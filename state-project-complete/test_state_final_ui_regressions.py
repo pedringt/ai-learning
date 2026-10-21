@@ -189,18 +189,12 @@ def test_idle_page_does_not_rewrite_the_dom_every_frame(open_ask):
         browser.close(); pw.stop()
 
 
-def test_dismissed_sources_strip_stays_dismissed_after_rerender():
-    # #450: the Workspace "Sources" strip moved from a MutationObserver layer
-    # (context-sources.js) into the Workspace template; dismissal must still
-    # remove it and survive later Workspace renders.
+def test_workspace_has_no_slack_source_strip():
+    # Oct 20: the "Sources / Slack / New integration / Connect Slack" strip (#450)
+    # was an old promo and is removed; Slack stays in Settings.
     pw, browser, page = _page()
     try:
         page.evaluate("() => localStorage.removeItem('state-workspace-source-banner-dismissed-v2')")
-        page.locator('.sidebar-nav [data-view="notes"]').click()
-        page.locator('.sidebar-nav [data-view="overview"]').click()
-        assert page.locator(".overview .workspace-source-strip").count() == 1
-        page.locator(".workspace-source-dismiss").click()
-        assert page.locator(".workspace-source-strip").count() == 0
         page.locator('.sidebar-nav [data-view="notes"]').click()
         page.locator('.sidebar-nav [data-view="overview"]').click()
         page.wait_for_timeout(300)
