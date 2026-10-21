@@ -30,7 +30,7 @@ FALLBACK_DESCRIPTIONS = {
 }
 
 
-LIBRARY_PAGES = {"ai-governance-handbook", "ai-durable-knowledge", "ai-professional-edge", "ai-business-solutions-map"}
+LIBRARY_PAGES = {"ai-governance-handbook", "ai-durable-knowledge", "ai-professional-edge", "ai-business-solutions-map", "ai-power-user-playbook"}
 
 
 def kicker(slug):
