@@ -814,7 +814,7 @@
     const pipeline=deliveryAttentionForData(data);
     const deliveryKind=pipeline.kind||'unknown';
     const rawPreviewFailure=d?.vercel?.kind==='bad'&&deliveryKind==='good';
-    const pipelineText=rawPreviewFailure?'No active production release failure':deliveryKind==='good'?'Latest production release is healthy':deliveryKind==='bad'?'Latest production release attempt did not deploy':deliveryKind==='warn'?'Latest production release attempt is still finishing':'Release status is unavailable';
+    const pipelineText=rawPreviewFailure?'No active production release failure':deliveryKind==='good'?'Latest production release is healthy':pipeline.checkFailed?(d?.vercel?.kind==='good'?'Latest production release deployed; a check failed':'A check failed on the latest production release'):deliveryKind==='bad'?'Latest production release attempt did not deploy':deliveryKind==='warn'?'Latest production release attempt is still finishing':'Release status is unavailable';
     const deliveryClass=deliveryKind==='bad'?'bad':deliveryKind==='warn'?'warn':'';
     const runtime=productionRuntime(data);
     const environmentBlock=(label,item)=>{
@@ -823,9 +823,9 @@
       const vercelTarget=(item.vercel?.contexts||[]).map(context=>context?.target_url).find(url=>/^https:\/\/vercel\.com\//.test(String(url||'')))||p.links?.vercel;
       return '<div class="delivery-environment"><div class="delivery-environment-head"><div><strong>'+esc(label)+'</strong><span class="branch-label">'+esc(item.branch)+'</span></div><span class="delivery-status '+esc(item.vercel?.kind||'unknown')+'">'+esc(status)+'</span></div>'+
         '<a class="delivery-release" href="'+esc(changeUrl(p.repo,item)||repoUrl(p.repo))+'" target="_blank" rel="noopener noreferrer">'+esc(commitTitle(item.message))+'</a>'+
-        '<div class="delivery-meta"><span>Updated '+esc(fmtDate(item.updatedAt))+'</span><span>'+githubLink(shortSha(item.sha),githubCommitUrl(p.repo,item.sha))+'</span><span>'+esc(item.vercel?.label||'Deployment status unavailable')+'</span>'+(vercelTarget?'<span>'+githubLink('Open in Vercel ↗',vercelTarget)+'</span>':'')+'</div></div>';
+        '<div class="delivery-meta"><span>Updated '+esc(fmtDate(item.updatedAt))+'</span><span>'+githubLink(shortSha(item.sha),githubCommitUrl(p.repo,item.sha))+'</span><span>'+esc(item.vercel?.label||'Deployment status unavailable')+'</span>'+(item.failedChecks||[]).slice(0,3).map(check=>'<span>Check failed: '+(check.url?githubLink(check.name,check.url):esc(check.name))+'</span>').join('')+(vercelTarget?'<span>'+githubLink('Open in Vercel ↗',vercelTarget)+'</span>':'')+'</div></div>';
     };
-    const prodInvestigate=deliveryKind==='bad'?investigateButton('vercel','production','Investigate deployment'):'';
+    const prodInvestigate=deliveryKind==='bad'&&!pipeline.checkFailed?investigateButton('vercel','production','Investigate deployment'):'';
     const checkInvestigate=Array.isArray(d?.failedChecks)&&d.failedChecks.length?investigateButton('github-check','production','Investigate failed check'):'';
     const deliveryHealthy=deliveryKind==='good'&&runtime.kind==='good'&&!checkInvestigate;
     const deliveryDetails=
