@@ -1,6 +1,6 @@
 """Generate link-preview cards and Open Graph / Twitter tags for every portfolio page.
 
-Each root page and each cheat sheet (cheat-sheets/*.html) gets a 1200x630 card in
+Each root page and each cheat sheet (cheat-sheets/*.html) gets a 2400x1260 card in
 assets/social/<slug>.png and a marked block of og:/twitter: tags in its <head>, built
 from the page's own <title> and meta description. A cheat sheet has no description
 tag of its own, so its one-line summary under the heading becomes one, inside the
@@ -30,9 +30,14 @@ FALLBACK_DESCRIPTIONS = {
 }
 
 
+LIBRARY_PAGES = {"ai-governance-handbook", "ai-durable-knowledge", "ai-professional-edge", "ai-business-solutions-map"}
+
+
 def kicker(slug):
     if slug.startswith(CHEAT_SHEETS + "/"):
-        return "Cheat sheet"
+        return "Library · Cheat sheet"
+    if slug in LIBRARY_PAGES:
+        return "Library"
     if slug == "index":
         return "Applied AI + Product Work"
     if slug.startswith("state-") or slug == "implementation-context":
@@ -41,8 +46,6 @@ def kicker(slug):
         return "Project Health"
     if slug == "tastemake":
         return "Tastemake"
-    if slug == "ai-governance-handbook":
-        return "Library"
     return "Case study"
 
 
@@ -69,18 +72,32 @@ def page_meta(path):
     return text, title, headline, description, add_description
 
 
-def card_html(kick, headline, description):
+# Oct 20: cards follow the site's current look (logo mark, grid, display type, yellow sticker label) and
+# render at 2x so LinkedIn's recompression keeps the text sharp. Bump IMAGE_VERSION when cards change so
+# LinkedIn and other caches fetch the new image instead of the one stored under the old address.
+IMAGE_VERSION = "2"
+CARD_CSS = """html,body{margin:0;width:1200px;height:630px;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171419;overflow:hidden}
+body{background:#fff;background-image:linear-gradient(#f1eff6 1px,transparent 1px),linear-gradient(90deg,#f1eff6 1px,transparent 1px);background-size:48px 48px;position:relative}
+body::after{content:"";position:absolute;right:-160px;top:-160px;width:620px;height:620px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,191,214,.20),rgba(255,95,162,.10),transparent)}
+.wrap{position:absolute;inset:64px 72px;display:flex;flex-direction:column;z-index:1}
+.brand{display:flex;align-items:center;gap:16px;font-size:30px;font-weight:900;letter-spacing:-.03em}
+.mark{width:38px;height:38px;border:3px solid #171419;border-radius:11px;background:linear-gradient(135deg,#fff 0 42%,#f4ff52 42% 100%);box-shadow:5px 5px 0 #171419}
+.hero{margin:auto 0 0;font-size:96px;line-height:.9;font-weight:950;letter-spacing:-.045em;max-width:1000px}
+.hero span{color:#f0408f}
+.url{margin-top:34px;font-size:24px;font-weight:800;color:#5f5a66}
+.chip{display:inline-block;align-self:flex-start;margin-top:auto;background:#f4ff52;font-size:20px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:8px 16px;transform:rotate(-2deg);border:2px solid #171419}
+h1{margin:22px 0 0;font-size:72px;line-height:.98;font-weight:950;letter-spacing:-.04em;max-width:1040px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+p{margin:20px 0 0;font-size:30px;line-height:1.35;color:#5f5a66;font-weight:500;max-width:1000px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}"""
+
+
+def card_html(kick, headline, description, home=False):
     e = html.escape
-    return f"""<!doctype html><html><head><meta charset="utf-8"><style>
-html,body{{margin:0;width:1200px;height:630px;background:#fbf8f3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#171419}}
-.card{{position:absolute;inset:44px;border:2px solid #e5ddd6;border-radius:28px;background:#fffdfa;padding:58px 64px;box-sizing:border-box;display:flex;flex-direction:column}}
-.kick{{font-size:24px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#5b478f}}
-h1{{margin:26px 0 0;font-size:66px;line-height:1.05;letter-spacing:-.02em;font-weight:800;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}}
-p{{margin:24px 0 0;font-size:28px;line-height:1.4;color:#6d676f;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}}
-.foot{{margin-top:auto;display:flex;justify-content:space-between;align-items:center;font-size:22px;font-weight:700;color:#171419}}
-.foot span:last-child{{color:#6d676f;font-weight:600}}
-</style></head><body><div class="card"><div class="kick">{e(kick)}</div><h1>{e(headline)}</h1><p>{e(description)}</p>
-<div class="foot"><span>Context <span style="color:#5b478f">Switch</span></span><span>contextswitch.tech</span></div></div></body></html>"""
+    brand = '<div class="brand"><div class="mark"></div>Context Switch</div>'
+    if home:
+        body = brand + '<div class="hero">AI doesn’t know <span>what it doesn’t know.</span></div><div class="url">contextswitch.tech</div>'
+    else:
+        body = brand + f'<div class="chip">{e(kick)}</div><h1>{e(headline)}</h1><p>{e(description)}</p>'
+    return f'<!doctype html><html><head><meta charset="utf-8"><style>{CARD_CSS}</style></head><body><div class="wrap">{body}</div></body></html>'
 
 
 def page_url(slug):
@@ -90,7 +107,7 @@ def page_url(slug):
 def tags(slug, title, description, add_description=False):
     e = lambda s: html.escape(s, quote=True)
     url = page_url(slug)
-    image = f"{SITE}/assets/social/{slug}.png"
+    image = f"{SITE}/assets/social/{slug}.png?v={IMAGE_VERSION}"
     return "\n".join([
         BEGIN,
         *([f'<meta content="{e(description)}" name="description"/>'] if add_description else []),
@@ -99,8 +116,8 @@ def tags(slug, title, description, add_description=False):
         f'<meta content="{e(title)}" property="og:title"/>',
         f'<meta content="{e(description)}" property="og:description"/>',
         f'<meta content="{image}" property="og:image"/>',
-        '<meta content="1200" property="og:image:width"/>',
-        '<meta content="630" property="og:image:height"/>',
+        '<meta content="2400" property="og:image:width"/>',
+        '<meta content="1260" property="og:image:height"/>',
         f'<meta content="{e(title)}" property="og:image:alt"/>',
         '<meta content="summary_large_image" name="twitter:card"/>',
         f'<meta content="{e(title)}" name="twitter:title"/>',
@@ -140,7 +157,7 @@ def main():
                 path.write_text(updated)
         if not (OUT / f"{slug}.png").exists():
             stale.append(f"assets/social/{slug}.png")
-        cards.append((slug, card_html(kicker(slug), headline, description)))
+        cards.append((slug, card_html(kicker(slug), headline, description, home=slug == "index")))
     expected_sitemap = sitemap(slugs)
     if not SITEMAP.exists() or SITEMAP.read_text() != expected_sitemap:
         stale.append("sitemap.xml")
@@ -157,7 +174,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        page = browser.new_page(viewport={"width": 1200, "height": 630})
+        page = browser.new_page(viewport={"width": 1200, "height": 630}, device_scale_factor=2)
         for slug, card in cards:
             page.set_content(card)
             (OUT / f"{slug}.png").parent.mkdir(parents=True, exist_ok=True)

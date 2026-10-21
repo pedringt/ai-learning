@@ -10,14 +10,14 @@
 <meta content="https://www.contextswitch.tech/cheat-sheets/Testing_and_Evaluating_AI_Systems" property="og:url"/>
 <meta content="Testing &amp; Evaluating AI Systems · Context Switch" property="og:title"/>
 <meta content="Use tests for guarantees, evals for judgment, and QA for unanticipated seams." property="og:description"/>
-<meta content="https://www.contextswitch.tech/assets/social/cheat-sheets/Testing_and_Evaluating_AI_Systems.png" property="og:image"/>
-<meta content="1200" property="og:image:width"/>
-<meta content="630" property="og:image:height"/>
+<meta content="https://www.contextswitch.tech/assets/social/cheat-sheets/Testing_and_Evaluating_AI_Systems.png?v=2" property="og:image"/>
+<meta content="2400" property="og:image:width"/>
+<meta content="1260" property="og:image:height"/>
 <meta content="Testing &amp; Evaluating AI Systems · Context Switch" property="og:image:alt"/>
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="Testing &amp; Evaluating AI Systems · Context Switch" name="twitter:title"/>
 <meta content="Use tests for guarantees, evals for judgment, and QA for unanticipated seams." name="twitter:description"/>
-<meta content="https://www.contextswitch.tech/assets/social/cheat-sheets/Testing_and_Evaluating_AI_Systems.png" name="twitter:image"/>
+<meta content="https://www.contextswitch.tech/assets/social/cheat-sheets/Testing_and_Evaluating_AI_Systems.png?v=2" name="twitter:image"/>
 <meta content="Testing &amp; Evaluating AI Systems · Context Switch" name="twitter:image:alt"/>
 <!-- social-preview:end -->
 </head><body><div class="bar"><i></i>Context Switch</div><main><div class="tools"><a href="../index.html#learn">← All references</a><button onclick="window.print()">Print / Save PDF</button></div><div class="hero"><div class="label"><a href="../index.html#learn">Library</a> / 04 Quality, Evals &amp; Reliability</div><span class="reviewed">Reviewed Oct 2026</span><h1>Testing &amp; Evaluating AI Systems</h1><p class="intro">Use tests for guarantees, evals for judgment, and QA for unanticipated seams.</p><p class="seen-in">This sheet covers which method to use. For what to measure and where to set release bars, see <a href="AI_Product_Evals_Cheat_Sheet.html">AI Product Evals →</a></p></div><section class="first"><div class="kicker">01 / table</div><h2>Choose the right method</h2><div class="table-wrap"><table><thead><tr><th>Method</th><th>Best for</th><th>Example</th></tr></thead><tbody><tr><td>Unit / contract</td><td>Invariants</td><td>Rejected evidence cannot mutate accepted state</td></tr><tr><td>Integration</td><td>Cross-component flow</td><td>Evidence → review → state → history</td></tr><tr><td>End-to-end</td><td>Browser-to-API journeys</td><td>Review and confirm visible state update</td></tr><tr><td>LLM eval</td><td>Semantic judgment</td><td>Consequence correctly detected</td></tr><tr><td>Manual / adversarial QA</td><td>Unexpected UX and failures</td><td>Contradictory input or duplication</td></tr></tbody></table></div></section><section class=""><div class="kicker">02 / cards</div><h2>Golden scenario anatomy</h2><div class="table-wrap"><table><thead><tr><th>Part</th><th>Define before inspecting output</th></tr></thead><tbody>
