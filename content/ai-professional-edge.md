@@ -64,6 +64,14 @@ Persistent agents hold a role, keep context, use approved tools, and continue wo
 
 **Ask:** What does this worker remember and for how long, when does its authority expire, and who can revoke it?
 
+### Design proactive behavior around relevance, not activity
+
+Persistence is about how long an agent holds a role. Proactivity is about when it decides to act. Reactive assistants respond when someone makes a request. Scheduled agents do predefined work at set times. Proactive agents watch the signals they are permitted to see and decide, without a new request, that something warrants attention or action. An agent that reports everything it notices is just a noisier scheduled job.
+
+Define what triggers proactive work, how relevance is judged, and when the agent should interrupt someone, save an item for a later briefing, or quietly record it. Learn preferences from explicit feedback, such as “not useful” or “tell me sooner,” rather than assuming that silence means approval. Cap background usage and cost, and give people a clear way to adjust, pause, or turn off proactive behavior. [Design an Attention Budget](ai-power-user-playbook.html#attention-budget) in the Power-User Playbook gives a prompt for drafting and testing these rules.
+
+**Ask:** What makes this worth someone's attention now, and how will we know if the agent interrupts too often or misses what matters?
+
 ### Make orchestration earn its complexity
 
 Multi-agent and dynamic workflows can split difficult work across isolated contexts or specialist workers and recombine the results. They can also multiply cost, latency, debugging difficulty, and coordination failures.
@@ -124,6 +132,8 @@ Map sensitive fields, source trust, third-party processing, retention, and logs.
 ### Verify real adoption beyond the pilot
 
 Measure whether teams actually complete work better, whether review queues grow, and whether training, support, or role ambiguity prevent sustained use.
+
+Much of the distance between a successful demo and a dependable business solution is client-facing work rather than model work: finding the workflow exceptions the prototype never saw, fitting the solution into the business processes it has to live inside, coordinating product, engineering, operations, and customer teams, and settling who owns adoption, support, and the business outcome. Model performance is one part of a successful implementation, not the whole of it.
 
 **Ask:** Does this improve the whole workflow after the initial demonstration?
 
