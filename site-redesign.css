@@ -169,3 +169,31 @@ html body .home-state-secondary {
 /* #483 (PF-01): on phones the typed phrase ran over the anchor label and off the edge. Stack it under its label (fixed height while typing); the "Applied work" heading just below replaces the anchor. */
 @media(max-width:560px){.rd-type-rail{padding-top:6px;padding-bottom:6px}.rd-type-left{flex-direction:column;align-items:flex-start;gap:3px}.rd-type-anchor{display:none}}
 
+
+/* Broader career positioning: keep the desk, make experience easy to scan. */
+#ai-cs-mock .home-experience { padding: 20px 0 12px; scroll-margin-top: 100px; }
+#ai-cs-mock .experience-heading { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; margin-bottom: 28px; }
+#ai-cs-mock .experience-heading h2 { max-width: 920px; font-size: clamp(26px, 3vw, 36px); line-height: 1.16; letter-spacing: -.035em; margin: 0; }
+#ai-cs-mock .experience-heading p, #ai-cs-mock .experience-grid p { font-size: 15px; line-height: 1.65; color: var(--muted); margin: 0; }
+#ai-cs-mock .experience-heading p { max-width: 760px; }
+#ai-cs-mock .experience-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+#ai-cs-mock .experience-grid article { border-top: 2px solid var(--ink); padding-top: 16px; }
+#ai-cs-mock .experience-number { color: var(--muted); font-size: 12px; font-weight: 800; }
+#ai-cs-mock .experience-grid h3 { font-size: 18px; line-height: 1.3; margin: 12px 0 8px; }
+@media(max-width:980px) {
+  #ai-cs-mock .experience-heading { grid-template-columns: 1fr; gap: 14px; }
+  #ai-cs-mock .experience-grid { grid-template-columns: 1fr; }
+}
+@media(max-width:560px) {
+  #ai-cs-mock .experience-grid { grid-template-columns: 1fr; gap: 22px; }
+}
+
+/* Keep the featured project compact on phones so experience follows the introduction. */
+@media(max-width:680px) {
+  html body #ai-cs-mock .rd-stage { margin-top: 24px; }
+  html body #ai-cs-mock .rd-stage .rd-mini-ui,
+  html body #ai-cs-mock .rd-stage .rd-trace,
+  html body #ai-cs-mock .rd-stage .rd-note { display: none; }
+  html body #ai-cs-mock .rd-stage .rd-card { transform: none; }
+  html body #ai-cs-mock .rd-stage .rd-card-top { margin-bottom: 8px; }
+}

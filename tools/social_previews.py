@@ -39,7 +39,7 @@ def kicker(slug):
     if slug in LIBRARY_PAGES:
         return "Library"
     if slug == "index":
-        return "Applied AI + Product Work"
+        return "Software Delivery + Product Quality + AI"
     if slug.startswith("state-") or slug == "implementation-context":
         return "State"
     if slug.startswith("project-health"):
@@ -94,7 +94,7 @@ def card_html(kick, headline, description, home=False):
     e = html.escape
     brand = '<div class="brand"><div class="mark"></div>Context Switch</div>'
     if home:
-        body = brand + '<div class="hero">AI doesn’t know <span>what it doesn’t know.</span></div><div class="url">contextswitch.tech</div>'
+        body = brand + '<div class="hero" style="font-size:78px">AI doesn’t know <span>what it doesn’t know.</span></div><div class="url">contextswitch.tech</div>'
     else:
         body = brand + f'<div class="chip">{e(kick)}</div><h1>{e(headline)}</h1><p>{e(description)}</p>'
     return f'<!doctype html><html><head><meta charset="utf-8"><style>{CARD_CSS}</style></head><body><div class="wrap">{body}</div></body></html>'
@@ -107,7 +107,8 @@ def page_url(slug):
 def tags(slug, title, description, add_description=False):
     e = lambda s: html.escape(s, quote=True)
     url = page_url(slug)
-    image = f"{SITE}/assets/social/{slug}.png?v={IMAGE_VERSION}"
+    version = "3" if slug == "index" else IMAGE_VERSION
+    image = f"{SITE}/assets/social/{slug}.png?v={version}"
     return "\n".join([
         BEGIN,
         *([f'<meta content="{e(description)}" name="description"/>'] if add_description else []),
