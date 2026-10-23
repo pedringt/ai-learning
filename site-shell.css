@@ -435,3 +435,20 @@ select:focus-visible,
 }
 @media(prefers-reduced-motion:reduce){.mnav-panel{animation:none}}
 @media print{.mnav{display:none!important}}
+
+/* Compact author and contact details shared by portfolio pages. */
+html body .portfolio-contact { display:flex; flex-wrap:wrap; justify-content:flex-end; text-align:right; align-items:center; gap:8px 24px; margin:32px 0 0; padding:20px 0 0; border-top:1px solid #e5e2e9; color:#635d6a; font-size:13px; line-height:1.6; }
+html body .portfolio-contact .portfolio-contact-name { font-weight:650; }
+html body .portfolio-contact a { color:inherit; font:inherit; text-decoration:underline; text-underline-offset:3px; overflow-wrap:anywhere; }
+html body .portfolio-contact a:hover { color:#171419; }
+html body .portfolio-contact a:focus-visible { outline:2px solid #635d6a; outline-offset:4px; }
+/* One page ending: closing copy on the left, contact details on the right. */
+html body #ai-cs-mock .page-closing { display:flex; align-items:baseline; justify-content:space-between; gap:16px 28px; }
+html body #ai-cs-mock .page-closing p { flex:1; font-size:14px; font-weight:500; }
+html body #ai-cs-mock .page-closing .portfolio-contact { flex:0 0 auto; margin:0; padding:0; border:0; }
+html body .portfolio-contact > * { white-space:nowrap; }
+@media(max-width:980px) {
+  html body #ai-cs-mock .page-closing { flex-direction:column; align-items:stretch; }
+  html body #ai-cs-mock .page-closing .portfolio-contact { align-self:flex-end; }
+}
+@media(max-width:560px) { html body .portfolio-contact { gap:6px 18px; } }
