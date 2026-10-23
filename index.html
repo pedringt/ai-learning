@@ -621,16 +621,13 @@
 #ai-cs-mock [data-page="learn"] > .page-intro{
   padding-bottom:18px!important;
 }
-/* Applied Work intro: no accent bar; the project explanation leads, research sits below as supporting context. */
+/* Applied Work intro: one paragraph, no accent bar. */
 html body #ai-cs-mock [data-page="portfolio"] > .page-intro .section-lead{
   max-width:860px!important;
   margin-top:22px!important;
   padding-left:0!important;
 }
 html body #ai-cs-mock [data-page="portfolio"] > .page-intro .section-lead::before{content:none!important}
-html body #ai-cs-mock [data-page="portfolio"] > .page-intro .applied-research{max-width:860px;margin-top:22px}
-html body #ai-cs-mock [data-page="portfolio"] > .page-intro .applied-research-label{margin:0 0 6px;color:var(--muted);font-size:11px;font-weight:850;letter-spacing:.1em;line-height:1.3;text-transform:uppercase}
-html body #ai-cs-mock [data-page="portfolio"] > .page-intro .applied-research-text{margin:0;color:var(--muted);font-size:14.5px;line-height:1.6}
 @media(max-width:760px){
   #ai-cs-mock .page-intro .lead,
   #ai-cs-mock .page-intro .section-lead,
@@ -871,7 +868,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <footer class="page-closing"><p>What I check before building, updated by what each build teaches me.</p><nav class="portfolio-contact" aria-label="Contact Paige Edrington"><span class="portfolio-contact-name">Paige Edrington</span><a href="mailto:paige.edrington@gmail.com">paige.edrington@gmail.com</a><a href="https://www.linkedin.com/in/paige-edrington-38214722" target="_blank" rel="noopener noreferrer">LinkedIn</a></nav></footer>
 </section>
 
-<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Software delivery experience, applied to AI</h2><p class="section-lead">These are independent projects. I define the workflows, direct AI-assisted work, evaluate the results, and iterate. The case studies separate my decisions from AI-assisted implementation.</p><div class="applied-research"><p class="applied-research-label">Research informing the work</p><p class="applied-research-text">I’m also researching how software teams are working with AI, including how responsibilities, collaboration, and quality checks are changing. That research informs what I build and how I evaluate it.</p></div></header>
+<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Software delivery experience, applied to AI</h2><p class="section-lead">These are independent projects. I define the workflows, direct AI-assisted work, evaluate the results, and iterate, and the case studies separate my decisions from AI-assisted implementation. The work is informed by my research into how software teams are using AI, including how responsibilities, collaboration, and quality checks are changing.</p></header>
 <div class="section-kicker applied-group-kicker"><span>Featured work</span></div>
 <div class="applied-major-grid applied-featured-grid applied-featured-three">
 <div class="card applied-major applied-major-with-actions"><span class="tag">Flagship · Requirements &amp; review</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">State keeps AI interpretation separate from human-approved project information. It demonstrates requirements, review workflows, and quality evaluation when evidence is incomplete or conflicting.</p><div class="applied-card-actions"><a href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State</a><a href="implementation-context.html">Case study →</a></div></div>
