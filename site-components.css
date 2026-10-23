@@ -1503,10 +1503,14 @@ html body main.case-shell .product-panel {
 html body main :is(.meta > span, .tag, .num, .flow-num, .map-chip, .map-step, span.accent) {
   border-radius: 8px !important;
 }
-/* Applied Work featured cards: three across, or one column, never 1+2 */
-@media (min-width: 701px){
+/* Applied Work featured cards: three across on desktop, one column below it (never 1+2), so tablet text columns stay readable */
+@media (min-width: 981px){
   html body #ai-cs-mock #portfolio .applied-featured-three { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   html body #ai-cs-mock #portfolio .applied-featured-three > * { grid-column: auto; grid-row: auto; }
+}
+@media (max-width: 980px){
+  html body #ai-cs-mock #portfolio .applied-featured-three { grid-template-columns: 1fr !important; }
+  html body #ai-cs-mock #portfolio .applied-featured-three > * { grid-column: auto !important; grid-row: auto; }
 }
 /* ---------- 4l. Project Health case study: one card style, one list style, one callout ---------- */
 html body main.case-shell :is(.card, .flow-card) .tag,
