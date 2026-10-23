@@ -621,6 +621,13 @@
 #ai-cs-mock [data-page="learn"] > .page-intro{
   padding-bottom:18px!important;
 }
+/* Applied Work intro: one paragraph, no accent bar. */
+html body #ai-cs-mock [data-page="portfolio"] > .page-intro .section-lead{
+  max-width:860px!important;
+  margin-top:22px!important;
+  padding-left:0!important;
+}
+html body #ai-cs-mock [data-page="portfolio"] > .page-intro .section-lead::before{content:none!important}
 @media(max-width:760px){
   #ai-cs-mock .page-intro .lead,
   #ai-cs-mock .page-intro .section-lead,
@@ -718,6 +725,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="rd-control">
 <h2>State</h2>
 <p>AI interprets project evidence, software enforces the rules, and people decide what becomes Current State.</p>
+<a class="rd-card-link" href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State <span aria-hidden="true">↗</span></a>
 <div class="rd-trace" aria-hidden="true"><div>Evidence</div><div>Review</div><div>Current State</div><div>History</div></div>
 <div class="rd-mini-ui" aria-hidden="true">
 <div class="rd-mini-panel">
@@ -753,7 +761,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 </div>
 <section class="home-experience" id="experience" aria-labelledby="experience-title">
 <div class="section-kicker"><span>Experience</span></div>
-<div class="experience-heading"><h2 id="experience-title">Project coordination and software quality.</h2><p>Coordinating delivery and evaluating software, with context from discovery, requirements, and client discussions.</p></div>
+<div class="experience-heading"><h2 id="experience-title">Project coordination and software quality.</h2><p>Before my independent AI work, I spent <strong>about eight years in custom software</strong>, moving from QA into project management on web and mobile projects. That meant coordinating releases, following up on blockers, testing user flows, and helping clients and developers clarify what the software needed to do.</p></div>
 <div class="experience-grid">
 <article><span class="experience-number" aria-hidden="true">01</span><h3>Team delivery &amp; releases</h3><p>Combined project management and Scrum Master responsibilities: coordinating team discussions, following up on blockers, organizing deployments, and keeping clients and developers informed.</p></article>
 <article><span class="experience-number" aria-hidden="true">02</span><h3>Quality &amp; investigation</h3><p>Tested user flows, investigated issues, documented reproducible problems, and verified fixes. Worked through questions about expected behavior with clients and developers.</p></article>
@@ -764,7 +772,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <div class="home-applied-heading"><div class="section-kicker"><span>Selected work · independent projects</span></div></div>
 <div class="home-feature-grid home-feature-state-led">
 <article class="home-feature-card home-feature-state-anchor">
-  <span class="home-project-kicker home-state-kicker" data-topic="Requirements &amp; review">Requirements &amp; review workflows</span>
+  <span class="home-project-kicker home-state-kicker" data-topic="Requirements &amp; review">Requirements &amp; review</span>
   <div class="home-state-content">
     <h2>State</h2>
     <p>A project information prototype shaped by the challenge of keeping everyone aligned. I define review workflows and test how AI handles incomplete or conflicting evidence before people approve updates.</p>
@@ -785,7 +793,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
   <div class="home-feature-actions"><a class="home-state-primary" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake</a><a class="home-state-secondary" href="tastemake.html">Case study →</a></div>
 </article>
 <article class="home-feature-card">
-  <div><span class="home-project-kicker" data-topic="Quality &amp; delivery">Quality &amp; delivery visibility</span><h2>Project Health</h2><p>A dashboard that connects delivery status with product quality. I use it to investigate issues and distinguish failed checks, missing information, and problems that need attention.</p></div>
+  <div><span class="home-project-kicker" data-topic="Quality &amp; release readiness">Quality &amp; release readiness</span><h2>Project Health</h2><p>A dashboard for release readiness and issue triage. I use it to tell a real product problem apart from a failed deployment or check, an incorrect test expectation, or missing evidence, so a person can decide what needs attention.</p></div>
   <div class="home-feature-actions"><a class="home-state-primary" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health</a><a class="home-state-secondary" href="project-health-case-study.html">Case study →</a></div>
 </article>
 </div>
@@ -860,12 +868,12 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <footer class="page-closing"><p>What I check before building, updated by what each build teaches me.</p><nav class="portfolio-contact" aria-label="Contact Paige Edrington"><span class="portfolio-contact-name">Paige Edrington</span><a href="mailto:paige.edrington@gmail.com">paige.edrington@gmail.com</a><a href="https://www.linkedin.com/in/paige-edrington-38214722" target="_blank" rel="noopener noreferrer">LinkedIn</a></nav></footer>
 </section>
 
-<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Software delivery experience, applied to AI</h2><p class="section-lead">My background centers on coordinating software delivery and evaluating quality, with involvement in discovery, requirements, and client discussions. These independent projects show how I’m applying that perspective with AI: defining workflows, directing AI-assisted work, evaluating results, and iterating. The case studies distinguish my decisions from AI-assisted implementation.</p><p class="section-lead">Alongside my independent projects, I’ve been researching how software teams are working with AI, including how responsibilities, collaboration, and quality checks are changing. That research informs what I build and how I evaluate it.</p></header>
+<section class="view" data-page="portfolio" id="portfolio"><header class="page-intro"><div class="eyebrow">Applied Work</div><h2 class="section-title">Software delivery experience, applied to AI</h2><p class="section-lead">These are independent projects. I define the workflows, direct AI-assisted work, evaluate the results, and iterate, and the case studies separate my decisions from AI-assisted implementation. The work is informed by my research into how software teams are using AI, including how responsibilities, collaboration, and quality checks are changing.</p></header>
 <div class="section-kicker applied-group-kicker"><span>Featured work</span></div>
 <div class="applied-major-grid applied-featured-grid applied-featured-three">
-<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship · Boundaries &amp; authority</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">State keeps AI interpretation separate from human-approved project information. It demonstrates requirements, review workflows, and quality evaluation when evidence is incomplete or conflicting.</p><div class="applied-card-actions"><a href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State</a><a href="implementation-context.html">Case study →</a></div></div>
-<div class="card applied-major applied-major-with-actions"><span class="tag">Feedback &amp; correction</span><h3><a class="applied-card-primary-link" href="tastemake.html">Tastemake</a></h3><p class="card-intro">Tastemake lets people see and correct what a recommender learns about their taste. It demonstrates user flows, feedback design, testing, and product iteration.</p><div class="applied-card-actions"><a href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake</a><a href="tastemake.html">Case study →</a></div></div>
-<div class="card applied-major applied-major-with-actions"><span class="tag">Quality &amp; evidence</span><h3><a class="applied-card-primary-link" href="project-health-case-study.html">Project Health</a></h3><p class="card-intro">Project Health brings scattered quality and delivery signals into one view. It demonstrates triage, issue investigation, and the distinction between a failed check and an unhealthy product.</p><div class="applied-card-actions"><a href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health</a><a href="project-health-case-study.html">Case study →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">Flagship · Requirements &amp; review</span><h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3><p class="card-intro">State keeps AI interpretation separate from human-approved project information. It demonstrates requirements, review workflows, and quality evaluation when evidence is incomplete or conflicting.</p><div class="applied-card-actions"><a href="https://state.contextswitch.tech/" data-state-app-link target="_blank" rel="noopener noreferrer">Open State</a><a href="implementation-context.html">Case study →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">User flows &amp; feedback</span><h3><a class="applied-card-primary-link" href="tastemake.html">Tastemake</a></h3><p class="card-intro">Tastemake lets people see and correct what a recommender learns about their taste. It demonstrates user flows, feedback design, testing, and product iteration.</p><div class="applied-card-actions"><a href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake</a><a href="tastemake.html">Case study →</a></div></div>
+<div class="card applied-major applied-major-with-actions"><span class="tag">Quality &amp; release readiness</span><h3><a class="applied-card-primary-link" href="project-health-case-study.html">Project Health</a></h3><p class="card-intro">Project Health brings delivery and quality signals into one view for release readiness and issue triage. It separates real product problems from failed deployments or checks, incorrect test expectations, and missing evidence, and never treats missing information as healthy. A person still decides what ships.</p><div class="applied-card-actions"><a href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health</a><a href="project-health-case-study.html">Case study →</a></div></div>
 </div>
 <div class="section-kicker applied-group-kicker"><span>Supporting work</span></div>
 <div class="applied-secondary-grid applied-secondary-compact">
@@ -874,7 +882,7 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <a class="card nav-card applied-secondary" href="meridian.html"><span class="tag">Discovery &amp; workflow design</span><h3>AI Support Workflow Exercise</h3><p class="card-intro">A simulated support exercise showing how discovery changed the AI boundaries, system rules, and human handoffs.</p></a>
 <a class="card nav-card applied-secondary" href="state-architecture-cost.html"><span class="tag">Architecture &amp; cost</span><h3>Where AI Earned Its Place in State</h3><p class="card-intro">What building State changed about where I use models, where I keep software deterministic, and which costs actually mattered.</p></a>
 </div>
-<footer class="page-closing"><p>Independent portfolio projects, built with AI assistance. Real-team adoption is still to test.</p><nav class="portfolio-contact" aria-label="Contact Paige Edrington"><span class="portfolio-contact-name">Paige Edrington</span><a href="mailto:paige.edrington@gmail.com">paige.edrington@gmail.com</a><a href="https://www.linkedin.com/in/paige-edrington-38214722" target="_blank" rel="noopener noreferrer">LinkedIn</a></nav></footer>
+<footer class="page-closing"><p>Independent portfolio projects, built with AI assistance. Not yet tested with a real team.</p><nav class="portfolio-contact" aria-label="Contact Paige Edrington"><span class="portfolio-contact-name">Paige Edrington</span><a href="mailto:paige.edrington@gmail.com">paige.edrington@gmail.com</a><a href="https://www.linkedin.com/in/paige-edrington-38214722" target="_blank" rel="noopener noreferrer">LinkedIn</a></nav></footer>
 </section>
 <script>
 (()=>{const root=document.getElementById('ai-cs-mock');if(!root)return;root.querySelectorAll('[data-page="home"] .journey .step').forEach(step=>{step.style.cursor='default';step.removeAttribute('tabindex');step.removeAttribute('role');});})();

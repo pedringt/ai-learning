@@ -1648,9 +1648,11 @@ html body #ai-cs-mock :is(.home-feature-actions, .home-state-button-row) a {
 @media (min-width: 1240px){
   html body #ai-cs-mock :is(.home-feature-actions, .home-state-button-row) { flex-wrap: nowrap; }
 }
-/* narrow three-up cards: keep the label on one line so the titles stay level */
+/* narrow three-up cards: stack "Featured" over the topic on every card so long topics wrap cleanly and the titles stay level */
 @media (min-width: 981px) and (max-width: 1139px){
-  html body #ai-cs-mock .home-feature-card .home-project-kicker { font-size: 10px; letter-spacing: 0.03em; padding: 6px 8px; white-space: nowrap; }
+  html body #ai-cs-mock .home-feature-card .home-project-kicker { font-size: 0; letter-spacing: 0.03em; padding: 6px 8px; white-space: normal; flex-wrap: wrap; row-gap: 4px; }
+  html body #ai-cs-mock .home-feature-card .home-project-kicker::before { border-right: 0; padding-right: 0; }
+  html body #ai-cs-mock .home-feature-card .home-project-kicker::after { flex-basis: 100%; }
 }
 /* wide desktop: the buttons fill the card's bottom row, so the number badge moves to the top-right corner */
 @media (min-width: 1240px){
