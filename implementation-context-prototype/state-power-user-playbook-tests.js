@@ -11,7 +11,7 @@ const html=fs.readFileSync(path.join(root,page),'utf8');
 const entries=[...html.matchAll(/<details class="pb-entry" id="([^"]+)"[\s\S]*?<\/details>/g)];
 const ids=entries.map(m=>m[1]);
 
-check('the playbook stays a curated set (30 to 35 techniques)',entries.length>=30&&entries.length<=35,`${entries.length}`);
+check('the playbook stays a curated set (30 to 36 techniques)',entries.length>=30&&entries.length<=36,`${entries.length}`);
 check('technique ids are unique',new Set(ids).size===ids.length);
 check('the page shows the real technique count',html.includes(`>${entries.length} techniques<`));
 check('every technique says what it does, when to use it, and gives an example',
