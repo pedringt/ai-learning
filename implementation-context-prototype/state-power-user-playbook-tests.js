@@ -1,6 +1,8 @@
 // Oct 21: the AI Power-User Playbook (ai-power-user-playbook.html) is a curated Library page of
 // techniques. These checks keep its entry format, the discovery prompt Paige asked to preserve
 // word for word, its Library entry, and its links intact as entries are added or edited.
+// Oct 26: whether a technique belongs is an editorial call, not a test, so there is no size
+// ceiling; the checks below keep the counts, categories, and entry structure accurate instead.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
 let pass=0,fail=0;
@@ -11,7 +13,16 @@ const html=fs.readFileSync(path.join(root,page),'utf8');
 const entries=[...html.matchAll(/<details class="pb-entry" id="([^"]+)"[\s\S]*?<\/details>/g)];
 const ids=entries.map(m=>m[1]);
 
-check('the playbook stays a curated set (30 to 36 techniques)',entries.length>=30&&entries.length<=36,`${entries.length}`);
+const sections=[...html.matchAll(/<section class="pb-section" data-cat="([a-z]+)"[\s\S]*?<\/section>/g)];
+const chipCounts=new Map([...html.matchAll(/class="pb-chip" data-filter="([a-z]+)"[^>]*>[^<]*<span>(\d+)<\/span>/g)].map(m=>[m[1],Number(m[2])]));
+const inSection=m=>(m[0].match(/<details class="pb-entry"/g)||[]).length;
+check('the All filter shows the real total',chipCounts.get('all')===entries.length,`${chipCounts.get('all')} vs ${entries.length}`);
+check('every category has a filter and every filter a category',
+  sections.map(m=>m[1]).sort().join()===[...chipCounts.keys()].filter(k=>k!=='all').sort().join());
+check('each category filter and heading shows its real count',
+  sections.every(m=>chipCounts.get(m[1])===inSection(m)&&Number((m[0].match(/class="pb-section-count">(\d+)</)||[])[1])===inSection(m)),
+  sections.map(m=>`${m[1]}:${inSection(m)}`).join(' '));
+check('every technique sits inside a category',sections.reduce((n,m)=>n+inSection(m),0)===entries.length);
 check('technique ids are unique',new Set(ids).size===ids.length);
 check('the page shows the real technique count',html.includes(`>${entries.length} techniques<`));
 check('every technique says what it does, when to use it, and gives an example',
