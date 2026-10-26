@@ -161,6 +161,14 @@ Show the minimum useful explanation by default, then allow deeper inspection: st
 
 **Ask:** What does this person need to see to trust, correct, or investigate the result?
 
+### Design around the outcome, not the application
+
+Traditional interfaces organize work around applications and individual tasks. An outcome-oriented interface lets someone describe the result they need rather than navigate each application involved in producing it. The AI coordinates the work, while the underlying systems continue enforcing their own rules and recording transactions.
+
+This can simplify complicated workflows, but it also creates a product-design challenge: users need to understand progress, exceptions, and when they must make a decision.
+
+**Ask:** Does coordinating the entire outcome genuinely reduce work, or does it hide important steps users still need to understand?
+
 ### Generate inside a stable UI shell
 
 Generative UI does not have to mean inventing a new interface on every request. A more controlled pattern is designed components plus generated content or configuration: the AI picks which approved card is relevant, fills recommendations into an established component, chooses from approved visualizations, or updates task status without rearranging the application. That preserves consistency, accessibility, testability, and user orientation.
