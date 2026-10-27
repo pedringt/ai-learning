@@ -18,6 +18,18 @@ Project Health is a portfolio-operations dashboard for Paige's active product wo
 - Attention: plain-language interpretation of concrete signals; no combined health score.
 - Run controls: guarded project-specific health workflows where one is explicitly configured.
 
+## Oct 27 changes (PM review, DEC-016)
+
+- **One measurement per card.** State's Overview cards are the AI Evals tab's four measurements (`STATE_QUALITY_METRICS`): Update understanding, Evidence grounding, Decision authority, Uncertainty handling. Each card's score, high-impact failures and change come from the same field, and changes are in points ("↓ 10 pts"). The old "Answer quality" card showed grounding's score with the whole suite's change and failures.
+- **Eval coverage on the Overview.** A line under the quality cards says which build the evals ran on and whether they still cover the live release. A release that differs from the eval build is only flagged when State's AI behavior files changed after the run, or when that history could not be checked.
+- **Where reports come from.** The Overview card built by rules is "Assessment from current signals" and says no AI was called. The quality investigation says it is built from recorded eval evidence. Only the failure investigator is labeled AI, with its model and "accuracy not yet measured".
+- **Healthy on what's measured.** See DEC-016. A project's `unmeasuredQuality` list keeps it from plain Healthy; today only Authority Lab declares one.
+- **15 s p95 target for State's AI calls.** `responseTargetP95Ms` on the State project; above it the AI response speed signal reads Watch.
+- **Small samples.** Below five checks a card shows the count ("1 / 1"), and NARC's pass/fail checks show Passing, Failing, Done or Pending, never 100% or 0%.
+- **Analytics loading.** The card says "Checking site analytics…" while it loads and names the actual failure otherwise. It used to say "still loading or temporarily unavailable" for both.
+- **Shared decision log.** Stored on the State backend (`project_health_decisions`), read by anyone, written with `PROJECT_HEALTH_DECISION_KEY`.
+- **Investigator planted-case accuracy.** See `docs/evals/README.md`.
+
 ## Oct 19 changes
 
 - **Server errors are not monitored.** Vercel's runtime-logs API is a live tail with no time range, so it cannot return past errors, and history needs Log Drains (Vercel Pro). The dashboard says "Not monitored on this plan" instead of reporting a clean or partial scan, and no longer waits on the stream.
@@ -50,6 +62,12 @@ Only configure a project-id variable when that project actually uses the corresp
 - `PROJECT_HEALTH_USAGE_KEY`: the same random value on the Vercel project (Production and Preview) and on both Render services (`state-api`, `state-api-staging`)
 
 Without it the investigator still works, but its calls are not counted. Production records to the production State API, previews to staging.
+
+### Decision log
+
+- `PROJECT_HEALTH_DECISION_KEY`: a random value on both Render services (`state-api`, `state-api-staging`). The Vercel project needs nothing new: `api/project-health-decisions.js` passes the key Paige types to the State API, which checks it.
+
+Without it the log still reads, and adding an entry returns "not configured for writes". The table comes from migration `021_project_health_decisions.sql`, so take the production SQLite backup before the backend deploy that adds it.
 
 ### Dashboard-run controls
 

@@ -172,19 +172,19 @@
     .monitoring-gaps{display:grid;gap:7px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.monitoring-gaps>strong{font-size:12px}
     .gap-list{display:grid;gap:6px}.gap-list>span{color:var(--muted);font-size:11px;line-height:1.45}.gap-list b{color:var(--ink)}
     .decision-log{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}.decision-log-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.decision-log-head>span{color:var(--muted);font-size:11px}
-    .decision-log-list{display:grid;gap:8px;margin-top:9px}.decision-log-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:9px 10px;border:1px solid #e8ebe8;border-radius:9px;background:#fafbfa}
-    .decision-log-item>strong{font-size:12px;line-height:1.4}.decision-log-item>span:last-child{color:var(--muted);font-size:10px;white-space:nowrap}
+    .decision-log-list{display:grid;gap:8px;margin-top:9px}.decision-log-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:start;padding:9px 10px;border:1px solid #e8ebe8;border-radius:9px;background:#fafbfa}
+    .decision-log-item>strong{font-size:12px;line-height:1.4}.decision-log-item>span:not(.activity-type){color:var(--muted);font-size:10px;white-space:nowrap}.decision-log-item .text-button{border:0;background:none;padding:0;color:var(--muted);font-size:10px;text-decoration:underline;cursor:pointer}
     .compact-empty{margin-top:8px;padding:10px 12px}
     .impact-chip{display:inline-flex;width:max-content;margin-top:5px;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:800;background:#f1f3f1;color:var(--muted)}
     .impact-chip.good{background:#edf7ef;color:#356444}.impact-chip.unknown{background:#f2f3f2;color:#6f7872}.impact-chip.bad{background:#fbefed;color:#8a3f38}
     .activity-followup{display:block;margin-top:5px;color:#50675b;font-size:11px;font-weight:750}
     .product-note-dialog{width:min(620px,calc(100vw - 32px))}
     .product-note-form{display:grid;gap:8px}.product-note-form label{display:grid;gap:3px;font-size:13px}.product-note-form label span{color:var(--muted);font-size:11px;font-weight:500}
-    .product-note-form select,.product-note-form textarea{width:100%;box-sizing:border-box;border:1px solid #dfe4df;border-radius:9px;background:#fff;color:var(--ink);font:inherit;padding:10px 11px}
-    .product-note-form textarea{resize:vertical;min-height:110px;line-height:1.45}.product-note-form select:focus-visible,.product-note-form textarea:focus-visible{border-color:#82998d;outline:3px solid rgba(56,98,77,.12)}
+    .product-note-form select,.product-note-form textarea,.product-note-form input{width:100%;box-sizing:border-box;border:1px solid #dfe4df;border-radius:9px;background:#fff;color:var(--ink);font:inherit;padding:10px 11px}
+    .product-note-form textarea{resize:vertical;min-height:110px;line-height:1.45}.product-note-form select:focus-visible,.product-note-form textarea:focus-visible,.product-note-form input:focus-visible{border-color:#82998d;outline:3px solid rgba(56,98,77,.12)}
     .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
     @media(max-width:850px){.decision-support-grid{grid-template-columns:1fr}}
-    @media(max-width:560px){.decision-log-head{align-items:flex-start;flex-direction:column}.decision-log-item{grid-template-columns:1fr}.decision-log-item>span:last-child{white-space:normal}.dialog-actions{justify-content:stretch}.dialog-actions .button{flex:1}}
+    @media(max-width:560px){.decision-log-head{align-items:flex-start;flex-direction:column}.decision-log-item{grid-template-columns:1fr}.decision-log-item>span:not(.activity-type){white-space:normal}.dialog-actions{justify-content:stretch}.dialog-actions .button{flex:1}}
 
     /* Mock-aligned light dashboard skin. Data/rendering logic remains unchanged. */
     :root{
@@ -557,6 +557,8 @@
     .mock-investigation-card{grid-column:1/-1;padding:18px}
     .mock-investigation-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
     .mock-investigation-head h3{margin:0;font-size:16px}
+    .mock-investigation-source{margin:3px 0 0;font-size:11px;color:var(--muted)}
+    .mock-eval-coverage{margin:12px 0 0;font-size:12px;line-height:1.45;color:var(--muted)}.mock-eval-coverage.warn,.mock-eval-coverage.unknown{color:var(--warn)}
     .mock-investigation-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
     .mock-investigation-column{min-height:150px;padding:14px;border-radius:10px;background:#f8f9fc}
     .mock-investigation-column>strong{display:block;margin-bottom:8px;font-size:11px}
@@ -759,8 +761,11 @@
             <option value="experiment">Experiment</option>
           </select>
           <label for="productNoteText"><strong>What happened?</strong><span>Capture the product judgment or change in plain language.</span></label>
-          <textarea id="productNoteText" name="text" rows="4" maxlength="500" required placeholder="Example: Treat the unknown-reason eval miss as a product behavior issue, not eval noise."></textarea>
-          <p class="footnote">This lightweight log is stored in this browser and appears in Activity. It does not change the project itself.</p>
+          <textarea id="productNoteText" name="text" rows="4" maxlength="1000" required placeholder="Example: Treat the unknown-reason eval miss as a product behavior issue, not eval noise."></textarea>
+          <label for="productNoteKey"><strong>Decision log key</strong><span>Only the project owner can add entries. The key is kept for this page only.</span></label>
+          <input id="productNoteKey" name="key" type="password" autocomplete="off" maxlength="200">
+          <p class="footnote" id="productNoteError" role="status" aria-live="polite"></p>
+          <p class="footnote">Entries are saved on the State backend, appear in Activity, and are visible to everyone who opens Project Health. They do not change the project itself.</p>
           <div class="dialog-actions"><button class="button" type="button" data-close-info>Cancel</button><button class="button primary" type="submit">Save record</button></div>
         </div>
       </form>

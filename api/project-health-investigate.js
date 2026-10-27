@@ -271,7 +271,7 @@ module.exports=async function handler(req,res){
   if(!report)return response(res,502,{detail:'The investigation model could not return a report. No project changes were made.'});
   const sources=[...selected.sources,...(deploymentEvidence?.sources||[]),...(commitEvidence?.sources||[])];
   res.setHeader('Cache-Control','no-store');
-  return response(res,200,{project:project.slug,environment,commit:sha,report,sources,observedAt:new Date().toISOString(),readOnly:true});
+  return response(res,200,{project:project.slug,environment,commit:sha,report,model:MODEL,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
 module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE};
 

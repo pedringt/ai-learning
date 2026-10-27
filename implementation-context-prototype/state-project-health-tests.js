@@ -801,7 +801,11 @@ assert.match(projectHealthSource,/Decision support/);
 assert.match(projectHealthSource,/What we cannot confirm/);
 assert.match(projectHealthSource,/Decision & change log/);
 assert.match(projectHealthSource,/data-add-product-note/);
-assert.match(projectHealthSource,/project-health-product-notes/);
+// Oct 27: the decision log is server-stored (key-only writes), not per-browser localStorage.
+assert.doesNotMatch(projectHealthSource,/project-health-product-notes/);
+assert.match(projectHealthSource,/\/api\/project-health-decisions\?project=/);
+assert.match(projectHealthSource,/'X-Project-Health-Decision-Key':key/);
+assert.match(healthHtml,/id="productNoteKey" name="key" type="password"/);
 assert.match(projectHealthSource,/Next evidence:/);
 assert.match(projectHealthSource,/accepted ambiguity outcome/);
 assert.match(projectHealthSource,/not surfaced through an accepted uncertainty path/);
@@ -931,12 +935,9 @@ assert.match(workflowText,/run_quality_evals\.py/);
 
 // Review #5 (Oct 2026): a suite that has not loaded must read as unknown, never as "0 failures"/green.
 const healthJs=fs.readFileSync(require.resolve('../project-health.js'),'utf8')+fs.readFileSync(require.resolve('../project-health-model.js'),'utf8'); // split in #452
-assert.match(healthJs,/!review\?'unknown':reviewFailures\?'warn':'good'/);
-assert.match(healthJs,/!ask\?'unknown':askFailures\?'bad':'good'/);
-assert.match(healthJs,/!review\?unknownSignal:reviewFailures/);
-assert.match(healthJs,/!ask\?unknownSignal:askFailures/);
-assert.match(healthJs,/authority==null\?'unknown'/);
-assert.match(healthJs,/uncertainty==null\?'unknown'/);
+// Oct 27: the cards come from stateMetricCards; with no results loaded every card is unknown with the loading signal.
+assert.ok(H.stateMetricCards(null,'Loading…').every(card=>card.kind==='unknown'&&card.signal==='Loading…'&&card.score==null));
+assert.match(healthJs,/stateMetricCards\(q,unknownSignal\)/);
 assert.match(fs.readFileSync(require.resolve('../project-health-redesign.css'),'utf8'),/\.mock-kpi-signal\.unknown/);
 
 console.log('Project Health shell tests passed');

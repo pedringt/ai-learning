@@ -24,6 +24,7 @@ from baseline_setup import register_baseline_routes
 from product_analytics import register_product_analytics
 from quality_analytics_api import register_quality_analytics
 from project_health_usage_api import register_project_health_usage
+from project_health_decisions_api import register_project_health_decisions
 
 __all__ = ["Settings", "app", "create_app"]
 
@@ -46,6 +47,7 @@ def create_app(settings=None, provider=None, ask_provider=None):
     register_product_analytics(application, application.state.settings)
     register_quality_analytics(application, application.state.settings)
     register_project_health_usage(application, application.state.settings)
+    register_project_health_decisions(application, application.state.settings)
     return application
 
 
