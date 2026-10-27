@@ -322,7 +322,8 @@ const regressionData={
   },
   delivery:{vercel:{kind:'good'}},
   activity:{available:true,deployments:{recent_failures:[]},runtime:{available:true,issues:[]}},
-  platform:{analytics:{configured:true,available:true},neon:{configured:true,available:true},aiTelemetry:{configured:true,available:true}},
+  // Fully monitored, agent workflow telemetry included: since Oct 27 the Observability count includes that gap.
+  platform:{analytics:{configured:true,available:true},neon:{configured:true,available:true},aiTelemetry:{configured:true,available:true,workflow:{available:true}}},
   runInfo:{configured:true}
 };
 const regression=H.regressionSignal(regressionData);

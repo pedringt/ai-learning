@@ -619,7 +619,8 @@
   function releaseRiskChecklist(data){
     const quality=data?.project?.quality==='state'?qualityAttention(data.quality):externalQualityAttention(data.externalQuality);
     const incidents=activityReviewItems(data).filter(item=>!item.resolved);
-    const gaps=setupGaps(data).filter(gap=>gap.label!=='Agent workflow telemetry');
+    // Count every gap "What we cannot confirm" lists (Paige, Oct 27: the count left out agent telemetry and read 2 next to 3).
+    const gaps=setupGaps(data);
     const delivery=deliveryAttentionForData(data);
     const stale=data?.project?.quality==='state'&&stateEvalResultsStale(data.quality);
     const qualityKind=stale?'warn':(quality?.kind||'unknown');

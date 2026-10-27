@@ -114,6 +114,16 @@ const q={review:latestReview,ask:latestAsk,recent:[
     assert.strictEqual(H.countDisplay(null,null),null);
   });
   const page=fs.readFileSync(path.join(__dirname,'..','project-health.js'),'utf8');
+  await check('the Observability count matches every gap listed under What we cannot confirm',()=>{
+    const data={project:PROJECT('state'),fresh:true,pending:new Set(),delivery:{vercel:{kind:'good'}},quality:q,
+      platform:{aiTelemetry:{available:true,cost:{partial:false}},neon:{available:false}},runInfo:{configured:true},
+      activity:{available:true,runtime:{coverage:'not_monitored'}}};
+    const gaps=M.setupGaps(data);
+    assert.ok(gaps.some(gap=>gap.label==='Agent workflow telemetry'));
+    const observability=M.releaseRiskChecklist(data).find(item=>item.label==='Observability');
+    assert.match(observability.detail,new RegExp('^'+gaps.length+' monitoring gaps'));
+    assert.doesNotMatch(page,/monitoringGaps\.slice\(/,'the list shows every gap the count includes');
+  });
   await check('NARC pass/fail checks never render as 100% or 0%',()=>{
     assert.match(page,/label==='First-run playtest'\?\(score===1\?'Done':'Pending'\):\(score===1\?'Passing':'Failing'\)/);
   });
