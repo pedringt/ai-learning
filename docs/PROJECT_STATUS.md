@@ -10,7 +10,10 @@ _Last updated: October 27, 2026, Pacific time. **Start with "Current state" just
 - **Oct 27 product review → #566 (on `staging`, not `main`):** production Ask misquoted a source ("approved" → "proposed for approval (not yet approved)", including inside a quoted Review title) and contradicted Current State on "What's our pilot budget, and can we start implementation planning?".
   - **Fixed:** the backstop spares words attributed to a source or inside quotes. The budget Review's rationale and `k-stage` were reworded in `seed_demo.py`. API Reviews no longer show a fixed "Does not establish" line. There are two new Ask scenarios (the suite is now 12). The State cache tag is `r126-no-fixed-does-not`.
   - **After promotion:** the seed changes reach production only through a Northstar reset (Paige's OK).
-  - **Follow-ups (Backlog):** #567 claim-level authority labels for Ask instead of rewriting words; #568 raw-vs-State comparison eval v2.
+  - **Measured (eval matrix, ask/adversarial ×10 on `3f363a3`):** adversarial 99%; the original 10 Ask scenarios 100/100; the two new scenarios only 5/10 each. The backstop still rewrote possessive attributions ("the note's figure (approved…)"), fixed in a second push. The two-part question is a model reasoning failure, tracked as #569.
+  - **Hold promotion** until #569 is settled: at about 50% it would often fail the Ask gate (DEC-013).
+  - **Follow-ups (Backlog):** #567 claim-level authority labels for Ask instead of rewriting words; #568 raw-vs-State comparison eval v2; #569 pending-Review rationale overrides Current State.
+  - **The eval matrix workflow is enabled again** (Oct 27, Paige), so its weekly Monday run is back on.
 - **`main`:** `0d0ac6a` (#547), verified on `state-api` `/health` and the frontend. `staging` matches it, apart from work in progress named in the section below.
 - **Production:**
   - Portfolio: `https://www.contextswitch.tech/`. State: `https://state.contextswitch.tech/`. API: `https://state-api-6waw.onrender.com`.

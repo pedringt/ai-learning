@@ -314,28 +314,56 @@ _REPORTING_VERB_RE = re.compile(
     r"mentions|mentioned|notes\s+that|noted\s+that|according\s+to)\b",
     re.I,
 )
-_ATTRIBUTION_BREAK_RE = re.compile(r",|\b(?:and|but|so|while|although|though|because)\b", re.I)
+_ATTRIBUTION_BREAK_RE = re.compile(r",|;|\b(?:and|but|so|while|although|though|because)\b", re.I)
+# Only the few words right before the verb name who is speaking: "The only relevant record is an open Review
+# noting that the Q3 note says..." is attributed to the note, not to a record (Oct 27 eval matrix, #566).
 _STATE_RECORD_SUBJECT_RE = re.compile(r"\b(?:current\s+state|state|history|records?|we)\b", re.I)
+_SUBJECT_WORDS = 4
+# #566 (Oct 27 eval matrix): the model also credits a source without a verb: "the Q3 planning session note's
+# figure (approved at $40,000...)", "the note's statement — pilot budget approved at...", "the note's figure,
+# approved at...", "the note's statement of a $40,000 approved budget". A source document's possessive
+# reporting noun attributes what follows it, through a parenthesis, a dash, a colon or one comma right after
+# the noun. "The vendor's retention terms are approved" is still softened: terms are not a reporting noun.
+_SOURCE_POSSESSIVE_RE = re.compile(
+    r"\b(?:note|notes|email|message|evidence|transcript|minutes|session|meeting|recap|document|source|memo|"
+    r"ticket|update|vendor|review)['’]s?\s+(?:\w+\s+)?(?:figure|statement|claim|wording|number|amount|text|"
+    r"description|report|account|summary|proposal|version|quote)\b",
+    re.I,
+)
+_POSSESSIVE_BREAK_RE = re.compile(r";|\b(?:and|but|so|while|although|though|because)\b", re.I)
+_NUMBER_WITH_COMMAS_RE = re.compile(r"\d(?:[\d,.]*\d)?")
 _QUOTED_SPAN_RE = re.compile(r"[“\"][^”\"]+[”\"]|(?<![\w’'])['‘][^'’]+['’](?![\w])")
 
 
-def _attributed_to_a_source(text: str, match: "re.Match[str]") -> bool:
+def _attributed_to_a_source(prefix: str) -> bool:
+    """True if `prefix`, the sentence text before a settled word (back to the last ";"), credits it to a source."""
     verb = None
-    for verb in _REPORTING_VERB_RE.finditer(text[:match.start()]):
+    for verb in _REPORTING_VERB_RE.finditer(prefix):
         pass
-    if not verb or _ATTRIBUTION_BREAK_RE.search(text[verb.end():match.start()]):
+    if verb and not _ATTRIBUTION_BREAK_RE.search(prefix[verb.end():]):
+        subject = " ".join(_words(prefix[:verb.start()])[-_SUBJECT_WORDS:])
+        if not _STATE_RECORD_SUBJECT_RE.search(subject):
+            return True
+    noun = None
+    for noun in _SOURCE_POSSESSIVE_RE.finditer(prefix):
+        pass
+    if not noun:
         return False
-    return not _STATE_RECORD_SUBJECT_RE.search(text[:verb.start()])
+    between = _NUMBER_WITH_COMMAS_RE.sub("0", prefix[noun.end():])
+    if _POSSESSIVE_BREAK_RE.search(between):
+        return False
+    commas = between.count(",")
+    return commas == 0 or (commas == 1 and between.lstrip().startswith(","))
 
 
 def _inside_quotes(text: str, match: "re.Match[str]") -> bool:
     return any(span.start() < match.start() and match.end() < span.end() for span in _QUOTED_SPAN_RE.finditer(text))
 
 
-def _soften_match(text: str, match: "re.Match[str]", replacement, governing) -> str:
+def _soften_match(text: str, match: "re.Match[str]", replacement, governing, lead: str = "") -> str:
     if _quotes_governing_state(text, match, governing) or _refers_to_governing_state(text, match, governing):
         return match.group(0)
-    if _inside_quotes(text, match) or _attributed_to_a_source(text, match):
+    if _inside_quotes(text, match) or _attributed_to_a_source(lead + text[:match.start()]):
         return match.group(0)
     whether = None
     for whether in _WHETHER_RE.finditer(text[:match.start()]):
@@ -378,13 +406,16 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
             rewritten.append(sentence)
             continue
         parts = _CLAUSE_SPLIT_RE.split(sentence)
+        original = list(parts)
         for index in range(0, len(parts), 2):  # odd indexes are the delimiters
             if _negated(parts[index]):
                 continue
+            # Attribution can carry into a parenthesis or dash after it, but not past a ";".
+            lead = "".join(original[:index]).rsplit(";", 1)[-1]
             fixed = parts[index]
             for pattern, replacement in _UNEARNED_SETTLED_PROSE_REPLACEMENTS:
                 current = fixed
-                fixed = pattern.sub(lambda m, r=replacement, t=current: _soften_match(t, m, r, governing_ngrams), current)
+                fixed = pattern.sub(lambda m, r=replacement, t=current, l=lead: _soften_match(t, m, r, governing_ngrams, l), current)
             parts[index] = fixed
         rewritten.append("".join(parts))
     text = " ".join(rewritten)

@@ -323,3 +323,42 @@ def test_no_before_the_settled_word_negates_the_headline():
 
 def test_a_settled_headline_is_still_softened():
     assert _soften_unearned_settled_words("Retention Terms Confirmed") == "Retention Terms Reported"
+
+
+# Oct 27 eval matrix (#566, staging 3f363a3): the failing ask_source_words_not_demoted answers, with the
+# backstop's rewrite undone. The first names a record before the note that speaks; the rest credit the
+# note with a possessive and no verb.
+MATRIX_SOURCE_SENTENCES = (
+    "The only relevant record is an open Review noting that the Q3 planning session note says the pilot budget "
+    "is approved at $40,000 for discovery and the first implementation phase, and asking whether that should be "
+    "recorded in Current State.",
+    "The only relevant record is an open Review proposing that the Q3 planning session note's figure (approved at "
+    "$40,000 for discovery and the first implementation phase) be recorded in Current State.",
+    "The only relevant record is an open Review proposing that the Q3 planning session note's statement — pilot "
+    "budget approved at $40,000 for discovery and the first implementation phase — be recorded in Current State.",
+    "The only relevant record is an open Review proposing that the Q3 planning session note's statement of a "
+    "$40,000 approved budget for discovery and the first implementation phase be recorded in Current State.",
+    "The only relevant record is an open Review proposing that the Q3 planning session note's figure, approved at "
+    "$40,000 for discovery and the first implementation phase, be recorded in Current State.",
+)
+
+
+def test_the_matrix_source_sentences_keep_the_sources_words():
+    for sentence in MATRIX_SOURCE_SENTENCES:
+        assert _soften_unearned_settled_prose(sentence) == sentence
+
+
+def test_the_record_check_reads_only_the_words_before_the_verb():
+    fixed = _soften_unearned_settled_prose("The record says the retention terms are approved.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
+def test_a_possessive_attribution_ends_at_a_second_clause():
+    for sentence in ("The note's figure is $40,000, the budget is approved.",
+                     "The note's figure is $40,000 and the budget is approved."):
+        assert "proposed for approval (not yet approved)" in _soften_unearned_settled_prose(sentence), sentence
+
+
+def test_attribution_does_not_carry_past_a_semicolon():
+    fixed = _soften_unearned_settled_prose("The note's figure is $40,000; the budget is approved.")
+    assert "proposed for approval (not yet approved)" in fixed
