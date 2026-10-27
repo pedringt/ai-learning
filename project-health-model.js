@@ -11,7 +11,13 @@
 
   const PROJECTS=[
     {
-      id:'state',name:'State',evalCheckNames:['quality','walkthrough'],description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePaths:['implementation-context-prototype','state-project-complete'],releaseIgnore:/project health|dashboard|assertion/i,evalBehaviorPaths:['state-project-complete/question_review_prompt.py','state-project-complete/ask_service.py','state-project-complete/anthropic_provider.py'],
+      id:'state',name:'State',evalCheckNames:['quality','walkthrough'],description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePaths:['implementation-context-prototype','state-project-complete'],releaseIgnore:/project health|dashboard|assertion/i,// What the controlled evals measure (Oct 27 smoke test: #566 changed ask_authority_text.py, which the old three-file
+      // list missed, and the dashboard called the Oct 26 scores current). These are the modules the eval harness runs,
+      // traced from its imports and stopping at infrastructure; test_project_health_eval_paths.py fails if the trace and
+      // this list drift apart. Contract paths are the scenarios and graders: a change there means the scores were
+      // measured against a different test, not that State behaves differently.
+      evalBehaviorPaths:['state-project-complete/question_review_prompt.py','state-project-complete/question_review_service.py','state-project-complete/review_service.py','state-project-complete/interpretation_trace.py','state-project-complete/interpretation_pipeline_integrated.py','state-project-complete/interpretation_runtime','state-project-complete/consequentiality_guidance.py','state-project-complete/extension_points.py','state-project-complete/ask_service.py','state-project-complete/ask_provider.py','state-project-complete/ask_authority_text.py','state-project-complete/ask_contract.py','state-project-complete/ask_refinement_transforms.py','state-project-complete/anthropic_provider.py','state-project-complete/model_request_options.py','state-project-complete/provider_json.py','state-project-complete/provider_output_schema.py'],
+      evalContractPaths:['state-project-complete/eval/quality_harness.py','state-project-complete/eval/ask_quality_scenarios.py','state-project-complete/eval/review_interpretation_scenarios.py','state-project-complete/eval/ask_grader.py'],
       // Paige, Oct 27: State's AI calls are judged against a 15 s p95; above it the speed signal reads Watch.
       responseTargetP95Ms:15000,
       focus:'Keep project truth trustworthy without giving AI authority to change Current State on its own.',
@@ -880,6 +886,7 @@
       staging:s.staging||null,
       quality:s.quality||null,
       qualityBehaviorUpdatedAt:s.qualityBehaviorUpdatedAt||null,
+      qualityContractUpdatedAt:s.qualityContractUpdatedAt||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
       previousPlatform:s.platform||null,
@@ -926,6 +933,7 @@
       staging:data.staging,
       quality:data.quality,
       qualityBehaviorUpdatedAt:data.qualityBehaviorUpdatedAt||null,
+      qualityContractUpdatedAt:data.qualityContractUpdatedAt||null,
       externalQuality:safeExternalQualitySnapshot(data.externalQuality),
       platform:data.platform,
       activity:data.activity,
@@ -990,7 +998,9 @@
   function stateEvalContractStale(q){
     const runs=[q?.review,q?.ask].filter(Boolean);
     if(!runs.length)return false;
-    const contract=dateMs(STATE_EVAL_CONTRACT_UPDATED_AT);
+    // The later of the fixed contract date and the last commit to the eval contract files.
+    const fetched=dateMs(q?.contractUpdatedAt);
+    const contract=Math.max(dateMs(STATE_EVAL_CONTRACT_UPDATED_AT),Number.isFinite(fetched)?fetched:-Infinity);
     return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<contract;});
   }
   function stateEvalBehaviorStale(q){
@@ -1015,7 +1025,8 @@
     const sameBuild=builds.length===1&&release&&builds[0]===release;
     if(sameBuild)return {kind:'good',text:'Evals ran on the live release ('+shortSha(release)+'), '+when+'.'};
     if(!Number.isFinite(dateMs(q?.behaviorUpdatedAt)))return {kind:'unknown',text:'Evals ran on '+built+', '+when+'. Project Health could not check whether State\u2019s AI behavior changed since.'};
-    return {kind:'good',text:'Evals ran on '+built+', '+when+'. State\u2019s AI behavior has not changed since, so the scores still apply to the live release'+(release?' ('+shortSha(release)+')':'')+'.'};
+    // Say what was checked, not more: the result is only as good as the watched file list.
+    return {kind:'good',text:'Evals ran on '+built+', '+when+'. No changes found since then in the files that shape State\u2019s AI behavior or its evals, so the scores should still apply to the live release'+(release?' ('+shortSha(release)+')':'')+'.'};
   }
   function stateEvalResultsStale(q){return stateEvalContractStale(q)||stateEvalBehaviorStale(q);}
   function stateEvalStaleReason(q){

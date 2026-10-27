@@ -95,14 +95,24 @@ async function loadDelivery(gh,project,branchName){
   return MODEL.deliveryHealth({name:branch?.name||branchName,commit:selectedCommit},status,checkRuns,project);
 }
 
+// The latest commit touching any of the paths, or null when a lookup failed: a missed path must read as "could not
+// check", never as "no change" (Oct 27).
+async function latestCommitFor(gh,project,branch,paths){
+  if(!paths.length)return {ok:true,commit:null};
+  let failed=false;
+  const rows=await Promise.all(paths.map(path=>gh('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branch)+'&path='+encodeURIComponent(path)+'&per_page=1').catch(()=>{failed=true;return [];})));
+  if(failed)return {ok:false,commit:null};
+  return {ok:true,commit:rows.flat().filter(Boolean).sort((a,b)=>commitDate(b)-commitDate(a))[0]||null};
+}
+const commitTime=commit=>commit?.commit?.committer?.date||commit?.commit?.author?.date||null;
 async function loadEvalBehavior(gh,project,environment){
   const paths=Array.isArray(project?.evalBehaviorPaths)?project.evalBehaviorPaths:[];
   if(!paths.length)return null;
+  const contractPaths=Array.isArray(project?.evalContractPaths)?project.evalContractPaths:[];
   const branch=MODEL.evalBehaviorBranch(project,environment);
-  const rows=await Promise.all(paths.map(path=>gh('/repos/'+project.repo+'/commits?sha='+encodeURIComponent(branch)+'&path='+encodeURIComponent(path)+'&per_page=1').catch(()=>[])));
-  const commits=rows.flat().filter(Boolean).sort((a,b)=>commitDate(b)-commitDate(a));
-  const latest=commits[0];
-  return latest?{sha:latest.sha||null,updatedAt:latest.commit?.committer?.date||latest.commit?.author?.date||null}:null;
+  const [behavior,contract]=await Promise.all([latestCommitFor(gh,project,branch,paths),latestCommitFor(gh,project,branch,contractPaths)]);
+  if(!behavior.ok||!behavior.commit)return null;
+  return {sha:behavior.commit.sha||null,updatedAt:commitTime(behavior.commit),contractUpdatedAt:contract.ok?commitTime(contract.commit):null};
 }
 
 // Only the fields the page reads; PR bodies and file lists never leave this function.

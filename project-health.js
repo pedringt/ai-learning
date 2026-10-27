@@ -271,10 +271,10 @@
     ];
     if(project.id==='state'){
       core.push(run('Production backend',loadPlatformSignal(project,'production-render'),value=>{data.platform=mergePlatform(data.platform,value);}));
-      core.push(run('Quality behavior',loadStateEvalBehavior(project,root,data),value=>{data.qualityBehaviorUpdatedAt=value?.updatedAt||null;if(data.quality)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;}));
+      core.push(run('Quality behavior',loadStateEvalBehavior(project,root,data),value=>{data.qualityBehaviorUpdatedAt=value?.updatedAt||null;data.qualityContractUpdatedAt=value?.contractUpdatedAt||null;if(data.quality){data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;data.quality.contractUpdatedAt=data.qualityContractUpdatedAt;}}));
     }
     const qualityTask=project.quality==='state'
-      ? run('Quality',loadStateQuality(root),value=>{data.quality=value;if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;})
+      ? run('Quality',loadStateQuality(root),value=>{data.quality=value;if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;if(data.qualityContractUpdatedAt)data.quality.contractUpdatedAt=data.qualityContractUpdatedAt;})
       : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;});
     data.qualityPromise=qualityTask;
     await Promise.all([...core,qualityTask]);
