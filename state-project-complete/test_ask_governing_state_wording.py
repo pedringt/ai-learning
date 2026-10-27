@@ -362,3 +362,29 @@ def test_a_possessive_attribution_ends_at_a_second_clause():
 def test_attribution_does_not_carry_past_a_semicolon():
     fixed = _soften_unearned_settled_prose("The note's figure is $40,000; the budget is approved.")
     assert "proposed for approval (not yet approved)" in fixed
+
+
+# #569 diagnosis (Oct 27, production c557ef3): 3 of 11 Ask answers still had the source's "approved"
+# rewritten. A comma inside "$40,000" ended the attribution, and "an evidence record" was read as
+# State's own record.
+PRODUCTION_SOURCE_SENTENCES = (
+    "Evidence from a Q3 planning session reports a $40,000 pilot budget approved for discovery and first implementation.",
+    "Evidence from a Q3 planning session reports that a $40,000 pilot budget was approved for discovery and first implementation.",
+    "A Q3 planning evidence record reports the pilot budget as approved at $40,000 for discovery and first implementation.",
+)
+
+
+def test_the_production_source_sentences_keep_the_sources_words():
+    for sentence in PRODUCTION_SOURCE_SENTENCES:
+        assert _soften_unearned_settled_prose(sentence) == sentence
+
+
+def test_a_real_comma_after_a_number_still_ends_the_attribution():
+    fixed = _soften_unearned_settled_prose("The note says the budget is $40,000, the vendor terms are approved.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
+def test_states_own_record_is_still_not_a_source():
+    for sentence in ("The record says the retention terms are approved.",
+                     "State's records show the retention terms are approved."):
+        assert "proposed for approval (not yet approved)" in _soften_unearned_settled_prose(sentence), sentence
