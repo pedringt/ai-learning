@@ -712,7 +712,7 @@
         why:'A stale pending proposal can remain the apparent next change even after authoritative evidence has corrected it.'
       };
     }
-    // DRAFT (Oct 27): wording for Paige to approve before release.
+    // Oct 27: wording approved by Paige.
     if(id==='review_tentative_high_consequence'){
       return {
         title:'An open leadership question was treated as a threat to Current State',
