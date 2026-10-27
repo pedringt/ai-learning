@@ -2,15 +2,18 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: October 12, 2026 (evening), Pacific time. **Start with "Current state" just below**; the Oct 12 section after it says what changed most recently. Older sections still apply where nothing newer overrides them, and anything before Oct 5 is history (some open-issue lists down there are stale: trust GitHub). Written as a handoff for a fresh session._
+_Last updated: October 27, 2026, Pacific time. **Start with "Current state" just below**; the Oct 12 section after it says what changed most recently. Older sections still apply where nothing newer overrides them, and anything before Oct 5 is history (some open-issue lists down there are stale: trust GitHub). Written as a handoff for a fresh session._
 
 ## Current state (Oct 20, 2026)
 
-- **The Anthropic API is blocked until Nov 1 (Oct 20, 18:50 UTC).**
-  - What happened: the organization crossed its tier-based monthly usage threshold (429 `enforced_spend_limit_reached`). That threshold is separate from the $500 custom limit in the Console, which showed $234.60 used.
-  - Effect: every AI feature in State, Tastemake and Project Health shows the calm budget message (Paige's wording, Oct 20) instead of failing.
-  - What resumes it: Paige raising the limit, or Nov 1.
-  - Until then: no paid evals, and the Monday weekly eval run will only record errors.
+- **The Anthropic API works again (checked Oct 27: production Ask answered).** From Oct 20 it was blocked by the organization's tier-based monthly threshold (429 `enforced_spend_limit_reached`), and AI features showed the budget message.
+- **Oct 27 product review → #566 (promoted to `main` Oct 27 at Paige's call):** production Ask misquoted a source ("approved" → "proposed for approval (not yet approved)", including inside a quoted Review title) and contradicted Current State on "What's our pilot budget, and can we start implementation planning?".
+  - **Fixed:** the backstop spares words attributed to a source or inside quotes. The budget Review's rationale and `k-stage` were reworded in `seed_demo.py`. API Reviews no longer show a fixed "Does not establish" line. There are two new Ask scenarios (the suite is now 12). The State cache tag is `r126-no-fixed-does-not`.
+  - **After promotion:** the seed changes reach production only through a Northstar reset (Paige's OK).
+  - **Measured (eval matrix, ask/adversarial ×10 on `3f363a3`):** adversarial 99%; the original 10 Ask scenarios 100/100; the two new scenarios only 5/10 each. The backstop still rewrote possessive attributions ("the note's figure (approved…)"), fixed in a second push. The two-part question is a model reasoning failure, tracked as #569.
+  - **Expect the weekly Ask check to go red** until #569 is fixed: `ask_compound_question_keeps_governing_state` passes about 30% (6/20), and the Ask gate (DEC-013) allows one miss per run and no scenario failing twice in a row. Paige promoted anyway (Oct 27).
+  - **Follow-ups (Backlog):** #567 claim-level authority labels for Ask instead of rewriting words; #568 raw-vs-State comparison eval v2; #569 pending-Review rationale overrides Current State.
+  - **The eval matrix workflow is enabled again** (Oct 27, Paige), so its weekly Monday run is back on.
 - **`main`:** `0d0ac6a` (#547), verified on `state-api` `/health` and the frontend. `staging` matches it, apart from work in progress named in the section below.
 - **Production:**
   - Portfolio: `https://www.contextswitch.tech/`. State: `https://state.contextswitch.tech/`. API: `https://state-api-6waw.onrender.com`.

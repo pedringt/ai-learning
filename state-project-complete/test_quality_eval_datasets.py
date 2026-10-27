@@ -159,11 +159,12 @@ class QualityEvalDatasetTests(unittest.TestCase):
             "false_premise",
             "important_omission",
             "conflict",
+            "source_fidelity",
         }.issubset(categories))
         self.assertTrue(any(scenario.should_distinguish_proposal_from_truth for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_express_uncertainty for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_reference_open_item for scenario in ASK_SCENARIOS))
-        self.assertEqual(len(ASK_SCENARIOS), 10)
+        self.assertEqual(len(ASK_SCENARIOS), 12)
         self.assertIn("superseded_review", categories)
         self.assertIn("outcome_vs_reason", categories)
 
@@ -315,6 +316,9 @@ def test_negated_reporting_frames_do_not_assert_the_claim():
     assert not _asserts("state does not show that leadership approved removing human review", "leadership approved removing human review")
     assert not _asserts("state does not have enough confirmed information to say we decided to fully automate support", "we decided to fully automate")
     assert not _asserts("the records cannot confirm that we decided to fully automate support", "we decided to fully automate")
+    # Oct 27: the correct answer from eval matrix run 40583243572.
+    assert not _asserts("state does not have confirmed information that leadership approved removing human review",
+                        "leadership approved removing human review")
 
 
 def test_reporting_frames_without_negation_still_assert_the_claim():
@@ -323,6 +327,8 @@ def test_reporting_frames_without_negation_still_assert_the_claim():
     assert _asserts("the record says we decided to fully automate support", "we decided to fully automate")
     assert _asserts("leadership approved removing human review last week", "leadership approved removing human review")
     assert _asserts("it is not pending: leadership approved removing human review", "leadership approved removing human review")
+    assert _asserts("state has confirmed information that leadership approved removing human review",
+                    "leadership approved removing human review")
 
 
 def test_a_claim_inside_a_whether_clause_is_not_asserted():
@@ -342,3 +348,34 @@ def test_premise_naming_and_article_after_a_negated_frame_do_not_assert():
     assert not _asserts("no current state record establishing that the zendesk integration was approved", claim)
     assert _asserts("yes, the zendesk integration was approved last week", claim)
     assert _asserts("the record says the zendesk integration was approved", claim)
+
+
+# Oct 27: the two scenarios from the production budget answer. The live answer must fail both;
+# a correct answer must pass both.
+LIVE_BUDGET_ANSWER = {
+    "headline": "No reported pilot budget is recorded yet; implementation planning should wait on budget confirmation",
+    "summary": ("State has no Current State entry for the pilot budget. Evidence from the Q3 planning session reports "
+                "the pilot budget as proposed for approval (not yet approved) at $40,000 for discovery and first "
+                "implementation. Starting implementation planning should therefore wait until the budget is accepted "
+                "into Current State."),
+}
+CORRECT_BUDGET_ANSWER = {
+    "headline": "The Q3 note says $40,000 was approved; it is not in Current State yet",
+    "summary": ("The Q3 planning session note says the pilot budget is approved at $40,000. That budget has not been "
+                "accepted into Current State; a Review is pending. Current State says implementation planning can "
+                "proceed with the bounded use case."),
+}
+
+
+def _ask_scenario(scenario_id):
+    return [s for s in ASK_SCENARIOS if s.id == scenario_id][0]
+
+
+def test_the_live_budget_answer_fails_both_new_scenarios():
+    for scenario_id in ("ask_source_words_not_demoted", "ask_compound_question_keeps_governing_state"):
+        assert not score_ask_answer(_ask_scenario(scenario_id), LIVE_BUDGET_ANSWER).passed, scenario_id
+
+
+def test_a_correct_budget_answer_passes_both_new_scenarios():
+    for scenario_id in ("ask_source_words_not_demoted", "ask_compound_question_keeps_governing_state"):
+        assert score_ask_answer(_ask_scenario(scenario_id), CORRECT_BUDGET_ANSWER).passed, scenario_id

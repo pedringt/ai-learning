@@ -270,3 +270,95 @@ def test_no_record_showing_negates_a_settled_word():
 
 def test_a_bare_no_does_not_protect_a_claim():
     assert "proposed for approval (not yet approved)" in _soften_unearned_settled_prose("No, the budget is approved.")
+
+
+# --- Oct 27: the backstop must not change what a source said ------------------
+# Production Ask (Northstar, "What's our pilot budget, and can we start implementation planning?"):
+# the Q3 planning note says the budget "is approved at $40,000" and the open Review is titled
+# "Is the approved pilot budget ready to be recorded?". The backstop rewrote both to "proposed for
+# approval (not yet approved)", and the headline "No confirmed pilot budget" to "No reported pilot budget".
+
+from ask_authority_text import _soften_unearned_settled_words  # noqa: E402
+
+LIVE_SUMMARY_SENTENCE = (
+    "Evidence from the Q3 planning session reports the pilot budget as approved at $40,000 for discovery "
+    "and first implementation, but that is only a reported statement, and an open Review ('Is the approved "
+    "pilot budget ready to be recorded?') has not changed Current State."
+)
+
+
+def test_the_live_budget_sentence_keeps_the_sources_words():
+    assert _soften_unearned_settled_prose(LIVE_SUMMARY_SENTENCE) == LIVE_SUMMARY_SENTENCE
+
+
+def test_a_reporting_verb_attributes_the_settled_word_to_its_source():
+    sentence = "The Q3 planning note says the budget was approved at $40,000."
+    assert _soften_unearned_settled_prose(sentence) == sentence
+
+
+def test_a_quoted_review_title_is_left_alone():
+    sentence = "An open Review asks “Is the approved pilot budget ready to be recorded?” before anything changes."
+    assert _soften_unearned_settled_prose(sentence) == sentence
+
+
+def test_a_claim_after_the_attribution_ends_is_still_softened():
+    fixed = _soften_unearned_settled_prose("The vendor says the terms are fine, and the retention terms are approved.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
+def test_attributing_the_claim_to_current_state_is_still_softened():
+    fixed = _soften_unearned_settled_prose("Current State says the retention terms are approved.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
+def test_a_possessive_apostrophe_does_not_open_a_quote():
+    fixed = _soften_unearned_settled_prose("The vendor's retention terms are approved for the pilot.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
+def test_no_before_the_settled_word_negates_the_headline():
+    headline = "No confirmed pilot budget is recorded yet"
+    assert _soften_unearned_settled_words(headline) == headline
+
+
+def test_a_settled_headline_is_still_softened():
+    assert _soften_unearned_settled_words("Retention Terms Confirmed") == "Retention Terms Reported"
+
+
+# Oct 27 eval matrix (#566, staging 3f363a3): the failing ask_source_words_not_demoted answers, with the
+# backstop's rewrite undone. The first names a record before the note that speaks; the rest credit the
+# note with a possessive and no verb.
+MATRIX_SOURCE_SENTENCES = (
+    "The only relevant record is an open Review noting that the Q3 planning session note says the pilot budget "
+    "is approved at $40,000 for discovery and the first implementation phase, and asking whether that should be "
+    "recorded in Current State.",
+    "The only relevant record is an open Review proposing that the Q3 planning session note's figure (approved at "
+    "$40,000 for discovery and the first implementation phase) be recorded in Current State.",
+    "The only relevant record is an open Review proposing that the Q3 planning session note's statement — pilot "
+    "budget approved at $40,000 for discovery and the first implementation phase — be recorded in Current State.",
+    "The only relevant record is an open Review proposing that the Q3 planning session note's statement of a "
+    "$40,000 approved budget for discovery and the first implementation phase be recorded in Current State.",
+    "The only relevant record is an open Review proposing that the Q3 planning session note's figure, approved at "
+    "$40,000 for discovery and the first implementation phase, be recorded in Current State.",
+)
+
+
+def test_the_matrix_source_sentences_keep_the_sources_words():
+    for sentence in MATRIX_SOURCE_SENTENCES:
+        assert _soften_unearned_settled_prose(sentence) == sentence
+
+
+def test_the_record_check_reads_only_the_words_before_the_verb():
+    fixed = _soften_unearned_settled_prose("The record says the retention terms are approved.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
+def test_a_possessive_attribution_ends_at_a_second_clause():
+    for sentence in ("The note's figure is $40,000, the budget is approved.",
+                     "The note's figure is $40,000 and the budget is approved."):
+        assert "proposed for approval (not yet approved)" in _soften_unearned_settled_prose(sentence), sentence
+
+
+def test_attribution_does_not_carry_past_a_semicolon():
+    fixed = _soften_unearned_settled_prose("The note's figure is $40,000; the budget is approved.")
+    assert "proposed for approval (not yet approved)" in fixed

@@ -155,4 +155,44 @@ SCENARIOS = (
         severity="high",
         rationale="Ask may know that an outcome happened without knowing why; it should not invent rationale or motivation.",
     ),
+    # Oct 27 (production Ask, Northstar): the other direction from forbidden over-claiming. The source
+    # says the budget is approved; Ask rewrote that to "proposed for approval (not yet approved)". What is
+    # pending is recording it in Current State, not the approval the source reports.
+    AskQualityScenario(
+        id="ask_source_words_not_demoted",
+        category="source_fidelity",
+        question="What did the Q3 planning session say about the pilot budget, and is it in Current State?",
+        current_state=(("scope", "The core pilot use case is Tier 1 troubleshooting assistance."),),
+        pending_reviews=(
+            "The Q3 planning session note says the pilot budget is approved at $40,000 for discovery and the first "
+            "implementation phase. Should that budget be recorded in Current State?",
+        ),
+        required_facts=("$40,000", ("not in current state", "not yet in current state", "not been recorded",
+                                    "not recorded", "not been accepted", "not yet accepted", "pending review",
+                                    "awaiting review", "has not changed current state")),
+        forbidden_claims=("proposed for approval", "not yet approved", "has not been approved"),
+        should_distinguish_proposal_from_truth=True,
+        severity="high",
+        rationale="Ask must report what a source said in the source's terms; the pending step is the Current State decision, not the source's approval.",
+    ),
+    # Oct 27 (production Ask, Northstar): a two-part question selected only the budget records, missed the
+    # Current State fact about planning, and turned the pending Review's "why it matters" into a gate.
+    AskQualityScenario(
+        id="ask_compound_question_keeps_governing_state",
+        category="authority_awareness",
+        question="What's our pilot budget, and can we start implementation planning?",
+        current_state=(
+            ("launch", "Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures."),
+            ("scope", "The core pilot use case is Tier 1 troubleshooting assistance."),
+            ("data", "The pilot uses the minimum customer and account data needed for troubleshooting."),
+        ),
+        pending_reviews=(
+            "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+        ),
+        required_facts=("$40,000", ("can proceed", "may proceed", "can start", "can begin", "can move forward")),
+        forbidden_claims=("should wait", "must wait", "cannot start", "can't start", "cannot begin", "cannot proceed"),
+        should_distinguish_proposal_from_truth=True,
+        severity="high",
+        rationale="Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
+    ),
 )

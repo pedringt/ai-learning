@@ -86,10 +86,8 @@
       resolvesQuestionIds:[...(r.resolves_question_ids||[])],
       resolvesQuestionId:(r.resolves_question_ids||[])[0],
       establishes:rationale||r.why_consequential,
-      // #482 (QA-11): one short line per decision type instead of the same boilerplate on every card.
-      doesNot:proposals.length
-        ? 'Only accepting this changes Current State.'
-        : 'Neither choice changes Current State.',
+      // No "does not establish" field: the interpretation does not say what the Evidence leaves unsettled, and a fixed
+      // line under "Does not establish" read as if it did (Oct 27 review). The card hides the line.
       whyConsequential:r.why_consequential,
       reviewType:r.review_type,
       proposals,
