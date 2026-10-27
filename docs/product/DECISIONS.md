@@ -296,3 +296,25 @@ Paige chose the smart suggestion and the fixed footer from her Oct 20 grading no
 
 **Rejected / deferred**  
 Plain "Add a Question / Add Evidence" buttons on every answer, and an AI-written scope sentence only on readiness questions.
+
+### DEC-016 — Project Health's trust rules: what "Healthy" means, a latency target, a shared decision log, and planted-case accuracy
+
+**Status:** Active  
+**Date:** 2026-10-27  
+**Related:** `project-health-model.js`, `project-health.js`, `api/project-health-decisions.js`, `state-project-complete/project_health_decisions_api.py`, `scripts/project_health_eval/`; DEC-011; R-020
+
+**Decision**  
+Paige made these choices after an Oct 27 PM review of the dashboard:
+- **Healthy needs measured product quality.** A project shows plain **Healthy** only if no product-quality area is declared unmeasured. A project lists its gaps in `unmeasuredQuality`; while any remain it reads **Healthy on what's measured** with a "Not measured: …" line. Platform gaps (server-error history on Vercel Hobby, database monitoring, agent telemetry) stay under "What we cannot confirm" and do not block the label. Declared today: Authority Lab, "the full lifecycle walkthrough". Tastemake, State and NARC declare none (NARC's pending playtest already shows Watch).
+- **State's AI response time is judged against a 15 s p95.** Above it, the AI response speed signal reads Watch. It does not change the project's status pill.
+- **The decision and change log is stored on the State backend.** Anyone can read it. Adding or removing an entry needs `PROJECT_HEALTH_DECISION_KEY`, a separate admin key Paige enters on the dashboard.
+- **The investigator's accuracy is labeled and checked on planted cases.** AI reports say "accuracy not yet measured" until the planted-case check has results Paige has looked at. The investigator eval scores whether the Likely cause section names each planted case's known cause (see `docs/evals/README.md`).
+
+**Why**  
+The review found the dashboard calling things healthy that it did not measure, showing a 26 s p95 with no way to judge it, keeping decisions in one browser, and running an AI feature whose correctness was unmeasured.
+
+**Rejected / deferred**  
+Counting platform gaps toward "Healthy" (no project could ever be Healthy on the Hobby plan). Declaring Tastemake's live recommendations and State's live answers as unmeasured gaps (Paige chose not to). Anyone-can-write and owner-only-read logs. Manual grading only.
+
+**Revisit when**  
+A project gains a check for a declared gap, a planted-case run shows misses, or the 15 s target proves wrong for real use.

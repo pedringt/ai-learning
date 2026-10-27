@@ -99,6 +99,7 @@ async function run(){
   const summary={all:lib.summarize(results),byKind:Object.fromEntries(kinds.map(kind=>[kind,lib.summarize(results.filter(item=>item.kind===kind))]))};
   fs.writeFileSync(path.join(outDir,'summary.json'),JSON.stringify(summary,null,2));
   console.log(JSON.stringify(summary,null,2));
+  console.log(lib.accuracyMarkdown(summary.all));
   if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,lib.summaryMarkdown(summary,results));
   // failOn lists technical facts that fail the run (API errors, reports cut off at the cap). Report quality
   // facts (canaries, cause stated unknown) are recorded, never judged here: that rubric is Paige's.

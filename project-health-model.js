@@ -12,6 +12,8 @@
   const PROJECTS=[
     {
       id:'state',name:'State',evalCheckNames:['quality','walkthrough'],description:'Human-reviewed project truth system with maintained Current State.',repo:'pedringt/ai-learning',branch:'main',stagingBranch:'staging',quality:'state',releasePaths:['implementation-context-prototype','state-project-complete'],releaseIgnore:/project health|dashboard|assertion/i,evalBehaviorPaths:['state-project-complete/question_review_prompt.py','state-project-complete/ask_service.py','state-project-complete/anthropic_provider.py'],
+      // Paige, Oct 27: State's AI calls are judged against a 15 s p95; above it the speed signal reads Watch.
+      responseTargetP95Ms:15000,
       focus:'Keep project truth trustworthy without giving AI authority to change Current State on its own.',
       evidence:['Understands updates','Answers stay grounded','Respects decision authority','Review burden'],
       nextDecision:'Expand failure investigation only if it stays useful without weakening human control.',
@@ -56,7 +58,7 @@
       }
     },
     {
-      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
+      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,unmeasuredQuality:['the full lifecycle walkthrough'],description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
       focus:'Show authority as explicit, evidence-earned, conditional, reversible, and authorized by a named person.',
       evidence:['Lifecycle walkthrough','Authority decisions','Record history','Reversibility'],
       nextDecision:'Decide whether the Refund recommendation walkthrough is clear enough to add a second capability.',
@@ -297,6 +299,8 @@
     const unchecked=uncheckedSignals(data);
     if(unchecked.length) return incompleteAttention(unchecked);
     if(qualityNotMeasured(data)) return {kind:'good',qualityNotMeasured:true,title:QUALITY_NOT_MEASURED_LABEL,detail:QUALITY_NOT_MEASURED_DETAIL};
+    const unmeasured=unmeasuredQuality(data);
+    if(unmeasured.length) return {kind:'good',qualityNotMeasured:true,partialQuality:true,title:PARTLY_MEASURED_LABEL,detail:'No delivery, runtime, or measured-quality problems. '+unmeasuredText(unmeasured)};
     return {kind:'good',title:'Healthy',detail:'No current incident or product-quality action needs attention.'};
   }
   // A project with no quality source by design (Authority Lab) can be fine on delivery and runtime, but Project Health
@@ -304,6 +308,12 @@
   // "Incomplete", which means a signal we do request failed to load.
   const QUALITY_NOT_MEASURED_LABEL='Healthy · quality not measured';
   const QUALITY_NOT_MEASURED_DETAIL='No delivery or runtime problems. Quality checks aren\u2019t connected for this project.';
+  // Paige, Oct 27: plain "Healthy" needs the project's product quality to be measured. A project lists the quality areas
+  // no check covers (unmeasuredQuality in PROJECTS); while any remain it reads "Healthy on what's measured". Platform
+  // gaps such as server-error history stay under "What we cannot confirm" and do not block the label.
+  const PARTLY_MEASURED_LABEL='Healthy on what\u2019s measured';
+  function unmeasuredQuality(data){return Array.isArray(data?.project?.unmeasuredQuality)?data.project.unmeasuredQuality.filter(Boolean):[];}
+  function unmeasuredText(list){return 'Not measured: '+list.join(', ')+'.';}
   // The header "Investigate" only calls the server-side model for a failed deployment or release check; every other
   // path is a local, free summary. Mirrors startProjectInvestigation in project-health.js.
   function investigationUsesModel(data){
@@ -353,6 +363,8 @@
   }
   function qualityNotMeasured(data){return !!data?.project?.noQualitySource;}
   function healthySummary(data){
+    const unmeasured=unmeasuredQuality(data);
+    if(!qualityNotMeasured(data)&&unmeasured.length) return {qualityNotMeasured:true,partialQuality:true,headline:'Nothing needs action in what Project Health measures.',rowTitle:PARTLY_MEASURED_LABEL,rowDetail:unmeasuredText(unmeasured),meta:'Partly measured'};
     if(qualityNotMeasured(data)) return {qualityNotMeasured:true,headline:QUALITY_NOT_MEASURED_DETAIL,rowTitle:'Quality not measured',rowDetail:'Nothing needs action, but Project Health can only confirm delivery and runtime here.',meta:'Not measured'};
     return {qualityNotMeasured:false,headline:'Everything looks healthy right now.',rowTitle:'Nothing needs attention right now',rowDetail:'No current incident or product-quality action is open.',meta:'Healthy'};
   }
@@ -362,6 +374,7 @@
     if(att.kind==='unknown') return {key:'checking',label:'Checking',kind:'unknown'};
     if(att.kind==='bad') return {key:'action',label:'Needs attention',kind:'bad'};
     if(att.kind==='warn') return {key:'watch',label:'Watch',kind:'warn'};
+    if(att.partialQuality) return {key:'partial',label:PARTLY_MEASURED_LABEL,shortLabel:'Partly measured',kind:'good'};
     if(att.qualityNotMeasured) return {key:'partial',label:QUALITY_NOT_MEASURED_LABEL,shortLabel:'Not measured',kind:'good'};
     return {key:'healthy',label:'Healthy',kind:'good'};
   }
@@ -413,7 +426,8 @@
         gaps.push({label:'Runtime error visibility',detail:'The bounded Vercel log stream did not return rows before timeout. Deployment health is still known, but this runtime error scan is incomplete.'});
       }
     }
-    if(p.id==='state'&&!platform?.neon?.available) gaps.push({label:'Database health',detail:'Not connected or unavailable. This is a monitoring gap, not a product incident.'});
+    // State's production data is SQLite on the Render disk (#508), so there is no Neon project to read; say that rather than "not connected".
+    if(p.id==='state'&&!platform?.neon?.available) gaps.push({label:'Database health',detail:'Not monitored. Production data is SQLite on the Render disk, and Project Health has no health check for it. This is a monitoring gap, not a product incident.'});
     if(p.id==='state'&&run&&!run.configured) gaps.push({label:'Run AI evals',detail:'Dashboard-run setup is incomplete.'});
     if(p.id==='state'&&data?.quality){
       const evalBuilds=[data.quality.review?.build,data.quality.ask?.build]
@@ -423,8 +437,8 @@
       const releaseSha=String(data?.delivery?.sha||'').trim();
       if(uniqueBuilds.length>1){
         gaps.push({label:'Eval build alignment',detail:'The latest controlled eval suites were recorded against different builds ('+uniqueBuilds.map(shortSha).join(' and ')+').'});
-      }else if(uniqueBuilds.length===1&&/^[0-9a-f]{7,40}$/i.test(releaseSha)&&uniqueBuilds[0]!==releaseSha){
-        gaps.push({label:'Current release eval coverage',detail:'Latest controlled eval evidence is from build '+shortSha(uniqueBuilds[0])+', while the current scoped release is '+shortSha(releaseSha)+'.'});
+      }else if(uniqueBuilds.length===1&&/^[0-9a-f]{7,40}$/i.test(releaseSha)&&uniqueBuilds[0]!==releaseSha&&!Number.isFinite(dateMs(data.quality.behaviorUpdatedAt))){
+        gaps.push({label:'Current release eval coverage',detail:'Latest controlled eval evidence is from build '+shortSha(uniqueBuilds[0])+', while the current scoped release is '+shortSha(releaseSha)+', and Project Health could not check whether State\u2019s AI behavior changed in between.'});
       }
     }
     if(!p.noRuntimeAi&&!pendingSet(data).has('AI operations')&&!ai?.available){
@@ -445,6 +459,8 @@
     if(open.length) return {kind:'warn',label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
     const unchecked=uncheckedSignals(data);
     if(unchecked.length) return {kind:'unknown',label:'Incomplete',detail:incompleteAttention(unchecked).title+'. Release health cannot be confirmed.'};
+    if(deliveryAttentionForData(data).kind==='good'&&!qualityNotMeasured(data)&&unmeasuredQuality(data).length)
+      return {kind:'good',label:PARTLY_MEASURED_LABEL,detail:'Delivery is healthy and there is no current high-impact quality issue in what is measured. '+unmeasuredText(unmeasuredQuality(data))};
     if(deliveryAttentionForData(data).kind==='good') return qualityNotMeasured(data)
       ?{kind:'good',label:'Healthy',detail:'Delivery is healthy. Quality checks aren\u2019t connected for this project, so quality is not measured.'}
       :{kind:'good',label:'Healthy',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
@@ -515,7 +531,11 @@
         const comparison=changed
           ?' · last saved '+durationLabel(previousP95)+' ('+(delta>0?'+':'')+durationLabel(Math.abs(delta))+(delta<0?' faster':' slower')+')'
           :'';
-        signals.push({kind:'available',label:'AI response speed',status:changed?'Changed':'Measured',detail:'p95 '+durationLabel(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+comparison+'.'});
+        const target=Number(data?.project?.responseTargetP95Ms);
+        const hasTarget=Number.isFinite(target)&&target>0;
+        const overTarget=hasTarget&&p95>target;
+        const targetText=hasTarget?(overTarget?' · above the '+durationLabel(target)+' target':' · within the '+durationLabel(target)+' target'):'';
+        signals.push({kind:overTarget?'warn':'available',label:'AI response speed',status:overTarget?'Watch':changed?'Changed':'Measured',detail:'p95 '+durationLabel(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+targetText+comparison+'.'});
       }
     }
     if(data?.project?.quality==='state'){
@@ -692,6 +712,23 @@
         why:'A stale pending proposal can remain the apparent next change even after authoritative evidence has corrected it.'
       };
     }
+    // Oct 27: wording approved by Paige.
+    if(id==='review_tentative_high_consequence'){
+      return {
+        title:'An open leadership question was treated as a threat to Current State',
+        whatHappened:'Leadership only asked whether human review could be removed for low-risk cases. State flagged the human-review fact as at risk instead of opening a Question.',
+        expected:'Open a Question about the undecided proposal and leave the maintained human-review fact unchanged.',
+        why:'Marking a fact at risk on an undecided question makes it look as if a decision is coming that nobody has made.'
+      };
+    }
+    if(id==='review_partial_reversal'){
+      return {
+        title:'A scoped reversal was not applied to Current State',
+        whatHappened:'Security paused password-reset automation for privileged accounts only. State kept this as Evidence and did not propose narrowing the maintained fact.',
+        expected:'Propose a Current State update: automation stays approved for standard resets and is paused for privileged-account resets.',
+        why:'Current State would keep saying automation is approved for every reset after Security paused part of it.'
+      };
+    }
     if(id==='ask_known_outcome_unknown_reason'){
       return {
         title:'Known outcome was answered without preserving an unknown reason',
@@ -853,6 +890,8 @@
       investigation:s.investigation||null,
       investigationHistory:Array.isArray(s.investigationHistory)?s.investigationHistory:[],
       productNotes:Array.isArray(s.productNotes)?s.productNotes:[],
+      productNotesStatus:s.productNotesStatus||null,
+      decisionKeyKnown:!!s.decisionKeyKnown,
       errors:[],
       failures:[],
       pending:new Set(),
@@ -958,6 +997,24 @@
     const changed=dateMs(q?.behaviorUpdatedAt);
     if(!runs.length||!Number.isFinite(changed))return false;
     return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<changed;});
+  }
+  // Which build the latest State evals ran on, and whether that still covers the live release (Oct 27 review). A release
+  // that differs from the eval build is only a problem when State's AI behavior files changed after the run
+  // (stateEvalBehaviorStale); a docs or styling release does not make the scores out of date.
+  function evalCoverageNote(data){
+    const q=data?.quality;
+    const runs=[q?.review,q?.ask].filter(Boolean);
+    if(data?.project?.quality!=='state'||!runs.length)return null;
+    const builds=[...new Set(runs.map(run=>String(run?.build||'').trim()).filter(value=>/^[0-9a-f]{7,40}$/i.test(value)))];
+    const latest=runs.map(run=>run?.created_at).filter(Boolean).sort().pop();
+    const when=latest?fmtDate(latest):'an unknown time';
+    const built=builds.length===1?'build '+shortSha(builds[0]):builds.length>1?'builds '+builds.map(shortSha).join(' and '):'an unrecorded build';
+    if(stateEvalResultsStale(q))return {kind:'warn',text:'Evals ran on '+built+', '+when+'. '+stateEvalStaleReason(q)+' Rerun before trusting these scores.'};
+    const release=String(data?.delivery?.sha||'').trim();
+    const sameBuild=builds.length===1&&release&&builds[0]===release;
+    if(sameBuild)return {kind:'good',text:'Evals ran on the live release ('+shortSha(release)+'), '+when+'.'};
+    if(!Number.isFinite(dateMs(q?.behaviorUpdatedAt)))return {kind:'unknown',text:'Evals ran on '+built+', '+when+'. Project Health could not check whether State\u2019s AI behavior changed since.'};
+    return {kind:'good',text:'Evals ran on '+built+', '+when+'. State\u2019s AI behavior has not changed since, so the scores still apply to the live release'+(release?' ('+shortSha(release)+')':'')+'.'};
   }
   function stateEvalResultsStale(q){return stateEvalContractStale(q)||stateEvalBehaviorStale(q);}
   function stateEvalStaleReason(q){
@@ -1246,7 +1303,7 @@
       ?'Checking project health…'
       :status.kind==='good'&&activityStillLoading(data)
       ?'Checking deployment activity…'
-      :(status.key==='partial'?'No delivery or runtime problems':status.kind==='good'?'No current product-quality action':attention.title);
+      :(status.key==='partial'?(attention.partialQuality?unmeasuredText(unmeasuredQuality(data)):'No delivery or runtime problems'):status.kind==='good'?'No current product-quality action':attention.title);
     // A shortened pill keeps the full label as its tooltip and as the text screen readers hear.
     const pill=status.shortLabel
       ?'<span class="status-pill '+esc(status.key)+'" title="'+esc(status.label)+'"><span aria-hidden="true">'+esc(status.shortLabel)+'</span><span class="visually-hidden">'+esc(status.label)+'</span></span>'
@@ -1265,14 +1322,42 @@
     const value=run.overall_pass_rate??run.interpretation_accuracy??run.ask_grounding;
     return value==null?null:Number(value);
   }
-  function evalTrend(recent,suite){
-    const rows=(Array.isArray(recent)?recent:[]).filter(item=>item?.suite===suite);
-    if(rows.length<2)return'No earlier run to compare yet';
-    const a=evalScore(rows[0]),b=evalScore(rows[1]);
-    if(a==null||b==null)return'No comparable score yet';
-    const delta=Math.round((a-b)*1000)/10;
-    if(Math.abs(delta)<0.1)return'Stable vs previous run';
-    return (delta>0?'Up ':'Down ')+Math.abs(delta)+' points vs previous run';
+  // State's four quality measurements (Oct 27 review): each card's score, failure count and change come from the same
+  // field, so a card can never show one metric's score next to another's trend ("100%, down 10" on Answer quality).
+  const STATE_QUALITY_METRICS=[
+    {label:'Update understanding',run:'review',suite:'review_interpretation',field:'interpretation_accuracy',check:'interpretation',sub:'Interpreting new evidence'},
+    {label:'Evidence grounding',run:'ask',suite:'ask_quality',field:'ask_grounding',check:'grounding',sub:'Answers stay on the record'},
+    {label:'Decision authority',run:'ask',suite:'ask_quality',field:'authority_accuracy',check:'authority',sub:'Authority boundary scenarios'},
+    {label:'Uncertainty handling',run:'ask',suite:'ask_quality',field:'uncertainty_accuracy',check:'uncertainty',sub:'Unknown-answer scenarios'}
+  ];
+  function metricScore(row,field){
+    if(!row)return null;
+    const value=field?row[field]:evalScore(row);
+    return value==null||value===''||!Number.isFinite(Number(value))?null:Number(value);
+  }
+  // The latest two runs of a suite, newest first, compared on one field (or the suite's overall score).
+  function metricChange(recent,suite,field){
+    const rows=(Array.isArray(recent)?recent:[]).filter(item=>item?.suite===suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
+    if(rows.length<2)return {status:'none'};
+    const a=metricScore(rows[0],field),b=metricScore(rows[1],field);
+    if(a==null||b==null)return {status:'incomparable'};
+    return {status:'ok',points:Math.round((a-b)*1000)/10};
+  }
+  function evalTrend(recent,suite,field){
+    const change=metricChange(recent,suite,field);
+    if(change.status==='none')return'No earlier run to compare yet';
+    if(change.status==='incomparable')return'No comparable score yet';
+    if(Math.abs(change.points)<0.1)return'Stable vs previous run';
+    return (change.points>0?'Up ':'Down ')+Math.abs(change.points)+' points vs previous run';
+  }
+  // The Overview's State cards: score, failures, change and trend all read the card's own field.
+  function stateMetricCards(q,unknownSignal='Not measured'){
+    return STATE_QUALITY_METRICS.map(m=>{
+      const run=q?.[m.run],score=metricScore(run,m.field),severe=failureCheckCount(q,m.check);
+      const kind=score==null?'unknown':severe?'bad':score<1?'warn':'good';
+      const signal=score==null?unknownSignal:severe?highImpactText(severe):score<1?'Lower-impact miss':'0 failures';
+      return {label:m.label,score,kind,signal,sub:score==null?m.sub:scenarioPassLabel(run,score),delta:mockDelta(q?.recent,m.suite,m.field),trend:mockTrendValues(q,m.suite,m.field)};
+    });
   }
   function stateEvalCard(title,value,description,trend,note){
     return '<div class="eval-card compact"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><div class="eval-card-meta">'+
@@ -1309,25 +1394,24 @@
     });
     return '<div class="mock-sparkline"><svg viewBox="0 0 '+w+' '+h+'" aria-hidden="true"><polyline points="'+pts.map(pt=>pt.x.toFixed(1)+','+pt.y.toFixed(1)).join(' ')+'"></polyline>'+pts.map(pt=>'<circle cx="'+pt.x.toFixed(1)+'" cy="'+pt.y.toFixed(1)+'" r="1.6"></circle>').join('')+'</svg></div>';
   }
-  function mockTrendValues(q,suite){
-    return (Array.isArray(q?.recent)?q.recent:[]).filter(item=>item?.suite===suite).map(evalScore).filter(v=>v!=null);
+  function mockTrendValues(q,suite,field){
+    return (Array.isArray(q?.recent)?q.recent:[]).filter(item=>item?.suite===suite).map(row=>metricScore(row,field)).filter(v=>v!=null);
   }
-  function mockDelta(recent,suite){
-    const rows=(Array.isArray(recent)?recent:[]).filter(item=>item?.suite===suite);
-    if(rows.length<2)return {label:'—',cls:'flat'};
-    const a=evalScore(rows[0]),b=evalScore(rows[1]);
-    if(a==null||b==null)return {label:'—',cls:'flat'};
-    const d=Math.round((a-b)*1000)/10;
-    if(Math.abs(d)<0.1)return {label:'0',cls:'flat'};
-    return {label:(d>0?'↑ ':'↓ ')+Math.abs(d)+'%',cls:d>0?'':'down'};
+  // A change in a pass rate is in percentage points, not percent (Oct 27 review).
+  function mockDelta(recent,suite,field){
+    const change=metricChange(recent,suite,field);
+    if(change.status!=='ok')return {label:'—',cls:'flat'};
+    const d=change.points;
+    if(Math.abs(d)<0.1)return {label:'0 pts',cls:'flat'};
+    return {label:(d>0?'↑ ':'↓ ')+Math.abs(d)+' pts',cls:d>0?'':'down'};
   }
   // The investigation model writes **Label:** headings; show them as bold, not as asterisks (Oct 20).
   function reportHtml(text){return esc(text).replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');}
   function plainReportLine(text){return String(text).replace(/\*\*([^*\n]+)\*\*/g,'$1');}
   function investigationResultHtml(investigation){
     if(investigation?.handoff) return '<div class="investigation-result agent-result"><div class="agent-kicker">Handoff preview</div><strong>Project handoff ready to review</strong><pre>'+esc(investigation.handoffText||investigation.report||'')+'</pre><p class="footnote">Project Health assembled this from the currently loaded delivery, quality, investigation, and product-decision signals. Review it before sharing.</p></div>';
-    if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
-    if(investigation?.error) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Read-only investigation agent</div><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>';
+    if(investigation?.loading) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Investigation</div><strong>Checking current health signals…</strong><p>Starting with current health signals and expanding only when the evidence points somewhere specific.</p></div>';
+    if(investigation?.error) return '<div class="investigation-result agent-result" role="status"><div class="agent-kicker">Investigation</div><strong>Investigation unavailable</strong><p>'+esc(investigation.error)+'</p></div>';
     if(investigation?.quickCheck){
       const checks=Array.isArray(investigation.checks)?investigation.checks:[];
       return '<div class="investigation-result agent-result"><div class="agent-kicker">Project check · deterministic fallback</div><strong>'+esc(investigation.title||'Quick project check complete')+'</strong><p>'+esc(investigation.summary||'No live failure was available, so Project Health checked the current project signals instead.')+'</p>'+
@@ -1335,8 +1419,10 @@
         '<p class="footnote">No AI model was called for this fallback. It uses the health data already loaded by Project Health.</p></div>';
     }
     if(!investigation?.report)return'';
-    const label=investigation.qualityInvestigation?'AI quality investigation':'Read-only investigation agent';
-    const title=investigation.qualityInvestigation?'Quality investigation · '+esc(fmtDate(investigation.observedAt)):'Agent investigation · '+esc(fmtDate(investigation.observedAt));
+    // Say where a report came from (Oct 27 review): the quality investigation is assembled by rules from recorded eval
+    // evidence; only the failure investigator calls a model, and its accuracy is not yet measured (DEC-011).
+    const label=investigation.qualityInvestigation?'Quality investigation · built from recorded eval evidence':'AI investigation'+(investigation.model?' · '+esc(modelDisplayName(investigation.model)):'')+' · accuracy not yet measured';
+    const title=investigation.qualityInvestigation?'Quality investigation · '+esc(fmtDate(investigation.observedAt)):'AI investigation · '+esc(fmtDate(investigation.observedAt));
     return '<div class="investigation-result agent-result"><div class="agent-kicker">'+label+'</div><strong>'+title+'</strong><pre>'+reportHtml(investigation.report)+'</pre>'+
       ((investigation.sources||[]).length?'<div class="investigation-sources"><strong>Evidence checked</strong> '+investigation.sources.map(source=>githubLink(esc(source.label),source.url)).join(' · ')+'</div>':'')+
 
@@ -1580,5 +1666,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

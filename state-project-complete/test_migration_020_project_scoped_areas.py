@@ -31,8 +31,9 @@ TABLES = ("projects", "project_areas", "current_state_items", "history_transitio
 def _connect_at_019(monkeypatch, connection):
     """Apply every migration before 020, as the code before #136 did."""
     every = database_migration_backed._get_migration_files()
-    assert every[-1].stem == MIGRATION
-    monkeypatch.setattr(database_migration_backed, "_get_migration_files", lambda: every[:-1])
+    # Cut at 020 by name: later migrations (021, Oct 27) come after it and run in the real startup below.
+    before = every[:[path.stem for path in every].index(MIGRATION)]
+    monkeypatch.setattr(database_migration_backed, "_get_migration_files", lambda: before)
     initialize_db(connection)
     monkeypatch.undo()
     return connection
@@ -119,7 +120,7 @@ def test_an_existing_database_migrates_without_visible_change(old_db):
     initialize_db(old_db)
 
     assert _is_scoped(old_db)
-    assert _applied(old_db)[-1] == MIGRATION
+    assert MIGRATION in _applied(old_db)
     assert _snapshot(old_db) == before
     if not old_db.is_postgres:
         assert old_db.execute("PRAGMA foreign_key_check").fetchall() == []

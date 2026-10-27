@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -70,12 +70,23 @@
   async function loadPlatformSignal(project,signal){return await jsonFetch('/api/project-health-platform?project='+encodeURIComponent(project.id)+'&signal='+encodeURIComponent(signal),{timeoutMs:6500});}
   async function loadRunInfo(project,root){if(project.noRunWorkflow)return null;try{return await jsonFetch('/api/project-health-run?project='+encodeURIComponent(project.id)+'&env='+pageEnvironment(root),{timeoutMs:5000});}catch(error){if(error.status===404)return null;throw error;}}
   // Authority Lab: one row per test suite; counts are null when the job log could not be read.
+  // Below this many checks a percentage overstates the evidence; show the count instead (Oct 27 review).
+  const SMALL_SAMPLE=5;
+  function countDisplay(passed,total){
+    const t=Number(total),p=Number(passed);
+    return Number.isFinite(t)&&t>0&&t<SMALL_SAMPLE&&Number.isFinite(p)?p+' / '+t:null;
+  }
+  function detailCard(label,score,sub,display){
+    const n=score==null||score===''||!Number.isFinite(Number(score))?null:Math.max(0,Math.min(100,Math.round(Number(score)*1000)/10));
+    return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+esc(display||(n==null?'—':n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(sub)+'</small></div>';
+  }
   function suiteRows(externalQ){
     return (externalQ?.suites||[]).map(item=>{
       const total=Number(item.tests),passed=Number(item.passed);
       const score=Number.isFinite(total)&&total>0&&Number.isFinite(passed)?passed/total:null;
       const passedRun=externalQ?.ci?.conclusion==='success';
-      return {name:item.name,detail:item.detail,score:score??(passedRun?1:null),label:score!=null?(passed+' / '+total+' passing'):(passedRun?'Passed (count unavailable)':'Status unavailable')};
+      const display=score!=null?countDisplay(passed,total):passedRun?'Passed':null;
+      return {name:item.name,detail:item.detail,score:score??(passedRun?1:null),display,label:score!=null?(passed+' / '+total+' passing'):(passedRun?'Passed (count unavailable)':'Status unavailable')};
     });
   }
   // Each external project's quality rendering lives in one place (Oct 19). The three views used to be
@@ -102,14 +113,14 @@
         const vals=[
           ['Recommendation rules',Number(e.rule_checks?.total)?Number(e.rule_checks?.passed)/Number(e.rule_checks?.total):null,e.rule_checks?.passed,e.rule_checks?.total,false],
           ['Bad outputs caught',Number(e.validator_self_test?.total)?Number(e.validator_self_test?.caught)/Number(e.validator_self_test?.total):null,e.validator_self_test?.caught,e.validator_self_test?.total,false],
-          ['Main automated checks',ci.conclusion==='success'?1:null,ci.conclusion==='success'?1:null,1,false],
+          ['Main automated checks',ci.conclusion==='success'?1:ci.conclusion?0:null,ci.conclusion==='success'?1:0,ci.conclusion?1:null,false],
           ['Baseline comparison',Number(b.valid_fixture_outputs?.total)?Number(b.valid_fixture_outputs?.passed)/Number(b.valid_fixture_outputs?.total):null,b.valid_fixture_outputs?.passed,b.valid_fixture_outputs?.total,true]
         ];
         kpis=vals.map(([label,score,passed,total,comparison])=>comparison
-          ?kpi(label,score,{label:'—',cls:'flat'},'good','Historical comparison',total?passed+' / '+total+' baseline outputs kept':'Not measured',[])
-          :kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score==null?'warn':'warn',score===1?'Healthy':'Needs a look',total?passed+' / '+total:'Not measured',[])
+          ?kpi(label,score,{label:'—',cls:'flat'},'good','Historical comparison',total?passed+' / '+total+' baseline outputs kept':'Not measured',[],countDisplay(passed,total))
+          :kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score==null?'warn':'warn',score===1?'Healthy':score==null?'Not measured':'Needs a look',total?passed+' / '+total:'Not measured',[],countDisplay(passed,total))
         ).join('');
-        qualityCards=vals.map(([label,score,passed,total,comparison])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(comparison?(total?(passed+' / '+total+' historical baseline'):'Historical comparison'):(total?(passed+' / '+total+' passing'):'Not measured'))+'</small></div>';}).join('');
+        qualityCards=vals.map(([label,score,passed,total,comparison])=>detailCard(label,score,comparison?(total?(passed+' / '+total+' historical baseline'):'Historical comparison'):(total?(passed+' / '+total+' passing'):'Not measured'),countDisplay(passed,total))).join('');
         return {kpis,qualityCards};
       },
       tab(externalQ){
@@ -141,8 +152,8 @@
       detail(externalQ,{kpi,pct}){
         let kpis='',qualityCards='';
         const rows=suiteRows(externalQ);
-        kpis=rows.map(row=>kpi(row.name,row.score,{label:'—',cls:'flat'},row.score===1?'good':'warn',row.score===1?'Healthy':row.score==null?'Unknown':'Needs a look',row.label,[])).join('');
-        qualityCards=rows.map(row=>{const n=pct(row.score);return '<div class="mock-quality-detail-card"><span>'+esc(row.name)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(row.label)+'</small></div>';}).join('');
+        kpis=rows.map(row=>kpi(row.name,row.score,{label:'—',cls:'flat'},row.score===1?'good':'warn',row.score===1?'Healthy':row.score==null?'Unknown':'Needs a look',row.label,[],row.display)).join('');
+        qualityCards=rows.map(row=>detailCard(row.name,row.score,row.label,row.display)).join('');
         return {kpis,qualityCards};
       },
       tab(externalQ){
@@ -178,8 +189,10 @@
           ['Branch consistency',green?1:null,green?'Passing':'Status unavailable'],
           ['Desktop behavior',green?1:null,green?'Passing':'Status unavailable']
         ];
-        kpis=vals.map(([label,score,sub])=>kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score===0?'warn':'warn',score===1?'Healthy':score===0?'Needs review':'Unknown',sub,[])).join('');
-        qualityCards=vals.map(([label,score,sub])=>{const n=pct(score);return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(sub)+'</small></div>';}).join('');
+        // These are pass/fail states, not rates, so they never show as 100% or 0%.
+        const stateText=(label,score)=>score==null?'—':label==='First-run playtest'?(score===1?'Done':'Pending'):(score===1?'Passing':'Failing');
+        kpis=vals.map(([label,score,sub])=>kpi(label,score,{label:'—',cls:'flat'},score===1?'good':score===0?'warn':'warn',score===1?'Healthy':score===0?'Needs review':'Unknown',sub,[],stateText(label,score))).join('');
+        qualityCards=vals.map(([label,score,sub])=>detailCard(label,score,sub,stateText(label,score))).join('');
         return {kpis,qualityCards};
       },
       tab(externalQ){
@@ -223,17 +236,18 @@
     }catch(_){}
   }
 
-  function productNoteKey(root,projectId){return 'project-health-product-notes:'+pageEnvironment(root)+':'+projectId;}
-  function loadProductNotes(root,projectId){
-    try{
-      const rows=JSON.parse(root.localStorage?.getItem(productNoteKey(root,projectId))||'[]');
-      return Array.isArray(rows)?rows.slice(0,30):[];
-    }catch(_){return[];}
+  // The decision log lives in the State backend since Oct 27 (Paige: server storage, key-only writes); it used to be
+  // per-browser localStorage. Anyone can read it; adding or removing an entry needs the decision log key.
+  async function loadDecisionLog(projectId){
+    const payload=await jsonFetch('/api/project-health-decisions?project='+encodeURIComponent(projectId),{timeoutMs:10000});
+    return Array.isArray(payload?.entries)?payload.entries:[];
   }
-  function saveProductNotes(root,projectId,rows){
-    try{root.localStorage?.setItem(productNoteKey(root,projectId),JSON.stringify((rows||[]).slice(0,30)));}catch(_){}
+  async function addDecisionEntry(projectId,type,text,key){
+    return await jsonFetch('/api/project-health-decisions',{method:'POST',timeoutMs:12000,headers:{'Content-Type':'application/json','X-Project-Health-Decision-Key':key},body:JSON.stringify({project:projectId,type,text})});
   }
-
+  async function removeDecisionEntry(id,key){
+    return await jsonFetch('/api/project-health-decisions?id='+encodeURIComponent(id),{method:'DELETE',timeoutMs:12000,headers:{'X-Project-Health-Decision-Key':key}});
+  }
   function investigationHistoryKey(root,projectId){return 'project-health-investigations:'+pageEnvironment(root)+':'+projectId;}
   function loadInvestigationHistory(root,projectId){
     try{
@@ -405,7 +419,7 @@
     doc.getElementById('attentionPanel').innerHTML='<h3>What needs attention?</h3>'+
       (actionable.length
         ?'<div class="attention-list">'+actionable.map(item=>attentionMarkup(item)).join('')+'</div>'
-        :(()=>{const ok=healthySummary(data);return '<div class="attention '+(ok.qualityNotMeasured?'unknown':'good')+'" style="margin-top:12px"><strong>'+esc(ok.rowTitle)+'</strong><p>'+esc(ok.qualityNotMeasured?ok.headline:ok.rowDetail)+'</p></div>';})());
+        :(()=>{const ok=healthySummary(data);return '<div class="attention '+(ok.qualityNotMeasured?'unknown':'good')+'" style="margin-top:12px"><strong>'+esc(ok.rowTitle)+'</strong><p>'+esc(ok.qualityNotMeasured&&!ok.partialQuality?ok.headline:ok.rowDetail)+'</p></div>';})());
 
     const reviewIsDependency=/^(after|when|once)\b|next recorded/i.test(String(p.nextReview||''));
     const nextDecision=operationalNextDecision(data);
@@ -421,6 +435,8 @@
     const monitoringGaps=setupGaps(data);
     const operational=operationalSignals(data);
     const productNotes=Array.isArray(data.productNotes)?data.productNotes:[];
+    const notesStatus=data.productNotesStatus||'ok';
+    const canRemove=!!data.decisionKeyKnown;
     doc.getElementById('decisionSupportPanel').innerHTML=
       '<div class="panel-title-row"><div><h3>Decision support</h3><p class="panel-copy">Release risk, regressions, blind spots, and the human decisions behind changes.</p></div><button class="button small" type="button" data-add-product-note>Add decision / change</button></div>'+
       '<div class="decision-support-grid" style="margin-top:12px">'+
@@ -429,8 +445,9 @@
           '<div class="monitoring-gaps"><strong>What we cannot confirm</strong>'+(monitoringGaps.length?'<div class="gap-list">'+monitoringGaps.slice(0,4).map(gap=>'<span><b>'+esc(gap.label)+':</b> '+esc(gap.detail)+'</span>').join('')+'</div>':'<span class="healthy-note">No known monitoring gaps.</span>')+'</div>'+
           '<div class="monitoring-gaps"><strong>Operational signals</strong>'+(operational.length?'<div class="risk-checklist">'+operational.slice(0,5).map(item=>'<div class="risk-row"><span class="health-status '+esc(item.kind)+'">'+esc(item.status)+'</span><div><strong>'+esc(item.label)+'</strong><span>'+esc(item.detail)+'</span></div></div>').join('')+'</div>':'<span class="healthy-note">No additional operational signals for this project.</span>')+'</div></div>'+
       '</div>'+
-      '<div class="decision-log"><div class="decision-log-head"><strong>Decision & change log</strong><span>Stored in this browser</span></div>'+
-        (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span></div>').join('')+'</div>':'<div class="empty compact-empty">No product decisions or changes recorded yet.</div>')+
+      '<div class="decision-log"><div class="decision-log-head"><strong>Decision & change log</strong><span>Shared · only the owner can add entries</span></div>'+
+        (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span>'+(canRemove?'<button class="text-button" type="button" data-remove-product-note="'+esc(note.id)+'">Remove</button>':'')+'</div>').join('')+'</div>'
+          :'<div class="empty compact-empty">'+esc(notesStatus==='loading'?'Loading the decision log…':notesStatus==='error'?'The decision log could not be loaded. Refresh to try again.':'No product decisions or changes recorded yet.')+'</div>')+
       '</div>';
 
     const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
@@ -488,7 +505,7 @@
       if(p.quality==='state'){
         const review=q?.review,ask=q?.ask;
         const reviewScore=review?.interpretation_accuracy??evalScore(review);
-        const askScore=ask?.ask_grounding??evalScore(ask);
+        const askScore=evalScore(ask); // the suite's overall pass rate, matching its overall trend
         const reviewKind=!review?'unknown':Number(review.high_severity_failures||0)>0?'bad':Number(reviewScore)<1?'warn':'good';
         const askKind=!ask?'unknown':Number(ask.high_severity_failures||0)>0?'bad':Number(askScore)<1?'warn':'good';
         cards=
@@ -520,7 +537,7 @@
       const nextLook=operationalNextDecision(data);
       const latestHistory=Array.isArray(data.investigationHistory)?data.investigationHistory[0]:null;
       overviewInvestigationPanel.innerHTML=
-        '<div class="panel-title-row"><div><h3>Latest investigation</h3><p class="panel-copy">'+
+        '<div class="panel-title-row"><div><h3>Assessment from current signals</h3><p class="panel-copy">'+
           esc(latestHistory?('Last recorded '+relativeAge(latestHistory.observedAt)):'Current diagnostic view from loaded evidence')+
         '</p></div><button class="button small" type="button" data-open-investigation>Open investigation</button></div>'+
         '<div class="mock-investigation-grid">'+
@@ -536,6 +553,7 @@
     if(mockDashboard){
       const overall=overallAttention(data);
       const actionable=attentionItems(data).filter(item=>item.kind!=='good');
+      const coverage=pending.has('Quality')?null:evalCoverageNote(data);
       const qDetails=p.quality==='state'?qualityFailureClassSummary(q):{details:[]};
       const latestHistory=Array.isArray(data.investigationHistory)?data.investigationHistory[0]:null;
 
@@ -544,9 +562,10 @@
         const n=Number(v);
         return Number.isFinite(n)?Math.max(0,Math.min(100,Math.round(n*1000)/10)):null;
       };
-      const kpi=(label,value,delta,kind,signal,sub,sparkValues)=>{
+      // display overrides the percentage for small samples and pass/fail checks (Oct 27 review: "100%" for 1 / 1).
+      const kpi=(label,value,delta,kind,signal,sub,sparkValues,displayText)=>{
         const n=pct(value);
-        const display=n==null?'—':n+'%';
+        const display=displayText||(n==null?'—':n+'%');
         return '<div class="mock-kpi">'+
           '<div class="mock-kpi-top"><div class="mock-kpi-value">'+esc(display)+'</div><span class="mock-kpi-delta '+esc(delta?.cls||'flat')+'">'+esc(delta?.label||'—')+'</span></div>'+
           '<div class="mock-kpi-label">'+esc(label)+'</div>'+
@@ -558,33 +577,13 @@
 
       let kpis='',qualityCards='';
       if(p.quality==='state'){
-        const review=q?.review,ask=q?.ask;
-        const reviewScore=review?.interpretation_accuracy??evalScore(review);
-        const grounding=ask?.ask_grounding;
-        const authority=ask?.authority_accuracy;
-        const uncertainty=ask?.uncertainty_accuracy;
-        const reviewFailures=Number(review?.high_severity_failures||0);
-        const askFailures=Number(ask?.high_severity_failures||0);
         // Unknown is not zero: until a suite's results have loaded, say so instead of "0 failures".
         const waiting=pendingSet(data).size>0;
         const unknownSignal=waiting?'Loading…':(Array.isArray(data.failures)&&data.failures.some(item=>item.label==='Quality'))?'Couldn\'t load':'Not measured';
-        const reviewDelta=mockDelta(q?.recent,'review_interpretation');
-        const askDelta=mockDelta(q?.recent,'ask_quality');
-        kpis=
-          kpi('Update understanding',reviewScore,reviewDelta,!review?'unknown':reviewFailures?'warn':'good',!review?unknownSignal:reviewFailures?(reviewFailures+' high-impact failure'+(reviewFailures===1?'':'s')):'0 high-impact failures',scenarioPassLabel(review,reviewScore),mockTrendValues(q,'review_interpretation'))+
-          kpi('Answer quality',grounding??evalScore(ask),askDelta,!ask?'unknown':askFailures?'bad':'good',!ask?unknownSignal:askFailures?(askFailures+' failure'+(askFailures===1?'':'s')):'0 failures',scenarioPassLabel(ask,grounding??evalScore(ask)),mockTrendValues(q,'ask_quality'))+
-          kpi('Decision authority',authority,{label:'—',cls:'flat'},authority==null?'unknown':authority<1?'warn':'good',authority==null?unknownSignal:authority<1?'Needs review':'0 failures',authority==null?'Run the authority checks':'Authority boundary scenarios',[])+
-          kpi('Uncertainty handling',uncertainty,{label:'—',cls:'flat'},uncertainty==null?'unknown':uncertainty<1?'warn':'good',uncertainty==null?unknownSignal:uncertainty<1?'Needs review':'Within target',uncertainty==null?'Run the uncertainty checks':'Unknown-answer scenarios',[]);
-        const qualityItems=[
-          ['Update understanding',reviewScore,review],
-          ['Answer quality',grounding??evalScore(ask),ask],
-          ['Decision authority',authority,ask],
-          ['Uncertainty handling',uncertainty,ask]
-        ];
-        qualityCards=qualityItems.map(([label,score,run])=>{
-          const n=pct(score),pass=run&&score!=null?scenarioPassLabel(run,score):unknownSignal;
-          return '<div class="mock-quality-detail-card"><span>'+esc(label)+'</span><strong>'+(n==null?'—':esc(n+'%'))+'</strong><div class="mock-progress"><span style="width:'+(n||0)+'%"></span></div><small>'+esc(pass)+'</small></div>';
-        }).join('');
+        // One measurement per card, named as on the AI Evals tab (Oct 27 review).
+        const metricCards=stateMetricCards(q,unknownSignal);
+        kpis=metricCards.map(card=>kpi(card.label,card.score,card.delta,card.kind,card.signal,card.sub,card.trend)).join('');
+        qualityCards=metricCards.map(card=>detailCard(card.label,card.score,card.score==null?unknownSignal:card.sub)).join('');
       }else if(QUALITY_VIEWS[p.id]&&(externalQ||QUALITY_VIEWS[p.id].detailWithoutData)){
         ({kpis,qualityCards}=QUALITY_VIEWS[p.id].detail(externalQ,{kpi,pct}));
       }
@@ -645,14 +644,15 @@
           '<div class="mock-card-title mock-analytics-title"><span class="mock-card-title-icon">▥</span><h3>Site analytics</h3>'+(analyticsUrl?'<a class="mock-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div>'+
           (a?.available
             ?'<div class="mock-analytics-signal"><span class="mock-analytics-dot '+esc(aSignal.kind)+'" aria-hidden="true"></span><div><strong>'+esc(aSignal.status)+'</strong><p>'+esc(aSignal.detail)+'</p></div></div>'
-            :'<div class="empty compact-empty">'+esc(a?.configured===false?'Site analytics are not connected for this environment.':a?.error||'Site analytics are still loading or temporarily unavailable.')+'</div>')+
+            :'<div class="empty compact-empty">'+esc(pending.has('Analytics')?'Checking site analytics…':a?.configured===false?'Site analytics are not connected for this environment.':a?.configured?analyticsGapDetail(a):'Site analytics could not be checked. Refresh to try again.')+'</div>')+
         '</section>'+
         '<section class="mock-dashboard-section mock-quality-detail">'+
           '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3>'+(pending.has('Quality')?'<span class="mock-refreshing-evals">'+(p.id==='state'?'Refreshing evals':'Refreshing checks')+'… showing last good results</span>':'')+'</div><button class="button small" type="button" data-tab-target="ai-quality">'+(p.id==='state'?'View all evaluations':'View all checks')+' →</button></div>'+
           '<div class="mock-quality-detail-grid">'+qualityCards+'</div>'+
+          (coverage?'<p class="mock-eval-coverage '+esc(coverage.kind)+'">'+esc(coverage.text)+'</p>':'')+
         '</section>'+
         '<section class="mock-dashboard-section mock-investigation-card">'+
-          '<div class="mock-investigation-head"><h3>Latest investigation</h3><button class="button small" type="button" data-open-investigation>View full investigation →</button></div>'+
+          '<div class="mock-investigation-head"><div><h3>Assessment from current signals</h3><p class="mock-investigation-source">Built by rules from the signals on this page. No AI model was called.</p></div><button class="button small" type="button" data-open-investigation>Open investigation →</button></div>'+
           '<div class="mock-investigation-columns">'+
             '<div class="mock-investigation-column"><strong>Current assessment</strong><p>'+esc(overall.title)+'. '+esc(overall.detail||'')+'</p></div>'+
             '<div class="mock-investigation-column"><strong>What failed</strong>'+(failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+'</div>'+
@@ -679,10 +679,10 @@
         const staleResults=stateEvalResultsStale(q);
         const cards=[];
         const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact failure'+(count===1?'':'s'):'';};
-        if(review?.interpretation_accuracy!=null) cards.push(stateScenarioCard('Update understanding',review.interpretation_accuracy,review,evalTrend(q.recent,'review_interpretation'),noteFor('interpretation')));
-        if(ask?.ask_grounding!=null) cards.push(stateScenarioCard('Evidence grounding',ask.ask_grounding,ask,evalTrend(q.recent,'ask_quality'),noteFor('grounding')));
-        if(ask?.authority_accuracy!=null) cards.push(stateScenarioCard('Decision authority',ask.authority_accuracy,ask,'',noteFor('authority')));
-        if(ask?.uncertainty_accuracy!=null) cards.push(stateScenarioCard('Uncertainty handling',ask.uncertainty_accuracy,ask,'',noteFor('uncertainty')));
+        STATE_QUALITY_METRICS.forEach(m=>{
+          const run=q?.[m.run],score=metricScore(run,m.field);
+          if(score!=null) cards.push(stateScenarioCard(m.label,score,run,evalTrend(q.recent,m.suite,m.field),noteFor(m.check)));
+        });
         const failureSummary=qualityFailureClassSummary(q);
         const failureDetailHtml=failureSummary.details?.length
           ?'<div class="failure-list">'+failureSummary.details.map(detail=>
@@ -1006,11 +1006,20 @@
   }
 
   async function init(root){
-    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail'),investigationDrawer=doc.getElementById('investigationDrawer'),investigationBackdrop=doc.getElementById('investigationBackdrop'),closeInvestigationDrawerButton=doc.getElementById('closeInvestigationDrawer'),drawerRunAgainButton=doc.getElementById('drawerRunAgainButton'),drawerCopyHandoffButton=doc.getElementById('drawerCopyHandoffButton'),productNoteDialog=doc.getElementById('productNoteDialog'),productNoteForm=doc.getElementById('productNoteForm'),productNoteType=doc.getElementById('productNoteType'),productNoteText=doc.getElementById('productNoteText');
+    const doc=root.document,cards=doc.getElementById('projectCards'),status=doc.getElementById('status'),summary=doc.getElementById('overviewSummary'),reviewInbox=doc.getElementById('reviewInbox'),refresh=doc.getElementById('refreshButton'),qualityPanel=doc.getElementById('qualityPanel'),projectTabs=doc.getElementById('projectTabs'),projectDetail=doc.getElementById('projectDetail'),investigationDrawer=doc.getElementById('investigationDrawer'),investigationBackdrop=doc.getElementById('investigationBackdrop'),closeInvestigationDrawerButton=doc.getElementById('closeInvestigationDrawer'),drawerRunAgainButton=doc.getElementById('drawerRunAgainButton'),drawerCopyHandoffButton=doc.getElementById('drawerCopyHandoffButton'),productNoteDialog=doc.getElementById('productNoteDialog'),productNoteForm=doc.getElementById('productNoteForm'),productNoteType=doc.getElementById('productNoteType'),productNoteText=doc.getElementById('productNoteText'),productNoteKey=doc.getElementById('productNoteKey'),productNoteError=doc.getElementById('productNoteError');
     if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
-    state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=loadProductNotes(root,item.project.id);});
+    state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=[];item.productNotesStatus='loading';});
+    // Held in memory for this page only, never stored, so a removal or a second entry does not ask again.
+    let decisionKey='';
+    state.forEach(item=>{
+      // A refresh replaces each project's data object, so write to whichever one is current when the log arrives.
+      const apply=update=>{const current=state.find(entry=>entry.project.id===item.project.id);if(current)Object.assign(current,update);scheduleRender();};
+      loadDecisionLog(item.project.id)
+        .then(entries=>apply({productNotes:entries,productNotesStatus:'ok'}))
+        .catch(()=>apply({productNotesStatus:'error'}));
+    });
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','releases','decision-support']);
@@ -1238,6 +1247,16 @@
       else dialog.setAttribute('open','');
     }
     if(projectDetail)projectDetail.addEventListener('click',event=>{
+      const removeNoteButton=event.target.closest?.('[data-remove-product-note]');
+      if(removeNoteButton){
+        const data=activeData();if(!data||!decisionKey)return;
+        if(!root.confirm('Remove this entry from the decision log? Everyone viewing Project Health will stop seeing it.'))return;
+        const id=removeNoteButton.dataset.removeProductNote;
+        removeDecisionEntry(id,decisionKey)
+          .then(()=>{data.productNotes=(data.productNotes||[]).filter(note=>note.id!==id);renderNow();})
+          .catch(error=>root.alert(error?.message||'The entry was not removed.'));
+        return;
+      }
       const addNoteButton=event.target.closest?.('[data-add-product-note]');
       if(addNoteButton){
         if(productNoteDialog?.showModal)productNoteDialog.showModal();else productNoteDialog?.setAttribute('open','');
@@ -1311,7 +1330,7 @@
       data.investigation={loading:true};renderNow();revealInvestigation();
       try{
         const payload=await jsonFetch('/api/project-health-investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:data.project.id,environment,signalType,sha:environment==='production'?data.delivery?.sha:data.staging?.sha}),timeoutMs:30000});
-        data.investigation={report:payload.report,sources:Array.isArray(payload.sources)?payload.sources:[],observedAt:payload.observedAt};
+        data.investigation={report:payload.report,model:payload.model||null,sources:Array.isArray(payload.sources)?payload.sources:[],observedAt:payload.observedAt};
       }catch(error){
         data.investigation={error:error.message||'Could not complete the investigation.'};
       }
@@ -1409,18 +1428,29 @@
       await runAgentInvestigation(data,button.dataset.investigate,button.dataset.environment);
     });
 
-    if(productNoteForm)productNoteForm.addEventListener('submit',event=>{
+    if(productNoteForm)productNoteForm.addEventListener('submit',async event=>{
       event.preventDefault();
       const data=activeData();if(!data)return;
       const textValue=String(productNoteText?.value||'').trim();
+      const keyValue=String(productNoteKey?.value||'').trim()||decisionKey;
       if(!textValue)return;
-      const row={id:'note-'+Date.now(),type:String(productNoteType?.value||'decision'),text:textValue,createdAt:new Date().toISOString()};
-      data.productNotes=[row,...(Array.isArray(data.productNotes)?data.productNotes:[])].slice(0,30);
-      saveProductNotes(root,data.project.id,data.productNotes);
-      if(productNoteText)productNoteText.value='';
-      if(productNoteType)productNoteType.value='decision';
-      if(productNoteDialog?.close)productNoteDialog.close();else productNoteDialog?.removeAttribute?.('open');
-      renderNow();
+      if(!keyValue){if(productNoteError)productNoteError.textContent='Enter the decision log key to save.';return;}
+      if(productNoteError)productNoteError.textContent='Saving…';
+      try{
+        const row=await addDecisionEntry(data.project.id,String(productNoteType?.value||'decision'),textValue,keyValue);
+        decisionKey=keyValue;
+        state.forEach(item=>{item.decisionKeyKnown=true;});
+        data.productNotes=[row,...(Array.isArray(data.productNotes)?data.productNotes:[])].slice(0,30);
+        data.productNotesStatus='ok';
+        if(productNoteText)productNoteText.value='';
+        if(productNoteKey)productNoteKey.value='';
+        if(productNoteType)productNoteType.value='decision';
+        if(productNoteError)productNoteError.textContent='';
+        if(productNoteDialog?.close)productNoteDialog.close();else productNoteDialog?.removeAttribute?.('open');
+        renderNow();
+      }catch(error){
+        if(productNoteError)productNoteError.textContent=[401,403].includes(Number(error?.status))?'That key was not accepted. Nothing was saved.':(error?.message||'The entry was not saved.');
+      }
     });
 
     async function refreshAll(){
@@ -1595,5 +1625,5 @@
     }
   }
 
-  return {QUALITY_VIEWS,PROJECTS,pageEnvironment,evalBehaviorBranch,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,coreStatusKnown,activityStillLoading,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,productNoteKey,loadProductNotes,saveProductNotes,loadProject,loadProjectDetails,infraCardLabel,neonConnectionDetail,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
+  return {QUALITY_VIEWS,PROJECTS,STATE_QUALITY_METRICS,stateMetricCards,metricChange,evalCoverageNote,countDisplay,SMALL_SAMPLE,pageEnvironment,evalBehaviorBranch,vercelFromStatus,deliveryHealth,commitTitle,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,changeUrl,normalizeQuality,qualityAttention,externalQualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,allAttentionSignals,attentionItems,overallAttention,productOpenItems,projectStatus,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,releaseRiskChecklist,healthConsistencyIssues,productionRuntime,operationalNextDecision,qualityFailureClassSummary,failureCheckCount,failureExplanation,activityTimelineItems,projectQualityLabel,evalScore,percent,shortSha,pendingSet,coreStatusKnown,activityStillLoading,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,loadProject,loadProjectDetails,infraCardLabel,neonConnectionDetail,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,relativeAge,changedSinceVisit,meaningfulChanges,freshnessMeta,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,trendText,activityReviewItems,progressText,quickProjectCheck,evalRunComplete,externalQualityRunComplete,qualityInvestigation,projectHandoff,init};
 });
