@@ -26,7 +26,7 @@ def _match_case(replacement: str, matched: str) -> str:
 # used to swap "resolved" unconditionally, and mangled an already-correct
 # "Retention is not yet resolved" into the nonsensical "not yet pending".
 _PENDING_HEDGE_PHRASES = (
-    "evidence says", "evidence reports", "pending review", "awaiting review",
+    "evidence says", "evidence reports", "pending review", "pending human review", "awaiting review",
     "not yet confirmed", "not yet accepted", "not yet established", "not yet approved",
     "not yet decided", "not yet resolved", "still open", "still pending",
     "remains open", "remains unresolved", "remains unaccepted", "proposed",
@@ -55,7 +55,11 @@ _NEGATION_RE = re.compile(
     # Oct 16 (adversarial suite): "no Review, History entry, or Evidence showing that this date was formally
     # approved" became "...formally proposed for approval (not yet approved)". "No" counts only before a
     # record noun, so "No, it's approved" is still softened.
-    r"|\bno\s+(?:[\w,]+\s+){0,3}?(?:record|records|review|reviews|evidence|entry|entries|history|document|indication)\b",
+    r"|\bno\s+(?:[\w,]+\s+){0,3}?(?:record|records|review|reviews|evidence|entry|entries|history|document|indication)\b"
+    # Oct 27 (production Ask): the headline "No confirmed pilot budget is recorded yet" became "No reported
+    # pilot budget...", which contradicted its own summary. "No" directly before the settled word (or one
+    # -ly adverb and the word) negates it.
+    r"|\bno\s+(?:\w+ly\s+)?(?=(?:confirmed|resolved|established|approved|decided|known)\b)",
     re.I,
 )
 _SETTLED_TARGET_WORD_RE = re.compile(
@@ -298,8 +302,40 @@ def _quotes_governing_state(text: str, match: "re.Match[str]", governing_ngrams:
 _WHETHER_RE = re.compile(r"\bwhether\b", re.I)
 
 
+# Oct 27 (production Ask, Northstar budget): "Evidence from the Q3 planning session reports the pilot
+# budget as approved at $40,000" became "...reports the pilot budget as proposed for approval (not yet
+# approved)...", and the quoted Review title "Is the approved pilot budget ready to be recorded?" was
+# rewritten inside its quotes. Both changed what a source said. A settled word is spared when a reporting
+# verb earlier in the same clause attributes it to a source, with no comma or conjunction in between
+# ("the note says the budget was approved"), or when it sits inside quotation marks. Attribution to State's
+# own record is not spared: "Current State says the terms are approved" is the claim the backstop guards.
+_REPORTING_VERB_RE = re.compile(
+    r"\b(?:says|said|reports|reported|states|stated|claims|claimed|describes|described|writes|wrote|"
+    r"mentions|mentioned|notes\s+that|noted\s+that|according\s+to)\b",
+    re.I,
+)
+_ATTRIBUTION_BREAK_RE = re.compile(r",|\b(?:and|but|so|while|although|though|because)\b", re.I)
+_STATE_RECORD_SUBJECT_RE = re.compile(r"\b(?:current\s+state|state|history|records?|we)\b", re.I)
+_QUOTED_SPAN_RE = re.compile(r"[“\"][^”\"]+[”\"]|(?<![\w’'])['‘][^'’]+['’](?![\w])")
+
+
+def _attributed_to_a_source(text: str, match: "re.Match[str]") -> bool:
+    verb = None
+    for verb in _REPORTING_VERB_RE.finditer(text[:match.start()]):
+        pass
+    if not verb or _ATTRIBUTION_BREAK_RE.search(text[verb.end():match.start()]):
+        return False
+    return not _STATE_RECORD_SUBJECT_RE.search(text[:verb.start()])
+
+
+def _inside_quotes(text: str, match: "re.Match[str]") -> bool:
+    return any(span.start() < match.start() and match.end() < span.end() for span in _QUOTED_SPAN_RE.finditer(text))
+
+
 def _soften_match(text: str, match: "re.Match[str]", replacement, governing) -> str:
     if _quotes_governing_state(text, match, governing) or _refers_to_governing_state(text, match, governing):
+        return match.group(0)
+    if _inside_quotes(text, match) or _attributed_to_a_source(text, match):
         return match.group(0)
     whether = None
     for whether in _WHETHER_RE.finditer(text[:match.start()]):
