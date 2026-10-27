@@ -164,7 +164,7 @@ class QualityEvalDatasetTests(unittest.TestCase):
         self.assertTrue(any(scenario.should_distinguish_proposal_from_truth for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_express_uncertainty for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_reference_open_item for scenario in ASK_SCENARIOS))
-        self.assertEqual(len(ASK_SCENARIOS), 12)
+        self.assertEqual(len(ASK_SCENARIOS), 14)
         self.assertIn("superseded_review", categories)
         self.assertIn("outcome_vs_reason", categories)
 

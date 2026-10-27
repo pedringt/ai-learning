@@ -195,4 +195,41 @@ SCENARIOS = (
         severity="high",
         rationale="Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
     ),
+    # #569 (Oct 27): the same failure on other topics, so a fix is not tuned to the budget wording.
+    AskQualityScenario(
+        id="ask_compound_retention_and_security_review",
+        category="authority_awareness",
+        question="What's the retention status, and can the security review of the pilot data flow proceed?",
+        current_state=(
+            ("security", "The security review of the pilot data flow can proceed on the read-only, minimum-data design; final sign-off still requires agreed retention terms."),
+            ("data", "The pilot uses the minimum customer and account data needed for troubleshooting."),
+            ("rollout", "Rollout begins with a bounded internal pilot."),
+        ),
+        pending_reviews=(
+            "Is the vendor's stated 30-day retention authoritative enough for pilot planning? The security review depends on confirmed retention terms.",
+        ),
+        required_facts=(("30-day", "30 days"), ("can proceed", "may proceed", "can continue", "can start", "can begin", "can move forward")),
+        forbidden_claims=("should wait", "must wait", "cannot proceed", "cannot start", "cannot begin", "cannot continue"),
+        should_distinguish_proposal_from_truth=True,
+        severity="high",
+        rationale="The review's governing Current State allows it to proceed; the pending retention Review limits only final sign-off.",
+    ),
+    AskQualityScenario(
+        id="ask_compound_move_date_and_furniture",
+        category="authority_awareness",
+        question="When is the office move, and can we start ordering furniture?",
+        current_state=(
+            ("move", "The office move is scheduled for November 8."),
+            ("furniture", "Furniture ordering can begin for the confirmed floor plan; delivery dates are set once the move date is final."),
+            ("it", "IT relocation is handled by TechMove Logistics."),
+        ),
+        pending_reviews=(
+            "Should the move date change to November 15? Furniture ordering depends on a fixed move date.",
+        ),
+        required_facts=("november 8", ("can begin", "can start", "can proceed", "can go ahead", "can move forward")),
+        forbidden_claims=("should wait", "must wait", "cannot start", "can't start", "cannot begin", "scheduled for november 15"),
+        should_distinguish_proposal_from_truth=True,
+        severity="high",
+        rationale="Current State allows furniture ordering now; the pending date change affects delivery timing, not whether ordering can begin.",
+    ),
 )
