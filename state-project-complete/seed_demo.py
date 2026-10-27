@@ -27,7 +27,7 @@ AREAS = [
 # by id, so a different project's own stage/outcome facts work the same way
 # without this file's IDs meaning anything special to the view layer.
 ITEMS = [
-    ("k-stage", "Project stage", "Late discovery is nearly complete; implementation planning is next once the remaining launch-critical security, access-authority, and evaluation questions are resolved.", None),
+    ("k-stage", "Project stage", "Late discovery is nearly complete; implementation planning can begin for the bounded use case while launch-critical security, access-authority, and evaluation questions are resolved.", None),
     ("k-outcome", "Project outcome", "Reduce repetitive support effort without sacrificing response quality or human control.", None),
     ("k-pilot", "Current direction", "The core pilot use case is Tier 1 troubleshooting assistance. AI drafts and assembles context; a support rep reviews before anything customer-facing is sent.", "scope-workflow"),
     ("k-entry", "Workflow fit", "The assistant supports the rep inside the existing troubleshooting workflow rather than replacing the support queue or customer conversation.", "scope-workflow"),
@@ -146,7 +146,7 @@ REVIEWS = [
         "evidence_date": "2026-08-31 13:30:00",
         "proposals": [{"state_item_id": None, "operation": "create",
                         "proposed_statement": "The pilot budget is approved at $40,000, covering discovery and the first implementation phase.",
-                        "rationale": "Implementation planning depends on a known budget ceiling.",
+                        "rationale": "The Q3 planning session recorded the pilot budget as approved at $40,000 for discovery and the first implementation phase.",
                         "area_id": "evaluation-rollout"}],
         "resolves_question_ids": [],
     },
