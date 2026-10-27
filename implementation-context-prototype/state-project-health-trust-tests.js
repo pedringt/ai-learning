@@ -54,7 +54,7 @@ const q={review:latestReview,ask:latestAsk,recent:[
   await check('eval coverage: a non-AI release after the eval keeps the scores current',()=>{
     const note=M.evalCoverageNote({project:{quality:'state'},quality:{...q,behaviorUpdatedAt:'2026-10-20T00:00:00Z'},delivery:{sha:'51da8e4000000000000000000000000000000000'}});
     assert.strictEqual(note.kind,'good');
-    assert.match(note.text,/^Evals ran on build 43904f3, .*State’s AI behavior has not changed since, so the scores still apply to the live release \(51da8e4\)\.$/);
+    assert.match(note.text,/^Evals ran on build 43904f3, .*No changes found since then in the files that shape State’s AI behavior or its evals, so the scores should still apply to the live release \(51da8e4\)\.$/);
   });
   await check('eval coverage: an AI behavior change after the eval says to rerun',()=>{
     const note=M.evalCoverageNote({project:{quality:'state'},quality:{...q,behaviorUpdatedAt:'2026-10-27T09:00:00Z'},delivery:{sha:'51da8e4'}});
@@ -65,6 +65,27 @@ const q={review:latestReview,ask:latestAsk,recent:[
     assert.strictEqual(M.evalCoverageNote({project:{quality:'state'},quality:q,delivery:{sha:'43904f306f705ea645820a1793ffffcf014b87f9'}}).kind,'good');
     assert.strictEqual(M.evalCoverageNote({project:{quality:'state'},quality:q,delivery:{sha:'51da8e4'}}).kind,'unknown');
     assert.strictEqual(M.evalCoverageNote({project:{quality:'tastemake'},quality:q}),null);
+  });
+  await check('an eval contract change after the run says to rerun, with its own reason',()=>{
+    const note=M.evalCoverageNote({project:{quality:'state'},quality:{...q,behaviorUpdatedAt:'2026-10-20T00:00:00Z',contractUpdatedAt:'2026-10-27T09:00:00Z'},delivery:{sha:'51da8e4'}});
+    assert.strictEqual(note.kind,'warn');
+    assert.match(note.text,/The eval contract changed after the latest recorded run\. Rerun/);
+  });
+  await check('the watched list includes the file #566 changed and the eval contract files',()=>{
+    const state=PROJECT('state');
+    assert.ok(state.evalBehaviorPaths.includes('state-project-complete/ask_authority_text.py'));
+    assert.ok(state.evalContractPaths.includes('state-project-complete/eval/ask_quality_scenarios.py'));
+  });
+  const GH=require('../api/project-health-github.js')._test;
+  const commit=(date,sha='a1')=>[{sha,commit:{committer:{date}}}];
+  await check('behavior lookup: newest commit wins and the contract date comes back separately',async()=>{
+    const gh=async url=>url.includes('ask_authority_text')?commit('2026-10-27T20:00:00Z','b2'):url.includes('ask_quality_scenarios')?commit('2026-10-27T21:00:00Z','c3'):commit('2026-10-01T00:00:00Z');
+    const result=await GH.loadEvalBehavior(gh,PROJECT('state'),'production');
+    assert.deepStrictEqual(result,{sha:'b2',updatedAt:'2026-10-27T20:00:00Z',contractUpdatedAt:'2026-10-27T21:00:00Z'});
+  });
+  await check('behavior lookup: one failed path reads as "could not check", never as "no change"',async()=>{
+    const gh=async url=>{if(url.includes('ask_authority_text'))throw Object.assign(new Error('rate limited'),{status:403});return commit('2026-10-01T00:00:00Z');};
+    assert.strictEqual(await GH.loadEvalBehavior(gh,PROJECT('state'),'production'),null);
   });
   await check('the release-vs-eval gap only appears when behavior history is unknown',()=>{
     const base={project:{id:'state'},delivery:{sha:'abcdef1234567890'},quality:{review:{build:'1234567abcdef'},ask:{build:'1234567abcdef'}},platform:{aiTelemetry:{available:true,cost:{partial:false},workflow:{available:true}},neon:{available:true}},runInfo:{configured:true}};
