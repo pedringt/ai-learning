@@ -321,7 +321,7 @@ A project gains a check for a declared gap, a planted-case run shows misses, or 
 
 ### DEC-017 — #569: fix the example Review's note, keep the budget case as an observe-only eval, no prompt change
 
-**Status:** Active until #567 or #569 is fixed  
+**Status:** Observe-only part ended Oct 27 (#569 fixed); the reworded note and the `observe_only` mechanism remain  
 **Date:** 2026-10-27  
 **Related:** #569, #567, #566, DEC-013; `seed_demo.py`, `eval/ask_quality_scenarios.py`, `eval/release_gate.py`
 
@@ -336,3 +336,5 @@ The failure is specific: an unaccepted dependency claim in a Review's note, with
 
 **Rejected / deferred**  
 Adopting the prompt rule. Whether a Review's note may claim dependencies the Evidence doesn't establish, for live interpretations, is not decided; #567 covers labeling such claims structurally.
+
+**Update (Oct 27, later):** the root cause of #569 was not the model. `ask_provider._filter_candidate_payload` treated the whole two-part question as a budget lookup and removed every Current State record without "budget" in it, so the model never saw "Implementation planning can proceed". The filter now runs only when every part of the question is a lookup (ask ×20: 19/19 scored). The scenario gates again; `observe_only` stays available for future known hard cases.

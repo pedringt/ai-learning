@@ -197,7 +197,5 @@ SCENARIOS = (
         should_distinguish_proposal_from_truth=True,
         severity="high",
         rationale="Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
-        # #569: about 40-50% on Haiku 5.5. The Review states a dependency no Current State record mentions.
-        observe_only=True,
     ),
 )
