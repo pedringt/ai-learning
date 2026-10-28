@@ -85,7 +85,10 @@ def test_one_call_prompt_keeps_source_approval_attributed_not_denied():
     prompt = _one_call_prompt("What's the pilot budget, and is it approved?", _CANDIDATES, None)
     assert "not yet recorded in Current State" in prompt
     assert '"not yet approved"' in prompt
-    assert "does not approve or decide them" in prompt
+    # The older "not yet decided, pending Review" answer applies only when no Evidence reports the decision,
+    # and a Current State "not approved" must still be said plainly (adv_leading_since_we_approved).
+    assert "when no supplied Evidence reports that the decision was made" in prompt
+    assert "say plainly that it is not approved or not decided" in prompt
 
 
 def test_synthesis_prompt_forbids_confirmed_language_for_open_reviews():
