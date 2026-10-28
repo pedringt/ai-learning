@@ -317,7 +317,12 @@ _REPORTING_VERB_RE = re.compile(
 _ATTRIBUTION_BREAK_RE = re.compile(r",|;|\b(?:and|but|so|while|although|though|because)\b", re.I)
 # Only the few words right before the verb name who is speaking: "The only relevant record is an open Review
 # noting that the Q3 note says..." is attributed to the note, not to a record (Oct 27 eval matrix, #566).
-_STATE_RECORD_SUBJECT_RE = re.compile(r"\b(?:current\s+state|state|history|records?|we)\b", re.I)
+_STATE_RECORD_SUBJECT_RE = re.compile(r"\b(?:current\s+state|state|history|we)\b", re.I)
+# "the record says" is State's own record; "an evidence record reports" is a source (#569 diagnosis, Oct 27).
+_SOURCE_RECORD_RE = re.compile(
+    r"\b(?:evidence|note|email|message|transcript|minutes|session|meeting|vendor|source|document)\s+records?\b", re.I
+)
+_RECORD_RE = re.compile(r"\brecords?\b", re.I)
 _SUBJECT_WORDS = 4
 # #566 (Oct 27 eval matrix): the model also credits a source without a verb: "the Q3 planning session note's
 # figure (approved at $40,000...)", "the note's statement — pilot budget approved at...", "the note's figure,
@@ -340,9 +345,11 @@ def _attributed_to_a_source(prefix: str) -> bool:
     verb = None
     for verb in _REPORTING_VERB_RE.finditer(prefix):
         pass
-    if verb and not _ATTRIBUTION_BREAK_RE.search(prefix[verb.end():]):
+    # A comma inside "$40,000" is not a clause break (#569 diagnosis, Oct 27).
+    if verb and not _ATTRIBUTION_BREAK_RE.search(_NUMBER_WITH_COMMAS_RE.sub("0", prefix[verb.end():])):
         subject = " ".join(_words(prefix[:verb.start()])[-_SUBJECT_WORDS:])
-        if not _STATE_RECORD_SUBJECT_RE.search(subject):
+        names_state_record = _RECORD_RE.search(subject) and not _SOURCE_RECORD_RE.search(subject)
+        if not _STATE_RECORD_SUBJECT_RE.search(subject) and not names_state_record:
             return True
     noun = None
     for noun in _SOURCE_POSSESSIVE_RE.finditer(prefix):

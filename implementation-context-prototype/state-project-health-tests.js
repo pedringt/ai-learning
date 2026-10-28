@@ -29,6 +29,12 @@ assert.strictEqual(
   'Make Project Health load progressively and cache safely'
 );
 assert.strictEqual(H.commitTitle('Show PR titles on project cards\n\nAdditional details'), 'Show PR titles on project cards');
+// Internal merges show their readable part, never the branch-merge wording
+assert.strictEqual(H.commitTitle('Merge ph-gap-count into staging (Observability gap count)'), 'Observability gap count');
+assert.strictEqual(H.commitTitle('Merge main into staging after #570 (Project Health trust fixes shipped ahead of #566)'), 'Project Health trust fixes shipped ahead of #566');
+assert.strictEqual(H.commitTitle("Merge remote-tracking branch 'origin/main' into sync-staging"), 'Change title unavailable');
+assert.strictEqual(H.commitTitle('Merge main into staging'), 'Change title unavailable');
+assert.strictEqual(H.commitTitle('Merge branch staging into main\n\nPromote the trust fixes'), 'Promote the trust fixes');
 
 assert.deepStrictEqual(
   H.vercelFromStatus({statuses:[{context:'Vercel – app',state:'success'}]}).kind,

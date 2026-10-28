@@ -31,6 +31,9 @@ class AskQualityScenario:
     should_distinguish_proposal_from_truth: bool = False
     severity: Severity = "medium"
     rationale: str = ""
+    # Measured and reported, but never fails the Ask gate (eval/release_gate.py). For a known hard case
+    # tracked in an issue; remove the flag when the issue is fixed (Paige, Oct 27, DEC-017).
+    observe_only: bool = False
 
 
 SCENARIOS = (
@@ -194,5 +197,7 @@ SCENARIOS = (
         should_distinguish_proposal_from_truth=True,
         severity="high",
         rationale="Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
+        # #569: about 40-50% on Haiku 5.5. The Review states a dependency no Current State record mentions.
+        observe_only=True,
     ),
 )

@@ -140,7 +140,7 @@ REVIEWS = [
        # and revised evaluation criteria, each its own decidable question).
         "id": "demo-review-create-budget", "review_type": "missing_understanding",
         "decision_question": "Is the approved pilot budget ready to be recorded?",
-        "why_consequential": "Implementation planning depends on a known budget ceiling, and none is currently recorded.",
+        "why_consequential": "The Q3 planning note reports an approved budget figure that Current State does not record yet.",
         "evidence_id": "demo-review-q3-planning-evidence",
         "evidence_text": "Q3 planning session: the pilot budget is approved at $40,000 for discovery and first implementation. Separately, the team agreed the evaluation criteria and sample definition need to be revised together before the next test round.",
         "evidence_date": "2026-08-31 13:30:00",

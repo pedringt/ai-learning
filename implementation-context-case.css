@@ -110,3 +110,5 @@
 .product-model:has(.architecture-split)>.kicker,.product-model:has(.architecture-split)>h2{grid-column:1/-1}
 .architecture-infra{max-width:none;}
 @media(max-width:900px){.product-model:has(.architecture-split){grid-template-columns:1fr}.product-model:has(.architecture-split)>.kicker,.product-model:has(.architecture-split)>h2{grid-column:auto}}
+
+.role-split .surface-grid ul{margin:0;padding-left:18px}.role-split .surface-grid li+li{margin-top:4px}
