@@ -64,9 +64,10 @@ def test_other_ask_misses_still_count_next_to_an_observe_only_one():
     assert any("0 of 2 passed" in r for r in gate(reports, {ASK_SUITE: ASK_SCENARIOS}, {ASK_SUITE: set()})[ASK_SUITE])
 
 
-def test_only_the_budget_two_part_scenario_is_observe_only():
+def test_no_ask_scenario_is_observe_only():
+    # #569 is fixed (Oct 27), so its budget scenario gates again (DEC-017).
     from eval.ask_quality_scenarios import SCENARIOS
-    assert [s.id for s in SCENARIOS if s.observe_only] == ["ask_compound_question_keeps_governing_state"]
+    assert [s.id for s in SCENARIOS if s.observe_only] == []
 
 
 def test_previous_failed_ids_reads_the_latest_run_of_the_suite():
