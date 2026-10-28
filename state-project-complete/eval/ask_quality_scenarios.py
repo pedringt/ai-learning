@@ -22,6 +22,8 @@ class AskQualityScenario:
     pending_reviews: tuple[str, ...] = field(default_factory=tuple)
     open_questions: tuple[str, ...] = field(default_factory=tuple)
     history: tuple[tuple[str, str, str], ...] = field(default_factory=tuple)
+    # Evidence text, seeded as Evidence records and linked to the first pending Review (#567).
+    evidence: tuple[str, ...] = field(default_factory=tuple)
     # Each entry is a required fact: either one phrase, or a tuple of acceptable
     # phrasings of the same fact (any one satisfies it).
     required_facts: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
@@ -197,5 +199,23 @@ SCENARIOS = (
         should_distinguish_proposal_from_truth=True,
         severity="high",
         rationale="Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
+    ),
+    # #567 (Oct 28, production): the Evidence says the budget is approved, and Ask's backstop rewrote
+    # that to "proposed (not yet approved)". The answer must keep the source's word and say it is not
+    # in Current State.
+    AskQualityScenario(
+        id="ask_evidence_backed_approval_qualified",
+        category="source_fidelity",
+        question="What's the pilot budget, and is it approved?",
+        current_state=(("scope", "The core pilot use case is Tier 1 troubleshooting assistance."),),
+        evidence=("Q3 planning session: the pilot budget is approved at $40,000 for discovery and first implementation.",),
+        pending_reviews=("Is the approved pilot budget of $40,000 ready to be recorded in Current State?",),
+        required_facts=("$40,000", ("not in current state", "not yet in current state", "not been recorded",
+                                    "not recorded", "not been accepted", "not yet accepted", "pending review",
+                                    "awaiting review", "has not changed current state")),
+        forbidden_claims=("proposed for approval", "not yet approved", "has not been approved"),
+        should_distinguish_proposal_from_truth=True,
+        severity="high",
+        rationale="Evidence that says approved is reported as approved, qualified as not in Current State; never denied.",
     ),
 )

@@ -388,3 +388,73 @@ def test_states_own_record_is_still_not_a_source():
     for sentence in ("The record says the retention terms are approved.",
                      "State's records show the retention terms are approved."):
         assert "proposed for approval (not yet approved)" in _soften_unearned_settled_prose(sentence), sentence
+
+
+# #567 (Oct 28, production 44183b5): when the selected Evidence itself says "approved", the backstop
+# qualifies the word instead of denying it, so the answer never contradicts its source.
+from ask_authority_text import EVIDENCE_QUALIFIER, _evidence_backing  # noqa: E402
+
+Q3_EVIDENCE = _evidence_backing([
+    "Q3 planning session: the pilot budget is approved at $40,000 for discovery and first implementation. "
+    "Separately, the team agreed the evaluation criteria and sample definition need to be revised together "
+    "before the next test round.",
+])
+
+
+def test_a_trailing_attribution_is_qualified_not_denied():
+    fixed = _soften_unearned_settled_prose(
+        "The approved pilot budget is $40,000 for discovery and first implementation, per the Q3 planning evidence.",
+        evidence=Q3_EVIDENCE)
+    assert fixed.startswith("The approved" + EVIDENCE_QUALIFIER + " pilot budget is $40,000")
+    assert "not yet approved" not in fixed
+
+
+def test_an_attributive_use_before_a_negation_is_qualified():
+    fixed = _soften_unearned_settled_prose(
+        "That is an unreviewed Review proposal and the approved budget has not been recorded as Current State.",
+        evidence=Q3_EVIDENCE)
+    assert "the approved" + EVIDENCE_QUALIFIER + " budget has not been recorded" in fixed
+
+
+def test_a_plain_claim_backed_by_evidence_is_qualified():
+    fixed = _soften_unearned_settled_prose("The pilot budget is approved at $40,000.", evidence=Q3_EVIDENCE)
+    assert fixed == "The pilot budget is approved" + EVIDENCE_QUALIFIER + " at $40,000."
+
+
+def test_a_different_number_is_still_denied():
+    fixed = _soften_unearned_settled_prose("The pilot budget is approved at $55,000.", evidence=Q3_EVIDENCE)
+    assert "not yet approved" in fixed and "per Evidence" not in fixed
+
+
+def test_a_different_subject_is_still_denied():
+    fixed = _soften_unearned_settled_prose("The vendor retention terms are approved.", evidence=Q3_EVIDENCE)
+    assert "not yet approved" in fixed and "per Evidence" not in fixed
+
+
+def test_without_evidence_nothing_changes():
+    sentence = "The pilot budget is approved at $40,000."
+    assert _soften_unearned_settled_prose(sentence) == _soften_unearned_settled_prose(sentence, evidence=())
+
+
+def test_the_headline_gets_the_same_qualifier():
+    headline = "Approved pilot budget is $40,000; implementation planning can proceed for the bounded use case"
+    fixed = _soften_unearned_settled_words(headline, Q3_EVIDENCE)
+    assert fixed.startswith("Approved" + EVIDENCE_QUALIFIER + " pilot budget is $40,000")
+
+
+def test_a_long_headline_gets_the_short_qualifier():
+    headline = ("Approved pilot budget is $40,000 for discovery and first implementation; implementation planning can "
+                "proceed, but launch still needs agreed thresholds")
+    assert 144 < len(headline) <= 165  # the long qualifier would pass 180 characters; the short one fits
+    fixed = _soften_unearned_settled_words(headline, Q3_EVIDENCE)
+    assert fixed.startswith("Approved (per Evidence) pilot budget") and len(fixed) <= 180
+
+
+def test_a_headline_too_long_for_any_qualifier_is_left_as_it_is():
+    headline = "Approved pilot budget is $40,000 for discovery and first implementation; " + "x" * 100
+    assert _soften_unearned_settled_words(headline, Q3_EVIDENCE) == headline
+
+
+def test_a_headline_without_evidence_backing_is_unchanged():
+    headline = "Approved vendor contract; retention still open"
+    assert _soften_unearned_settled_words(headline, Q3_EVIDENCE) == headline
