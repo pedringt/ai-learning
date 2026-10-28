@@ -6,7 +6,8 @@ miss is in the unsafe direction (proposing something unconfirmed as established,
 see ``authority_lab_export.unsafe_direction_miss``).
 
 Ask quality (Paige, Oct 19, DEC-013, a trial): the same shape without the unsafe-direction check, so a run
-passes when at most one scenario misses and no scenario fails in two consecutive runs.
+passes when at most one scenario misses and no scenario fails in two consecutive runs. A scenario marked
+``observe_only`` (DEC-017, Oct 27) is reported but left out of both checks.
 
 This is a library: it never loads ``.env`` and never calls a model. ``run_quality_evals`` uses it.
 """
@@ -41,8 +42,10 @@ def review_gate(rows: list[Mapping[str, Any]], scenarios: Iterable[Any], previou
     return reasons
 
 
-def ask_gate(rows: list[Mapping[str, Any]], previous_failed_ids: set[str] | None) -> list[str]:
-    """Reasons the Ask run fails; empty when it passes (DEC-013 trial)."""
+def ask_gate(rows: list[Mapping[str, Any]], previous_failed_ids: set[str] | None, scenarios: Iterable[Any] = ()) -> list[str]:
+    """Reasons the Ask run fails; empty when it passes (DEC-013 trial). Observe-only scenarios don't count (DEC-017)."""
+    observed = {s.id for s in scenarios if getattr(s, "observe_only", False)}
+    rows = [r for r in rows if r.get("id") not in observed]
     failed = [r for r in rows if not r.get("passed")]
     reasons: list[str] = []
     if len(failed) > 1:
@@ -63,7 +66,7 @@ def gate(reports: list[Mapping[str, Any]], scenarios_by_suite: Mapping[str, Iter
         if suite == REVIEW_SUITE:
             out[suite] = review_gate(rows, scenarios_by_suite.get(suite, ()), previous_failed.get(suite))
         else:
-            out[suite] = ask_gate(rows, previous_failed.get(suite))
+            out[suite] = ask_gate(rows, previous_failed.get(suite), scenarios_by_suite.get(suite, ()))
     return out
 
 

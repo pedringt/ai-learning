@@ -50,6 +50,25 @@ def test_ask_suite_fails_on_two_misses_or_a_repeat():
     assert gate(repeat, {}, {ASK_SUITE: {"ask_blocker_not_omitted"}})[ASK_SUITE] == ["failed in two consecutive runs: ask_blocker_not_omitted"]
 
 
+# DEC-017 (Oct 27): an observe-only Ask scenario is reported but never fails the gate.
+ASK_SCENARIOS = [SimpleNamespace(id="hard", observe_only=True), SimpleNamespace(id="a"), SimpleNamespace(id="b")]
+
+
+def test_an_observe_only_ask_miss_does_not_count():
+    reports = [{"suite": ASK_SUITE, "results": [row("hard", False), row("a", False), row("b", True)]}]
+    assert gate(reports, {ASK_SUITE: ASK_SCENARIOS}, {ASK_SUITE: {"hard"}})[ASK_SUITE] == []
+
+
+def test_other_ask_misses_still_count_next_to_an_observe_only_one():
+    reports = [{"suite": ASK_SUITE, "results": [row("hard", False), row("a", False), row("b", False)]}]
+    assert any("0 of 2 passed" in r for r in gate(reports, {ASK_SUITE: ASK_SCENARIOS}, {ASK_SUITE: set()})[ASK_SUITE])
+
+
+def test_only_the_budget_two_part_scenario_is_observe_only():
+    from eval.ask_quality_scenarios import SCENARIOS
+    assert [s.id for s in SCENARIOS if s.observe_only] == ["ask_compound_question_keeps_governing_state"]
+
+
 def test_previous_failed_ids_reads_the_latest_run_of_the_suite():
     analytics = {"controlled_evals": {"recent": [
         {"suite": REVIEW_SUITE, "created_at": "2026-10-16 20:07:04", "failure_details": [{"scenario_id": "old"}]},

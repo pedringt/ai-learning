@@ -318,3 +318,21 @@ Counting platform gaps toward "Healthy" (no project could ever be Healthy on the
 
 **Revisit when**  
 A project gains a check for a declared gap, a planted-case run shows misses, or the 15 s target proves wrong for real use.
+
+### DEC-017 — #569: fix the example Review's note, keep the budget case as an observe-only eval, no prompt change
+
+**Status:** Active until #567 or #569 is fixed  
+**Date:** 2026-10-27  
+**Related:** #569, #567, #566, DEC-013; `seed_demo.py`, `eval/ask_quality_scenarios.py`, `eval/release_gate.py`
+
+**Decision**  
+Paige chose these on Oct 27, after the #569 prompt experiment:
+- **The seeded budget Review's "why it matters" note no longer claims a dependency.** It said "Implementation planning depends on a known budget ceiling", which the Q3 Evidence never establishes. Ask then treated that unconfirmed claim as a gate over Current State's "Implementation planning can proceed". It now reads "The Q3 planning note reports an approved budget figure that Current State does not record yet."
+- **`ask_compound_question_keeps_governing_state` stays in the Ask suite as an observe-only hard case.** It is still run and reported, but the Ask gate (DEC-013) leaves it out of both the one-miss and the two-runs-in-a-row checks. Its Review text keeps the dependency claim on purpose. Remove the flag when #567 or #569 fixes it.
+- **No Ask prompt change.** The tested rule ("answer every part from its governing Current State; a Review's why-it-matters text never limits what Current State allows") had no measurable effect: 12/30 before and 10/20 after on the budget case. Two-part questions on other topics already passed 100% without it.
+
+**Why**  
+The failure is specific: an unaccepted dependency claim in a Review's note, with no Current State record that speaks to it. A prompt rule did not move it, and gating on a known ~50% case would turn the weekly Ask check red without telling anyone anything new.
+
+**Rejected / deferred**  
+Adopting the prompt rule. Whether a Review's note may claim dependencies the Evidence doesn't establish, for live interpretations, is not decided; #567 covers labeling such claims structurally.
