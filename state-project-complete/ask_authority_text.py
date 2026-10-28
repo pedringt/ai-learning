@@ -98,7 +98,11 @@ _SETTLED_WORD_REPLACEMENTS = (
 )
 
 
-def _soften_unearned_settled_words(value: str | None) -> str | None:
+_HEADLINE_EVIDENCE_WORD_RE = re.compile(r"\b(?:approved|decided|established)\b", re.I)
+_HEADLINE_MAX = 180  # AskSynthesis.headline's max_length
+
+
+def _soften_unearned_settled_words(value: str | None, evidence=()) -> str | None:
     """Headlines and section titles are the one place the model reliably
     keeps reaching for "Confirmed"/"Resolved" as a compact status badge
     (e.g. "Retention Terms: Legal Confirmed", "Confirmed Retention and
@@ -122,6 +126,15 @@ def _soften_unearned_settled_words(value: str | None) -> str | None:
     text = value
     for pattern, replacement in _SETTLED_WORD_REPLACEMENTS:
         text = pattern.sub(replacement, text)
+    # #567: a headline's "Approved pilot budget is $40,000" was left as a flat claim while the summary
+    # denied it. An Evidence-backed approved / decided / established gets the same qualifier as prose
+    # ("confirmed" is already rewritten to "reported" above), shortened if the headline would run long.
+    for qualifier in (EVIDENCE_QUALIFIER, _SHORT_EVIDENCE_QUALIFIER):
+        candidate = _HEADLINE_EVIDENCE_WORD_RE.sub(
+            lambda m, q=qualifier, t=text: m.group(0) + q if _evidence_backed(t, m, evidence) else m.group(0), text)
+        if len(candidate) <= _HEADLINE_MAX:
+            text = candidate
+            break
     text = re.sub(r"\s{2,}", " ", text).strip(" -–—:;,.")
     return text or value
 
@@ -367,7 +380,42 @@ def _inside_quotes(text: str, match: "re.Match[str]") -> bool:
     return any(span.start() < match.start() and match.end() < span.end() for span in _QUOTED_SPAN_RE.finditer(text))
 
 
-def _soften_match(text: str, match: "re.Match[str]", replacement, governing, lead: str = "") -> str:
+# #567 (Oct 28): when the selected Evidence itself says "approved" (or decided / established /
+# confirmed), denying it ("proposed (not yet approved)") makes the answer contradict its source,
+# whatever the phrasing ("the approved budget has not been recorded", "..., per the Q3 note").
+# Such a word is qualified instead: true to the source, and still clear it is not Current State.
+_EVIDENCE_QUALIFIED_WORDS = frozenset({"approved", "decided", "established", "confirmed"})
+EVIDENCE_QUALIFIER = " (per Evidence, not in Current State)"
+_SHORT_EVIDENCE_QUALIFIER = " (per Evidence)"
+_CONTEXT_WORDS = 4
+_STOP = frozenset({
+    "the", "a", "an", "and", "or", "of", "for", "to", "in", "on", "at", "by", "is", "are", "was", "were",
+    "be", "been", "has", "have", "had", "that", "this", "with", "as", "it", "its", "not", "yet", "per",
+})
+
+
+class _EvidenceBacking(tuple):
+    """(word set, numbers) for each Evidence text an Ask answer may be quoting."""
+
+
+def _evidence_backing(texts) -> _EvidenceBacking:
+    return _EvidenceBacking((frozenset(_words(t or "")), _numbers(t or "")) for t in texts if t)
+
+
+def _evidence_backed(text: str, match: "re.Match[str]", evidence) -> bool:
+    """True if a selected Evidence record uses the same settled word about the same thing: every
+    number in the clause is in it, and a nearby content word (four words either side) is too."""
+    word = match.group(0).lower()
+    if word not in _EVIDENCE_QUALIFIED_WORDS or not evidence:
+        return False
+    numbers = _numbers(text)
+    near = [w for w in _words(text[:match.start()])[-_CONTEXT_WORDS:] + _words(text[match.end():])[:_CONTEXT_WORDS]
+            if len(w) > 3 and w not in _STOP and not w.isdigit()]
+    return any(word in tokens and numbers <= ev_numbers and any(w in tokens for w in near)
+               for tokens, ev_numbers in evidence)
+
+
+def _soften_match(text: str, match: "re.Match[str]", replacement, governing, lead: str = "", evidence=()) -> str:
     if _quotes_governing_state(text, match, governing) or _refers_to_governing_state(text, match, governing):
         return match.group(0)
     if _inside_quotes(text, match) or _attributed_to_a_source(lead + text[:match.start()]):
@@ -378,6 +426,8 @@ def _soften_match(text: str, match: "re.Match[str]", replacement, governing, lea
     if whether and "," not in text[whether.end():match.start()]:
         # "Whether or not Legal agrees, the terms are approved" still claims approval.
         return match.group(0)
+    if _evidence_backed(text, match, evidence):
+        return match.group(0) + EVIDENCE_QUALIFIER
     attributive = _ATTRIBUTIVE_REPLACEMENTS.get(match.group(0).lower())
     if attributive and _attributive(text, match):
         # "the approved move budget" -> "the proposed (not yet approved) move budget",
@@ -386,7 +436,7 @@ def _soften_match(text: str, match: "re.Match[str]", replacement, governing, lea
     return replacement(match)
 
 
-def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozenset = frozenset()) -> str | None:
+def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozenset = frozenset(), evidence=()) -> str | None:
     """Sentence-scoped companion to _soften_unearned_settled_words: rewrites
     an unhedged settled-sounding claim within full prose (Ask's summary,
     and free-text item text/detail), leaving any sentence that already
@@ -402,7 +452,9 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
     alone when the wording around it quotes a governing Current State statement
     verbatim, or (#473) refers to one attributively ("the approved move budget at
     $85,000"; see _refers_to_governing_state), so an approved, established fact is never
-    rewritten into an unapproved one. Everything else is still softened.
+    rewritten into an unapproved one. `evidence` (see _evidence_backing, #567): a word the
+    selected Evidence itself uses about the same thing is qualified, not denied. Everything else
+    is still softened.
     """
     if not value:
         return value
@@ -422,7 +474,7 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
             fixed = parts[index]
             for pattern, replacement in _UNEARNED_SETTLED_PROSE_REPLACEMENTS:
                 current = fixed
-                fixed = pattern.sub(lambda m, r=replacement, t=current, l=lead: _soften_match(t, m, r, governing_ngrams, l), current)
+                fixed = pattern.sub(lambda m, r=replacement, t=current, l=lead: _soften_match(t, m, r, governing_ngrams, l, evidence), current)
             parts[index] = fixed
         rewritten.append("".join(parts))
     text = " ".join(rewritten)
