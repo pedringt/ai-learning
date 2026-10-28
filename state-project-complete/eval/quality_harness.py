@@ -320,6 +320,10 @@ def _seed_ask_scenario(connection, scenario: AskQualityScenario) -> None:
             # Oct 20: no placeholder: the grader read "Controlled Ask quality scenario" as filler on every card.
             (f"ask-review-{idx}", text, ""),
         )
+    for idx, text in enumerate(scenario.evidence):
+        connection.execute("INSERT INTO evidence(id, content) VALUES (?, ?)", (f"ask-evidence-{idx}", text))
+        if scenario.pending_reviews:
+            connection.execute("INSERT INTO review_evidence(review_id, evidence_id) VALUES (?, ?)", ("ask-review-0", f"ask-evidence-{idx}"))
     for idx, text in enumerate(scenario.open_questions):
         blocking = 1 if text.upper().startswith("BLOCKING:") else 0
         clean = re.sub(r"^BLOCKING:\s*", "", text, flags=re.IGNORECASE)

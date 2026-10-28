@@ -164,7 +164,7 @@ class QualityEvalDatasetTests(unittest.TestCase):
         self.assertTrue(any(scenario.should_distinguish_proposal_from_truth for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_express_uncertainty for scenario in ASK_SCENARIOS))
         self.assertTrue(any(scenario.should_reference_open_item for scenario in ASK_SCENARIOS))
-        self.assertEqual(len(ASK_SCENARIOS), 12)
+        self.assertEqual(len(ASK_SCENARIOS), 13)
         self.assertIn("superseded_review", categories)
         self.assertIn("outcome_vs_reason", categories)
 
@@ -379,3 +379,24 @@ def test_the_live_budget_answer_fails_both_new_scenarios():
 def test_a_correct_budget_answer_passes_both_new_scenarios():
     for scenario_id in ("ask_source_words_not_demoted", "ask_compound_question_keeps_governing_state"):
         assert score_ask_answer(_ask_scenario(scenario_id), CORRECT_BUDGET_ANSWER).passed, scenario_id
+
+
+# Oct 28 (#579): Haiku 5.5's usual answer, eval matrix run 40711384115. Accepted because the body attributes the
+# approval to its source; the same headline with no attribution is a denial and still fails.
+ATTRIBUTED_HEADLINE_ANSWER = {
+    "headline": "The pilot budget is $40,000 per Q3 planning notes, but it is not yet approved in Current State.",
+    "summary": ("Evidence from the Q3 planning session says the pilot budget is approved at $40,000 for discovery and "
+                "first implementation. Current State does not yet record a budget; it is pending review."),
+}
+
+
+def test_an_attributed_not_yet_approved_headline_passes_the_qualified_scenario():
+    assert score_ask_answer(_ask_scenario("ask_evidence_backed_approval_qualified"), ATTRIBUTED_HEADLINE_ANSWER).passed
+
+
+def test_an_unattributed_denial_fails_the_qualified_scenario():
+    scenario = _ask_scenario("ask_evidence_backed_approval_qualified")
+    bare = {"headline": "The pilot budget is $40,000, but it is not yet approved.",
+            "summary": "A Review is pending; the budget is not in Current State."}
+    assert not score_ask_answer(scenario, bare).passed
+    assert not score_ask_answer(scenario, LIVE_BUDGET_ANSWER).passed

@@ -17,6 +17,7 @@ from ask_contract import (
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from db import project_id_of
 from ask_authority_text import (  # noqa: F401  (re-exported: tests and callers import these from ask_service)
+    _evidence_backing,
     _DEMO_SLUG_ID,
     _INTERNAL_JSON_FIELD_NAMES,
     _NEGATION_RE,
@@ -590,12 +591,18 @@ def _validate_synthesis(
         x.get("statement", "") for x in [*context.get("state", []), *((candidates or {}).get("state", []))]
     )
 
+    # Evidence the answer may be quoting (#567): a settled word it uses about the same thing is
+    # qualified rather than denied. Candidate pool too, for the same reason as above.
+    evidence_backing = _evidence_backing(
+        x.get("content", "") for x in [*context.get("evidence", []), *((candidates or {}).get("evidence", []))]
+    )
+
     answer.headline = _clean_visible_ask_text(answer.headline, all_internal_ids, labels) or "Project answer"
     if has_pending_material:
-        answer.headline = _soften_unearned_settled_words(answer.headline)
+        answer.headline = _soften_unearned_settled_words(answer.headline, evidence_backing)
     answer.summary = _clean_visible_ask_text(answer.summary, all_internal_ids, labels) or "See the grounded project details below."
     if has_pending_material:
-        answer.summary = _soften_unearned_settled_prose(answer.summary, governing_ngrams)
+        answer.summary = _soften_unearned_settled_prose(answer.summary, governing_ngrams, evidence_backing)
     answer.suggested_refinements = [
         cleaned for value in answer.suggested_refinements
         if (cleaned := _clean_visible_ask_text(value, all_internal_ids, labels))
@@ -607,15 +614,15 @@ def _validate_synthesis(
     for section in answer.sections:
         section.title = _clean_visible_ask_text(section.title, all_internal_ids, labels) or "Project context"
         if has_pending_material:
-            section.title = _soften_unearned_settled_words(section.title)
+            section.title = _soften_unearned_settled_words(section.title, evidence_backing)
         clean_items = []
         for item in section.items:
             if item.record_type == "none":
                 item.text = _clean_visible_ask_text(item.text, all_internal_ids, labels) or "Project context"
                 item.detail = _clean_visible_ask_text(item.detail, all_internal_ids, labels)
                 if has_pending_material:
-                    item.text = _soften_unearned_settled_prose(item.text, governing_ngrams)
-                    item.detail = _soften_unearned_settled_prose(item.detail, governing_ngrams)
+                    item.text = _soften_unearned_settled_prose(item.text, governing_ngrams, evidence_backing)
+                    item.detail = _soften_unearned_settled_prose(item.detail, governing_ngrams, evidence_backing)
                 clean_items.append(item)
                 continue
             if item.record_id and item.record_id in allowed.get(item.record_type, set()):
