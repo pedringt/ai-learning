@@ -237,3 +237,63 @@ def test_drafting_request_keeps_records_despite_an_attribute_word():
     assert len(drafted["state"]) == 2 and len(drafted["reviews"]) == 1
     looked_up = _filter_candidate_payload("What is the billing contact email?", payload)
     assert [r["id"] for r in looked_up["state"]] == ["c"]
+
+
+# #569 (Oct 27): a two-part question with one lookup part was filtered as a pure lookup, so the
+# Current State record answering the other part never reached the model.
+NORTHSTAR = {
+    "state": [
+        {"id": "k-launch", "statement": "Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds."},
+        {"id": "k-pilot", "statement": "The core pilot use case is Tier 1 troubleshooting assistance."},
+    ],
+    "reviews": [{"id": "demo-review-create-budget", "decision_question": "Is the approved pilot budget ready to be recorded?"}],
+    "questions": [], "history": [],
+    "evidence": [{"id": "q3", "content": "Q3 planning session: the pilot budget is approved at $40,000."}],
+    "rules": [],
+}
+
+PRODUCTION_TWO_PART_QUESTIONS = (
+    "What's our pilot budget, and can we start implementation planning?",
+    "What is our pilot budget and can we start implementation planning?",
+    "What's the pilot budget, and can implementation planning start?",
+    "Do we have a pilot budget yet, and can we begin implementation planning?",
+    "What is the budget for the pilot, and are we able to start implementation planning now?",
+    "Pilot budget? And can we start planning implementation?",
+    "What's our budget for the pilot, and is implementation planning allowed to start?",
+    "Can we start implementation planning, and what is the pilot budget?",
+    "What is the approved pilot budget, and may we start implementation planning?",
+)
+
+
+def test_a_two_part_question_keeps_the_current_state_for_its_other_part():
+    for query in PRODUCTION_TWO_PART_QUESTIONS:
+        filtered = _filter_candidate_payload(query, NORTHSTAR)
+        assert "k-launch" in [x["id"] for x in filtered["state"]], query
+        assert [x["id"] for x in filtered["reviews"]] == ["demo-review-create-budget"], query
+
+
+def test_a_single_lookup_is_still_filtered():
+    filtered = _filter_candidate_payload("What's the pilot budget?", NORTHSTAR)
+    assert filtered["state"] == []
+    assert [x["id"] for x in filtered["reviews"]] == ["demo-review-create-budget"]
+
+
+def test_two_lookups_are_still_filtered():
+    payload = {
+        "state": [
+            {"id": "billing", "statement": "Billing contact: Morgan Lee."},
+            {"id": "security", "statement": "Security contact: Priya Shah."},
+            {"id": "scope", "statement": "Billing adjustments remain outside the pilot."},
+        ],
+        "reviews": [], "questions": [], "history": [], "evidence": [], "rules": [],
+    }
+    for query in ("Who is the billing contact, and who is the security contact?",
+                  "What's the billing contact and the security contact?"):
+        kept = [x["id"] for x in _filter_candidate_payload(query, payload)["state"]]
+        assert kept == ["billing", "security"], query
+
+
+def test_the_whole_production_prompt_keeps_current_state():
+    prompt = _prompt(PRODUCTION_TWO_PART_QUESTIONS[0])
+    hardened = _harden_prompt_for_relevance(prompt)
+    assert "billing-scope" in hardened and "security-contact" in hardened

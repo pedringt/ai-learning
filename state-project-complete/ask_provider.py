@@ -177,6 +177,31 @@ def _is_drafting_request(query: str) -> bool:
     return bool(_DRAFTING_RE.search(query or ""))
 
 
+# #569: "What's our pilot budget, and can we start implementation planning?" was filtered as a budget
+# lookup, which removed every Current State record without "budget" in it, including "Implementation
+# planning can proceed". A question is split into parts at "?", ";" or ", and/but/also/plus" followed by
+# a new clause; the strict filter runs only when every part is itself a lookup.
+_QUESTION_PART_SPLIT = re.compile(
+    r"[?;]+|,?\s+(?:and|but|also|plus)\s+(?=(?:can|could|should|may|is|are|do|does|did|will|what|when|who|"
+    r"how|why|where|has|have|was|were|which)\b)",
+    re.I,
+)
+
+
+def _question_parts(query: str) -> list[str]:
+    return [part for part in (piece.strip() for piece in _QUESTION_PART_SPLIT.split(query or "")) if _query_terms(part)]
+
+
+def _is_lookup_part(part: str) -> bool:
+    """Same test as _filter_candidate_payload's, applied to one part of the question."""
+    terms = {_normalize_token(term) for term in _query_terms(part)}
+    anchors = terms & _LOOKUP_ANCHORS
+    if not anchors:
+        return False
+    # An entity noun next to other content terms is the subject, not the attribute (#223).
+    return not (terms - anchors and not (anchors - _ENTITY_ANCHORS))
+
+
 def _record_text(record: Mapping[str, Any]) -> str:
     parts: list[str] = []
     for key, value in record.items():
@@ -200,6 +225,8 @@ def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[st
     data = {key: list(value) if isinstance(value, list) else value for key, value in payload.items()}
     if (_is_broad_request(query) or _is_dependent_followup(query) or _is_transform_request(query)
             or _is_drafting_request(query)):
+        return data
+    if not all(_is_lookup_part(part) for part in _question_parts(query)):
         return data
 
     terms = _query_terms(query)
