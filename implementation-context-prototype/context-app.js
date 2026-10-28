@@ -155,7 +155,7 @@
   }
   function workspaceAttentionHtml(){
     if(API && state.workspaceAttentionStatus==='loading'){
-      return `<section class="workspace-attention is-loading" aria-busy="true"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('alert')}</span><span class="eyebrow">Needs your attention</span><h3>Opening action items…</h3></div></div></section>`;
+      return `<section class="workspace-attention is-loading" aria-busy="true"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('loading')}</span><span class="eyebrow">Needs your attention</span><h3>Opening action items…</h3></div></div></section>`;
     }
     if(API && state.workspaceAttentionStatus==='error'){
       return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('alert')}</span><span class="eyebrow">Needs your attention</span><h3>Attention items could not be loaded</h3><p>Ask still works; try Open Items again in a moment.</p></div><button class="text-button" data-action="retry-hydration">Try again →</button></div></section>`;
@@ -192,6 +192,7 @@
   // const, so it is hoisted: renderers can run before later declarations in this file execute.
   function workspaceIcon(name){
     return ({
+      loading:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>',
       alert:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v6M12 17h.01"/></svg>',
       review:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h8l3 3V20H7z"/><path d="M15 3.5V7h3M10 11h5M10 14h5M10 17h3"/></svg>',
       question:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H10l-4 3v-3H5z"/><path d="M10 9a2.2 2.2 0 1 1 3.8 1.5c-.9.8-1.8 1.1-1.8 2M12 15h.01"/></svg>',

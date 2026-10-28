@@ -1426,3 +1426,6 @@ html:not(#_#_#_) .overview-stage .workspace-stage-pill.is-late-discovery{backgro
 #askStateDrawer .ask-answer-head{width:100%!important}
 #askStateDrawer .ask-answer-head .ask-answer-actions{flex:0 0 auto!important;width:auto!important;margin-left:auto!important}
 #askStateDrawer .ask-answer-head .ask-answer-actions .btn{width:auto!important;min-width:0!important;flex:0 0 auto!important;padding:7px 14px!important}
+/* Cold load: the loading card is not an alert, so its icon stays neutral until items arrive */
+html:not(#_#_#_) .workspace-attention.is-loading .attention-head-icon{border-color:var(--line,#d8dde6)!important;color:var(--muted,#6b7280)!important;background:var(--surface,#fff)!important;box-shadow:none!important}
+html:not(#_#_#_) .workspace-attention.is-loading .attention-head-icon::before{color:var(--muted,#6b7280)!important}

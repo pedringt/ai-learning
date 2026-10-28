@@ -83,8 +83,11 @@
   function commitTitle(message){
     const sections=String(message||'').split(/\r?\n\s*\r?\n/).map(section=>section.trim()).filter(Boolean);
     const first=sections[0]?.split(/\r?\n/)[0]?.trim()||'';
-    if(/^Merge pull request #\d+ from /i.test(first)||/^Merge branch .+ into /i.test(first)){
-      return sections[1]?.split(/\r?\n/)[0]?.trim()||'Change title unavailable';
+    if(/^Merge pull request #\d+ from /i.test(first)||/^Merge (remote-tracking branch |branch )?\S+ into \S+/i.test(first)){
+      // A hand-written merge like "Merge ph-gap-count into staging (Observability gap count)" keeps
+      // its readable part in the parentheses; branch names alone are not a release name.
+      const described=first.match(/^Merge (?:remote-tracking branch |branch )?\S+ into \S+.*?\(([^()]+)\)$/i)?.[1]?.trim();
+      return described||sections[1]?.split(/\r?\n/)[0]?.trim()||'Change title unavailable';
     }
     return first||'Change title unavailable';
   }
