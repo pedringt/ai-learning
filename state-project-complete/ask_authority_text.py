@@ -533,6 +533,8 @@ def _clean_visible_ask_text(value: str | None, internal_ids: set[str], labels: M
     # #478: an id removed from "(: Support Slack not approved; restricted by k-slack)" leaves
     # "(:" and a dangling "by )". Close those up rather than show an empty slot.
     text = re.sub(r"\(\s*[:;,]\s*", "(", text)
+    # #577: "(q-thresholds is open and blocking)" left "( is open and blocking)" once the id was removed.
+    text = re.sub(r"\(\s+(?:is|are|was|were|remains|remain)\s+", "(", text, flags=re.IGNORECASE)
     text = re.sub(r"\s+(?:by|from|per|via|see)\s*([;,]?\s*\))", r"\1", text, flags=re.IGNORECASE)
     text = re.sub(r"\s*[;,]\s*\)", ")", text)
     text = re.sub(r"\(\s*(?:[,;]\s*)*\)", "", text)

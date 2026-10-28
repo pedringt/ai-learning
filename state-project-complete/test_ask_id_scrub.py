@@ -150,3 +150,16 @@ def test_a_sentence_keeps_its_final_period():
     assert _clean_visible_ask_text("Is the vendor approved?", set()) == "Is the vendor approved?"
     assert _clean_visible_ask_text(". Leading dot left by an id", set()) == "Leading dot left by an id"
     assert _clean_visible_ask_text("review_1.", {"review_1"}) is None
+
+
+def test_a_linking_verb_left_after_a_removed_id_is_tidied():
+    # #577 (production, Oct 28): "( is open and blocking)".
+    text = ("Pilot launch still requires agreed thresholds (q-thresholds is open and blocking) and "
+            "retention terms (q-retention is open and blocking), so launch is not yet cleared.")
+    cleaned = _clean_visible_ask_text(text, {"q-thresholds", "q-retention"})
+    assert cleaned == ("Pilot launch still requires agreed thresholds (open and blocking) and "
+                       "retention terms (open and blocking), so launch is not yet cleared.")
+
+
+def test_a_parenthetical_that_never_held_an_id_is_left_alone():
+    assert _clean_visible_ask_text("Retention (is still open) matters.", set()) == "Retention (is still open) matters."
