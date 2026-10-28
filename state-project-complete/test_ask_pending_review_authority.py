@@ -80,6 +80,14 @@ def test_one_call_prompt_forbids_confirmed_language_for_open_reviews():
     assert "resolving its linked Question" in prompt or "resolves it" not in prompt.lower()
 
 
+def test_one_call_prompt_keeps_source_approval_attributed_not_denied():
+    # #579: Ask wrote "not yet approved in Current State" for a budget the source said was approved.
+    prompt = _one_call_prompt("What's the pilot budget, and is it approved?", _CANDIDATES, None)
+    assert "not yet recorded in Current State" in prompt
+    assert '"not yet approved"' in prompt
+    assert "does not approve or decide them" in prompt
+
+
 def test_synthesis_prompt_forbids_confirmed_language_for_open_reviews():
     selection = AskSelection(
         job="current_fact", state_ids=[], review_ids=[], blocking_question_ids=[],
