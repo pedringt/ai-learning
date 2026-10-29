@@ -106,6 +106,71 @@
       "source": "/state-ai-evals.html",
       "destination": "/state-evals",
       "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/AI_Customer_Success_Guide_to_Debugging_Claude_Agents.pdf",
+      "destination": "/cheat-sheets/AI_Customer_Success_Guide_to_Debugging_Claude_Agents",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/AI_Governance_Risk_PM_Cheat_Sheet.pdf",
+      "destination": "/cheat-sheets/AI_Governance_Risk_PM_Cheat_Sheet",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/AI_Product_Discovery_Questions.pdf",
+      "destination": "/cheat-sheets/AI_Product_Discovery_Questions",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/AI_Product_Evals_Cheat_Sheet.pdf",
+      "destination": "/cheat-sheets/AI_Product_Evals_Cheat_Sheet",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/AI_Production_Reliability_and_Observability.pdf",
+      "destination": "/cheat-sheets/AI_Production_Reliability_and_Observability",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/Anatomy_of_an_LLM_Application.pdf",
+      "destination": "/cheat-sheets/Anatomy_of_an_LLM_Application",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/BUILD_BOOST_BUY_DECISION_TREE.pdf",
+      "destination": "/cheat-sheets/BUILD_BOOST_BUY_DECISION_TREE",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/Building_Software_with_AI.pdf",
+      "destination": "/cheat-sheets/Building_Software_with_AI",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/Claude_Managed_Agents_Tracing_Cheat_Sheet.pdf",
+      "destination": "/cheat-sheets/Claude_Managed_Agents_Tracing_Cheat_Sheet",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/Efficient_AI_Use_for_Product_Work.pdf",
+      "destination": "/cheat-sheets/Efficient_AI_Use_for_Product_Work",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/Human_AI_Workflow_Design_Cheat_Sheet.pdf",
+      "destination": "/cheat-sheets/Human_AI_Workflow_Design_Cheat_Sheet",
+      "permanent": true
+    },
+    {
+      "source": "/cheat-sheets/Testing_and_Evaluating_AI_Systems.pdf",
+      "destination": "/cheat-sheets/Testing_and_Evaluating_AI_Systems",
+      "permanent": true
+    },
+    {
+      "source": "/assets/AI_Feature_Architecture_Cost_Cheat_Sheet_Plain_v2.pdf",
+      "destination": "/state-architecture-cost",
+      "permanent": true
     }
   ],
   "headers": [
