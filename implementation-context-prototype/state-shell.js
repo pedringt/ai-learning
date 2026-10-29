@@ -55,47 +55,6 @@
     }
   }
 
-  /* Surface the controlled Managed Agents exercise beside the existing
-     reliability and observability references instead of inventing a new
-     learning-resource treatment. */
-  const learningPage=document.querySelector('[data-page="learn"]');
-  if(learningPage&&!learningPage.querySelector('a[href="cheat-sheets/Claude_Managed_Agents_Tracing_Cheat_Sheet.pdf"]')){
-    const observability=learningPage.querySelector('a[href="cheat-sheets/State_Learning_Cheat_Sheet_05_Production_Reliability_and_Observability.pdf"]');
-    const resourceRow=observability?.closest('.resource-row');
-    if(resourceRow){
-      const tracingResource=document.createElement('a');
-      tracingResource.className='resource-link';
-      tracingResource.href='cheat-sheets/Claude_Managed_Agents_Tracing_Cheat_Sheet.pdf';
-      tracingResource.target='_blank';
-      tracingResource.rel='noopener noreferrer';
-      tracingResource.textContent='Managed agents + tracing';
-      resourceRow.appendChild(tracingResource);
-    }
-  }
-
-  /* Keep the eval cheat sheet with the Learning Guide's Quality, Risk &
-     Governance material. Reuse the existing resource-row/link classes so it
-     behaves like the rest of the learning library on desktop and mobile. */
-  if(learningPage&&!learningPage.querySelector('a[href="cheat-sheets/AI_Product_Evals_Cheat_Sheet.pdf"]')){
-    const qualityStage=learningPage.querySelector('#quality-evals');
-    const practice=qualityStage?.querySelector('.stage-group.practice');
-    let resourceRow=qualityStage?.querySelector('.resource-row');
-    if(!resourceRow&&practice){
-      resourceRow=document.createElement('div');
-      resourceRow.className='resource-row';
-      practice.insertAdjacentElement('afterend',resourceRow);
-    }
-    if(resourceRow){
-      const evalResource=document.createElement('a');
-      evalResource.className='resource-link';
-      evalResource.href='cheat-sheets/AI_Product_Evals_Cheat_Sheet.pdf';
-      evalResource.target='_blank';
-      evalResource.rel='noopener noreferrer';
-      evalResource.textContent='AI Product Evals Cheat Sheet';
-      resourceRow.appendChild(evalResource);
-    }
-  }
-
   /* Keep the validation story precise about the user's actual background:
      hands-on QA was primarily manual; broader testing familiarity came from
      working closely with software teams in project management. */
