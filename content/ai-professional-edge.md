@@ -46,6 +46,14 @@ Multi-step AI work may time out, fail halfway through, receive the same request 
 
 **Ask:** If this stops halfway through or runs twice, what happens?
 
+### Separate execution, checking, triggering, and improvement
+
+Long-running agents often involve several distinct loops, though they need not be separate services. The execution loop chooses steps, calls tools, and observes results. A verification loop checks the result against explicit criteria, using software checks, human review, or model-based assessment, and can request another attempt. A model checking another model's work does not guarantee correctness. An event-driven loop starts work when an approved signal occurs. An improvement loop examines past runs to propose changes to the instructions, tools, or workflow around the model.
+
+These loops need different controls. Bound retries by attempts, time, or cost, and define when to stop or escalate. Changes proposed from past runs are proposals: they should pass evaluation and the applicable approval process before release. Further reading: [Loop Engineering with LangChain Deep Agents](https://www.deeplearning.ai/courses/loop-engineering-with-langchain-deep-agents) (DeepLearning.AI course with LangChain, October 2026).
+
+**Ask:** Which part performs the task, which checks it, what starts it, and how do improvements become approved changes?
+
 ### Diagnose multi-step failures at the first bad step
 
 A final success or failure score can hide the real bug. Trace a long run back to the first wrong response or tool action, then separate that root cause from later steps that inherited it.
