@@ -204,6 +204,32 @@ const q={review:latestReview,ask:latestAsk,recent:[
     assert.deepStrictEqual([res.code,res.body.detail],[403,'Invalid Project Health decision key']);
   });
 
+  // Oct 30 (Paige): with no saved snapshot the page's first paint, before the refresh starts, read "Healthy" for State
+  // and then switched to "Watch · AI evals need to be rerun". The first paint must not give a verdict.
+  await check('first paint with no snapshot shows Checking, not Healthy',()=>{
+    for(const project of M.PROJECTS){
+      const data=M.hydrateProjectData(project,null);
+      assert.strictEqual(M.projectStatus(data).label,'Checking',project.id);
+      assert.strictEqual(M.overallAttention(data).kind,'unknown',project.id);
+      assert.match(M.cardMarkup(data,false),/Checking project health/,project.id);
+      assert.doesNotMatch(M.cardMarkup(data,false),/Healthy/,project.id);
+    }
+  });
+  await check('a saved snapshot still paints its saved status',()=>{
+    const quality={review:latestReview,ask:latestAsk,behaviorUpdatedAt:'2026-10-27T09:00:00Z'};
+    const data=M.hydrateProjectData(PROJECT('state'),{projectId:'state',quality,qualityBehaviorUpdatedAt:'2026-10-27T09:00:00Z'});
+    assert.strictEqual(data.pending.size,0);
+    assert.notStrictEqual(M.projectStatus(data).label,'Checking');
+  });
+  await check('State waits for AI eval freshness before giving a verdict',()=>{
+    const data=M.emptyProjectData(PROJECT('state'),null);
+    data.quality={review:review({created_at:'2026-10-26 20:00:33'}),ask:ask({created_at:'2026-10-26 20:00:33'})};
+    data.pending.add('Quality behavior');
+    assert.strictEqual(M.projectStatus(data).label,'Checking');
+    data.pending.delete('Quality behavior');
+    data.quality.behaviorUpdatedAt='2026-10-27T09:00:00Z';
+    assert.strictEqual(M.projectStatus(data).label,'Watch');
+  });
   console.log(`\n${pass} passed, ${fail} failed`);
   if(fail)process.exit(1);
 })();

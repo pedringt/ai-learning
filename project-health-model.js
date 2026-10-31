@@ -287,7 +287,7 @@
   }
   function overallAttention(data){
     const pending=pendingSet(data);
-    if(['Delivery','Quality','Production backend'].some(label=>pending.has(label))) return {kind:'unknown',title:'Checking project health',detail:'Core signals are still loading.'};
+    if(STATUS_SIGNALS.some(label=>pending.has(label))) return {kind:'unknown',title:'Checking project health',detail:'Core signals are still loading.'};
     const liveIncidents=activityReviewItems(data).filter(item=>!item.resolved);
     if(liveIncidents.length) return {kind:'bad',title:liveIncidents[0].title,detail:liveIncidents[0].impact};
     let quality=productOpenItems(data);
@@ -948,8 +948,17 @@
     };
   }
 
+  // The page draws once before the first refresh starts. With no saved snapshot (first visit, private window, cleared
+  // storage) the empty data would read as "Healthy" for that frame (Paige, Oct 30), so mark its core signals pending:
+  // the project shows "Checking" until the first load lands.
+  function initialPendingSignals(project){
+    return ['Delivery','Quality',...(project?.id==='state'?['Production backend','Quality behavior']:[])];
+  }
   function hydrateProjectData(project,saved){
-    return emptyProjectData(project,saved&&saved.projectId===project.id?saved:null);
+    const match=saved&&saved.projectId===project.id?saved:null;
+    const data=emptyProjectData(project,match);
+    if(!match)initialPendingSignals(project).forEach(label=>data.pending.add(label));
+    return data;
   }
   function investigationHistorySummary(investigation){
     if(!investigation)return'Investigation completed';
