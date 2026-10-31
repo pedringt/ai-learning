@@ -1429,3 +1429,19 @@ html:not(#_#_#_) .overview-stage .workspace-stage-pill.is-late-discovery{backgro
 /* Cold load: the loading card is not an alert, so its icon stays neutral until items arrive */
 html:not(#_#_#_) .workspace-attention.is-loading .attention-head-icon{border-color:var(--line,#d8dde6)!important;color:var(--muted,#6b7280)!important;background:var(--surface,#fff)!important;box-shadow:none!important}
 html:not(#_#_#_) .workspace-attention.is-loading .attention-head-icon::before{color:var(--muted,#6b7280)!important}
+
+/* Oct 30: on phones the floating Ask button (44px, 14px from the corner) sat on the Workspace
+   "Review" badges and card links, which all hug the right edge. Keep a right gutter so they end
+   ~9px left of the button. Each card's inner padding differs, so each inset differs; together
+   they line up at viewport-67px. Card headers skip the gutter under 360px, where it wrapped the
+   heading to four lines, and What Changed only needs it while the cards are one column. */
+@media(max-width:760px){
+  html body .workspace-attention .attention-item{padding-right:38px!important}
+  html body .workspace-status-card>.eyebrow{padding-right:34px!important}
+}
+@media(min-width:360px) and (max-width:760px){
+  html body .workspace-attention-head{padding-right:38px!important}
+}
+@media(min-width:360px) and (max-width:700px){
+  html body .workspace-recent-head{padding-right:36px!important}
+}
