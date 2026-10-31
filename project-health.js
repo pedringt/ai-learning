@@ -1175,11 +1175,15 @@
       applyTabState();
       root.PROJECT_HEALTH_LAST_TIMINGS=Object.fromEntries(state.map(item=>[item.project.id,{...item.timings}]));
     }
+    // requestAnimationFrame never fires in a hidden or background page, so a render queued there waited forever and the
+    // page kept its first paint (Oct 31: every card stuck on "Checking" after "Updated just now"). A timer backs it up;
+    // whichever fires first renders, once.
     function scheduleRender(){
       if(renderQueued)return;
       renderQueued=true;
-      const schedule=root.requestAnimationFrame||((fn)=>root.setTimeout(fn,16));
-      schedule(renderNow);
+      const run=()=>{if(renderQueued)renderNow();};
+      if(root.requestAnimationFrame)root.requestAnimationFrame(run);
+      root.setTimeout(run,root.requestAnimationFrame?250:16);
     }
     function persist(){saveSnapshot(root,state);}
 
