@@ -131,11 +131,13 @@ Identify who receives user reports, who investigates an AI behavior issue, and w
 
 **Ask:** Who responds when the AI is wrong but the service is technically healthy?
 
-### Check data-handling boundaries before connecting tools
+### Check tool trust and data boundaries before connecting systems
 
-Map sensitive fields, source trust, third-party processing, retention, and logs. Test whether untrusted retrieved text tries to override instructions or permissions.
+Before adopting extensions, plugins, or agent tools, verify their publisher, distribution channel, update process, and access requirements. A trusted product name does not guarantee that every marketplace or update channel distributing it is trustworthy. Further reading: [Inside a malicious Claude Code-branded extension and its persistent SSH backdoor](https://www.microsoft.com/en-us/security/blog/2026/10/30/inside-malicious-claude-code-branded-cursor-extension-persistent-ssh-backdoor/) (Microsoft Security Research, October 2026), where a tampered copy reached users through one marketplace while the publisher's own channels were unaffected.
 
-**Ask:** Can external content change what the agent is authorized to do?
+Map sensitive fields, source trust, third-party processing, retention, and logs. Test whether untrusted retrieved content attempts to override instructions or permissions.
+
+**Ask:** Can we trust the software supplying this capability, and can any content it accesses change what the agent is authorized to do?
 
 ### Verify real adoption beyond the pilot
 
