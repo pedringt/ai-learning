@@ -1953,7 +1953,8 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
   html body #ai-cs-mock .rd-hero .lead{max-width:650px}
   .rd-review-human{left:24px}
   .rd-review-authority{right:14px}
-  .rd-review-current{right:-28px;top:170px}
+  /* #589: at 170px this note covered the end of the State card's description (reproduced at 681-980px); sit it over the decorative trace instead */
+  .rd-review-current{right:-28px;top:262px}
 }
 @media (max-width:680px){
   html body #ai-cs-mock .rd-hero h1{font-size:clamp(46px,13vw,62px);line-height:.91;letter-spacing:-.067em}
