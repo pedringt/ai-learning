@@ -94,8 +94,9 @@ function cachedSnapshot(){
     assert.ok(story.expected.details.some(line=>/^Also acceptable: flag the Current State fact as at risk; open a new Question/.test(line)),'alternatives move to details');
     assert.ok(story.expected.details.some(line=>/must not say “was revised”/.test(line)),'forbidden phrases move to details');
     assert.strictEqual(story.consequence.direction,'missed');
-    assert.match(story.consequence.text,/^This run missed a needed Review: no change to Current State was put up for approval, so Current State still says “Evaluation uses the Q2 sample split/);
-    assert.match(story.consequence.text,/did not make this scenario’s unsafe mistake \(overstating what the Evidence establishes\)/,'the miss is in the cautious direction (unsafe_if: overstatement)');
+    assert.match(story.consequence.text,/^This run missed a needed Review, so the agreed revision plan wasn’t proposed for approval\. It did not incorrectly report the revision as completed\.$/);
+    assert.match(story.consequence.text,/It did not incorrectly report the revision as completed\./,'the miss is in the cautious direction (unsafe_if: overstatement)');
+    assert.doesNotMatch(story.consequence.text,/Current State (still says|was updated)|Evaluation uses/,'the Consequence neither repeats the Evidence nor implies a Review updates Current State');
     assert.doesNotMatch(story.consequence.text,/high|impact|severity/i,'severity is not presented as this run\'s outcome');
     assert.doesNotMatch(story.nextStep,/\. /,'Next step is one sentence');
     assert.match(story.nextStep,/State or the contract/);
@@ -151,7 +152,7 @@ function cachedSnapshot(){
     const unsafe=M.failureStory({scenario_id:'review_ambiguity_opens_question',severity:'high',expected:'open_question',observed:'update_state',failed_checks:['interpretation']},review());
     assert.strictEqual(unsafe.heading,'Support’s unconfirmed report about billing drafts led to a proposed Current State change');
     const wording=M.failureStory({scenario_id:'review_partial_question_answer',severity:'high',expected:'update_state',observed:'update_state',failed_checks:['interpretation']},review());
-    assert.strictEqual(wording.heading,'Security’s approval of Slack for two channels: the Review’s wording missed the contract');
+    assert.strictEqual(wording.heading,'Security’s approval of Slack for two channels: the Review didn’t meet the expected wording requirements');
     const errored=M.failureStory({scenario_id:'review_direct_reversal',severity:'high',expected:'update_state',observed:'error',failed_checks:['review_needed','interpretation','processing']},review());
     assert.strictEqual(errored.heading,'Security’s pause of password-reset automation could not be scored');
     assert.doesNotMatch(errored.observed.text,/No Review was created/,'an error says nothing about Reviews');
@@ -254,7 +255,7 @@ function cachedSnapshot(){
 
   // ---- #597: counts, grammar, comparability ----
   await check('counts and percentage agree for 0, 1 and several failures, with singular/plural grammar',()=>{
-    const cases=[[1,0,'16 of 16 passed','100%',null],[0.9375,1,'15 of 16 passed','93.8%','1 high-impact AI scenario needs review'],[0.8125,3,'13 of 16 passed','81.3%','3 high-impact AI scenarios need review']];
+    const cases=[[1,0,'16 of 16 passed','100%',null],[0.9375,1,'15 of 16 passed','93.8%','1 failure in a high-severity AI scenario needs review'],[0.8125,3,'13 of 16 passed','81.3%','3 failures in high-severity AI scenarios need review']];
     for(const [score,severe,label,pct,title] of cases){
       const run=review({interpretation_accuracy:score,high_severity_failures:severe,failure_details:[]});
       assert.strictEqual(M.scenarioPassLabel(run,score),label);
@@ -265,7 +266,7 @@ function cachedSnapshot(){
     const lower=M.stateMetricCards({review:review({interpretation_accuracy:0.875,high_severity_failures:0,failure_details:[]}),ask:ask(),recent:[]})[0];
     assert.strictEqual(lower.signal,'2 lower-impact misses');
     const unattributed=M.stateMetricCards({review:review({interpretation_accuracy:0.8125,high_severity_failures:3,failure_details:[]}),ask:ask(),recent:[]})[0];
-    assert.deepStrictEqual([unattributed.signal,unattributed.kind],['3 high-impact failures','bad'],'high-impact failures without details are never called lower-impact');
+    assert.deepStrictEqual([unattributed.signal,unattributed.kind],['3 failures in high-severity scenarios','bad'],'failures in high-severity scenarios without details are never called lower-severity');
     assert.strictEqual(M.scenarioPassLabel(review({errors:1}),14/15),'14 of 15 passed · 1 could not be scored','errored scenarios are not counted as passed or failed');
   });
   await check('the unique-scenario note uses the loaded totals and the catalog, never a fixed 29',()=>{
@@ -296,6 +297,33 @@ function cachedSnapshot(){
     assert.doesNotMatch(investigation.report,/declined/);
   });
 
+  // ---- Nov 3 approved follow-ups (#596/#597) ----
+  await check('a failure with too little recorded gets a neutral heading, never the scenario name',()=>{
+    const run=review();
+    const missing=M.failureStory({scenario_id:'review_planned_action_not_stated_as_done',severity:'high',failed_checks:['interpretation']},run);
+    assert.strictEqual(missing.heading,'An agreed revision plan: failure details weren’t recorded');
+    const askMissing=M.failureStory({scenario_id:'ask_blocker_not_omitted',severity:'high',failed_checks:[]},ask());
+    assert.match(askMissing.heading,/^The answer to “[^”]+”: failure details weren’t recorded$/);
+    const unknown=M.failureStory({scenario_id:'review_not_in_catalog',severity:'high',failed_checks:[]},run);
+    assert.strictEqual(unknown.heading,'This scenario: failure details weren’t recorded');
+    for(const story of [missing,askMissing,unknown])assert.doesNotMatch(story.heading,/ failed$|not recorded as already done/);
+  });
+  await check('the approved agreed-plan Consequence replaces only that scenario’s missed-Review sentence',()=>{
+    const planned=M.failureStory(plannedFailure,review());
+    assert.strictEqual(planned.consequence.text,'This run missed a needed Review, so the agreed revision plan wasn’t proposed for approval. It did not incorrectly report the revision as completed.');
+    const other=M.failureStory({scenario_id:'review_partial_question_answer',severity:'high',observed:'preserve_evidence_only',failed_checks:['review_needed','action']},review());
+    assert.match(other.consequence.text,/^This run missed a needed Review: no change to Current State was put up for approval/);
+  });
+  await check('no user-facing text says "high-impact"; severity stays the scenario’s',()=>{
+    const fs=require('fs');
+    for(const file of ['../project-health.js','../project-health-model.js','../project-health.html']){
+      const source=fs.readFileSync(require.resolve(file),'utf8').split('\n').filter(line=>!/^\s*\/\//.test(line)).join('\n');
+      assert.doesNotMatch(source,/high-impact|High-impact/,file);
+    }
+    assert.strictEqual(M.highSeverityFailureText(1),'1 failure in a high-severity scenario');
+    assert.strictEqual(M.highSeverityFailureText(3),'3 failures in high-severity scenarios');
+  });
+
   // ---- #597: the page, end to end with stub fetches ----
   const realFetch=global.fetch;
   try{
@@ -314,7 +342,7 @@ function cachedSnapshot(){
         release();
         await done;
         assert.ok(await waitFor(()=>!/is-previous/.test(panel())),'after success the results are current');
-        assert.match(panel(),/1 high-impact scenario needs review/);
+        assert.match(panel(),/1 failure in a high-severity scenario needs review/);
         assert.match(panel(),/Recorded /);
         const health=elements.get('overviewHealthPanel').innerHTML;
         assert.match(health,/<strong>AI Evals<\/strong>[\s\S]*?signal-meta ">Recorded [^<]*<\/span>/,'the quality row shows when the eval ran, not a fetch time');
@@ -375,7 +403,7 @@ function cachedSnapshot(){
         assert.match(panel,/<span class="severity-chip high"[^>]*>Scenario severity: high<\/span>/);
         assert.doesNotMatch(panel,/High impact</);
         assert.match(panel,/<h4>An agreed revision plan didn’t trigger a Review<\/h4><p class="failure-scenario">Scenario: An agreed plan is not recorded as already done<\/p>/);
-        assert.match(panel,/<details class="failure-contract"><summary>Contract details<\/summary>[\s\S]*Also acceptable[\s\S]*must not say[\s\S]*Contract note:/);
+        assert.match(panel,/<details class="failure-contract"><summary>Expected behavior details<\/summary>[\s\S]*Also acceptable[\s\S]*must not say[\s\S]*Contract note:/);
         const reading=panel.split('<details class="failure-contract">')[0];
         assert.doesNotMatch(reading,/Also acceptable|must not say|Contract note/,'contract rules are not in the visible text');
         assert.doesNotMatch(panel,/<details[^>]* open/,'details start collapsed');

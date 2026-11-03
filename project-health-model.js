@@ -145,7 +145,8 @@
     return {resolvedReviews:Number(live.resolved_reviews||0),acceptedAsProposedRate:live.accepted_as_proposed_rate,materialEditRate:live.material_edit_rate,review:controlled.latest_review_interpretation||null,ask:controlled.latest_ask_quality||null,recent:Array.isArray(controlled.recent)?controlled.recent:[]};
   }
   function percent(v){return v==null||Number.isNaN(Number(v))?'Not measured':(Math.round(Number(v)*1000)/10)+'%';}
-  function highImpactText(value){const n=Number(value||0);return n+' high-impact failure'+(n===1?'':'s');}
+  // Severity belongs to the scenario, not to what this run's failure did (#596): "1 failure in a high-severity scenario".
+  function highSeverityFailureText(value){const n=Number(value||0);return n===1?'1 failure in a high-severity scenario':n+' failures in high-severity scenarios';}
   function modelDisplayName(value){
     const raw=String(value||'');
     if(raw==='claude-haiku-4-5-20251001')return'Claude Haiku 4.5';
@@ -158,7 +159,7 @@
     if(!runs.length) return {kind:'warn',title:'AI evals have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
     if(stateEvalResultsStale(q)) return {kind:'warn',title:'AI evals need to be rerun',detail:stateEvalStaleReason(q)+' Historical failures are not treated as current product failures.',nextAction:'Run the controlled AI evals again.',owner:'Product'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
-    if(severe>0) return {kind:'bad',title:severe+' high-impact AI scenario'+(severe===1?' needs':'s need')+' review',detail:'Most aggregate quality signals may still look healthy; review the specific failed scenario'+(severe===1?'':'s')+' before deciding whether product behavior or the eval contract should change.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
+    if(severe>0) return {kind:'bad',title:(severe===1?'1 failure in a high-severity AI scenario needs':severe+' failures in high-severity AI scenarios need')+' review',detail:'Most aggregate quality signals may still look healthy; review the specific failed scenario'+(severe===1?'':'s')+' before deciding whether product behavior or the eval contract should change.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
     if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI evals need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
     const missing=[];
     if(!q.review||evalScore(q.review)==null) missing.push('update understanding');
@@ -166,7 +167,7 @@
     if(q.ask?.authority_accuracy==null) missing.push('decision authority');
     if(q.ask?.uncertainty_accuracy==null) missing.push('uncertainty handling');
     if(missing.length) return {kind:'warn',title:'Some AI quality signals are not measured',detail:'Project Health cannot call State quality healthy while '+missing.join(', ')+' '+(missing.length===1?'is':'are')+' unmeasured.',nextAction:'Run or repair the missing controlled quality checks before treating the quality signal as healthy.',owner:'Product'};
-    return {kind:'good',title:'AI evals are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
+    return {kind:'good',title:'AI evals are healthy',detail:'The latest recorded checks reported no failures in high-severity scenarios.'};
   }
   function deliveryAttention(d){
     if(!d) return {kind:'warn',title:'Delivery status is unavailable',detail:'Project Health could not confirm the latest release status.'};
@@ -465,15 +466,15 @@
   function releaseReadiness(data){
     const incidents=activityReviewItems(data).filter(item=>!item.resolved);
     const open=productOpenItems(data);
-    if(incidents.length||open.some(item=>item.kind==='bad')) return {kind:'bad',label:'Needs attention',detail:'Resolve the current high-impact issue before treating the next release as healthy.'};
+    if(incidents.length||open.some(item=>item.kind==='bad')) return {kind:'bad',label:'Needs attention',detail:'Resolve the issue that needs attention before treating the next release as healthy.'};
     if(open.length) return {kind:'warn',label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
     const unchecked=uncheckedSignals(data);
     if(unchecked.length) return {kind:'unknown',label:'Incomplete',detail:incompleteAttention(unchecked).title+'. Release health cannot be confirmed.'};
     if(deliveryAttentionForData(data).kind==='good'&&!qualityNotMeasured(data)&&unmeasuredQuality(data).length)
-      return {kind:'good',label:PARTLY_MEASURED_LABEL,detail:'Delivery is healthy and there is no current high-impact quality issue in what is measured. '+unmeasuredText(unmeasuredQuality(data))};
+      return {kind:'good',label:PARTLY_MEASURED_LABEL,detail:'Delivery is healthy and no quality issue needs attention in what is measured. '+unmeasuredText(unmeasuredQuality(data))};
     if(deliveryAttentionForData(data).kind==='good') return qualityNotMeasured(data)
       ?{kind:'good',label:'Healthy',detail:'Delivery is healthy. Quality checks aren\u2019t connected for this project, so quality is not measured.'}
-      :{kind:'good',label:'Healthy',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
+      :{kind:'good',label:'Healthy',detail:'Delivery is healthy and no quality issue needs attention.'};
     return {kind:'unknown',label:'Unknown',detail:'There is not enough current evidence to confirm release health.'};
   }
   function regressionSignal(data){
@@ -622,7 +623,7 @@
     const overall=overallAttention(data);
     const readiness=releaseReadiness(data);
     if(overall.kind==='good'&&open.some(item=>['bad','warn'].includes(item.kind)))issues.push('Overall health is healthy while product-quality work is still open.');
-    if(readiness.kind==='good'&&open.some(item=>item.kind==='bad'))issues.push('Release health is healthy while a high-impact product-quality issue is open.');
+    if(readiness.kind==='good'&&open.some(item=>item.kind==='bad'))issues.push('Release health is healthy while a product-quality issue that needs attention is open.');
     if(readiness.kind==='good'&&activityReviewItems(data).some(item=>!item.resolved))issues.push('Release health is healthy while an unresolved incident is open.');
     return issues;
   }
@@ -669,7 +670,7 @@
     if(data?.project?.quality==='state'&&data.quality){
       const q=qualityAttention(data.quality);
       if(stateEvalResultsStale(data.quality))return 'Rerun the AI evals before changing State behavior or the eval.';
-      if(q.kind==='bad')return 'Review the high-impact failure class before changing the prompt, product behavior, or eval.';
+      if(q.kind==='bad')return 'Review the failed high-severity scenarios before changing the prompt, product behavior, or eval.';
       if(q.kind==='warn')return 'Review the quality miss and decide whether it represents product behavior or eval noise.';
     }else{
       const q=externalQualityAttention(data?.externalQuality);
@@ -756,6 +757,11 @@
     review_same_unknown_links_existing_question:'Conflicting retention claims',
     review_planned_action_not_stated_as_done:'An agreed revision plan',
     review_rationale_states_what_evidence_establishes:'Finance’s confirmed $40,000 budget'
+  };
+  // Paige-approved Consequence text for a scenario whose run missed a needed Review (#596, Nov 3). It replaces the generic
+  // sentence, which repeats the Evidence. No entry means the generic sentence.
+  const MISSED_REVIEW_CONSEQUENCES={
+    review_planned_action_not_stated_as_done:'This run missed a needed Review, so the agreed revision plan wasn’t proposed for approval. It did not incorrectly report the revision as completed.'
   };
   // The direction each scenario marks as unsafe (its unsafe_if), in words.
   const UNSAFE_DIRECTIONS={state_change:'proposing a Current State change',overstatement:'overstating what the Evidence establishes'};
@@ -957,6 +963,7 @@
         consequence=(reviewCreated===false?'This run missed a needed Review: ':'This run’s Review proposed nothing: ')+missing;
         // With no Review there is no proposal, Review or rationale text, so nothing could overstate the Evidence.
         if(unsafeWords&&reviewCreated===false)consequence+=' It did not make this scenario’s unsafe mistake ('+unsafeWords+').';
+        if(reviewCreated===false&&MISSED_REVIEW_CONSEQUENCES[id])consequence=MISSED_REVIEW_CONSEQUENCES[id];
         else if(unsafeWords&&scenario.unsafe_if==='state_change')consequence+=' No change was proposed, so it did not make this scenario’s unsafe mistake ('+unsafeWords+').';
       }else if(reviewCreated===true&&!scenario.review_needed){
         direction='routing';
@@ -983,12 +990,16 @@
       else if(reviewCreated===false&&scenario?.review_needed)heading=subject+' didn’t trigger a Review';
       else if(STATE_CHANGE_OUTCOMES.has(recorded.action)&&scenario?.unsafe_if==='state_change')heading=subject+' led to a proposed Current State change';
       else if(reviewCreated===true&&scenario&&!scenario.review_needed)heading=subject+' triggered a Review it doesn’t need';
-      else if(allowed.includes(recorded.action)&&checks.includes('interpretation'))heading=subject+': the Review’s wording missed the contract';
+      else if(allowed.includes(recorded.action)&&checks.includes('interpretation'))heading=subject+': the Review didn’t meet the expected wording requirements';
       else if(recorded.action==='preserve_evidence_only')heading=subject+': the Review proposed nothing';
       else heading=subject+': State '+outcomeShort(recorded.action,'observed')+', not '+(expectedCode?outcomeShort(expectedCode,'expected'):'the expected outcome');
     }else if(suite==='ask'&&askPrimary){
       heading=(scenario?.question?'The answer to '+quote(scenario.question):'The answer')+' '+ASK_CHECKS[askPrimary].failed;
-    }else heading=scenarioTitle(id,detail?.category||scenario?.category)+' failed';
+    }else{
+      // Not enough recorded to say how it failed: a neutral heading, never the scenario's own (success-sounding) name.
+      const fallbackSubject=SCENARIO_SUBJECTS[id]||(suite==='ask'&&scenario?.question?'The answer to '+quote(scenario.question):'This scenario');
+      heading=fallbackSubject+': failure details weren’t recorded';
+    }
     const contractNote=scenario?.rationale||null;
     const nextStep='Decide which is wrong, State or the contract: fix State and rerun '+suiteLabel+', or record a product decision before changing the contract.';
     return {
@@ -1092,7 +1103,7 @@
     }
     if(p.id==='state'&&Array.isArray(q?.recent)){
       for(const item of q.recent.slice(0,6)){
-        if(item.created_at)items.push({when:item.created_at,type:'Quality check',category:'quality',title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+Number(item.high_severity_failures||0)+' high-impact failures'});
+        if(item.created_at)items.push({when:item.created_at,type:'Quality check',category:'quality',title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+highSeverityFailureText(item.high_severity_failures)});
       }
     }else if(p.id==='tastemake'&&externalQ?.ci?.updated_at){
       items.push({when:externalQ.ci.updated_at,type:'Quality check',category:'quality',title:'Recommendation quality checks updated',detail:externalQ.ci.conclusion==='success'?'Automated recommendation checks passed.':'Latest check result recorded.'});
@@ -1450,7 +1461,7 @@
       items.push({...visitComparison('ask','Answer-quality'),observedAt:currentQ.askAt,tab:'ai-quality'});
     }
     if(currentQ.severe!=null&&oldQ.severe!=null&&currentQ.severe!==oldQ.severe){
-      items.push({title:'High-impact quality failures changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt,tab:'ai-quality'});
+      items.push({title:'Failures in high-severity scenarios changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt,tab:'ai-quality'});
     }
     const analytics=data.platform?.analytics;
     if(before.analyticsAvailable!==null&&analytics&&before.analyticsAvailable!==analytics.available){
@@ -1718,10 +1729,10 @@
       const run=q?.[m.run],score=metricScore(run,m.field),severe=failureCheckCount(q,m.check);
       const kind=score==null?'unknown':severe?'bad':score<1?'warn':'good';
       const misses=scenarioCounts(run,score)?.failed;
-      // An older run can record high-impact failures without per-scenario details; never call those lower-impact.
+      // An older run can record failures in high-severity scenarios without per-scenario details; never call those lower-severity.
       const unattributed=!severe&&Number(run?.high_severity_failures||0)>0&&!(Array.isArray(run?.failure_details)&&run.failure_details.length);
-      if(unattributed&&score!=null&&score<1)return {label:m.label,score,kind:'bad',signal:m.run==='review'?highImpactText(run.high_severity_failures):'High-impact failures in this suite',sub:scenarioPassLabel(run,score),display:scenarioCountDisplay(run,score),percent:percent(score),delta:mockDelta(q?.recent,m.suite,m.field,q?.contractUpdatedAt),trend:mockTrendValues(q,m.suite,m.field)};
-      const signal=score==null?unknownSignal:severe?highImpactText(severe):score<1?(misses?misses+' lower-impact miss'+(misses===1?'':'es'):'Lower-impact miss'):'0 failures';
+      if(unattributed&&score!=null&&score<1)return {label:m.label,score,kind:'bad',signal:m.run==='review'?highSeverityFailureText(run.high_severity_failures):'Failures in high-severity scenarios in this suite',sub:scenarioPassLabel(run,score),display:scenarioCountDisplay(run,score),percent:percent(score),delta:mockDelta(q?.recent,m.suite,m.field,q?.contractUpdatedAt),trend:mockTrendValues(q,m.suite,m.field)};
+      const signal=score==null?unknownSignal:severe?highSeverityFailureText(severe):score<1?(misses?misses+' lower-impact miss'+(misses===1?'':'es'):'Lower-impact miss'):'0 failures';
       return {label:m.label,score,kind,signal,sub:score==null?m.sub:scenarioPassLabel(run,score),display:score==null?null:scenarioCountDisplay(run,score),percent:score==null?null:percent(score),delta:mockDelta(q?.recent,m.suite,m.field,q?.contractUpdatedAt),trend:mockTrendValues(q,m.suite,m.field)};
     });
   }
@@ -1738,7 +1749,7 @@
     return '<div class="eval-card compact state-scenario-card"><strong>'+esc(title)+'</strong>'+
       '<div class="scenario-result">'+esc(pass.replace(' passed',' scenarios passed'))+'</div>'+
       '<div class="eval-card-meta">'+
-        (note?'<span class="failure">'+esc(note)+'</span>':'<span class="healthy-note">No high-impact failures</span>')+
+        (note?'<span class="failure">'+esc(note)+'</span>':'<span class="healthy-note">No failures in high-severity scenarios</span>')+
         (trend?'<span class="trend '+trendClass+'">'+esc(trend)+'</span>':'')+
         '<span class="score-secondary">'+esc(percent(score))+'</span>'+
       '</div></div>';
@@ -1906,9 +1917,9 @@
     const overallLines=[];
     if(review){
       const score=evalScore(review),passed=review?.total!=null&&score!=null?Math.round(Number(review.total)*score):null;
-      overallLines.push('Update understanding: '+percent(score)+(passed!=null?' ('+passed+'/'+review.total+' scenarios)':'')+' · '+highImpactText(review.high_severity_failures));
+      overallLines.push('Update understanding: '+percent(score)+(passed!=null?' ('+passed+'/'+review.total+' scenarios)':'')+' · '+highSeverityFailureText(review.high_severity_failures));
     }
-    if(ask)overallLines.push('Answer quality: '+percent(evalScore(ask))+' · '+highImpactText(ask.high_severity_failures));
+    if(ask)overallLines.push('Answer quality: '+percent(evalScore(ask))+' · '+highSeverityFailureText(ask.high_severity_failures));
 
     if(stateEvalResultsStale(quality)){
       const report=[
@@ -1968,12 +1979,12 @@
       changeLines.push('- '+targeted.suiteLabel+' '+(delta===0?'unchanged at '+percent(relevantScore)+' since the previous run.':(delta>0?'improved ':'declined ')+Math.abs(delta)+' points from '+percent(previousScore)+' to '+percent(relevantScore)+'.'));
     }
     if(relevantComparison.comparable&&relevantRun&&previousRelevant&&Number(previousRelevant.high_severity_failures||0)!==Number(relevantRun.high_severity_failures||0)){
-      changeLines.push('- '+targeted.suiteLabel+' high-impact failures changed from '+Number(previousRelevant.high_severity_failures||0)+' to '+Number(relevantRun.high_severity_failures||0)+'.');
+      changeLines.push('- '+targeted.suiteLabel+' failures in high-severity scenarios changed from '+Number(previousRelevant.high_severity_failures||0)+' to '+Number(relevantRun.high_severity_failures||0)+'.');
     }
 
     const why=targeted
       ?story.consequence.text
-      :(details.length?'At least one current failure can affect maintained project truth or another high-impact behavior.':'The current miss is a quality/workflow issue rather than a production outage.');
+      :(details.length?'At least one current failure is in a high-severity scenario, which guards maintained project truth or another high-severity behavior.':'The current miss is a quality/workflow issue rather than a production outage.');
     const nextStep=targeted
       ?story.nextStep
       :details.length
@@ -2022,7 +2033,7 @@
     const latestQuality=data?.project?.quality==='state'&&data.quality
       ?(stateEvalResultsStale(data.quality)
         ?'Needs rerun · '+stateEvalStaleReason(data.quality)+' Historical failures are not treated as current product failures.'
-        :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+highImpactText(run.high_severity_failures)).join('\n'))
+        :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+highSeverityFailureText(run.high_severity_failures)).join('\n'))
       :projectQualityLabel(data);
     const release=data?.delivery
       ?commitTitle(data.delivery.message)+' · '+fmtDate(data.delivery.updatedAt)
@@ -2086,5 +2097,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

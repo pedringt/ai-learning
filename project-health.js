@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,refreshStatus,signalRefreshFailure,sectionFreshness}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,refreshStatus,signalRefreshFailure,sectionFreshness}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -692,11 +692,11 @@
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
         const staleResults=stateEvalResultsStale(q);
         const cards=[];
-        const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact failure'+(count===1?'':'s'):'';};
+        const noteFor=check=>{const count=failureCheckCount(q,check);return count?highSeverityFailureText(count):'';};
         const metricSignals=Object.fromEntries(stateMetricCards(q).map(card=>[card.label,card]));
         STATE_QUALITY_METRICS.forEach(m=>{
           const run=q?.[m.run],score=metricScore(run,m.field);
-          // A run that recorded high-impact failures without scenario details still says so (#597).
+          // A run that recorded failures in high-severity scenarios without scenario details still says so (#597).
           const card=metricSignals[m.label],note=noteFor(m.check)||(card?.kind==='bad'?card.signal:'');
           if(score!=null) cards.push(stateScenarioCard(m.label,score,run,evalTrend(q.recent,m.suite,m.field,q.contractUpdatedAt),note));
         });
@@ -705,7 +705,7 @@
         // #596: each failure reads Evidence → Observed → Expected → Consequence → Next step; identifiers stay one click away.
         const factBlock=(label,body)=>'<div class="failure-fact"><strong>'+esc(label)+'</strong><div>'+body+'</div></div>';
         const failureDetailHtml=!failureSummary.details?.length
-          ?'<p class="fact-gap">This run recorded '+failureSummary.count+' high-impact failure'+(failureSummary.count===1?'':'s')+' but no scenario-level details, so they cannot be explained here. Rerun the evals to record them.</p>'
+          ?'<p class="fact-gap">This run recorded '+highSeverityFailureText(failureSummary.count)+' but no scenario-level details, so they cannot be explained here. Rerun the evals to record them.</p>'
           :'<div class="failure-list">'+failureSummary.details.map(detail=>{
               const story=detail.story||failureStory(detail);
               const tech=story.technical;
@@ -722,7 +722,7 @@
               // Expected stays one line; alternatives, phrases and the contract note are one click away.
               const contractLines=[...story.expected.details,...(story.contractNote?['Contract note: '+story.contractNote]:[])];
               const expectedHtml='<p>'+esc(story.expected.text)+'</p>'+sourceHtml(story.expected.source)+
-                (contractLines.length?'<details class="failure-contract"><summary>Contract details</summary><ul>'+contractLines.map(line=>'<li>'+esc(line)+'</li>').join('')+'</ul></details>':'');
+                (contractLines.length?'<details class="failure-contract"><summary>Expected behavior details</summary><ul>'+contractLines.map(line=>'<li>'+esc(line)+'</li>').join('')+'</ul></details>':'');
               const gapsHtml=story.gaps.length?'<div class="failure-gaps"><strong>Not recorded</strong><ul>'+story.gaps.map(gap=>'<li>'+esc(gap)+'</li>').join('')+'</ul></div>':'';
               const techRows=[
                 ['Scenario ID',tech.scenarioId],['Suite',story.suiteLabel],['Category',tech.category||'—'],['Scenario severity',tech.severity],
@@ -757,7 +757,7 @@
               ?'Previous results · couldn’t refresh'
               :(staleResults
                 ?'AI evals need to be rerun'
-                :(failureSummary.count?failureSummary.count+' high-impact scenario'+(failureSummary.count===1?' needs':'s need')+' review':'AI evals are healthy'));
+                :(failureSummary.count?(failureSummary.count===1?'1 failure in a high-severity scenario needs':failureSummary.count+' failures in high-severity scenarios need')+' review':'AI evals are healthy'));
         const recordedText=latestDate?'Recorded '+fmtDate(latestDate):'Recording time unknown';
         const statusDetail=activeEvalRun
           ?'Started '+esc(fmtDate(activeEvalRun.startedAt))+' · Previous results stay visible below until this run finishes.'
@@ -766,8 +766,8 @@
             :(staleResults
               ?esc(recordedText)+' · Previous run needs a rerun before these scores are treated as current.'
               :esc(recordedText)+' · '+esc(total||'—')+' scenarios · '+(failureSummary.count
-                ?failureSummary.count+' high-impact failure'+(failureSummary.count===1?'':'s')
-                :'no high-impact failures'));
+                ?highSeverityFailureText(failureSummary.count)
+                :'no failures in high-severity scenarios'));
         const statusAction=(!activeEvalRun&&!staleResults&&failureSummary.count)
           ?'<button class="button small eval-overview-action" type="button" data-jump-quality-failures>Review failure'+(failureSummary.count===1?'':'s')+'</button>'
           :'';

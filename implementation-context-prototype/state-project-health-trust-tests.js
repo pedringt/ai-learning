@@ -34,11 +34,11 @@ const q={review:latestReview,ask:latestAsk,recent:[
     assert.strictEqual(grounding.delta.label,'0 pts');
     const uncertainty=cards.find(c=>c.label==='Uncertainty handling');
     assert.strictEqual(uncertainty.score,0.9);
-    assert.strictEqual(uncertainty.signal,'1 high-impact failure');
+    assert.strictEqual(uncertainty.signal,'1 failure in a high-severity scenario');
     assert.strictEqual(uncertainty.kind,'bad');
     assert.deepStrictEqual(uncertainty.delta,{label:'↓ 10 pts',cls:'down'});
     const understanding=cards.find(c=>c.label==='Update understanding');
-    assert.strictEqual(understanding.signal,'2 high-impact failures');
+    assert.strictEqual(understanding.signal,'2 failures in high-severity scenarios');
     assert.strictEqual(understanding.sub,'13 of 16 passed','#597: counts read "15 of 16 passed"');
     assert.deepStrictEqual(understanding.delta,{label:'↓ 18.7 pts',cls:'down'});
   });

@@ -136,7 +136,7 @@ const mediumOnly=H.normalizeQuality({
 assert.strictEqual(H.qualityAttention(mediumOnly).kind,'warn');
 const mediumInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:mediumOnly});
 assert.match(mediumInvestigation.report,/75%/);
-assert.match(mediumInvestigation.report,/0 high-impact failures/);
+assert.match(mediumInvestigation.report,/0 failures in high-severity scenarios/);
 assert.match(mediumInvestigation.report,/Current AI eval failures/);
 assert.match(mediumInvestigation.report,/Overall AI eval status/);
 
@@ -234,7 +234,7 @@ assert.match(targetedUnknownReason.report,/Investigation scope\nAnswer quality �
 assert.match(targetedUnknownReason.report,/reason for the pause was not established/i);
 assert.match(targetedUnknownReason.report,/mistake an inferred explanation for maintained project truth/i);
 assert.match(targetedUnknownReason.report,/Overall AI eval status/);
-assert.match(targetedUnknownReason.report,/Answer quality: 90% · 1 high-impact failure/);
+assert.match(targetedUnknownReason.report,/Answer quality: 90% · 1 failure in a high-severity scenario/);
 assert.doesNotMatch(targetedUnknownReason.report,/Current assessment/);
 assert.strictEqual(targetedUnknownReason.nextCheckpoint,'After Answer quality is rerun.');
 const targetedHandoff=H.projectHandoff({
@@ -244,7 +244,7 @@ const targetedHandoff=H.projectHandoff({
   delivery:{sha:'28f8caafc6025947f8bd45bae6f7e3ea09504dbd',message:'Compact Project Health cards',updatedAt:'2026-09-30T20:00:00Z',vercel:{kind:'good'}},
   investigation:targetedUnknownReason
 });
-assert.match(targetedHandoff.handoffText,/1 high-impact failure\nAnswer quality: 90% · 1 high-impact failure/);
+assert.match(targetedHandoff.handoffText,/1 failure in a high-severity scenario\nAnswer quality: 90% · 1 failure in a high-severity scenario/);
 assert.match(targetedHandoff.handoffText,/Next checkpoint\nAfter Answer quality is rerun/);
 assert.doesNotMatch(targetedHandoff.handoffText,/Next decision/);
 assert.doesNotMatch(targetedHandoff.handoffText,/28f8caa/);
@@ -703,7 +703,7 @@ const handoff=H.projectHandoff({
 assert.strictEqual(handoff.handoff,true);
 assert.match(handoff.handoffText,/State project handoff/);
 assert.match(handoff.handoffText,/Next decision/);
-assert.match(handoff.handoffText,/No immediate product decision|Rerun the AI evals|Review the quality miss|Review the high-impact failure class/);
+assert.match(handoff.handoffText,/No immediate product decision|Rerun the AI evals|Review the quality miss|Review the failed high-severity scenarios/);
 const narcWithNoAi={...H.emptyProjectData(H.PROJECTS[2]),fresh:true,platform:{analytics:{configured:true,available:true},aiTelemetry:{configured:false,not_applicable:true}}};
 assert.ok(!H.setupGaps(narcWithNoAi).some(item=>/^AI /.test(item.label)));
 
