@@ -414,6 +414,21 @@ function cachedSnapshot(){
         assert.match(panel,/29 unique scenarios/);
       }finally{cleanup();}
     });
+    await check('the attention banner lists every item it counts',async()=>{
+      const {root,elements,cleanup}=stubRoot(null);
+      global.fetch=stubFetch({quality:async()=>({status:200,body:qualityPayload()})});
+      try{
+        await H.init(root);
+        const overview=()=>elements.get('mockDashboardOverview').innerHTML;
+        assert.ok(await waitFor(()=>/issues? needs? your review/.test(overview())),overview().slice(0,300));
+        const count=Number(overview().match(/(\d+) issues? needs? your review/)[1]);
+        const banner=overview().split('<section class="mock-dashboard-section mock-release-card">')[0];
+        const rows=(banner.match(/class="mock-issue-row"/g)||[]).length;
+        assert.ok(count>=2,'this fixture fails several sources, so more than one item is counted: '+count);
+        assert.strictEqual(rows,count,'rows shown = items counted');
+        assert.match(banner,/Couldn(?:'|&#39;|&#x27;)t check: /);
+      }finally{cleanup();}
+    });
   }finally{global.fetch=realFetch;}
 
   console.log(`\n${pass} passed, ${fail} failed`);

@@ -630,7 +630,8 @@
       const attentionHtml=checking
         ? '<div class="mock-skeleton" aria-hidden="true"><i></i><i></i></div>'
         : actionable.length
-        ? '<div class="mock-issue-row"><span class="mock-issue-dot"></span><div><strong>'+esc(actionable[0].title)+'</strong><p>'+esc(actionable[0].detail||'Review the current signal before changing product behavior.')+'</p></div><span class="mock-issue-meta">'+esc(actionable[0].owner||'Product')+'</span></div>'
+        // Every item the banner counts is listed, so "2 issues" never shows one row (#597 follow-up).
+        ? actionable.map(item=>'<div class="mock-issue-row"><span class="mock-issue-dot"></span><div><strong>'+esc(item.title)+'</strong><p>'+esc(item.detail||'Review the current signal before changing product behavior.')+'</p></div><span class="mock-issue-meta">'+esc(item.owner||'Product')+'</span></div>').join('')
         : '<div class="mock-issue-row"><span class="mock-issue-dot"'+(okSummary.qualityNotMeasured?'':' style="background:#16a36f"')+'></span><div><strong>'+esc(okSummary.rowTitle)+'</strong><p>'+esc(okSummary.rowDetail)+'</p></div><span class="mock-issue-meta">'+esc(okSummary.meta)+'</span></div>';
 
       // #597: one provenance label for the quality numbers on Overview and AI Evals. Previous results stay visible during a
