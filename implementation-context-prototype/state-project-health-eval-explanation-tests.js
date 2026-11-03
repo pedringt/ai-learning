@@ -204,7 +204,7 @@ function cachedSnapshot(){
     data.failures.push({label:'Quality',reason:'server error 502',status:502});
     const p=M.qualityProvenance(data);
     assert.deepStrictEqual([p.status,p.previous],['stale',true]);
-    assert.match(p.detail,/Couldn’t refresh the AI eval results \(server error 502\)\. Showing previous results, recorded .*; last loaded/);
+    assert.match(p.detail,/Couldn’t refresh the AI eval results \(server error 502\) · showing previously loaded data, recorded .* · last fetched at /);
     assert.strictEqual(M.stateMetricCards(data.quality)[0].display,'15 of 16','the previous numbers stay');
   });
   await check('a first visit shows no numbers while loading, and no fake zero when loading fails',()=>{
@@ -373,7 +373,7 @@ function cachedSnapshot(){
         assert.match(panel,/15 of 16 scenarios passed/);
         assert.match(panel,/eval-results is-previous/);
         assert.match(elements.get('mockDashboardOverview').innerHTML,/quality-provenance stale/);
-        assert.match(elements.get('overviewHealthPanel').innerHTML,/Couldn’t refresh · showing retained data from /,'the Overview quality row says its data is retained');
+        assert.match(elements.get('overviewHealthPanel').innerHTML,/Couldn’t refresh · showing previously loaded data · last fetched at /,'the Overview quality row says its data was previously loaded, with the fetch time (Nov 3)');
         // Nov 2 timestamp fix: this expectation used to require "Updated just now" beside "Couldn’t refresh", the pairing
         // Paige flagged as misleading. The status line now describes the refresh attempt itself.
         assert.match(elements.get('status').innerHTML,/^<strong>Partly refreshed [^<]+<\/strong> · Couldn’t refresh: /);

@@ -345,7 +345,7 @@
     }
     const projectCheckButton=doc.getElementById('projectCheckButton');
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
-    const currentQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
+    const currentQuality=p.quality==='state'?qualityAttention(q,data):externalQualityAttention(externalQ);
     const noRecordedStateRuns=p.id==='state'&&![q?.review,q?.ask].filter(Boolean).length;
     const shouldRunChecksFirst=!!(run?.configured&&(p.id!=='state'||noRecordedStateRuns||stateEvalResultsStale(q)));
     const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttentionForData(data).kind==='bad'||activityReviewItems(data).some(item=>!item.resolved);
@@ -450,7 +450,7 @@
           :'<div class="empty compact-empty">'+esc(notesStatus==='loading'?'Loading the decision log…':notesStatus==='error'?'The decision log could not be loaded. Refresh to try again.':'No product decisions or changes recorded yet.')+'</div>')+
       '</div>';
 
-    const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
+    const overviewQuality=p.quality==='state'?qualityAttention(q,data):externalQualityAttention(externalQ);
     const overviewDelivery=deliveryAttentionForData(data);
     const overviewInfra=infrastructureAttention(platform);
     const runtimeStatus=productionRuntime(data);
@@ -464,7 +464,7 @@
     const retainedOr=(labels,hasData,fallback)=>signalRefreshFailure(data,labels)?sectionFreshness(data,labels,null,{hasData}):fallback;
     const qualityHas=p.quality==='state'?!!(q?.review||q?.ask):!!externalQ;
     const healthRows=[
-      {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||(p.noQualitySource?'Not connected yet':'Quality status unavailable'),tab:'ai-quality',fresh:sectionFreshness(data,['Quality'],qualityTime,{hasData:qualityHas,staleHours:72,noun:'Recorded'})},
+      {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||(p.noQualitySource?'Not connected yet':'Quality status unavailable'),tab:'ai-quality',fresh:signalRefreshFailure(data,['Quality'])?{label:retainedNotice(data,['Quality'],{hasData:qualityHas,loadedAt:data.qualityCheckedAt}).text,stale:true,retained:qualityHas}:sectionFreshness(data,['Quality'],qualityTime,{hasData:qualityHas,staleHours:72,noun:'Recorded'})},
       {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:retainedOr(['Production backend','Delivery'],!!(platform||d),freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24))},
       {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:retainedOr(['Delivery'],!!d,freshnessMeta(d?.updatedAt,data.checkedAt,24))},
       ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:retainedOr(['Neon','AI operations'],!!platform,freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6))}]:[]),
@@ -518,7 +518,7 @@
         const askScore=evalScore(ask); // the suite's overall pass rate, matching its overall trend
         const reviewKind=!review?'unknown':Number(review.high_severity_failures||0)>0?'bad':Number(reviewScore)<1?'warn':'good';
         const askKind=!ask?'unknown':Number(ask.high_severity_failures||0)>0?'bad':Number(askScore)<1?'warn':'good';
-        const noRun=pending.has('Quality')?'Loading…':'No recorded run';
+        const noRun=pending.has('Quality')?'Loading…':signalRefreshFailure(data,['Quality'])?'Couldn’t load':'No recorded run';
         cards=
           summaryCard('Update understanding',reviewScore,review?scenarioPassLabel(review,reviewScore):noRun,reviewKind,evalTrend(q?.recent,'review_interpretation',undefined,q?.contractUpdatedAt))+
           summaryCard('Answer quality',askScore,ask?scenarioPassLabel(ask,askScore):noRun,askKind,evalTrend(q?.recent,'ask_quality',undefined,q?.contractUpdatedAt));
@@ -1453,7 +1453,7 @@
       if(!data)return;
       const liveIncident=activityReviewItems(data).find(item=>!item.resolved);
       if(liveIncident?.kind==='deployment'){await runAgentInvestigation(data,'vercel','production');return;}
-      if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality).kind)){
+      if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality,data).kind)){
         data.investigation=qualityInvestigation(data);recordInvestigation(data,data.investigation,'AI eval');renderNow();revealInvestigation();return;
       }
       if(deliveryAttentionForData(data).kind==='bad'){

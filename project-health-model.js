@@ -153,14 +153,18 @@
     if(raw==='claude-haiku-5-5')return'Claude Haiku 5.5';
     return raw||'Model unavailable';
   }
-  function qualityAttention(q){
+  // A failed Quality refresh with no previously loaded runs is unavailable evidence, not a finding (Paige, Nov 3): a saved
+  // empty response is historical only and never reads as "no runs exist now". Previously loaded runs are still assessed.
+  const QUALITY_UNAVAILABLE={kind:'unknown',unavailable:true,title:'AI eval results couldn’t be loaded',detail:'Project Health couldn’t reach State’s quality data, so it can’t say whether evals have been recorded, passed or failed.'};
+  function qualityAttention(q,data){
+    const runs=[q?.review,q?.ask].filter(Boolean);
+    if(!runs.length&&signalRefreshFailure(data,['Quality'])) return QUALITY_UNAVAILABLE;
     if(!q) return {kind:'unknown',title:'Quality data is not available yet',detail:'Project Health could not load a recent quality result.'};
-    const runs=[q.review,q.ask].filter(Boolean);
-    if(!runs.length) return {kind:'warn',title:'AI evals have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
+    if(!runs.length) return {kind:'warn',noRuns:true,title:'AI evals have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
     if(stateEvalResultsStale(q)) return {kind:'warn',title:'AI evals need to be rerun',detail:stateEvalStaleReason(q)+' Historical failures are not treated as current product failures.',nextAction:'Run the controlled AI evals again.',owner:'Product'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
     if(severe>0) return {kind:'bad',title:(severe===1?'1 failure in a high-severity AI scenario needs':severe+' failures in high-severity AI scenarios need')+' review',detail:'Most aggregate quality signals may still look healthy; review the specific failed scenario'+(severe===1?'':'s')+' before deciding whether product behavior or the eval contract should change.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
-    if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI evals need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
+    if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',scenarioMiss:true,title:'Some AI evals need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
     const missing=[];
     if(!q.review||evalScore(q.review)==null) missing.push('update understanding');
     if(!q.ask||(q.ask.ask_grounding??evalScore(q.ask))==null) missing.push('answer quality');
@@ -232,7 +236,7 @@
     if(!data?.project||pending.has('Quality')) return items;
     if(data.project.quality==='state'){
       if(!data.quality&&!data.fresh)return items;
-      const q=qualityAttention(data.quality);
+      const q=qualityAttention(data.quality,data);
       if(['bad','warn'].includes(q.kind)){
         const noRecordedRuns=![data.quality?.review,data.quality?.ask].filter(Boolean).length;
         const staleResults=stateEvalResultsStale(data.quality);
@@ -282,7 +286,7 @@
     const pending=pendingSet(data),signals=[];
     if(data.delivery) signals.push(deliveryAttentionForData(data));
     else if(data.fresh&&!pending.has('Delivery')) signals.push(deliveryAttentionForData(data));
-    if(data.quality) signals.push(qualityAttention(data.quality));
+    if(data.quality) signals.push(qualityAttention(data.quality,data));
     const external=externalQualityAttention(data.externalQuality);if(external) signals.push(external);
     const infra=infrastructureAttention(data.platform);if(infra) signals.push(infra);
     return signals;
@@ -294,7 +298,7 @@
     if(liveIncidents.length) return {kind:'bad',title:liveIncidents[0].title,detail:liveIncidents[0].impact};
     let quality=productOpenItems(data);
     if(!data?.project&&data?.quality){
-      const fallback=qualityAttention(data.quality);
+      const fallback=qualityAttention(data.quality,data);
       if(['bad','warn'].includes(fallback.kind)) quality=[fallback];
     }
     if(!data?.project&&data?.externalQuality){
@@ -331,7 +335,7 @@
     if(!data?.project)return false;
     const liveIncident=activityReviewItems(data).find(item=>!item.resolved);
     if(liveIncident?.kind==='deployment')return true;
-    if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality).kind))return false;
+    if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality,data).kind))return false;
     return deliveryAttentionForData(data).kind==='bad';
   }
   // Cowork, Oct 11: any visitor can press these, so say plainly what they cost. Visual pass, Oct 11: each note sits
@@ -401,7 +405,7 @@
     if(incidents.length) return incidents;
     let open=productOpenItems(data);
     if(!data?.project&&data?.quality){
-      const fallback=qualityAttention(data.quality);
+      const fallback=qualityAttention(data.quality,data);
       if(['bad','warn'].includes(fallback.kind)) open=[fallback];
     }
     if(!data?.project&&data?.externalQuality){
@@ -628,7 +632,7 @@
     return issues;
   }
   function releaseRiskChecklist(data){
-    const quality=data?.project?.quality==='state'?qualityAttention(data.quality):externalQualityAttention(data.externalQuality);
+    const quality=data?.project?.quality==='state'?qualityAttention(data.quality,data):externalQualityAttention(data.externalQuality);
     const incidents=activityReviewItems(data).filter(item=>!item.resolved);
     // Count every gap "What we cannot confirm" lists (Paige, Oct 27: the count left out agent telemetry and read 2 next to 3).
     const gaps=setupGaps(data);
@@ -667,11 +671,15 @@
     const live=activityReviewItems(data).find(item=>!item.resolved);
     if(live?.kind==='runtime')return 'Confirm user impact from the runtime incident and decide whether engineering needs to intervene now.';
     if(live?.kind==='deployment')return 'Decide whether to retry the failed release or supersede it with the current branch.';
-    if(data?.project?.quality==='state'&&data.quality){
-      const q=qualityAttention(data.quality);
-      if(stateEvalResultsStale(data.quality))return 'Rerun the AI evals before changing State behavior or the eval.';
+    if(data?.project?.quality==='state'){
+      const q=qualityAttention(data.quality,data);
+      if(q.unavailable)return 'Restore the missing checks before assessing project health.';
+      if(data.quality&&stateEvalResultsStale(data.quality))return 'Rerun the AI evals before changing State behavior or the eval.';
       if(q.kind==='bad')return 'Review the failed high-severity scenarios before changing the prompt, product behavior, or eval.';
-      if(q.kind==='warn')return 'Review the quality miss and decide whether it represents product behavior or eval noise.';
+      // "Quality miss" only when a scenario actually failed; no runs or unmeasured signals are not a miss (Nov 3).
+      if(q.scenarioMiss)return 'Review the quality miss and decide whether it represents product behavior or eval noise.';
+      if(q.noRuns)return 'Run the controlled AI evals to get a quality result.';
+      if(q.kind==='warn'&&q.nextAction)return q.nextAction;
     }else{
       const q=externalQualityAttention(data?.externalQuality);
       if(q?.kind==='bad')return 'Review the failing product-quality signal and decide whether the next change should address it.';
@@ -1351,8 +1359,11 @@
     const recorded=resultAt?'recorded '+fmtDate(resultAt):'recording time unknown';
     if(loading&&hasResults)return {status:'refreshing',previous:true,resultAt,confirmedAt,label:'Previous results',detail:'Previous '+what+', '+recorded+' \u00b7 checking for newer results\u2026'};
     if(loading)return {status:'loading',previous:false,resultAt:null,confirmedAt,label:'Checking\u2026',detail:'Loading the latest '+what+'\u2026'};
-    if(failure&&hasResults)return {status:'stale',previous:true,resultAt,confirmedAt,label:'Previous results \u00b7 refresh failed',detail:'Couldn\u2019t refresh the '+what+' ('+failure.reason+'). Showing previous results, '+recorded+(confirmedAt?'; last loaded '+relativeAge(confirmedAt):'')+'.'};
-    if(failure)return {status:'unavailable',previous:false,resultAt:null,confirmedAt,label:'Couldn\u2019t load',detail:'Couldn\u2019t load the '+what+' ('+failure.reason+'). Nothing is shown rather than a guess.'};
+    const fetchedAt=confirmedAt&&Number.isFinite(dateMs(confirmedAt))?fmtDate(confirmedAt):null;
+    if(failure&&hasResults)return {status:'stale',previous:true,resultAt,confirmedAt,label:'Previous results \u00b7 refresh failed',detail:'Couldn\u2019t refresh the '+what+' ('+failure.reason+') \u00b7 showing previously loaded data, '+recorded+(fetchedAt?' \u00b7 last fetched at '+fetchedAt:'')+'.'};
+    // A saved empty response is history, not a current finding (Nov 3): it never reads as "no runs exist now".
+    const savedEmpty=state&&data?.quality&&fetchedAt?' The last successful fetch, at '+fetchedAt+', had no recorded runs; that may have changed since.':'';
+    if(failure)return {status:'unavailable',previous:false,resultAt:null,confirmedAt,label:'Couldn\u2019t load',detail:'Couldn\u2019t load the '+what+' ('+failure.reason+'). Nothing is shown rather than a guess.'+savedEmpty};
     if(!hasResults)return {status:'none',previous:false,resultAt:null,confirmedAt,label:'No results',detail:'No '+what+' are recorded yet.'};
     return {status:'current',previous:false,resultAt,confirmedAt,label:resultAt?'Recorded '+fmtDate(resultAt):'Recorded',detail:'Latest '+what+', '+recorded+'.'};
   }
@@ -1644,7 +1655,7 @@
   function projectQualityLabel(data){
     if(data.project.quality==='state'){
       if(!data.quality) return 'Quality unavailable';
-      const q=qualityAttention(data.quality);
+      const q=qualityAttention(data.quality,data);
       if(q.kind==='good') return 'AI evals healthy';
       if(q.kind==='bad') return 'AI evals need action';
       if(q.kind==='warn') return 'AI evals need a look';

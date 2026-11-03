@@ -708,7 +708,7 @@ const handoff=H.projectHandoff({
 assert.strictEqual(handoff.handoff,true);
 assert.match(handoff.handoffText,/State project handoff/);
 assert.match(handoff.handoffText,/Next decision/);
-assert.match(handoff.handoffText,/No immediate product decision|Rerun the AI evals|Review the quality miss|Review the failed high-severity scenarios/);
+assert.match(handoff.handoffText,/No immediate product decision|Rerun the AI evals|Run the controlled AI evals to get a quality result|Review the failed high-severity scenarios/);
 const narcWithNoAi={...H.emptyProjectData(H.PROJECTS[2]),fresh:true,platform:{analytics:{configured:true,available:true},aiTelemetry:{configured:false,not_applicable:true}}};
 assert.ok(!H.setupGaps(narcWithNoAi).some(item=>/^AI /.test(item.label)));
 
