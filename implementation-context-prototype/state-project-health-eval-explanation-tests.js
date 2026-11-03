@@ -221,6 +221,37 @@ function cachedSnapshot(){
     assert.strictEqual(M.hydrateProjectData(M.PROJECTS[0],saved).qualityCheckedAt,'2026-11-02T23:00:00Z');
   });
 
+  // ---- #597 (Nov 2): refresh attempt versus recorded result ----
+  await check('the status line describes the refresh attempt: refreshed, partly refreshed or failed, never "Updated just now"',()=>{
+    const at='2026-11-02T23:10:00Z';
+    const ok=M.refreshStatus([{project:{name:'State'},timings:{Delivery:1,Quality:1},failures:[]}],at);
+    assert.deepStrictEqual([ok.kind,ok.title,ok.detail],['refreshed','Refreshed '+M.fmtDate(at),'']);
+    const partial=M.refreshStatus([{project:{name:'State'},timings:{Delivery:1,Quality:1},failures:[{label:'Quality',reason:'server error 500'}]}],at);
+    assert.strictEqual(partial.kind,'partial');
+    assert.strictEqual(partial.title,'Partly refreshed '+M.fmtDate(at));
+    assert.strictEqual(partial.detail,'Couldn’t refresh: State quality.');
+    const failed=M.refreshStatus([{project:{name:'State'},timings:{Delivery:1,Quality:1},failures:[{label:'Delivery'},{label:'Quality'}]}],at);
+    assert.deepStrictEqual([failed.kind,failed.title],['failed','Refresh failed '+M.fmtDate(at)]);
+    for(const result of [ok,partial,failed])assert.doesNotMatch(result.title+result.detail,/Updated|just now/);
+  });
+  await check('a re-fetched or retained eval keeps its run time; the fetch time is never shown as the recorded time',()=>{
+    const runAt='2026-11-02 22:50:28';
+    const refetched=stateData({quality:quality(),qualityCheckedAt:new Date().toISOString(),checkedAt:new Date().toISOString()});
+    assert.strictEqual(M.qualityProvenance(refetched).resultAt,runAt,'a successful re-fetch of the same run keeps the run time');
+    assert.strictEqual(M.qualityProvenance(refetched).label,'Recorded '+M.fmtDate(runAt));
+    const fresh=M.sectionFreshness(refetched,['Quality'],runAt,{noun:'Recorded',staleHours:100000});
+    assert.match(fresh.label,/^Recorded /);
+    const retained=stateData({quality:quality(),checkedAt:new Date().toISOString()});
+    retained.failures.push({label:'Quality',reason:'server error 500'});
+    const kept=M.sectionFreshness(retained,['Quality'],runAt,{noun:'Recorded'});
+    assert.deepStrictEqual([kept.label,kept.stale,kept.retained],['Couldn’t refresh · showing retained data from '+M.fmtDate(runAt),true,true]);
+    const nothing=M.sectionFreshness(retained,['Quality'],null,{hasData:false});
+    assert.strictEqual(nothing.label,'Couldn’t refresh','no retained data is claimed when there is none');
+    assert.strictEqual(M.sectionFreshness(stateData(),['Quality'],null,{noun:'Recorded'}).label,'Recorded time unknown','no time is invented');
+    const p=M.qualityProvenance({...retained,qualityCheckedAt:null});
+    assert.doesNotMatch(p.detail,/last loaded/,'without a recorded successful fetch, no last-loaded time is invented');
+  });
+
   // ---- #597: counts, grammar, comparability ----
   await check('counts and percentage agree for 0, 1 and several failures, with singular/plural grammar',()=>{
     const cases=[[1,0,'16 of 16 passed','100%',null],[0.9375,1,'15 of 16 passed','93.8%','1 high-impact AI scenario needs review'],[0.8125,3,'13 of 16 passed','81.3%','3 high-impact AI scenarios need review']];
@@ -285,6 +316,9 @@ function cachedSnapshot(){
         assert.ok(await waitFor(()=>!/is-previous/.test(panel())),'after success the results are current');
         assert.match(panel(),/1 high-impact scenario needs review/);
         assert.match(panel(),/Recorded /);
+        const health=elements.get('overviewHealthPanel').innerHTML;
+        assert.match(health,/<strong>AI Evals<\/strong>[\s\S]*?signal-meta ">Recorded [^<]*<\/span>/,'the quality row shows when the eval ran, not a fetch time');
+        assert.doesNotMatch(health,/Updated just now/);
         assert.doesNotMatch(elements.get('status').innerHTML,/State quality(?! behavior)/,'quality refreshed, so it is not listed');
       }finally{cleanup();}
     });
@@ -299,7 +333,11 @@ function cachedSnapshot(){
         assert.match(panel,/15 of 16 scenarios passed/);
         assert.match(panel,/eval-results is-previous/);
         assert.match(elements.get('mockDashboardOverview').innerHTML,/quality-provenance stale/);
-        assert.match(elements.get('status').innerHTML,/Updated just now<\/strong> · Couldn’t refresh: .*State quality/);
+        assert.match(elements.get('overviewHealthPanel').innerHTML,/Couldn’t refresh · showing retained data from /,'the Overview quality row says its data is retained');
+        // Nov 2 timestamp fix: this expectation used to require "Updated just now" beside "Couldn’t refresh", the pairing
+        // Paige flagged as misleading. The status line now describes the refresh attempt itself.
+        assert.match(elements.get('status').innerHTML,/^<strong>Partly refreshed [^<]+<\/strong> · Couldn’t refresh: /);
+        assert.doesNotMatch(elements.get('status').innerHTML,/Updated just now/);
       }finally{cleanup();}
     });
     await check('first load without a cache: no numbers while loading, an error (not "no evals") when it fails',async()=>{

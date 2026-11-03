@@ -1337,6 +1337,30 @@
     if(!hasResults)return {status:'none',previous:false,resultAt:null,confirmedAt,label:'No results',detail:'No '+what+' are recorded yet.'};
     return {status:'current',previous:false,resultAt,confirmedAt,label:resultAt?'Recorded '+fmtDate(resultAt):'Recorded',detail:'Latest '+what+', '+recorded+'.'};
   }
+  // #597 (Nov 2): the status line describes the refresh attempt (when the page tried and what failed), never when a
+  // result was recorded. A section whose fetch failed keeps its retained data and says so; no success time is invented.
+  function refreshStatus(items,attemptAt){
+    const list=Array.isArray(items)?items:[];
+    const failed=list.flatMap(item=>(Array.isArray(item?.failures)?item.failures:[]).map(failure=>(item.project?.name?item.project.name+' ':'')+String(failure.label||'').toLowerCase()));
+    const attempted=list.reduce((n,item)=>n+Object.keys(item?.timings||{}).length,0);
+    const when=fmtDate(attemptAt);
+    const named=failed.slice(0,3).join(', ')+(failed.length>3?' and '+(failed.length-3)+' more':'');
+    if(!failed.length)return {kind:'refreshed',title:'Refreshed '+when,detail:''};
+    if(attempted&&failed.length>=attempted)return {kind:'failed',title:'Refresh failed '+when,detail:'Couldn’t refresh: '+named+'.'};
+    return {kind:'partial',title:'Partly refreshed '+when,detail:'Couldn’t refresh: '+named+'.'};
+  }
+  function signalRefreshFailure(data,labels){
+    const failures=Array.isArray(data?.failures)?data.failures:[];
+    return failures.find(failure=>labels.includes(failure?.label))||null;
+  }
+  // Freshness for one Overview section: a failed fetch is named, and a result time is never replaced by the fetch time.
+  function sectionFreshness(data,labels,resultAt,{hasData=true,staleHours=24,noun='Updated'}={}){
+    const failure=signalRefreshFailure(data,labels);
+    if(failure)return {label:hasData?'Couldn’t refresh · showing retained data'+(resultAt?' from '+fmtDate(resultAt):''):'Couldn’t refresh',stale:true,retained:hasData};
+    if(!resultAt)return {label:noun+' time unknown',stale:true};
+    const meta=freshnessMeta(resultAt,null,staleHours);
+    return noun==='Updated'?meta:{...meta,label:meta.stale?'May be stale · '+noun.toLowerCase()+' '+relativeAge(resultAt):noun+' '+relativeAge(resultAt)};
+  }
   function freshnessMeta(value,fallback,staleHours=24){
     const ts=value||fallback;
     if(!ts)return {label:'Freshness unknown',stale:true};
@@ -2062,5 +2086,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });
