@@ -291,7 +291,7 @@
     data.detailLoading=true;
     const project=data.project,run=makeRunner(data,onUpdate);
     const tasks=[
-      run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
+      run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);data.analyticsLoadedAt=new Date().toISOString();}),
       run('AI operations',loadPlatformSignal(project,'ai-telemetry'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Open work',loadOpenPullRequests(project,root,data),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
@@ -618,6 +618,7 @@
       const a=platform?.analytics;
       // Cowork, Oct 11: the public card shows whether analytics is connected and receiving data, not raw counts.
       const aSignal=analyticsSignal(a);
+      const analyticsNotice=retainedNotice(data,['Analytics'],{hasData:!!a?.available,loadedAt:data.analyticsLoadedAt});
       const analyticsUrl=p.links?.vercel?(p.links.vercel.replace(/\/$/,'')+'/analytics'):null;
 
       const failedItems=[];
@@ -666,7 +667,12 @@
         '</section>'+
         '<section class="mock-dashboard-section mock-usage-card">'+
           '<div class="mock-card-title mock-analytics-title"><span class="mock-card-title-icon">▥</span><h3>Site analytics</h3>'+(analyticsUrl?'<a class="mock-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div>'+
-          (a?.available
+          // Saved analytics after a failed refresh read as stale and neutral, not as a current green signal (Nov 3).
+          (analyticsNotice?.retained
+            ?'<div class="mock-analytics-signal"><span class="mock-analytics-dot" aria-hidden="true"></span><div><strong>Previous status: '+esc(aSignal.status)+'</strong><p>'+esc(aSignal.detail)+'</p></div></div><p class="section-retained-note" role="status">'+esc(analyticsNotice.text)+'</p>'
+            :analyticsNotice
+            ?'<div class="empty compact-empty">Site analytics unavailable.</div><p class="section-retained-note" role="status">'+esc(analyticsNotice.text)+'</p>'
+            :a?.available
             ?'<div class="mock-analytics-signal"><span class="mock-analytics-dot '+esc(aSignal.kind)+'" aria-hidden="true"></span><div><strong>'+esc(aSignal.status)+'</strong><p>'+esc(aSignal.detail)+'</p></div></div>'
             :'<div class="empty compact-empty">'+esc(pending.has('Analytics')?'Checking site analytics…':a?.configured===false?'Site analytics are not connected for this environment.':a?.configured?analyticsGapDetail(a):'Site analytics could not be checked. Refresh to try again.')+'</div>')+
         '</section>'+

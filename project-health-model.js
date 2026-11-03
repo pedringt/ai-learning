@@ -682,6 +682,8 @@
     const infra=infrastructureAttention(data?.platform);
     if(infra?.kind==='bad')return 'Confirm user impact and assign the infrastructure response.';
     if(Array.isArray(data?.openPullRequests)&&data.openPullRequests.length)return 'Decide whether the current open work is ready for the next release.';
+    // Missing data does not support carrying on unchanged (Paige, Nov 3): with no more specific finding, restore the checks.
+    if(['Delivery','Quality','Activity','Production backend','Quality behavior'].some(label=>signalRefreshFailure(data,[label])))return 'Restore the missing checks before assessing project health.';
     return 'No immediate product decision is required. Continue the current goal until the next review.';
   }
   function failureCheckCount(q,check){
@@ -1174,6 +1176,7 @@
       activity:s.activity||null,
       deliveryLoadedAt:s.deliveryLoadedAt||null,
       activityLoadedAt:s.activityLoadedAt||null,
+      analyticsLoadedAt:s.analyticsLoadedAt||null,
       openPullRequests:Array.isArray(s.openPullRequests)?s.openPullRequests:[],
       runInfo:null,
       checkedAt:s.checkedAt||null,
@@ -1223,6 +1226,7 @@
       activity:data.activity,
       deliveryLoadedAt:data.deliveryLoadedAt||null,
       activityLoadedAt:data.activityLoadedAt||null,
+      analyticsLoadedAt:data.analyticsLoadedAt||null,
       openPullRequests:data.openPullRequests,
       runInfo:null,
       checkedAt:data.checkedAt,
@@ -1374,7 +1378,7 @@
   function retainedNotice(data,labels,{hasData,loadedAt}={}){
     if(!signalRefreshFailure(data,labels))return null;
     return hasData
-      ?{retained:true,text:'Couldn’t refresh · showing previously loaded data'+(loadedAt&&Number.isFinite(dateMs(loadedAt))?' from '+fmtDate(loadedAt):'')}
+      ?{retained:true,text:'Couldn’t refresh · showing previously loaded data'+(loadedAt&&Number.isFinite(dateMs(loadedAt))?' · last fetched at '+fmtDate(loadedAt):'')}
       :{retained:false,text:'Couldn’t refresh · no previously loaded data'};
   }
   function sectionFreshness(data,labels,resultAt,{hasData=true,staleHours=24,noun='Updated'}={}){
@@ -1462,7 +1466,7 @@
     // #597: a different scenario set or contract is a new baseline, not an improvement or decline.
     const visitComparison=(kind,name)=>{
       const comparison=runComparability({total:currentQ[kind+'Total'],created_at:currentQ[kind+'At']},{total:oldQ[kind+'Total'],created_at:oldQ[kind+'At']},data?.quality?.contractUpdatedAt);
-      if(!comparison.comparable)return {title:name+' eval re-run on a different test',detail:'Not comparable with your last visit: '+comparison.text+' \u00b7 now '+percent(currentQ[kind+'Score'])};
+      if(!comparison.comparable)return {title:name+' eval '+(comparison.reason==='unrecorded'?'re-run':'re-run on a different test'),detail:'Not comparable with your last visit: '+comparison.text+' \u00b7 now '+percent(currentQ[kind+'Score'])};
       const delta=scoreDeltaPoints(currentQ[kind+'Score'],oldQ[kind+'Score']);
       return {title:name+' eval '+(delta===0?'re-run':'changed'),detail:evalChangeDetail(delta,currentQ[kind+'Score'])};
     };
@@ -1709,9 +1713,16 @@
   // a pass rate over 12 cases and one over 13 differ in what was tested, not only in how State did. The latest commit to
   // the contract files is all Project Health knows, so a change between the two runs is detected; a same-size swap of
   // scenarios with no contract commit cannot happen without one.
+  // Two runs are comparable only when the record shows they ran the same scenarios against the same expected-behavior
+  // contract (Paige, Nov 3). An equal count does not establish the same set, and current run records do not list their
+  // scenarios, so without that list a comparison is omitted rather than guessed.
   function runComparability(current,previous,contractChangedAt){
     const a=Number(current?.total),b=Number(previous?.total);
     if(Number.isFinite(a)&&Number.isFinite(b)&&a>0&&b>0&&a!==b)return {comparable:false,reason:'scenario-set',text:'scenario set changed ('+b+' \u2192 '+a+' cases)'};
+    const idsA=Array.isArray(current?.scenario_ids)?[...new Set(current.scenario_ids.map(String))].sort():null;
+    const idsB=Array.isArray(previous?.scenario_ids)?[...new Set(previous.scenario_ids.map(String))].sort():null;
+    if(!idsA||!idsB)return {comparable:false,reason:'unrecorded',text:'the run records don\u2019t show which scenarios ran'};
+    if(idsA.join('\n')!==idsB.join('\n'))return {comparable:false,reason:'scenario-set',text:'scenario set changed'};
     const fetched=dateMs(contractChangedAt);
     const changed=Math.max(dateMs(STATE_EVAL_CONTRACT_UPDATED_AT),Number.isFinite(fetched)?fetched:-Infinity);
     const before=dateMs(previous?.created_at),after=dateMs(current?.created_at);
@@ -1817,8 +1828,16 @@
     });
     return '<div class="mock-sparkline"><svg viewBox="0 0 '+w+' '+h+'" aria-hidden="true"><polyline points="'+pts.map(pt=>pt.x.toFixed(1)+','+pt.y.toFixed(1)).join(' ')+'"></polyline>'+pts.map(pt=>'<circle cx="'+pt.x.toFixed(1)+'" cy="'+pt.y.toFixed(1)+'" r="1.6"></circle>').join('')+'</svg></div>';
   }
+  // The trend line covers only the unbroken comparable history ending with the latest run; with fewer than two such
+  // runs there is no line (Paige, Nov 3).
   function mockTrendValues(q,suite,field){
-    return (Array.isArray(q?.recent)?q.recent:[]).filter(item=>item?.suite===suite).map(row=>metricScore(row,field)).filter(v=>v!=null);
+    const rows=(Array.isArray(q?.recent)?q.recent:[]).filter(item=>item?.suite===suite&&metricScore(item,field)!=null).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
+    const comparable=rows.length?[rows[0]]:[];
+    for(const row of rows.slice(1)){
+      if(!runComparability(rows[0],row,q?.contractUpdatedAt).comparable)break;
+      comparable.push(row);
+    }
+    return comparable.length>1?comparable.map(row=>metricScore(row,field)):[];
   }
   // A change in a pass rate is in percentage points, not percent (Oct 27 review).
   function mockDelta(recent,suite,field,contractChangedAt){

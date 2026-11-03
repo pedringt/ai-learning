@@ -284,7 +284,10 @@ function cachedSnapshot(){
     assert.strictEqual(M.metricChange(recent,'ask_quality','ask_grounding').status,'not-comparable');
     assert.strictEqual(M.evalTrend(recent,'ask_quality','ask_grounding'),'Not comparable with the previous run: scenario set changed (12 → 13 cases)');
     assert.strictEqual(M.mockDelta(recent,'ask_quality','ask_grounding').label,'Not comparable');
-    const sameSize=[review({interpretation_accuracy:0.9375}),review({interpretation_accuracy:0.8125,created_at:'2026-10-20 10:00:00'})];
+    const unrecorded=[review({interpretation_accuracy:0.9375}),review({interpretation_accuracy:0.8125,created_at:'2026-10-20 10:00:00'})];
+    assert.deepStrictEqual([M.metricChange(unrecorded,'review_interpretation','interpretation_accuracy').status,M.metricChange(unrecorded,'review_interpretation','interpretation_accuracy').reason],['not-comparable','unrecorded'],'an equal count without a recorded scenario list is not comparable');
+    const ids=['a','b'];
+    const sameSize=[review({interpretation_accuracy:0.9375,scenario_ids:ids}),review({interpretation_accuracy:0.8125,created_at:'2026-10-20 10:00:00',scenario_ids:ids})];
     assert.strictEqual(M.metricChange(sameSize,'review_interpretation','interpretation_accuracy').status,'ok');
     const contractMoved=M.metricChange(sameSize,'review_interpretation','interpretation_accuracy','2026-10-25T00:00:00Z');
     assert.deepStrictEqual([contractMoved.status,contractMoved.reason],['not-comparable','contract']);
@@ -317,7 +320,7 @@ function cachedSnapshot(){
   await check('a retained section names previously loaded data, with a time only when one was recorded',()=>{
     const failed={failures:[{label:'Delivery'}]};
     assert.strictEqual(M.retainedNotice({failures:[]},['Delivery'],{hasData:true,loadedAt:'2026-11-02T22:00:00Z'}),null);
-    assert.match(M.retainedNotice(failed,['Delivery'],{hasData:true,loadedAt:'2026-11-02T22:00:00Z'}).text,/^Couldn’t refresh · showing previously loaded data from .+/);
+    assert.match(M.retainedNotice(failed,['Delivery'],{hasData:true,loadedAt:'2026-11-02T22:00:00Z'}).text,/^Couldn’t refresh · showing previously loaded data · last fetched at .+/);
     assert.strictEqual(M.retainedNotice(failed,['Delivery'],{hasData:true,loadedAt:null}).text,'Couldn’t refresh · showing previously loaded data');
     assert.strictEqual(M.retainedNotice(failed,['Delivery'],{hasData:true,loadedAt:'not a date'}).text,'Couldn’t refresh · showing previously loaded data');
     const none=M.retainedNotice(failed,['Delivery'],{hasData:false});
@@ -440,7 +443,7 @@ function cachedSnapshot(){
         assert.ok(await waitFor(()=>/section-retained-note/.test(overview())),overview().slice(0,400));
         assert.match(overview(),/State: keep Workspace badges clear/,'the previously loaded release stays visible');
         assert.match(overview(),/>Previous assessment: [A-Z][a-z ]+</,'the status is labelled as the previous assessment');
-        assert.match(overview(),/Couldn’t refresh · showing previously loaded data from /,'a recorded load time is shown');
+        assert.match(overview(),/Couldn’t refresh · showing previously loaded data · last fetched at /,'a recorded load time is shown');
         const history=elements.get('historyPanel').innerHTML;
         assert.match(history,/Deployment activity: Couldn’t refresh · showing previously loaded data</,'no load time was recorded for activity, so none is shown');
         const changes=elements.get('changesPanel').innerHTML;
@@ -484,6 +487,46 @@ function cachedSnapshot(){
         assert.ok(await waitFor(()=>/Refresh failed|Partly refreshed/.test(elements.get('status').innerHTML)),elements.get('status').innerHTML);
         assert.match(elements.get('status').innerHTML,/^<strong>Refresh failed [^<]+<\/strong> · Couldn’t refresh: /);
       }finally{cleanup();}
+    });
+    await check('saved analytics after a failed refresh read as stale and neutral; with nothing saved, unavailable',async()=>{
+      const fetched=new Date(Date.now()-5400000).toISOString();
+      const snapshot=cachedSnapshot();
+      Object.assign(snapshot.projects[0],{platform:{analytics:{available:true,configured:true,receiving:true}},analyticsLoadedAt:fetched});
+      const failing=async()=>({ok:false,status:500,json:async()=>({detail:'server error'})});
+      let env=stubRoot(snapshot);
+      global.fetch=failing;
+      try{
+        await H.init(env.root);
+        const overview=()=>env.elements.get('mockDashboardOverview').innerHTML;
+        assert.ok(await waitFor(()=>/Previous status: /.test(overview())),overview().slice(0,300));
+        const card=overview().split('mock-usage-card')[1].split('</section>')[0];
+        assert.match(card,/<strong>Previous status: Connected · receiving page views<\/strong>/);
+        assert.match(card,/class="mock-analytics-dot"/,'neutral dot, no good/warn colour');
+        assert.doesNotMatch(card,/mock-analytics-dot good/);
+        assert.match(card,/Couldn’t refresh · showing previously loaded data · last fetched at /);
+      }finally{env.cleanup();}
+      env=stubRoot(null);
+      try{
+        await H.init(env.root);
+        const overview=()=>env.elements.get('mockDashboardOverview').innerHTML;
+        assert.ok(await waitFor(()=>/Site analytics unavailable\./.test(overview())),overview().slice(0,300));
+        assert.match(overview().split('mock-usage-card')[1],/Couldn’t refresh · no previously loaded data/);
+      }finally{env.cleanup();}
+    });
+    await check('missing checks are not reassurance: the next look asks to restore them when nothing more specific applies',async()=>{
+      const {root,elements,cleanup}=stubRoot(null);
+      global.fetch=async()=>({ok:false,status:500,json:async()=>({detail:'server error'})});
+      try{
+        await H.init(root);
+        const overview=()=>elements.get('mockDashboardOverview').innerHTML;
+        await waitFor(()=>/Restore the missing checks/.test(overview()),6000);
+        assert.match(overview(),/Recommended next look<\/strong><p>Restore the missing checks before assessing project health\.<\/p>/);
+        assert.doesNotMatch(overview(),/Continue the current goal/);
+      }finally{cleanup();}
+      // A specific finding still comes first.
+      const data={project:H.PROJECTS.find(p=>p.id==='state'),quality:M.normalizeQuality(qualityPayload()),failures:[{label:'Delivery'}],platform:{},openPullRequests:[]};
+      assert.match(M.operationalNextDecision(data),/^Review the failed high-severity scenarios/);
+      assert.strictEqual(M.operationalNextDecision({...data,quality:null,failures:[]}),'No immediate product decision is required. Continue the current goal until the next review.');
     });
   }finally{global.fetch=realFetch;}
 

@@ -12,8 +12,10 @@ let pass=0,fail=0;
 async function check(name,fn){try{await fn();pass++;console.log('✓',name);}catch(error){fail++;console.error('✗',name,'\n ',error.message);}}
 
 // The live payload shape from Oct 26: grounding stayed at 100% while the suite's overall score and uncertainty fell.
-const ask=(overrides)=>({suite:'ask_quality',total:10,high_severity_failures:0,ask_grounding:1,uncertainty_accuracy:1,authority_accuracy:1,overall_pass_rate:1,failure_details:[],...overrides});
-const review=(overrides)=>({suite:'review_interpretation',total:16,high_severity_failures:0,interpretation_accuracy:1,failure_details:[],...overrides});
+// These runs record their scenario list, so consecutive runs can be compared (Nov 3: an equal count alone cannot).
+const ASK_IDS=Array.from({length:10},(_,i)=>'ask_'+i),REVIEW_IDS=Array.from({length:16},(_,i)=>'review_'+i);
+const ask=(overrides)=>({suite:'ask_quality',total:10,scenario_ids:ASK_IDS,high_severity_failures:0,ask_grounding:1,uncertainty_accuracy:1,authority_accuracy:1,overall_pass_rate:1,failure_details:[],...overrides});
+const review=(overrides)=>({suite:'review_interpretation',total:16,scenario_ids:REVIEW_IDS,high_severity_failures:0,interpretation_accuracy:1,failure_details:[],...overrides});
 const latestAsk=ask({build:'43904f306f705ea645820a1793ffffcf014b87f9',created_at:'2026-10-26 20:00:33',uncertainty_accuracy:0.9,overall_pass_rate:0.9,high_severity_failures:1,
   failure_details:[{scenario_id:'ask_known_outcome_unknown_reason',severity:'high',failed_checks:['uncertainty']}]});
 const latestReview=review({build:'43904f306f705ea645820a1793ffffcf014b87f9',created_at:'2026-10-26 20:00:33',interpretation_accuracy:0.8125,high_severity_failures:2,
@@ -46,6 +48,32 @@ const q={review:latestReview,ask:latestAsk,recent:[
     assert.strictEqual(M.evalTrend(q.recent,'ask_quality','ask_grounding'),'Stable vs previous run');
     assert.strictEqual(M.evalTrend(q.recent,'ask_quality','uncertainty_accuracy'),'Down 10 points vs previous run');
     assert.strictEqual(M.evalTrend(q.recent,'ask_quality'),'Down 10 points vs previous run','the suite overall still works without a field');
+  });
+  await check('without a recorded scenario list, an equal count is not comparable: no point change and no trend line',()=>{
+    const strip=run=>{const {scenario_ids,...rest}=run;return rest;};
+    const unrecorded={review:strip(latestReview),ask:strip(latestAsk),recent:q.recent.map(strip)};
+    const cards=M.stateMetricCards(unrecorded);
+    for(const card of cards){
+      assert.strictEqual(card.delta.label,'Not comparable',card.label);
+      assert.match(card.delta.title,/the run records don’t show which scenarios ran/);
+      assert.deepStrictEqual(card.trend,[],card.label+' draws no line');
+      assert.ok(card.score!=null,'the score itself is kept');
+    }
+    assert.strictEqual(M.evalTrend(unrecorded.recent,'ask_quality','ask_grounding'),'Not comparable with the previous run: the run records don’t show which scenarios ran');
+    const differentSets=[ask({created_at:'2026-11-02 10:00:00'}),ask({created_at:'2026-11-01 10:00:00',scenario_ids:[...ASK_IDS.slice(1),'ask_other']})];
+    assert.deepStrictEqual([M.metricChange(differentSets,'ask_quality','ask_grounding').status,M.metricChange(differentSets,'ask_quality','ask_grounding').text],['not-comparable','scenario set changed'],'same count, different scenarios');
+  });
+  await check('the trend line is the unbroken comparable history ending with the latest run',()=>{
+    const recent=[
+      ask({created_at:'2026-11-03 10:00:00',ask_grounding:1}),
+      ask({created_at:'2026-11-02 10:00:00',ask_grounding:0.9}),
+      ask({created_at:'2026-11-01 10:00:00',ask_grounding:0.8,total:9,scenario_ids:ASK_IDS.slice(1)}),
+      ask({created_at:'2026-10-31 10:00:00',ask_grounding:0.7})
+    ];
+    assert.deepStrictEqual(M.mockTrendValues({recent},'ask_quality','ask_grounding'),[1,0.9],'stops at the first run that is not comparable, even if an older one matches again');
+    assert.deepStrictEqual(M.mockTrendValues({recent:recent.slice(0,1)},'ask_quality','ask_grounding'),[]);
+    const contract={recent:recent.slice(0,2),contractUpdatedAt:'2026-11-02T12:00:00Z'};
+    assert.deepStrictEqual(M.mockTrendValues(contract,'ask_quality','ask_grounding'),[],'a contract change between the runs breaks the line');
   });
   await check('a suite with no earlier run, or an earlier run without the field, shows no change',()=>{
     assert.strictEqual(M.mockDelta([latestAsk],'ask_quality','ask_grounding').label,'—');

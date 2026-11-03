@@ -543,10 +543,15 @@ assert.doesNotMatch(releaseAndDeliveryChanges.find(item=>item.title==='New produ
     quality:{ask:{ask_grounding:newScore,created_at:'2026-10-12T00:00:00Z'}},
     platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'
   }).find(item=>/Answer-quality eval/.test(item.title));
-  const up=evalChange(0.9,0.95),down=evalChange(1,0.875),same=evalChange(1,1),tiny=evalChange(1,0.9996);
-  assert.deepStrictEqual([up.title,up.detail],['Answer-quality eval changed','Improved 5 points to 95%']);
-  assert.deepStrictEqual([down.title,down.detail],['Answer-quality eval changed','Declined 12.5 points to 87.5%']);
-  assert.deepStrictEqual([same.title,same.detail],['Answer-quality eval re-run','Unchanged at 100%']);
+  // Nov 3: a saved visit does not record which scenarios ran, so a later run is never scored against it; the score stays.
+  const visit=evalChange(0.9,0.95);
+  assert.deepStrictEqual([visit.title,visit.detail],['Answer-quality eval re-run','Not comparable with your last visit: the run records don’t show which scenarios ran · now 95%']);
+  // The change wording itself, for comparable runs.
+  const change=(oldScore,newScore)=>M.evalChangeDetail(M.scoreDeltaPoints(newScore,oldScore),newScore);
+  const up={detail:change(0.9,0.95)},down={detail:change(1,0.875)},same={detail:change(1,1)},tiny={detail:change(1,0.9996)};
+  assert.strictEqual(up.detail,'Improved 5 points to 95%');
+  assert.strictEqual(down.detail,'Declined 12.5 points to 87.5%');
+  assert.strictEqual(same.detail,'Unchanged at 100%');
   assert.strictEqual(tiny.detail,'Unchanged at 100%','a change that rounds to zero is unchanged, not "Declined 0 points"');
   assert.strictEqual(M.evalChangeDetail(null,0.8),'New controlled run recorded · 80%');
   assert.strictEqual(M.scoreDeltaPoints(1,1),0);
