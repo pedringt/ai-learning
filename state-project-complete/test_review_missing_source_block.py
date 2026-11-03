@@ -73,3 +73,35 @@ def test_review_without_evidence_stays_readable():
     reviews = list_reviews(conn, "open")
     assert [r["id"] for r in reviews] == ["r1"]
     assert reviews[0]["evidence_items"] == []
+
+
+def test_api_refuses_accept_and_adjust_without_evidence_but_allows_leave_unchanged(tmp_path):
+    """Direct API calls are enforced too, not only the disabled buttons."""
+    from fastapi.testclient import TestClient
+
+    from api import Settings, create_app
+    from test_api import LaunchDateProvider
+
+    db_path = str(tmp_path / "state.db")
+    app = create_app(Settings(database_path=db_path, provider="anthropic", cors_origins=["http://localhost:8000"]), provider=LaunchDateProvider())
+    with TestClient(app) as client:
+        with sqlite3.connect(db_path) as conn:
+            conn.execute("INSERT INTO current_state_items(id, topic, statement, version) VALUES ('state_launch','launch','Launch is October 1.',1)")
+            conn.commit()
+        created = client.post("/api/evidence", json={"content": "Launch moved to October 15."})
+        assert created.status_code == 201
+        review = created.json()["reviews"][0]
+        with sqlite3.connect(db_path) as conn:  # damage the record: drop its Evidence link
+            conn.execute("DELETE FROM review_evidence WHERE review_id=?", (review["id"],))
+            conn.commit()
+
+        accept = client.post(f"/api/reviews/{review['id']}/resolve", json={"decision": "accept"})
+        assert accept.status_code == 409 and accept.json()["detail"] == MISSING_SOURCE_MESSAGE
+        proposal_id = client.get("/api/reviews?status=open").json()["items"][0]["proposals"][0]["id"]
+        adjust = client.post(f"/api/reviews/{review['id']}/resolve", json={"decision": "accept", "adjustments": [{"proposal_id": proposal_id, "adjusted_statement": "Launch is October 16."}]})
+        assert adjust.status_code == 409
+        assert client.get("/api/state").json()["items"][0]["statement"] == "Launch is October 1."
+
+        leave = client.post(f"/api/reviews/{review['id']}/resolve", json={"decision": "keep"})
+        assert leave.status_code == 200
+        assert client.get("/api/state").json()["items"][0]["version"] == 1
