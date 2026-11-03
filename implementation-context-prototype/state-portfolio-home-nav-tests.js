@@ -12,7 +12,7 @@ const between=(start,end)=>{const i=html.indexOf(start);return i<0?'':html.slice
 
 const hero=between('<div class="rd-hero-copy">','</aside>');
 check('the hero names Paige with the accepted description before the headline',
-  /<p class="rd-identity"><span class="rd-name">Paige Edrington<\/span><span class="rd-descriptor">Software QA and project management, applied to AI\.<\/span><\/p><h1/.test(hero));
+  /<p class="rd-identity"><span class="rd-name">Paige Edrington<\/span><span class="rd-descriptor">Software QA · Project Management · Applied AI<\/span><\/p><h1/.test(hero));
 check('the existing headline is kept',hero.includes('AI doesn’t know <span>what it doesn’t know.</span></h1>'));
 check('no spoken "I\'m Paige" introduction',!/I[’']m Paige/.test(html));
 
