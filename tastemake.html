@@ -54,7 +54,7 @@
 <div class="case-meta"><span><b>My role</b> Product model, UX rules, evaluation &amp; testing</span><span><b>AI collaborator</b> Research, implementation, debugging &amp; test support</span><span><b>Status</b> Working prototype · live, not yet tested with outside users</span></div>
 </header><p class="in-short"><span>In short</span>Tastemake lets people see and correct the taste profile behind their recommendations.</p>
 
-<aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>, a real profile with 61 titles and two corrections.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
+<aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>, a real profile with 61 titles, one correction and one confirmed pattern.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
 
 <article class="case-page-content flagship-case">
 
@@ -81,13 +81,14 @@
 <h2>The biggest improvement was showing what actually changed.</h2>
 <p>Earlier versions could build a Taste Profile, but the user still had to guess what their feedback changed. I redesigned that part so Tastemake explains what it learned and how that will affect future recommendations.</p>
 <div class="taste-example">
-<span>Example interaction</span>
+<span>A real correction from my Example Profile</span>
 <div>
-<article><strong>You told Tastemake</strong><p><em>Neon Gods</em> → Loved.</p></article>
-<article><strong>So Tastemake changed</strong><p>A broad romance pattern gets narrowed to mythic atmosphere and morally messy characters.</p></article>
-<article><strong>What that means</strong><p>Future picks can lean on those traits without assuming every similar romance will work.</p></article>
+<article><strong>Tastemake inferred</strong><p>“Quirky character-driven comedy”: deadpan, character-led TV comedy, supported by four shows I had tried, including <em>Nathan for You</em> and <em>The Rehearsal</em>.</p></article>
+<article><strong>I told it</strong><p>Partly accurate.</p></article>
+<article><strong>What that changes</strong><p>Tastemake records my answer separately from its guess. The AI that ranks recommendations and refreshes the profile is told to apply the pattern narrowly. My answer does not change the pattern’s weight in Tastemake’s own ranking.</p></article>
 </div>
 </div>
+<p>That correction is recorded, but I have not measured whether it improved later recommendations, and the profile was not refreshed after it.</p>
 <p>Recommendation explanations use the same approach: why this might work, what Tastemake is testing, and what could still be wrong.</p>
 </section>
 
