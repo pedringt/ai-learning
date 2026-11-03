@@ -97,7 +97,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <header class="meridian-case-hero flagship-hero">
 <h1>Project Health</h1>
 <p class="lead">Project Health brings together product quality, incidents, delivery, and usage signals so teams can see what actually needs attention.</p>
-<div class="case-meta"><span><b>My role</b> Product framing, UX, QA, eval review</span><span><b>AI collaborator</b> Implementation, testing, regression coverage, drafting</span><span><b>Status</b> Working product · portfolio build</span></div>
+<div class="case-meta"><span><b>My role</b> Product framing, UX, QA, eval review</span><span><b>AI collaborator</b> Implementation, testing, regression coverage, drafting</span><span><b>Status</b> Working prototype · live, built around my own projects</span></div>
 </header><p class="in-short"><span>In short</span>Project Health turns scattered product signals into a clearer picture of what needs attention.</p>
 <aside class="meridian-product-callout"><div><span>Try Project Health</span><strong>See the signals come together</strong><p>Open the dashboard I built around my own projects to review quality, delivery, and monitoring in one place.</p></div><a class="meridian-primary-action" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health <span aria-hidden="true">↗</span></a></aside>
 
@@ -155,7 +155,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker">Investigate</div>
 <h2>Investigate starts with the specific problem</h2>
-<p>When a signal needs more context, Investigate gathers the relevant evidence and produces a handoff that shows what happened, what is known, what is still uncertain, and what should happen next. The AI helps investigate; it does not make the decision.</p>
+<p>When a signal needs more context, Investigate produces a handoff that shows what happened, what is known, what is still uncertain, and what should happen next. It takes one of two paths depending on the signal:</p><ul><li><strong>A failed eval</strong> is explained from the eval results already recorded. Rules assemble the handoff, and no new model call is made.</li><li><strong>A release or deployment problem</strong> goes to a read-only AI investigator that reads bounded evidence, such as deployment status and logs, and drafts the handoff. It cannot change code, configuration, or deployments.</li></ul><p>Either way, Investigate does not make the decision. A person does.</p>
 </section>
 
 <section class="section">
