@@ -75,6 +75,18 @@ check('a Review with no recorded Evidence says so beside the proposal',figure(mi
 check('the missing state quotes nothing and falls back to nothing',!figure(missing).includes('<blockquote>')&&!missing.includes('Text the browser happened to hold'),missing);
 check('Why / source agrees that no source evidence is recorded',why(missing).includes('No source evidence is recorded'),why(missing));
 
+// Missing source blocks fact changes (Nov 2): Update and Adjust are disabled with a reason; Leave unchanged stays.
+const btn=(h,action)=>(h.match(new RegExp(`<button[^>]*data-action="${action}"[^>]*>`))||[''])[0];
+check('with no recorded source, Update Current State is disabled and points at the reason',/ disabled/.test(btn(missing,'review-update'))&&btn(missing,'review-update').includes('aria-describedby="review-blocked-r-budget"'),btn(missing,'review-update'));
+check('with no recorded source, Adjust is disabled too',/ disabled/.test(btn(missing,'open-adjust-review')),btn(missing,'open-adjust-review'));
+check('with no recorded source, Leave unchanged stays available',btn(missing,'review-keep')&&!/ disabled/.test(btn(missing,'review-keep')),btn(missing,'review-keep'));
+check('the card says why the change is blocked',missing.includes('id="review-blocked-r-budget"')&&missing.includes('can&rsquo;t change Current State'),missing);
+check('a Review with a recorded source keeps Update Current State enabled',!/ disabled/.test(btn(html,'review-update'))&&!html.includes('review-blocked-note'),btn(html,'review-update'));
+const legacyBlock=openItems.reviewCard({...mapped,evidenceItems:undefined},true,false);
+check('an unknown evidence list (older caller) blocks nothing',!/ disabled/.test(btn(legacyBlock,'review-update'))&&!legacyBlock.includes('review-blocked-note'),btn(legacyBlock,'review-update'));
+const missingRisk=openItems.reviewCard(api.mapApiReview({...budget,review_type:'state_at_risk',proposals:[],evidence_items:[]},''),true,false);
+check('Keep tracking on an at-risk Review is unaffected by a missing source',!/ disabled/.test(btn(missingRisk,'review-acknowledge-risk'))&&!missingRisk.includes('review-blocked-note'),btn(missingRisk,'review-acknowledge-risk'));
+
 // Review types the excerpt does not apply to / older callers
 const risk=openItems.reviewCard(api.mapApiReview({...budget,review_type:'state_at_risk',proposals:[]},''),true,false);
 check('a check-only Review keeps its full "What the evidence says" block and gets no second copy',risk.includes('What the evidence says')&&!risk.includes('review-source-excerpt'),risk);

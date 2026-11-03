@@ -50,6 +50,11 @@
     const proposals=Array.isArray(r.proposals)?r.proposals:[];
     const checkOnly=!isQuestionReview && proposals.length===0;
     const adjustableCount=proposals.filter(p=>p.operation!=='retire').length;
+    // A Review whose source Evidence is known to be missing can't change Current State (the server
+    // refuses it too); it stays readable and can still be left unchanged. Unknown (null) blocks nothing.
+    const sourceMissing=!isQuestionReview&&!checkOnly&&recordedSources(r)?.length===0;
+    const blockedId=`review-blocked-${r.id}`;
+    const blocked=sourceMissing?` disabled aria-describedby="${blockedId}"`:'';
     const questionProposal=r.questionToCreate;
     const questionReady=!!questionProposal?.id&&questionProposal.status==='pending';
     // #482 (QA-11): "Still unresolved" that only restates the card's title adds nothing.
@@ -75,7 +80,7 @@
       // Keeping the button always present (disabled + a title on the
       // retire-only case) keeps the row's shape predictable across every
       // Review of this type.
-      : `<button class="btn primary" data-action="review-update" data-review="${r.id}">Update Current State</button><button class="btn secondary" data-action="open-adjust-review" data-review="${r.id}"${adjustableCount?'':' disabled title="Nothing to adjust -- every proposal here retires a fact rather than proposing wording."'}>Adjust</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}" title="Do not apply this evidence to Current State.">Leave unchanged</button>`;
+      : `<button class="btn primary" data-action="review-update" data-review="${r.id}"${blocked}>Update Current State</button><button class="btn secondary" data-action="open-adjust-review" data-review="${r.id}"${sourceMissing?blocked:adjustableCount?'':' disabled title="Nothing to adjust -- every proposal here retires a fact rather than proposing wording."'}>Adjust</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}" title="Do not apply this evidence to Current State.">Leave unchanged</button>`;
     // A related open Review is a structural pointer only (same State item or
     // Question as this one) -- never a claim that the two are the same
     // decision. Shown plainly, not as an action, so the human decides
@@ -83,7 +88,7 @@
     const relatedBlock=(r.relatedOpenReviews||[]).length
       ? `<div class="review-context-block review-related-block"><span>${r.relatedOpenReviews.length>1?'Related open reviews':'Related open review'}</span>${r.relatedOpenReviews.map(x=>`<p>&ldquo;${esc(x.decisionQuestion)}&rdquo;</p>`).join('')}</div>`
       : '';
-    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${isQuestionReview?(questionProposal?.existing_question_id?'Already tracked':'Question to track'):checkOnly?'What the evidence says':'Proposed change'}</span><p>${esc(isQuestionReview?(questionReady?questionProposal.existing_question_text||questionProposal.text:'Question suggestion unavailable. Refresh and review it again.'):checkOnly?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p>${checkOnly?'':sourceExcerptHtml(r)}</div>${!checkOnly&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}${relatedBlock}</div><div class="review-actions">${actions}</div><details class="reasoning"><summary>Why / source</summary>${fullSourcesHtml(r)}<p><strong>Establishes:</strong> ${esc(cleanReviewCopy(r.establishes))}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
+    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${isQuestionReview?(questionProposal?.existing_question_id?'Already tracked':'Question to track'):checkOnly?'What the evidence says':'Proposed change'}</span><p>${esc(isQuestionReview?(questionReady?questionProposal.existing_question_text||questionProposal.text:'Question suggestion unavailable. Refresh and review it again.'):checkOnly?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p>${checkOnly?'':sourceExcerptHtml(r)}</div>${!checkOnly&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}${relatedBlock}</div>${sourceMissing?`<p class="review-blocked-note" id="${blockedId}">No source Evidence is recorded, so this Review can&rsquo;t change Current State. You can still leave it unchanged.</p>`:''}<div class="review-actions">${actions}</div><details class="reasoning"><summary>Why / source</summary>${fullSourcesHtml(r)}<p><strong>Establishes:</strong> ${esc(cleanReviewCopy(r.establishes))}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
     if(accordion) return `<article class="review-record is-expanded" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="true">${head}</button><div class="review-card-body" style="padding:0 16px 16px 16px!important;box-sizing:border-box">${body}</div></article>`;
     return `<article class="review-card compact-review" data-review-card="${r.id}"><span class="review-row-head open-question-copy"><span class="open-item-label review">Review</span><span class="review-card-title open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><div class="review-card-body">${body}</div></article>`;
   }
