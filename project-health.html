@@ -589,6 +589,35 @@
     .mock-refreshing-evals{
       display:block;margin-top:4px;font-size:10px;font-weight:650;color:#7b8496;
     }
+    /* #597: previous results stay visible but secondary while a refresh runs or after it fails. */
+    .mock-refreshing-evals.previous{color:#8a5a00}
+    .quality-provenance{grid-column:1/-1;margin:0;padding:9px 12px;border:1px solid #e3e6ec;border-radius:10px;background:#f4f5f8;color:#4b5563;font-size:12px;font-weight:650;line-height:1.4}
+    .quality-provenance.stale,.quality-provenance.unavailable{border-color:#f0d29a;background:#fff7e9;color:#7a4a05}
+    .mock-kpi-grid.is-previous .mock-kpi,.mock-quality-detail-grid.is-previous,.eval-results.is-previous{opacity:.68}
+    .mock-kpi-grid.is-previous .mock-kpi-value,.mock-quality-detail-grid.is-previous strong{color:#5b6472}
+    .mock-quality-detail-grid.is-previous .mock-progress span{background:#9aa3b2}
+    .eval-overview.previous{border-color:#d9dde5;background:#f6f7f9}
+    .eval-counts-note{margin:10px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+    /* #596: a failed scenario reads Evidence → Observed → Expected → Consequence → Next step. */
+    .failure-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .severity-chip{padding:3px 8px;border-radius:999px;background:#f1f3f6;color:#4b5563;font-size:10px;font-weight:800;white-space:nowrap}
+    .severity-chip.high{background:#fff0ef;color:#b3261e}.severity-chip.medium{background:#fff7e9;color:#8a5a00}
+    .failure-headline{margin:0 0 4px;color:var(--ink);font-size:13px;font-weight:650;line-height:1.45}
+    .failure-story{display:grid;gap:10px;margin-top:10px}
+    .failure-fact{display:grid;grid-template-columns:140px minmax(0,1fr);gap:10px}
+    .failure-fact>strong{font-size:12px;color:var(--ink)}
+    .failure-fact p{margin:0 0 4px;color:#41495a;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+    .fact-lead{color:var(--ink);font-weight:750}
+    .failure-fact .fact-source{color:#7b8496;font-size:11px}
+    .fact-gap{color:#8a5a00}
+    .failure-setup{margin:4px 0;padding-left:18px;color:#41495a;font-size:13px;line-height:1.45}
+    .failure-gaps{margin-top:10px;padding:8px 10px;border:1px dashed #e0c48a;border-radius:8px;background:#fffbf2;font-size:12px}
+    .failure-gaps ul{margin:4px 0 0;padding-left:18px}
+    .failure-technical{margin-top:10px;font-size:12px}
+    .failure-technical summary{cursor:pointer;font-weight:800}
+    .failure-technical dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px;margin:8px 0}
+    .failure-technical dt{color:#7b8496}.failure-technical dd{margin:0;overflow-wrap:anywhere}
+    @media(max-width:720px){.failure-fact{grid-template-columns:1fr;gap:2px}}
 
 
     .mock-analytics-title{justify-content:flex-start}
@@ -801,6 +830,7 @@
     </dialog>
   </main>
   <link href="project-health-redesign.css?v=r4-oct11" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
+  <script src="state-eval-catalog.js"></script>
   <script src="project-health-model.js"></script>
   <script src="project-health.js"></script>
 </body>
