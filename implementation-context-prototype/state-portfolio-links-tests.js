@@ -60,5 +60,12 @@ check('the specific index.html rule comes before the catch-all so it is not shad
   sources.indexOf('/implementation-context-prototype/index.html')<sources.indexOf('/implementation-context-prototype/:path*'));
 check('the legacy Vercel redirect points to Context Switch',redirects.some(r=>r.source==='/:path*'&&(r.has||[]).some(h=>h.value==='ai-learning-rouge.vercel.app')&&r.destination==='https://www.contextswitch.tech/:path*'));
 
-console.log(`\n${pass} passed, ${fail} failed`);
+// With trailingSlash:false a folder page is served as /docs/review/<name>, so a relative asset path resolves one folder
+// too high (#595 staging review, Nov 3). docs/review pages must use root-absolute asset paths.
+const vercelConfig=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
+const reviewRoot=path.join(root,'docs','review');
+const reviewPages=fs.existsSync(reviewRoot)?fs.readdirSync(reviewRoot).map(d=>path.join(reviewRoot,d,'index.html')).filter(f=>fs.existsSync(f)):[];
+const relativeAssets=reviewPages.flatMap(f=>[...fs.readFileSync(f,'utf8').matchAll(/\b(?:src|srcset|href)="([^"#]*)"/g)]
+  .map(m=>m[1]).filter(u=>u&&!/^(\/|https?:|mailto:|data:)/.test(u)).map(u=>path.relative(root,f)+': '+u));
+check('review folder pages use root-absolute asset paths (the site drops trailing slashes)',vercelConfig.trailingSlash!==false||relativeAssets.length===0,relativeAssets.join(', '));
 if(fail)process.exit(1);
