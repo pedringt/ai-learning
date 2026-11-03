@@ -15,6 +15,8 @@ check('the hero names Paige with the accepted description before the headline',
   /<p class="rd-identity"><span class="rd-name">Paige Edrington<\/span><span class="rd-descriptor">Software QA · Project Management · Applied AI<\/span><\/p><h1/.test(hero));
 check('the existing headline is kept',hero.includes('AI doesn’t know <span>what it doesn’t know.</span></h1>'));
 check('no spoken "I\'m Paige" introduction',!/I[’']m Paige/.test(html));
+// Nov 3 (Paige): the introduction no longer repeats the descriptor's background.
+check('the hero introduction does not repeat the descriptor',hero.includes('I look for where AI needs more context, clearer direction, or closer review.')&&!/My background in/.test(hero));
 
 const actions=[...between('<div class="rd-actions">','</div>').matchAll(/<a class="([^"]*)" href="([^"]*)">([^<]*)</g)].map(m=>({cls:m[1],href:m[2],text:m[3]}));
 check('See the work is the first, primary action and opens Applied Work',
@@ -29,7 +31,7 @@ check('all three State entry points remain (hero, homepage card, Applied Work)',
 const homeCard=between('<article class="home-feature-card home-feature-state-anchor">','</article>');
 const catalog=between('<h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3>','</div></div>');
 check('the homepage State card describes the practical problem and keeps demo + case-study links',
-  homeCard.includes('what the team should treat as true right now')&&homeCard.includes('data-state-app-link')&&homeCard.includes('href="implementation-context.html"'));
+  homeCard.includes('what a team should treat as true right now')&&!/documents/i.test(homeCard)&&homeCard.includes('data-state-app-link')&&homeCard.includes('href="implementation-context.html"'));
 check('the authority-boundary explanation is not repeated in the homepage card or the catalog entry',
   ![homeCard,catalog].some(t=>/authoriz|human-approved|boundary|people approve/i.test(t)));
 
