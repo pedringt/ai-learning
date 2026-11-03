@@ -51,18 +51,18 @@
 <header class="meridian-case-hero flagship-hero">
 <h1>Tastemake</h1>
 <p class="lead">Tastemake is a working product for user-editable personalization. Recommendations are the surface; the harder question is whether people can see, understand, and correct the model an AI builds of their taste.</p>
-<div class="case-meta"><span><b>My role</b> Product model, UX rules, evaluation &amp; testing</span><span><b>AI collaborator</b> Research, implementation, debugging &amp; test support</span><span><b>Status</b> Working product · portfolio build</span></div>
+<div class="case-meta"><span><b>My role</b> Product model, UX rules, evaluation &amp; testing</span><span><b>AI’s role</b> Most of the coding, plus research and debugging (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, not yet tested with outside users</span></div>
 </header><p class="in-short"><span>In short</span>Tastemake lets people see and correct the taste profile behind their recommendations.</p>
 
-<aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>, a real profile with 61 titles and two corrections.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
+<aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>, a real profile with 61 titles, one correction and one confirmed pattern.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
 
 <article class="case-page-content flagship-case">
 
 <section class="section narrative-open">
 <div class="kicker">The problem</div>
-<h2>Most recommenders learn from behavior without showing the user what they concluded.</h2>
-<p>Most recommendation systems ask for a rating and move on. I wanted Tastemake to show the patterns behind its recommendations too. If it decides you like something because of atmosphere, pacing, characters, or another pattern, you can tell it whether that read is right.</p>
-<p>The question became less about making a smarter recommendation list and more about whether the user could understand and improve the model behind it.</p>
+<h2>My taste was split across apps, and their recommendations were hard to understand.</h2>
+<p>I’ve loved books, games, movies, and TV my whole life, but my taste was split across separate apps. In my experience, those apps mainly helped me log what I’d tried. Recommendations were often weak, and I couldn’t always tell why something had been suggested. I didn’t have a useful way to explain why I liked something or correct what the system inferred.</p>
+<p>I didn’t want more recommendations. I wanted one place that showed what it thought my taste was, let me fix it, and carried those corrections into future recommendations across books, movies, TV, and games. That became Tastemake.</p>
 </section>
 
 <section class="section product-model">
@@ -81,13 +81,14 @@
 <h2>The biggest improvement was showing what actually changed.</h2>
 <p>Earlier versions could build a Taste Profile, but the user still had to guess what their feedback changed. I redesigned that part so Tastemake explains what it learned and how that will affect future recommendations.</p>
 <div class="taste-example">
-<span>Example interaction</span>
+<span>A real correction from my Example Profile</span>
 <div>
-<article><strong>You told Tastemake</strong><p><em>Neon Gods</em> → Loved.</p></article>
-<article><strong>So Tastemake changed</strong><p>A broad romance pattern gets narrowed to mythic atmosphere and morally messy characters.</p></article>
-<article><strong>What that means</strong><p>Future picks can lean on those traits without assuming every similar romance will work.</p></article>
+<article><strong>Tastemake inferred</strong><p>“Quirky character-driven comedy”: deadpan, character-led TV comedy, supported by four shows I had tried, including <em>Nathan for You</em> and <em>The Rehearsal</em>.</p></article>
+<article><strong>I told it</strong><p>Partly accurate.</p></article>
+<article><strong>What that changes</strong><p>Tastemake records my answer separately from its guess. The AI that ranks recommendations and refreshes the profile is told to apply the pattern narrowly. My answer does not change the pattern’s weight in Tastemake’s own ranking.</p></article>
 </div>
 </div>
+<p>That correction is recorded, but I have not measured whether it improved later recommendations, and the profile was not refreshed after it.</p>
 <p>Recommendation explanations use the same approach: why this might work, what Tastemake is testing, and what could still be wrong.</p>
 </section>
 
@@ -117,7 +118,7 @@
 <h2>How I split the work</h2>
 <div class="surface-grid">
 <article><span>My role</span><ul><li>defined the product model and UX rules</li><li>redesigned the Taste Profile so Tastemake explains what it learned and how that will affect future recommendations</li><li>moved deeper taste questions behind the first reaction so the recommendation card stays simple</li><li>led evaluation and testing, including using a confident miss to refine the underlying taste pattern rather than just suppress that one result</li></ul></article>
-<article><span>AI-assisted work</span><ul><li>research</li><li>implementation</li><li>debugging</li><li>test support</li></ul></article>
+<article><span>AI’s part</span><ul><li>most of the coding, through ChatGPT and Claude</li><li>research</li><li>debugging</li></ul></article>
 </div>
 </section>
 

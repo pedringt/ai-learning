@@ -97,7 +97,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <header class="meridian-case-hero flagship-hero">
 <h1>Project Health</h1>
 <p class="lead">Project Health brings together product quality, incidents, delivery, and usage signals so teams can see what actually needs attention.</p>
-<div class="case-meta"><span><b>My role</b> Product framing, UX, QA, eval review</span><span><b>AI collaborator</b> Implementation, testing, regression coverage, drafting</span><span><b>Status</b> Working product · portfolio build</span></div>
+<div class="case-meta"><span><b>My role</b> Product framing, UX, QA, eval review</span><span><b>AI’s role</b> Most of the coding, plus tests and drafting (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, built around my own projects</span></div>
 </header><p class="in-short"><span>In short</span>Project Health turns scattered product signals into a clearer picture of what needs attention.</p>
 <aside class="meridian-product-callout"><div><span>Try Project Health</span><strong>See the signals come together</strong><p>Open the dashboard I built around my own projects to review quality, delivery, and monitoring in one place.</p></div><a class="meridian-primary-action" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health <span aria-hidden="true">↗</span></a></aside>
 
@@ -107,7 +107,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker">The problem</div>
 <h2>A failed release, a lower eval score, and a runtime warning all lived in different places.</h2>
-<p>The information already existed. It was just spread across deployments, commits, evals, analytics, logs, and the live products themselves. I built Project Health around my own projects as a practical test bed for a pattern I would expect to matter inside a product team: bring the signals together, then help someone decide whether a signal is a real product problem, something to watch, or simply missing information.</p>
+<p>As I built and maintained several prototypes, checking on them meant opening too many separate tools and pages. I wanted one place to see failures across projects and jump into the relevant tool when something needed attention. That became Project Health: a central dashboard for seeing what needed a closer look and getting to it.</p>
+<p>The information already existed, spread across deployments, commits, evals, analytics, logs and the live products. The product decisions were about bringing it together without losing where each signal came from: link back to the source tool, keep a failed or missing check distinct from a healthy result, and help explain a failure. A failed eval is explained from its recorded results with no model call. Release and deployment problems go to a bounded, read-only AI investigation.</p>
 </section>
 
 <section class="section">
@@ -155,7 +156,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker">Investigate</div>
 <h2>Investigate starts with the specific problem</h2>
-<p>When a signal needs more context, Investigate gathers the relevant evidence and produces a handoff that shows what happened, what is known, what is still uncertain, and what should happen next. The AI helps investigate; it does not make the decision.</p>
+<p>When a signal needs more context, Investigate produces a handoff that shows what happened, what is known, what is still uncertain, and what should happen next. It takes one of two paths depending on the signal:</p><ul><li><strong>A failed eval</strong> is explained from the eval results already recorded. Rules assemble the handoff, and no new model call is made.</li><li><strong>A release or deployment problem</strong> goes to a read-only AI investigator that reads bounded evidence, such as deployment status and logs, and drafts the handoff. It cannot change code, configuration, or deployments.</li></ul><p>Either way, Investigate does not make the decision. A person does.</p>
 </section>
 
 <section class="section">
@@ -172,7 +173,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <h2>How I split the work</h2>
 <div class="role-grid">
   <div class="card"><span class="tag">My role</span><ul><li>framed the problem and chose which signals mattered</li><li>designed the information hierarchy</li><li>reviewed failed evals and decided whether product behavior or the test should change</li><li>used QA findings to reshape the product</li></ul></div>
-  <div class="card"><span class="tag">AI-assisted work</span><ul><li>implementation and code iteration</li><li>testing and regression coverage</li><li>drafting and interface iteration</li></ul></div>
+  <div class="card"><span class="tag">AI’s part</span><ul><li>most of the coding, through ChatGPT and Claude</li><li>testing and regression-coverage code</li><li>drafting and interface iteration</li></ul></div>
 </div>
 </section>
 
