@@ -58,5 +58,12 @@ const tabletAt=css.indexOf('@media (max-width:980px) and (min-width:681px){\n  h
 const tablet=tabletAt<0?'':css.slice(tabletAt,css.indexOf('\n}',tabletAt));
 check('at tablet widths the Current State note sits below the State card sentence',/\.rd-review-current\{right:-28px;top:262px\}/.test(tablet),tablet);
 
+// #588/#598: every homepage footer links the accepted general résumé, a real two-page PDF at /resume.pdf.
+const footers=[...html.matchAll(/<nav class="portfolio-contact"[\s\S]*?<\/nav>/g)].map(m=>m[0]);
+check('each homepage footer (Home, Applied Work, Library) links the résumé PDF in a new tab',
+  footers.length===3&&footers.every(f=>/<a href="resume\.pdf" target="_blank" rel="noopener">Résumé \(PDF\)<\/a><\/nav>$/.test(f)),String(footers.length));
+const pdf=fs.readFileSync(path.join(root,'resume.pdf'));
+check('resume.pdf is a PDF with two pages',pdf.slice(0,5).toString()==='%PDF-'&&(pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g)||[]).length===2);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);
