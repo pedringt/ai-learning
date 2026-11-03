@@ -107,7 +107,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker">The problem</div>
 <h2>A failed release, a lower eval score, and a runtime warning all lived in different places.</h2>
-<p>The information already existed. It was just spread across deployments, commits, evals, analytics, logs, and the live products themselves. I built Project Health around my own projects as a practical test bed for a pattern I would expect to matter inside a product team: bring the signals together, then help someone decide whether a signal is a real product problem, something to watch, or simply missing information.</p>
+<p>As I built and maintained several prototypes, checking on them meant opening too many separate tools and pages. I wanted one place to see failures across projects and jump into the relevant tool when something needed attention. That became Project Health: a central dashboard for seeing what needed a closer look and getting to it.</p>
+<p>The information already existed, spread across deployments, commits, evals, analytics, logs and the live products. The product decisions were about bringing it together without losing where each signal came from: link back to the source tool, keep a failed or missing check distinct from a healthy result, and help explain a failure. A failed eval is explained from its recorded results with no model call. Release and deployment problems go to a bounded, read-only AI investigation.</p>
 </section>
 
 <section class="section">
