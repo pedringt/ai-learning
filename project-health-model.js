@@ -736,6 +736,29 @@
     ask_compound_question_keeps_governing_state:'Each part of a compound question keeps its governing State', // NEW
     ask_evidence_backed_approval_qualified:'Report an evidence-backed approval without denying it' // NEW
   };
+  // What each Review scenario's Evidence is about, as the subject of a failure heading (#596 refinement, Nov 2). Drafted
+  // from each scenario's Evidence text; all await Paige's review except the planned-action one, which follows her example.
+  // Ask failures use the scenario's own question instead, so they need no entry here.
+  const SCENARIO_SUBJECTS={
+    review_direct_reversal:'Security’s pause of password-reset automation',
+    review_question_answer_only:'Legal’s answer to the open contract question',
+    review_question_and_state_change:'Leadership’s approval of Slack as an evidence source',
+    review_ambiguity_opens_question:'Support’s unconfirmed report about billing drafts',
+    review_duplicate_confirmation:'A repeat confirmation of password-reset automation',
+    review_unknown_not_false:'A note that the autonomy target is still unknown',
+    review_non_authoritative_opinion:'An engineer’s personal opinion about human review',
+    review_tentative_high_consequence:'Leadership’s open question about removing human review',
+    review_partial_reversal:'Security’s pause for privileged-account resets',
+    review_new_fact_with_downstream_question:'The approved training requirement with no date yet',
+    review_new_evidence_over_pending_review:'Finance’s corrected budget cap',
+    review_authority_disagreement:'An engineer’s recommendation against the Security owner’s decision',
+    review_partial_question_answer:'Security’s approval of Slack for two channels',
+    review_same_unknown_links_existing_question:'Conflicting retention claims',
+    review_planned_action_not_stated_as_done:'An agreed revision plan',
+    review_rationale_states_what_evidence_establishes:'Finance’s confirmed $40,000 budget'
+  };
+  // The direction each scenario marks as unsafe (its unsafe_if), in words.
+  const UNSAFE_DIRECTIONS={state_change:'proposing a Current State change',overstatement:'overstating what the Evidence establishes'};
   function humanize(value){const text=String(value||'').replaceAll('_',' ').trim();return text?text.charAt(0).toUpperCase()+text.slice(1):'';}
   function scenarioTitle(id,category){return SCENARIO_TITLES[String(id||'')]||humanize(category)||humanize(id)||'Controlled scenario';}
   // What each Review outcome code means, as an instruction (expected) and as a past-tense fact (observed).
@@ -745,9 +768,10 @@
     answer_question_and_update_state:['propose an answer to the open Question and a Current State change','proposed an answer to the open Question and a Current State change'],
     update_state_and_open_question:['propose a Current State change and open a new Question','proposed a Current State change and a new Question'],
     open_question:['open a new Question','proposed a new Question'],
-    link_existing_question:['link the Evidence to the existing open Question','linked the Evidence to the existing open Question'],
-    state_at_risk:['flag the Current State fact as at risk','flagged a Current State fact as at risk'],
-    preserve_evidence_only:['keep the update as Evidence only, with no Current State change or Question','kept the update as Evidence only, with no Current State change or Question'],
+    link_existing_question:['link the Evidence to the existing open Question','proposed linking the Evidence to the existing open Question'],
+    state_at_risk:['flag the Current State fact as at risk','raised a Review flagging a Current State fact as at risk'],
+    // The harness records this code whenever no Review proposes a change, Question, link or risk flag (quality_harness.py).
+    preserve_evidence_only:['keep the update as Evidence only, with no Current State change or Question','proposed no Current State change, Question or at-risk flag'],
     error:['finish processing','failed before producing an outcome']
   };
   // Short forms for the one-line result: what was expected (a noun) and what State did (a verb phrase).
@@ -756,10 +780,10 @@
     answer_question:['a proposed answer to the open Question','proposed an answer to the open Question'],
     answer_question_and_update_state:['an answer to the open Question plus a Current State change','proposed an answer and a Current State change'],
     update_state_and_open_question:['a Current State change plus a new Question','proposed a Current State change and a new Question'],
-    open_question:['a new Question','opened a new Question'],
-    link_existing_question:['a link to the existing open Question','linked the existing open Question'],
+    open_question:['a new Question','proposed a new Question'],
+    link_existing_question:['a link to the existing open Question','proposed a link to the existing open Question'],
     state_at_risk:['the fact flagged as at risk','flagged the fact as at risk'],
-    preserve_evidence_only:['Evidence kept with no change','kept it as Evidence only'],
+    preserve_evidence_only:['Evidence kept with no change','proposed nothing'],
     error:['a scored outcome','failed before producing an outcome']
   };
   function outcomeShort(code,tense){const entry=REVIEW_OUTCOME_SHORT[String(code||'').trim()];return entry?entry[tense==='observed'?1:0]:outcomeText(code,tense);}
@@ -777,14 +801,16 @@
     const proposal=at>=0?raw.slice(at+marker.length).trim():'';
     return {action,proposal,truncated:!!proposal&&(proposal.length>=180||raw.length>=240)};
   }
+  // The Ask scorer matches phrases and signal words, so "failed" says what the wording lacked, not what the answer meant.
   const ASK_CHECKS={
-    grounding:{failed:'missed a required fact or made a claim this scenario forbids',risk:'The answer did not stay on the record for this question, so a reader could leave with a fact missing or a claim the record does not support.'},
-    required_facts:{failed:'left out a fact this scenario requires',risk:'A reader could miss part of what the record establishes.'},
-    forbidden_claims:{failed:'made a claim this scenario forbids',risk:'A reader could take a claim the record does not support as project truth.'},
-    uncertainty:{failed:'did not say what is not established',risk:'A reader could take an unknown as settled.'},
-    open_item:{failed:'did not point to the open item',risk:'A reader may not learn that the question is still open.'},
-    authority:{failed:'did not keep a pending proposal apart from approved Current State',risk:'A reader could treat a proposal as a decision someone made.'}
+    grounding:{failed:'missed a required fact or made a claim this scenario forbids',risk:'A reader of this answer could leave with a fact missing or a claim the record does not support.'},
+    required_facts:{failed:'did not include a fact this scenario requires',risk:'A reader of this answer could miss part of what the record establishes.'},
+    forbidden_claims:{failed:'made a claim this scenario forbids',risk:'A reader of this answer could take a claim the record does not support as project truth.'},
+    uncertainty:{failed:'did not use wording that marks something as unknown',risk:'A reader of this answer could take an unknown as settled.'},
+    open_item:{failed:'did not use wording that points to an open item',risk:'A reader of this answer may not learn that something is still open.'},
+    authority:{failed:'did not use wording that separates a pending proposal from approved Current State',risk:'A reader of this answer could treat a proposal as a decision someone made.'}
   };
+  const ASK_CHECK_ORDER=['forbidden_claims','authority','uncertainty','required_facts','open_item','grounding'];
   const quote=text=>'“'+String(text).trim().replace(/[.;]$/,'')+'”';
   function phraseList(items,limit=3){
     const list=(Array.isArray(items)?items:[]).map(item=>Array.isArray(item)?item.map(quote).join(' or '):quote(item));
@@ -818,6 +844,7 @@
     return lines;
   }
   // Evidence → Observed behavior → Expected behavior → Consequence → Next step, from recorded and catalog data only.
+  // Observed and Consequence describe what this run did; severity is the scenario's, set in the catalog (#596, Nov 2).
   function failureStory(detail,run){
     const id=String(detail?.scenario_id||'');
     const scenario=evalScenario(id);
@@ -829,23 +856,32 @@
     const reviewed=REVIEWED_EXPLANATIONS[id];
     const reviewedApplies=!!(reviewed&&reviewed.when(recorded.action,checks));
     const gaps=[];
+    const FROM_RECORD='From the run record.',FROM_CATALOG='From the scenario catalog.';
+    // Whether this run created a Review: the harness counts a Review as recommended when processing created one, and the
+    // review_needed check compares that with the scenario. Unknown without the catalog entry or after an error.
+    const reviewCreated=suite==='review'&&scenario&&recorded.action&&recorded.action!=='error'
+      ?(checks.includes('review_needed')?!scenario.review_needed:!!scenario.review_needed):null;
     // Evidence: the scenario's synthetic setup.
     let evidence;
     if(scenario){
       evidence=suite==='review'
-        ?{lead:'New Evidence',text:scenario.evidence,setup:setupLines({...scenario,evidence:[]}),source:'Synthetic test setup from the scenario catalog.'}
-        :{lead:'Question asked',text:scenario.question,setup:setupLines(scenario),source:'Synthetic test setup from the scenario catalog.'};
+        ?{lead:'New Evidence',text:scenario.evidence,setup:setupLines({...scenario,evidence:[]}),source:'From the scenario catalog (synthetic test setup).'}
+        :{lead:'Question asked',text:scenario.question,setup:setupLines(scenario),source:'From the scenario catalog (synthetic test setup).'};
     }else{
       evidence={lead:null,text:null,setup:[],source:null};
       gaps.push('This page’s scenario catalog has no entry for '+(id||'this scenario')+', so its setup cannot be shown. The run may have used a different scenario set.');
     }
-    // Observed: what the run recorded.
+    // Observed: what the run recorded, no broader than the record supports.
     const observedParts=[];
-    let observedExcerpt=null;
+    let observedExcerpt=null,askPrimary=null;
     if(suite==='review'){
-      if(recorded.action)observedParts.push('State '+outcomeText(recorded.action,'observed')+'.');
-      if(checks.includes('review_needed'))observedParts.push(scenario?.review_needed===false?'It also asked for a human Review that this scenario does not need.':scenario?'It did not recommend a human Review, so nobody would have been asked to look at this Evidence.':'The review-needed check failed.');
-      if(checks.includes('processing'))observedParts.push('Processing did not finish normally.');
+      if(recorded.action==='error')observedParts.push('Processing failed before producing an outcome.');
+      else if(reviewCreated===false&&recorded.action==='preserve_evidence_only')observedParts.push('No Review was created for this Evidence, so State proposed no Current State change, Question or at-risk flag.');
+      else if(recorded.action)observedParts.push('State '+outcomeText(recorded.action,'observed')+'.');
+      if(checks.includes('review_needed')&&reviewCreated===true)observedParts.push('It created a Review, which this scenario does not need.');
+      else if(checks.includes('review_needed')&&reviewCreated===false&&recorded.action!=='preserve_evidence_only')observedParts.push('No Review was created for this Evidence.');
+      else if(checks.includes('review_needed')&&reviewCreated==null&&recorded.action!=='error')observedParts.push('The review-needed check failed.');
+      if(checks.includes('processing')&&recorded.action!=='error')observedParts.push('Processing did not finish normally.');
       const allowed=scenario?(scenario.allowed_actions?.length?scenario.allowed_actions:[scenario.expected_action]):[];
       if(recorded.action&&allowed.includes(recorded.action)&&checks.includes('interpretation'))observedParts.push('That outcome is one this scenario accepts, so the miss was in the wording: a required or forbidden phrase, or the rationale.');
       if(recorded.proposal)observedExcerpt={text:recorded.proposal,truncated:recorded.truncated};
@@ -855,6 +891,7 @@
     }else if(suite==='ask'){
       const named=checks.filter(check=>ASK_CHECKS[check]);
       const failed=named.filter(check=>!(check==='grounding'&&(named.includes('required_facts')||named.includes('forbidden_claims'))));
+      askPrimary=ASK_CHECK_ORDER.find(check=>failed.includes(check))||null;
       if(failed.length)observedParts.push('The answer '+failed.map(check=>ASK_CHECKS[check].failed).join('; it ')+'.');
       else if(detail?.observed)observedParts.push(String(detail.observed));
       gaps.push('The answer text is not recorded, so its wording cannot be shown here.');
@@ -862,79 +899,106 @@
       observedParts.push(String(detail.observed));
     }
     if(!observedParts.length)observedParts.push('No observed behavior was recorded for this failure.');
-    // Expected: the scenario's contract, or the recorded expected code when the catalog has no entry.
-    const expectedParts=[];
+    // Expected: one line from the scenario's contract; the rest of the contract goes in details.
+    let expectedLine='';
+    const expectedDetails=[];
+    const expectedCode=scenario?.expected_action||String(detail?.expected||'').trim();
     if(suite==='review'){
-      const expectedCode=scenario?.expected_action||String(detail?.expected||'').trim();
-      if(expectedCode)expectedParts.push('State should '+outcomeText(expectedCode,'expected')+'.');
+      if(expectedCode)expectedLine='State should '+outcomeText(expectedCode,'expected')+'.'+(scenario&&!scenario.review_needed?' No Review is needed.':'');
       const others=scenario?(scenario.allowed_actions||[]).filter(code=>code!==expectedCode):[];
-      if(others.length)expectedParts.push('Also acceptable: '+others.map(code=>outcomeText(code,'expected')).join('; ')+'.');
+      if(others.length)expectedDetails.push('Also acceptable: '+others.map(code=>outcomeText(code,'expected')).join('; ')+'.');
       if(scenario){
-        expectedParts.push(scenario.review_needed?'A person should be asked to review it.':'No human Review is needed.');
-        if(scenario.required_state_update_phrases?.length)expectedParts.push('A proposed change must include '+phraseList(scenario.required_state_update_phrases)+'.');
+        if(scenario.review_needed)expectedDetails.push('A person should be asked to review it.');
+        if(scenario.required_state_update_phrases?.length)expectedDetails.push('A proposed change must include '+phraseList(scenario.required_state_update_phrases)+'.');
         const forbidden=[...(scenario.forbidden_state_update_phrases||[]),...(scenario.forbidden_review_phrases||[])].filter((item,index,list)=>list.indexOf(item)===index);
-        if(forbidden.length)expectedParts.push('It must not say '+phraseList(forbidden)+'.');
-        if(scenario.required_rationale_phrases?.length)expectedParts.push('The rationale must include '+phraseList(scenario.required_rationale_phrases)+'.');
-        if(scenario.must_preserve_uncertainty)expectedParts.push('What is still uncertain stays uncertain.');
+        if(forbidden.length)expectedDetails.push('It must not say '+phraseList(forbidden)+'.');
+        if(scenario.required_rationale_phrases?.length)expectedDetails.push('The rationale must include '+phraseList(scenario.required_rationale_phrases)+'.');
+        if(scenario.must_preserve_uncertainty)expectedDetails.push('What is still uncertain stays uncertain.');
+        if(scenario.unsafe_if&&UNSAFE_DIRECTIONS[scenario.unsafe_if])expectedDetails.push('Unsafe direction: '+UNSAFE_DIRECTIONS[scenario.unsafe_if]+'.');
       }
     }else if(suite==='ask'&&scenario){
-      if(scenario.required_facts?.length)expectedParts.push('The answer should include '+phraseList(scenario.required_facts)+'.');
-      if(scenario.forbidden_claims?.length)expectedParts.push('It must not claim '+phraseList(scenario.forbidden_claims)+'.');
-      if(scenario.should_express_uncertainty)expectedParts.push('It should say what is not established.');
-      if(scenario.should_reference_open_item)expectedParts.push('It should point to the open item.');
-      if(scenario.should_distinguish_proposal_from_truth)expectedParts.push('It should keep pending proposals apart from approved Current State.');
+      const wants=[];
+      if(scenario.required_facts?.length)wants.push('include the required facts');
+      if(scenario.forbidden_claims?.length)wants.push('avoid the forbidden claims');
+      if(scenario.should_express_uncertainty)wants.push('say what is not established');
+      if(scenario.should_reference_open_item)wants.push('point to the open item');
+      if(scenario.should_distinguish_proposal_from_truth)wants.push('keep pending proposals apart from approved Current State');
+      if(wants.length)expectedLine='The answer should '+(wants.length>1?wants.slice(0,-1).join(', ')+' and '+wants[wants.length-1]:wants[0])+'.';
+      if(scenario.required_facts?.length)expectedDetails.push('Required facts: '+phraseList(scenario.required_facts,6)+'.');
+      if(scenario.forbidden_claims?.length)expectedDetails.push('Forbidden claims: '+phraseList(scenario.forbidden_claims,6)+'.');
     }else if(detail?.expected){
-      expectedParts.push(String(detail.expected));
+      expectedLine=String(detail.expected);
     }
-    if(!expectedParts.length)expectedParts.push('The expected behavior for this scenario is not available here.');
-    // Consequence: from the scenario's contract and the direction of the miss.
+    if(!expectedLine)expectedLine='The expected behavior for this scenario is not available here.';
+    // Consequence: what this run did, from the record and the direction of the miss. Not the scenario's severity.
     let consequence,direction='unknown';
+    const unsafeWords=UNSAFE_DIRECTIONS[scenario?.unsafe_if]||null;
     if(reviewedApplies){
       consequence=reviewed.why;direction='reviewed';
     }else if(suite==='review'&&scenario&&recorded.action){
       const statement=(scenario.current_state||[])[0]?.[1];
       const proposesChange=STATE_CHANGE_OUTCOMES.has(recorded.action);
       const expectsChange=STATE_CHANGE_OUTCOMES.has(scenario.expected_action);
-      if(proposesChange&&scenario.unsafe_if==='state_change'){
+      if(recorded.action==='error'){
+        direction='error';
+        consequence='This run could not score the scenario. It counts as a failure until it is rerun.';
+      }else if(proposesChange&&scenario.unsafe_if==='state_change'){
         direction='unsafe';
-        consequence='This is the unsafe direction for this scenario: the Evidence settles nothing, yet State proposed a Current State change. A reviewer who approved it would record something unconfirmed as project truth.';
+        consequence='This run proposed a Current State change, which this scenario marks as the unsafe direction. If a reviewer approved it, Current State would change on Evidence the contract says should not change it.';
       }else if(proposesChange&&scenario.unsafe_if==='overstatement'){
         direction='possibly-unsafe';
-        consequence='This scenario’s unsafe direction is overstating what the Evidence establishes. State proposed a change, and the recorded result does not show whether the miss was wording this scenario forbids. Compare the recorded excerpt with the contract before deciding.';
-      }else if(recorded.action==='preserve_evidence_only'&&expectsChange){
+        consequence='This run proposed a change, and this scenario’s unsafe direction is overstating what the Evidence establishes. The record does not show whether the wording overstated it; compare any recorded excerpt with the contract before deciding.';
+      }else if(recorded.action==='preserve_evidence_only'&&(expectsChange||['open_question','link_existing_question','answer_question'].includes(scenario.expected_action))){
         direction='missed';
-        consequence=(statement?'Current State would keep saying '+quote(statement)+'':'Current State would stay as it was')+(checks.includes('review_needed')?', and no Review would ask anyone to record what the Evidence established.':' after Evidence that the contract says should change it.')+(scenario.unsafe_if?' Nothing was overstated, so this is not the scenario’s unsafe direction.':'');
-      }else if(recorded.action==='preserve_evidence_only'&&['open_question','link_existing_question','answer_question'].includes(scenario.expected_action)){
-        direction='missed';
-        consequence='The Evidence would be kept without the '+(scenario.expected_action==='link_existing_question'?'link to the open Question':scenario.expected_action==='answer_question'?'answer to the open Question':'new Question')+' this scenario expects, so '+(scenario.expected_action==='answer_question'?'the Question would stay open after Evidence that answers it.':'the open uncertainty is easier to miss.');
-      }else if(recorded.action==='error'){
-        direction='error';
-        consequence='The scenario could not be scored. A high-severity scenario that did not run counts as a failure until it is rerun.';
+        const missing=expectsChange?'no change to Current State was put up for approval'+(statement?', so Current State still says '+quote(statement):'')+'.'
+          :scenario.expected_action==='answer_question'?'no answer to the open Question was proposed, so the Question stays open.'
+          :scenario.expected_action==='link_existing_question'?'the Evidence was not linked to the open Question.'
+          :'no new Question was proposed.';
+        consequence=(reviewCreated===false?'This run missed a needed Review: ':'This run’s Review proposed nothing: ')+missing;
+        // With no Review there is no proposal, Review or rationale text, so nothing could overstate the Evidence.
+        if(unsafeWords&&reviewCreated===false)consequence+=' It did not make this scenario’s unsafe mistake ('+unsafeWords+').';
+        else if(unsafeWords&&scenario.unsafe_if==='state_change')consequence+=' No change was proposed, so it did not make this scenario’s unsafe mistake ('+unsafeWords+').';
+      }else if(reviewCreated===true&&!scenario.review_needed){
+        direction='routing';
+        consequence='This run created a Review this scenario does not need, so a person would be asked to look at Evidence that needs no decision. Nothing changes in Current State without approval.';
       }else{
         direction='routing';
-        consequence='A person would be asked to decide something different from what this scenario expects. State only proposes, so nothing changes in Current State without approval'+(scenario.unsafe_if?'; this is not the direction the scenario marks as unsafe.':'.');
+        consequence='This run’s Review asks a person to decide something different from what this scenario expects. Nothing changes in Current State without approval.'+
+          (scenario.unsafe_if==='state_change'&&!proposesChange?' No change was proposed, so it did not make this scenario’s unsafe mistake ('+unsafeWords+').':
+           scenario.unsafe_if==='overstatement'?' The record does not show whether its wording overstated the Evidence.':'');
       }
     }else if(suite==='ask'){
-      const named=checks.filter(check=>ASK_CHECKS[check]);
-      const primary=['forbidden_claims','authority','uncertainty','required_facts','open_item','grounding'].find(check=>named.includes(check));
-      direction=primary?'answer':'unknown';
-      consequence=primary?ASK_CHECKS[primary].risk+' Ask is read-only, so project records are unchanged; the risk is what the reader believes.':'The recorded result does not say which answer check failed.';
+      direction=askPrimary?'answer':'unknown';
+      consequence=askPrimary?ASK_CHECKS[askPrimary].risk+' Ask is read-only, so project records are unchanged.':'The recorded result does not say which answer check failed.';
     }else{
-      consequence='The recorded result does not include enough detail to say what this miss would change.';
+      consequence='The recorded result does not include enough detail to say what this run’s miss would change.';
     }
+    // Heading: what this run did wrong, built from the recorded miss and the scenario's subject.
+    const subject=SCENARIO_SUBJECTS[id]||'The Evidence';
+    let heading;
+    if(reviewedApplies)heading=reviewed.headline;
+    else if(suite==='review'&&recorded.action){
+      const allowed=scenario?(scenario.allowed_actions?.length?scenario.allowed_actions:[scenario.expected_action]):[];
+      if(recorded.action==='error')heading=subject+' could not be scored';
+      else if(reviewCreated===false&&scenario?.review_needed)heading=subject+' didn’t trigger a Review';
+      else if(STATE_CHANGE_OUTCOMES.has(recorded.action)&&scenario?.unsafe_if==='state_change')heading=subject+' led to a proposed Current State change';
+      else if(reviewCreated===true&&scenario&&!scenario.review_needed)heading=subject+' triggered a Review it doesn’t need';
+      else if(allowed.includes(recorded.action)&&checks.includes('interpretation'))heading=subject+': the Review’s wording missed the contract';
+      else if(recorded.action==='preserve_evidence_only')heading=subject+': the Review proposed nothing';
+      else heading=subject+': State '+outcomeShort(recorded.action,'observed')+', not '+(expectedCode?outcomeShort(expectedCode,'expected'):'the expected outcome');
+    }else if(suite==='ask'&&askPrimary){
+      heading=(scenario?.question?'The answer to '+quote(scenario.question):'The answer')+' '+ASK_CHECKS[askPrimary].failed;
+    }else heading=scenarioTitle(id,detail?.category||scenario?.category)+' failed';
     const contractNote=scenario?.rationale||null;
-    const expectedCode=scenario?.expected_action||String(detail?.expected||'').trim();
-    const headline=reviewedApplies?reviewed.headline
-      :suite==='review'&&recorded.action?(expectedCode?'Expected '+outcomeShort(expectedCode,'expected')+'; State '+outcomeShort(recorded.action,'observed')+'.':'State '+outcomeShort(recorded.action,'observed')+'.')
-      :suite==='ask'&&observedParts.length?observedParts[0]:'';
-    const nextStep='Decide which is wrong: State’s behavior or this scenario’s contract. If the contract is right, treat it as a State behavior problem, fix it, and rerun '+suiteLabel+'. If State’s outcome is acceptable, changing the contract is a product decision to record before the scenario is edited.';
+    const nextStep='Decide which is wrong, State or the contract: fix State and rerun '+suiteLabel+', or record a product decision before changing the contract.';
     return {
       scenarioId:id,suite,suiteLabel,severity,
+      severityLabel:'Scenario severity: '+(['high','medium','low'].includes(severity)?severity:'unknown'),
       title:scenarioTitle(id,detail?.category||scenario?.category),
-      headline,
+      heading,
       evidence,
-      observed:{text:reviewedApplies?reviewed.summary:observedParts.join(' '),recorded:reviewedApplies?observedParts.join(' '):null,excerpt:observedExcerpt},
-      expected:{text:expectedParts.join(' ')},
+      observed:{text:reviewedApplies?reviewed.summary:observedParts.join(' '),recorded:reviewedApplies?observedParts.join(' '):null,excerpt:observedExcerpt,source:FROM_RECORD},
+      expected:{text:expectedLine,details:expectedDetails,source:scenario?FROM_CATALOG:FROM_RECORD},
       consequence:{text:consequence,direction},
       contractNote,
       nextStep,
@@ -951,7 +1015,7 @@
   function failureExplanation(detail,run){
     const story=failureStory(detail,run);
     return {
-      title:story.headline||story.title,
+      title:story.heading,
       whatHappened:story.observed.text,
       expected:story.expected.text,
       why:story.consequence.text
@@ -1851,7 +1915,7 @@
     const runFor=detail=>detail?.suiteKey==='review'?review:detail?.suiteKey==='ask'?ask:null;
     const failedLines=details.length?details.map(detail=>{
       const story=failureStory(detail,runFor(detail));
-      return '- '+detail.suiteLabel+' / '+detail.scenario_id+' ('+(detail.severity||'unknown')+'). '+(story.headline||story.observed.text);
+      return '- '+detail.suiteLabel+' / '+detail.scenario_id+' (scenario severity: '+(detail.severity||'unknown')+'). '+story.heading+'.';
     }):['- Exact scenario metadata is unavailable for this older run, so Project Health can only report the suite-level result.'];
     // #596: a single failure is explained as Evidence → Observed → Expected → Consequence → Next step.
     const story=targeted?failureStory(targeted,runFor(targeted)):null;
@@ -1864,7 +1928,7 @@
       story.observed.text+(story.observed.recorded?'\nRecorded: '+story.observed.recorded:'')+(story.observed.excerpt?'\nProposed State (recorded excerpt'+(story.observed.excerpt.truncated?', cut off':'')+'): '+story.observed.excerpt.text:''),
       '',
       'Expected behavior',
-      story.expected.text+(story.contractNote?'\nContract note: '+story.contractNote:''),
+      story.expected.text+story.expected.details.map(line=>'\n- '+line).join('')+(story.contractNote?'\nContract note: '+story.contractNote:''),
       ...(story.gaps.length?['','Not recorded',story.gaps.map(gap=>'- '+gap).join('\n')]:[])
     ]:[];
 
@@ -1898,7 +1962,7 @@
       targeted?(targeted.suiteLabel+' · '+targeted.scenario_id):'Current AI eval failures',
       '',
       'What failed',
-      targeted?'- '+story.title+'. '+(story.headline||''):failedLines.join('\n'),
+      targeted?'- '+story.heading+'. Scenario: '+story.title+' ('+story.severityLabel.toLowerCase()+').':failedLines.join('\n'),
       ...storyLines,
       '',
       targeted?'Consequence':'Why this matters',

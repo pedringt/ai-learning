@@ -81,20 +81,28 @@ function cachedSnapshot(){
     assert.strictEqual(story.title,'An agreed plan is not recorded as already done');
     assert.strictEqual(story.evidence.text,scenario.evidence,'the Evidence is the scenario\'s own text');
     assert.deepStrictEqual(story.evidence.setup,[{label:'Current State',text:scenario.current_state[0][1]}]);
-    assert.match(story.observed.text,/kept the update as Evidence only/);
-    assert.match(story.observed.text,/did not recommend a human Review/,'review_needed is explained, not shown as a code');
+    // Nov 2 refinement: the heading names this run's miss; the scenario's own name is the secondary label.
+    assert.strictEqual(story.heading,'An agreed revision plan didn’t trigger a Review');
+    assert.strictEqual(story.severityLabel,'Scenario severity: high');
+    // Narrowed to what the record supports: review_needed failed on a scenario that needs one, so no Review was created.
+    assert.strictEqual(story.observed.text,'No Review was created for this Evidence, so State proposed no Current State change, Question or at-risk flag.');
+    assert.doesNotMatch(story.observed.text,/nobody would have been asked|did not recommend/,'no claim broader than the record');
+    assert.strictEqual(story.observed.source,'From the run record.');
     assert.strictEqual(story.observed.excerpt,null,'no proposal was recorded, so none is shown');
-    assert.match(story.expected.text,/^State should propose a Current State change for a person to approve\./);
-    assert.match(story.expected.text,/Also acceptable: flag the Current State fact as at risk; open a new Question/);
-    assert.match(story.expected.text,/must not say “was revised”/);
+    assert.strictEqual(story.expected.text,'State should propose a Current State change for a person to approve.','Expected is one line');
+    assert.strictEqual(story.expected.source,'From the scenario catalog.');
+    assert.ok(story.expected.details.some(line=>/^Also acceptable: flag the Current State fact as at risk; open a new Question/.test(line)),'alternatives move to details');
+    assert.ok(story.expected.details.some(line=>/must not say “was revised”/.test(line)),'forbidden phrases move to details');
     assert.strictEqual(story.consequence.direction,'missed');
-    assert.match(story.consequence.text,/Current State would keep saying “Evaluation uses the Q2 sample split/);
-    assert.match(story.consequence.text,/not the scenario’s unsafe direction/,'the miss is in the cautious direction (unsafe_if: overstatement)');
-    assert.match(story.nextStep,/State’s behavior or this scenario’s contract/);
+    assert.match(story.consequence.text,/^This run missed a needed Review: no change to Current State was put up for approval, so Current State still says “Evaluation uses the Q2 sample split/);
+    assert.match(story.consequence.text,/did not make this scenario’s unsafe mistake \(overstating what the Evidence establishes\)/,'the miss is in the cautious direction (unsafe_if: overstatement)');
+    assert.doesNotMatch(story.consequence.text,/high|impact|severity/i,'severity is not presented as this run\'s outcome');
+    assert.doesNotMatch(story.nextStep,/\. /,'Next step is one sentence');
+    assert.match(story.nextStep,/State or the contract/);
     assert.match(story.nextStep,/product decision/);
     assert.strictEqual(story.contractNote,scenario.rationale);
     assert.ok(story.gaps.some(gap=>/scorer’s exact reason is not recorded/.test(gap)));
-    for(const text of [story.title,story.headline,story.observed.text,story.expected.text,story.consequence.text])
+    for(const text of [story.title,story.heading,story.observed.text,story.expected.text,story.consequence.text])
       assert.doesNotMatch(text,/review_planned_action_not_stated_as_done|preserve_evidence_only|update_state/,'no internal codes in the reading text: '+text);
     assert.deepStrictEqual([story.technical.scenarioId,story.technical.build,story.technical.runAt,story.technical.total],[plannedFailure.scenario_id,BUILD,'2026-11-02 22:50:28',16]);
     assert.strictEqual(story.technical.sourceUrl,'https://github.com/pedringt/ai-learning/blob/'+BUILD+'/state-project-complete/eval/review_interpretation_scenarios.py');
@@ -119,10 +127,45 @@ function cachedSnapshot(){
     assert.ok(story.gaps.some(gap=>/no entry for review_not_in_catalog/.test(gap)));
     assert.match(story.observed.text,/proposed a new Question/);
   });
+  await check('every catalog scenario gets a failure heading from its recorded miss, never the intended behavior',()=>{
+    for(const scenario of catalog.review){
+      const allowed=scenario.allowed_actions?.length?scenario.allowed_actions:[scenario.expected_action];
+      const wrong=['preserve_evidence_only','open_question','update_state'].find(code=>!allowed.includes(code));
+      const failed=[!allowed.includes(wrong)?'interpretation':null,(wrong==='preserve_evidence_only')===!!scenario.review_needed?'review_needed':null].filter(Boolean);
+      const story=M.failureStory({scenario_id:scenario.id,severity:scenario.severity,expected:scenario.expected_action,observed:wrong,failed_checks:failed},review());
+      assert.notStrictEqual(story.heading,story.title,scenario.id+': the heading is not the scenario name');
+      assert.doesNotMatch(story.heading,/_/,scenario.id+': no codes in the heading: '+story.heading);
+      assert.ok(story.heading.length>10,scenario.id);
+    }
+    for(const scenario of catalog.ask){
+      const story=M.failureStory({scenario_id:scenario.id,severity:scenario.severity,failed_checks:['required_facts','grounding']},ask());
+      // Two Ask scenarios keep their pre-#596 hand-written headings when the recorded miss matches them.
+      if(['ask_blocker_not_omitted','ask_conflicting_evidence'].includes(scenario.id))assert.notStrictEqual(story.heading,story.title);
+      else assert.strictEqual(story.heading,'The answer to “'+scenario.question.replace(/[.;]$/,'')+'” did not include a fact this scenario requires');
+    }
+  });
+  await check('headings follow the direction of the miss',()=>{
+    const unneeded=M.failureStory({scenario_id:'review_non_authoritative_opinion',severity:'high',expected:'preserve_evidence_only',observed:'open_question',failed_checks:['review_needed','interpretation']},review());
+    assert.strictEqual(unneeded.heading,'An engineer’s personal opinion about human review triggered a Review it doesn’t need');
+    assert.match(unneeded.observed.text,/It created a Review, which this scenario does not need\./);
+    const unsafe=M.failureStory({scenario_id:'review_ambiguity_opens_question',severity:'high',expected:'open_question',observed:'update_state',failed_checks:['interpretation']},review());
+    assert.strictEqual(unsafe.heading,'Support’s unconfirmed report about billing drafts led to a proposed Current State change');
+    const wording=M.failureStory({scenario_id:'review_partial_question_answer',severity:'high',expected:'update_state',observed:'update_state',failed_checks:['interpretation']},review());
+    assert.strictEqual(wording.heading,'Security’s approval of Slack for two channels: the Review’s wording missed the contract');
+    const errored=M.failureStory({scenario_id:'review_direct_reversal',severity:'high',expected:'update_state',observed:'error',failed_checks:['review_needed','interpretation','processing']},review());
+    assert.strictEqual(errored.heading,'Security’s pause of password-reset automation could not be scored');
+    assert.doesNotMatch(errored.observed.text,/No Review was created/,'an error says nothing about Reviews');
+    const unknown=M.failureStory({scenario_id:'review_not_in_catalog',severity:'high',expected:'update_state',observed:'preserve_evidence_only',failed_checks:['review_needed']},review());
+    assert.doesNotMatch(unknown.observed.text,/No Review was created/,'without the catalog the Review requirement is unknown');
+    assert.strictEqual(M.failureStory({...plannedFailure,severity:'medium'},review()).severityLabel,'Scenario severity: medium');
+    assert.strictEqual(M.failureStory({scenario_id:'x_unknown',failed_checks:[]},null).severityLabel,'Scenario severity: unknown');
+  });
   await check('an Ask failure names the failed checks and says the answer text is not recorded',()=>{
     const story=M.failureStory({scenario_id:'ask_unknown_stays_unknown',severity:'high',expected:'Grounded answer that preserves uncertainty, open items, and decision authority',observed:'Failed checks: uncertainty, open_item',failed_checks:['uncertainty','open_item']},ask());
     assert.strictEqual(story.evidence.lead,'Question asked');
-    assert.match(story.observed.text,/did not say what is not established; it did not point to the open item/);
+    // Narrowed (Nov 2) to what the phrase-matching scorer checks: wording, not meaning.
+    assert.match(story.observed.text,/did not use wording that marks something as unknown; it did not use wording that points to an open item/);
+    assert.strictEqual(story.heading,'The answer to “What percentage of tickets will be fully autonomous?” did not use wording that marks something as unknown');
     assert.ok(story.gaps.some(gap=>/answer text is not recorded/.test(gap)));
     assert.match(story.consequence.text,/Ask is read-only/);
   });
@@ -290,7 +333,17 @@ function cachedSnapshot(){
         assert.match(panel,/<summary>Technical details<\/summary>[\s\S]*review_planned_action_not_stated_as_done/);
         assert.match(panel,/blob\/b22a14e38ba69f30e82ed8da952efb8d3273ade3\/state-project-complete\/eval\/review_interpretation_scenarios\.py/);
         assert.match(panel,/state-evals\?failure=review_planned_action_not_stated_as_done/);
-        assert.match(panel,/High impact/);
+        // Nov 2 refinement: severity is labelled as the scenario's, the heading names the miss, details start collapsed.
+        assert.match(panel,/<span class="severity-chip high"[^>]*>Scenario severity: high<\/span>/);
+        assert.doesNotMatch(panel,/High impact</);
+        assert.match(panel,/<h4>An agreed revision plan didn’t trigger a Review<\/h4><p class="failure-scenario">Scenario: An agreed plan is not recorded as already done<\/p>/);
+        assert.match(panel,/<details class="failure-contract"><summary>Contract details<\/summary>[\s\S]*Also acceptable[\s\S]*must not say[\s\S]*Contract note:/);
+        const reading=panel.split('<details class="failure-contract">')[0];
+        assert.doesNotMatch(reading,/Also acceptable|must not say|Contract note/,'contract rules are not in the visible text');
+        assert.doesNotMatch(panel,/<details[^>]* open/,'details start collapsed');
+        assert.match(panel,/Observed behavior<\/strong><div>[\s\S]*?From the run record\./);
+        assert.match(panel,/Expected behavior<\/strong><div>[\s\S]*?From the scenario catalog\./);
+        assert.match(panel,/<strong>Not recorded<\/strong>/);
         assert.match(panel,/No model was called/);
         assert.match(panel,/29 unique scenarios/);
       }finally{cleanup();}

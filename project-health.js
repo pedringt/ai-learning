@@ -613,7 +613,7 @@
       const nextLook=operationalNextDecision(data);
 
       const testRows=(qDetails.details||[]).slice(0,2).map(item=>
-        '<div class="mock-test-row"><strong>'+esc(item.story?.title||item.title||item.scenario_id||'Quality scenario')+'</strong><span class="status-pill bad">Failed</span><span>'+esc(item.story?.headline||item.expected||'Review scenario')+'</span></div>'
+        '<div class="mock-test-row"><strong>'+esc(item.story?.heading||item.title||item.scenario_id||'Quality scenario')+'</strong><span class="status-pill bad">Failed</span><span>'+esc(item.story?'Scenario: '+item.story.title:(item.expected||'Review scenario'))+'</span></div>'
       ).join('');
 
       // While the only open item is "Still checking", show a neutral loading state instead of an orange warning.
@@ -710,28 +710,34 @@
                   (story.evidence.setup.length?'<ul class="failure-setup">'+story.evidence.setup.map(item=>'<li><span class="fact-lead">'+esc(item.label)+':</span> “'+esc(item.text)+'”</li>').join('')+'</ul>':'')+
                   '<p class="fact-source">'+esc(story.evidence.source)+'</p>'
                 :'<p class="fact-gap">Not available: this page’s scenario catalog has no setup for this scenario.</p>';
+              const sourceHtml=text=>'<p class="fact-source">'+esc(text)+'</p>';
               const observedHtml='<p>'+esc(story.observed.text)+'</p>'+
                 (story.observed.recorded?'<p class="fact-source">Recorded: '+esc(story.observed.recorded)+'</p>':'')+
-                (story.observed.excerpt?'<p><span class="fact-lead">Proposed State (recorded excerpt'+(story.observed.excerpt.truncated?', cut off':'')+'):</span> “'+esc(story.observed.excerpt.text)+'”</p>':'');
-              const expectedHtml='<p>'+esc(story.expected.text)+'</p>'+(story.contractNote?'<p class="fact-source">Contract note: '+esc(story.contractNote)+'</p>':'');
+                (story.observed.excerpt?'<p><span class="fact-lead">Proposed State (recorded excerpt'+(story.observed.excerpt.truncated?', cut off':'')+'):</span> “'+esc(story.observed.excerpt.text)+'”</p>':'')+
+                sourceHtml(story.observed.source);
+              // Expected stays one line; alternatives, phrases and the contract note are one click away.
+              const contractLines=[...story.expected.details,...(story.contractNote?['Contract note: '+story.contractNote]:[])];
+              const expectedHtml='<p>'+esc(story.expected.text)+'</p>'+sourceHtml(story.expected.source)+
+                (contractLines.length?'<details class="failure-contract"><summary>Contract details</summary><ul>'+contractLines.map(line=>'<li>'+esc(line)+'</li>').join('')+'</ul></details>':'');
               const gapsHtml=story.gaps.length?'<div class="failure-gaps"><strong>Not recorded</strong><ul>'+story.gaps.map(gap=>'<li>'+esc(gap)+'</li>').join('')+'</ul></div>':'';
               const techRows=[
-                ['Scenario ID',tech.scenarioId],['Suite',story.suiteLabel],['Category',tech.category||'—'],['Severity',tech.severity],
+                ['Scenario ID',tech.scenarioId],['Suite',story.suiteLabel],['Category',tech.category||'—'],['Scenario severity',tech.severity],
                 ['Failed checks',(tech.failedChecks||[]).join(', ')||'—'],['Expected (recorded)',tech.expectedCode||'—'],['Observed (recorded)',tech.observedRaw||'—'],
                 ['Run recorded',tech.runAt?fmtDate(tech.runAt):'—'],['Build',tech.build?shortSha(tech.build):'—'],['Model',tech.model?modelDisplayName(tech.model):'—'],['Scenarios in run',tech.total??'—']
               ];
               return '<article class="failure-item-compact" id="failure-'+esc(story.scenarioId)+'">'+
-                '<div class="failure-head"><div class="eyebrow">'+esc(story.suiteLabel)+'</div><span class="severity-chip '+esc(story.severity)+'">'+esc(story.severity==='high'?'High impact':story.severity==='medium'?'Medium impact':story.severity==='low'?'Low impact':'Impact unknown')+'</span></div>'+
-                '<h4>'+esc(story.title)+'</h4>'+
-                (story.headline?'<p class="failure-headline">'+esc(story.headline)+'</p>':'')+
+                '<div class="failure-head"><div class="eyebrow">'+esc(story.suiteLabel)+'</div><span class="severity-chip '+esc(story.severity)+'" title="Set in the scenario catalog; it does not describe this run’s outcome.">'+esc(story.severityLabel)+'</span></div>'+
+                '<h4>'+esc(story.heading)+'</h4>'+
+                '<p class="failure-scenario">Scenario: '+esc(story.title)+'</p>'+
                 '<div class="failure-story">'+
                   factBlock('Evidence',evidenceHtml)+
                   factBlock('Observed behavior',observedHtml)+
                   factBlock('Expected behavior',expectedHtml)+
                   factBlock('Consequence','<p>'+esc(story.consequence.text)+'</p>')+
-                  factBlock('Next step','<p>'+esc(story.nextStep)+'</p><p class="fact-source">This explanation uses the recorded result and the scenario catalog. No model was called; reproducing the failure needs a new eval run.</p>')+
+                  factBlock('Next step','<p>'+esc(story.nextStep)+'</p>')+
                 '</div>'+gapsHtml+
                 '<details class="failure-technical"><summary>Technical details</summary><dl>'+techRows.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl>'+
+                  '<p>This explanation uses the recorded result and the scenario catalog. No model was called; reproducing the failure needs a new eval run.</p>'+
                   '<p>'+(tech.sourceUrl?githubLink('Scenario source at this build ↗',tech.sourceUrl)+' · ':'')+githubLink('Scenario on the State evals page ↗',tech.pageUrl)+'</p></details>'+
                 '<div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality data-failure-id="'+esc(story.scenarioId)+'">Investigate failure</button><a class="button small" href="'+esc(p.links.quality)+'?failure='+encodeURIComponent(story.scenarioId)+'" target="_blank" rel="noopener noreferrer">View scenario ↗</a></div>'+
               '</article>';
