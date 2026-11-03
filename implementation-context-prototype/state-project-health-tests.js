@@ -136,7 +136,7 @@ const mediumOnly=H.normalizeQuality({
 assert.strictEqual(H.qualityAttention(mediumOnly).kind,'warn');
 const mediumInvestigation=H.qualityInvestigation({project:H.PROJECTS[0],quality:mediumOnly});
 assert.match(mediumInvestigation.report,/75%/);
-assert.match(mediumInvestigation.report,/0 high-impact failures/);
+assert.match(mediumInvestigation.report,/0 failures in high-severity scenarios/);
 assert.match(mediumInvestigation.report,/Current AI eval failures/);
 assert.match(mediumInvestigation.report,/Overall AI eval status/);
 
@@ -234,7 +234,7 @@ assert.match(targetedUnknownReason.report,/Investigation scope\nAnswer quality �
 assert.match(targetedUnknownReason.report,/reason for the pause was not established/i);
 assert.match(targetedUnknownReason.report,/mistake an inferred explanation for maintained project truth/i);
 assert.match(targetedUnknownReason.report,/Overall AI eval status/);
-assert.match(targetedUnknownReason.report,/Answer quality: 90% · 1 high-impact failure/);
+assert.match(targetedUnknownReason.report,/Answer quality: 90% · 1 failure in a high-severity scenario/);
 assert.doesNotMatch(targetedUnknownReason.report,/Current assessment/);
 assert.strictEqual(targetedUnknownReason.nextCheckpoint,'After Answer quality is rerun.');
 const targetedHandoff=H.projectHandoff({
@@ -244,7 +244,7 @@ const targetedHandoff=H.projectHandoff({
   delivery:{sha:'28f8caafc6025947f8bd45bae6f7e3ea09504dbd',message:'Compact Project Health cards',updatedAt:'2026-09-30T20:00:00Z',vercel:{kind:'good'}},
   investigation:targetedUnknownReason
 });
-assert.match(targetedHandoff.handoffText,/1 high-impact failure\nAnswer quality: 90% · 1 high-impact failure/);
+assert.match(targetedHandoff.handoffText,/1 failure in a high-severity scenario\nAnswer quality: 90% · 1 failure in a high-severity scenario/);
 assert.match(targetedHandoff.handoffText,/Next checkpoint\nAfter Answer quality is rerun/);
 assert.doesNotMatch(targetedHandoff.handoffText,/Next decision/);
 assert.doesNotMatch(targetedHandoff.handoffText,/28f8caa/);
@@ -543,10 +543,15 @@ assert.doesNotMatch(releaseAndDeliveryChanges.find(item=>item.title==='New produ
     quality:{ask:{ask_grounding:newScore,created_at:'2026-10-12T00:00:00Z'}},
     platform:{},openPullRequests:[],checkedAt:'2026-10-12T01:00:00Z'
   }).find(item=>/Answer-quality eval/.test(item.title));
-  const up=evalChange(0.9,0.95),down=evalChange(1,0.875),same=evalChange(1,1),tiny=evalChange(1,0.9996);
-  assert.deepStrictEqual([up.title,up.detail],['Answer-quality eval changed','Improved 5 points to 95%']);
-  assert.deepStrictEqual([down.title,down.detail],['Answer-quality eval changed','Declined 12.5 points to 87.5%']);
-  assert.deepStrictEqual([same.title,same.detail],['Answer-quality eval re-run','Unchanged at 100%']);
+  // Nov 3: a saved visit does not record which scenarios ran, so a later run is never scored against it; the score stays.
+  const visit=evalChange(0.9,0.95);
+  assert.deepStrictEqual([visit.title,visit.detail],['Answer-quality eval re-run','Not comparable with your last visit: the run records don’t show which scenarios ran · now 95%']);
+  // The change wording itself, for comparable runs.
+  const change=(oldScore,newScore)=>M.evalChangeDetail(M.scoreDeltaPoints(newScore,oldScore),newScore);
+  const up={detail:change(0.9,0.95)},down={detail:change(1,0.875)},same={detail:change(1,1)},tiny={detail:change(1,0.9996)};
+  assert.strictEqual(up.detail,'Improved 5 points to 95%');
+  assert.strictEqual(down.detail,'Declined 12.5 points to 87.5%');
+  assert.strictEqual(same.detail,'Unchanged at 100%');
   assert.strictEqual(tiny.detail,'Unchanged at 100%','a change that rounds to zero is unchanged, not "Declined 0 points"');
   assert.strictEqual(M.evalChangeDetail(null,0.8),'New controlled run recorded · 80%');
   assert.strictEqual(M.scoreDeltaPoints(1,1),0);
@@ -703,7 +708,7 @@ const handoff=H.projectHandoff({
 assert.strictEqual(handoff.handoff,true);
 assert.match(handoff.handoffText,/State project handoff/);
 assert.match(handoff.handoffText,/Next decision/);
-assert.match(handoff.handoffText,/No immediate product decision|Rerun the AI evals|Review the quality miss|Review the high-impact failure class/);
+assert.match(handoff.handoffText,/No immediate product decision|Rerun the AI evals|Review the quality miss|Review the failed high-severity scenarios/);
 const narcWithNoAi={...H.emptyProjectData(H.PROJECTS[2]),fresh:true,platform:{analytics:{configured:true,available:true},aiTelemetry:{configured:false,not_applicable:true}}};
 assert.ok(!H.setupGaps(narcWithNoAi).some(item=>/^AI /.test(item.label)));
 

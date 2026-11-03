@@ -7,7 +7,8 @@
   // Project Health's data and pure analysis (#452): project list, environment rules, and the functions that
   // turn GitHub/Vercel/eval payloads into health signals. No DOM, no network, no mutable state.
   // The page (project-health.js) renders these; keep anything that touches the DOM or fetches out of here.
-
+  // The controlled-eval scenario catalog (#596): required under Node, a global from state-eval-catalog.js in the page.
+  const EVAL_CATALOG=(typeof module==='object'&&module.exports&&typeof require==='function')?(()=>{try{return require('./state-eval-catalog.js');}catch(_){return null;}})():null;
 
   const PROJECTS=[
     {
@@ -144,7 +145,8 @@
     return {resolvedReviews:Number(live.resolved_reviews||0),acceptedAsProposedRate:live.accepted_as_proposed_rate,materialEditRate:live.material_edit_rate,review:controlled.latest_review_interpretation||null,ask:controlled.latest_ask_quality||null,recent:Array.isArray(controlled.recent)?controlled.recent:[]};
   }
   function percent(v){return v==null||Number.isNaN(Number(v))?'Not measured':(Math.round(Number(v)*1000)/10)+'%';}
-  function highImpactText(value){const n=Number(value||0);return n+' high-impact failure'+(n===1?'':'s');}
+  // Severity belongs to the scenario, not to what this run's failure did (#596): "1 failure in a high-severity scenario".
+  function highSeverityFailureText(value){const n=Number(value||0);return n===1?'1 failure in a high-severity scenario':n+' failures in high-severity scenarios';}
   function modelDisplayName(value){
     const raw=String(value||'');
     if(raw==='claude-haiku-4-5-20251001')return'Claude Haiku 4.5';
@@ -157,7 +159,7 @@
     if(!runs.length) return {kind:'warn',title:'AI evals have not been recorded yet',detail:'Run the controlled checks to see how State handles understanding, evidence, uncertainty, and decision authority.'};
     if(stateEvalResultsStale(q)) return {kind:'warn',title:'AI evals need to be rerun',detail:stateEvalStaleReason(q)+' Historical failures are not treated as current product failures.',nextAction:'Run the controlled AI evals again.',owner:'Product'};
     const severe=runs.reduce((n,r)=>n+Number(r.high_severity_failures||0),0);
-    if(severe>0) return {kind:'bad',title:severe+' high-impact AI scenario'+(severe===1?'':'s')+' need review',detail:'Most aggregate quality signals may still look healthy; review the specific failed scenario'+(severe===1?'':'s')+' before deciding whether product behavior or the eval contract should change.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
+    if(severe>0) return {kind:'bad',title:(severe===1?'1 failure in a high-severity AI scenario needs':severe+' failures in high-severity AI scenarios need')+' review',detail:'Most aggregate quality signals may still look healthy; review the specific failed scenario'+(severe===1?'':'s')+' before deciding whether product behavior or the eval contract should change.',nextAction:'Review the failed scenario evidence and decide whether product behavior or the eval contract is wrong.',owner:'Product'};
     if(runs.some(r=>{const score=evalScore(r);return Number(r.failed_cases||0)>0||(score!=null&&score<1);})) return {kind:'warn',title:'Some AI evals need a look',detail:'At least one controlled scenario did not behave as expected.',nextAction:'Review the scenario-level miss, then rerun the affected suite.',owner:'Product'};
     const missing=[];
     if(!q.review||evalScore(q.review)==null) missing.push('update understanding');
@@ -165,7 +167,7 @@
     if(q.ask?.authority_accuracy==null) missing.push('decision authority');
     if(q.ask?.uncertainty_accuracy==null) missing.push('uncertainty handling');
     if(missing.length) return {kind:'warn',title:'Some AI quality signals are not measured',detail:'Project Health cannot call State quality healthy while '+missing.join(', ')+' '+(missing.length===1?'is':'are')+' unmeasured.',nextAction:'Run or repair the missing controlled quality checks before treating the quality signal as healthy.',owner:'Product'};
-    return {kind:'good',title:'AI evals are healthy',detail:'The latest recorded checks did not report a high-impact failure.'};
+    return {kind:'good',title:'AI evals are healthy',detail:'The latest recorded checks reported no failures in high-severity scenarios.'};
   }
   function deliveryAttention(d){
     if(!d) return {kind:'warn',title:'Delivery status is unavailable',detail:'Project Health could not confirm the latest release status.'};
@@ -464,15 +466,15 @@
   function releaseReadiness(data){
     const incidents=activityReviewItems(data).filter(item=>!item.resolved);
     const open=productOpenItems(data);
-    if(incidents.length||open.some(item=>item.kind==='bad')) return {kind:'bad',label:'Needs attention',detail:'Resolve the current high-impact issue before treating the next release as healthy.'};
+    if(incidents.length||open.some(item=>item.kind==='bad')) return {kind:'bad',label:'Needs attention',detail:'Resolve the issue that needs attention before treating the next release as healthy.'};
     if(open.length) return {kind:'warn',label:'Watch',detail:'Delivery is healthy, but a product-quality check or human review is still open.'};
     const unchecked=uncheckedSignals(data);
     if(unchecked.length) return {kind:'unknown',label:'Incomplete',detail:incompleteAttention(unchecked).title+'. Release health cannot be confirmed.'};
     if(deliveryAttentionForData(data).kind==='good'&&!qualityNotMeasured(data)&&unmeasuredQuality(data).length)
-      return {kind:'good',label:PARTLY_MEASURED_LABEL,detail:'Delivery is healthy and there is no current high-impact quality issue in what is measured. '+unmeasuredText(unmeasuredQuality(data))};
+      return {kind:'good',label:PARTLY_MEASURED_LABEL,detail:'Delivery is healthy and no quality issue needs attention in what is measured. '+unmeasuredText(unmeasuredQuality(data))};
     if(deliveryAttentionForData(data).kind==='good') return qualityNotMeasured(data)
       ?{kind:'good',label:'Healthy',detail:'Delivery is healthy. Quality checks aren\u2019t connected for this project, so quality is not measured.'}
-      :{kind:'good',label:'Healthy',detail:'Delivery is healthy and there is no current high-impact quality issue.'};
+      :{kind:'good',label:'Healthy',detail:'Delivery is healthy and no quality issue needs attention.'};
     return {kind:'unknown',label:'Unknown',detail:'There is not enough current evidence to confirm release health.'};
   }
   function regressionSignal(data){
@@ -621,7 +623,7 @@
     const overall=overallAttention(data);
     const readiness=releaseReadiness(data);
     if(overall.kind==='good'&&open.some(item=>['bad','warn'].includes(item.kind)))issues.push('Overall health is healthy while product-quality work is still open.');
-    if(readiness.kind==='good'&&open.some(item=>item.kind==='bad'))issues.push('Release health is healthy while a high-impact product-quality issue is open.');
+    if(readiness.kind==='good'&&open.some(item=>item.kind==='bad'))issues.push('Release health is healthy while a product-quality issue that needs attention is open.');
     if(readiness.kind==='good'&&activityReviewItems(data).some(item=>!item.resolved))issues.push('Release health is healthy while an unresolved incident is open.');
     return issues;
   }
@@ -668,7 +670,7 @@
     if(data?.project?.quality==='state'&&data.quality){
       const q=qualityAttention(data.quality);
       if(stateEvalResultsStale(data.quality))return 'Rerun the AI evals before changing State behavior or the eval.';
-      if(q.kind==='bad')return 'Review the high-impact failure class before changing the prompt, product behavior, or eval.';
+      if(q.kind==='bad')return 'Review the failed high-severity scenarios before changing the prompt, product behavior, or eval.';
       if(q.kind==='warn')return 'Review the quality miss and decide whether it represents product behavior or eval noise.';
     }else{
       const q=externalQualityAttention(data?.externalQuality);
@@ -680,6 +682,8 @@
     const infra=infrastructureAttention(data?.platform);
     if(infra?.kind==='bad')return 'Confirm user impact and assign the infrastructure response.';
     if(Array.isArray(data?.openPullRequests)&&data.openPullRequests.length)return 'Decide whether the current open work is ready for the next release.';
+    // Missing data does not support carrying on unchanged (Paige, Nov 3): with no more specific finding, restore the checks.
+    if(['Delivery','Quality','Activity','Production backend','Quality behavior'].some(label=>signalRefreshFailure(data,[label])))return 'Restore the missing checks before assessing project health.';
     return 'No immediate product decision is required. Continue the current goal until the next review.';
   }
   function failureCheckCount(q,check){
@@ -688,76 +692,351 @@
       .filter(item=>String(item?.severity||'').toLowerCase()==='high')
       .filter(item=>(item?.failed_checks||[]).some(name=>String(name).toLowerCase()===String(check).toLowerCase())).length;
   }
-  function failureExplanation(detail){
+  // Failed-eval explanations (#596). A run records only the scenario ID, the expected and observed outcome codes, a short
+  // excerpt of any proposed State text and the names of the failed checks (eval/run_quality_evals.py _failure_details).
+  // The scenario's setup and contract come from state-eval-catalog.js, generated from the scenario files and checked by
+  // test_state_eval_catalog_export.py. Anything neither source holds is shown as a gap, never filled in.
+  function evalCatalog(){return EVAL_CATALOG||globalThis.STATE_EVAL_CATALOG||null;}
+  function evalScenario(id){
+    const catalog=evalCatalog(),key=String(id||'');
+    if(!catalog||!key)return null;
+    for(const suite of ['review','ask']){
+      const found=(Array.isArray(catalog[suite])?catalog[suite]:[]).find(item=>item?.id===key);
+      if(found)return {...found,suite};
+    }
+    return null;
+  }
+  // Plain titles for the scenario catalog. The first 23 repeat the public State evals page; the six marked NEW (Nov 2)
+  // were drafted for #596 and await Paige's review.
+  const SCENARIO_TITLES={
+    review_direct_reversal:'Direct reversal',
+    review_question_answer_only:'Resolve a question without overstating the answer',
+    review_question_and_state_change:'Answer a question and update State',
+    review_ambiguity_opens_question:'Ambiguous evidence stays ambiguous',
+    review_duplicate_confirmation:'Duplicate confirmation',
+    review_unknown_not_false:'Known unknown stays quiet',
+    review_non_authoritative_opinion:'Opinion is not authority',
+    review_tentative_high_consequence:'High-consequence proposal is not a decision',
+    review_partial_reversal:'Partial reversal keeps the unaffected scope',
+    review_new_fact_with_downstream_question:'Decision plus downstream unknown',
+    review_new_evidence_over_pending_review:'New evidence supersedes a pending proposal',
+    review_authority_disagreement:'Authority beats opinion',
+    review_partial_question_answer:'Partial answer does not resolve the broad question',
+    review_same_unknown_links_existing_question:'Conflicting claims link to the existing Question', // NEW
+    review_planned_action_not_stated_as_done:'An agreed plan is not recorded as already done', // NEW
+    review_rationale_states_what_evidence_establishes:'The rationale says what the Evidence established', // NEW
+    ask_current_over_stale:'Prefer current truth over stale history',
+    ask_pending_review_not_truth:'Pending review is not approved truth',
+    ask_unknown_stays_unknown:'Unknown stays unknown',
+    ask_change_summary:'Summarize a change in the right direction',
+    ask_false_premise:'Correct a false premise',
+    ask_blocker_not_omitted:'Do not omit a consequential blocker',
+    ask_conflicting_evidence:'Surface unresolved conflicting evidence',
+    ask_question_answer_no_state_mutation:'Question resolution is not a State mutation',
+    ask_superseded_pending_review:'Prefer the newest pending proposal',
+    ask_known_outcome_unknown_reason:'Know what happened without inventing why',
+    ask_source_words_not_demoted:'Report the source in its own words', // NEW
+    ask_compound_question_keeps_governing_state:'Each part of a compound question keeps its governing State', // NEW
+    ask_evidence_backed_approval_qualified:'Report an evidence-backed approval without denying it' // NEW
+  };
+  // What each Review scenario's Evidence is about, as the subject of a failure heading (#596 refinement, Nov 2). Drafted
+  // from each scenario's Evidence text; all await Paige's review except the planned-action one, which follows her example.
+  // Ask failures use the scenario's own question instead, so they need no entry here.
+  const SCENARIO_SUBJECTS={
+    review_direct_reversal:'Security’s pause of password-reset automation',
+    review_question_answer_only:'Legal’s answer to the open contract question',
+    review_question_and_state_change:'Leadership’s approval of Slack as an evidence source',
+    review_ambiguity_opens_question:'Support’s unconfirmed report about billing drafts',
+    review_duplicate_confirmation:'A repeat confirmation of password-reset automation',
+    review_unknown_not_false:'A note that the autonomy target is still unknown',
+    review_non_authoritative_opinion:'An engineer’s personal opinion about human review',
+    review_tentative_high_consequence:'Leadership’s open question about removing human review',
+    review_partial_reversal:'Security’s pause for privileged-account resets',
+    review_new_fact_with_downstream_question:'The approved training requirement with no date yet',
+    review_new_evidence_over_pending_review:'Finance’s corrected budget cap',
+    review_authority_disagreement:'An engineer’s recommendation against the Security owner’s decision',
+    review_partial_question_answer:'Security’s approval of Slack for two channels',
+    review_same_unknown_links_existing_question:'Conflicting retention claims',
+    review_planned_action_not_stated_as_done:'An agreed revision plan',
+    review_rationale_states_what_evidence_establishes:'Finance’s confirmed $40,000 budget'
+  };
+  // Paige-approved Consequence text for a scenario whose run missed a needed Review (#596, Nov 3). It replaces the generic
+  // sentence, which repeats the Evidence. No entry means the generic sentence.
+  const MISSED_REVIEW_CONSEQUENCES={
+    review_planned_action_not_stated_as_done:'This run missed a needed Review, so the agreed revision plan wasn’t proposed for approval. It did not incorrectly report the revision as completed.'
+  };
+  // The direction each scenario marks as unsafe (its unsafe_if), in words.
+  const UNSAFE_DIRECTIONS={state_change:'proposing a Current State change',overstatement:'overstating what the Evidence establishes'};
+  function humanize(value){const text=String(value||'').replaceAll('_',' ').trim();return text?text.charAt(0).toUpperCase()+text.slice(1):'';}
+  function scenarioTitle(id,category){return SCENARIO_TITLES[String(id||'')]||humanize(category)||humanize(id)||'Controlled scenario';}
+  // What each Review outcome code means, as an instruction (expected) and as a past-tense fact (observed).
+  const REVIEW_OUTCOMES={
+    update_state:['propose a Current State change for a person to approve','proposed a Current State change'],
+    answer_question:['propose an answer to the open Question','proposed an answer to the open Question'],
+    answer_question_and_update_state:['propose an answer to the open Question and a Current State change','proposed an answer to the open Question and a Current State change'],
+    update_state_and_open_question:['propose a Current State change and open a new Question','proposed a Current State change and a new Question'],
+    open_question:['open a new Question','proposed a new Question'],
+    link_existing_question:['link the Evidence to the existing open Question','proposed linking the Evidence to the existing open Question'],
+    state_at_risk:['flag the Current State fact as at risk','raised a Review flagging a Current State fact as at risk'],
+    // The harness records this code whenever no Review proposes a change, Question, link or risk flag (quality_harness.py).
+    preserve_evidence_only:['keep the update as Evidence only, with no Current State change or Question','proposed no Current State change, Question or at-risk flag'],
+    error:['finish processing','failed before producing an outcome']
+  };
+  // Short forms for the one-line result: what was expected (a noun) and what State did (a verb phrase).
+  const REVIEW_OUTCOME_SHORT={
+    update_state:['a proposed Current State change','proposed a Current State change'],
+    answer_question:['a proposed answer to the open Question','proposed an answer to the open Question'],
+    answer_question_and_update_state:['an answer to the open Question plus a Current State change','proposed an answer and a Current State change'],
+    update_state_and_open_question:['a Current State change plus a new Question','proposed a Current State change and a new Question'],
+    open_question:['a new Question','proposed a new Question'],
+    link_existing_question:['a link to the existing open Question','proposed a link to the existing open Question'],
+    state_at_risk:['the fact flagged as at risk','flagged the fact as at risk'],
+    preserve_evidence_only:['Evidence kept with no change','proposed nothing'],
+    error:['a scored outcome','failed before producing an outcome']
+  };
+  function outcomeShort(code,tense){const entry=REVIEW_OUTCOME_SHORT[String(code||'').trim()];return entry?entry[tense==='observed'?1:0]:outcomeText(code,tense);}
+  const STATE_CHANGE_OUTCOMES=new Set(['update_state','answer_question_and_update_state','update_state_and_open_question']);
+  function outcomeText(code,tense){
+    const entry=REVIEW_OUTCOMES[String(code||'').trim()];
+    return entry?entry[tense==='observed'?1:0]:(code?String(code).replaceAll('_',' '):'');
+  }
+  // The recorded observed field is "<outcome code>" or "<outcome code> | proposed State: <up to 180 characters>", capped at 240.
+  function parseReviewObserved(observed){
+    const raw=String(observed||'');
+    const marker=' | proposed State: ';
+    const at=raw.indexOf(marker);
+    const action=(at>=0?raw.slice(0,at):raw).trim();
+    const proposal=at>=0?raw.slice(at+marker.length).trim():'';
+    return {action,proposal,truncated:!!proposal&&(proposal.length>=180||raw.length>=240)};
+  }
+  // The Ask scorer matches phrases and signal words, so "failed" says what the wording lacked, not what the answer meant.
+  const ASK_CHECKS={
+    grounding:{failed:'missed a required fact or made a claim this scenario forbids',risk:'A reader of this answer could leave with a fact missing or a claim the record does not support.'},
+    required_facts:{failed:'did not include a fact this scenario requires',risk:'A reader of this answer could miss part of what the record establishes.'},
+    forbidden_claims:{failed:'made a claim this scenario forbids',risk:'A reader of this answer could take a claim the record does not support as project truth.'},
+    uncertainty:{failed:'did not use wording that marks something as unknown',risk:'A reader of this answer could take an unknown as settled.'},
+    open_item:{failed:'did not use wording that points to an open item',risk:'A reader of this answer may not learn that something is still open.'},
+    authority:{failed:'did not use wording that separates a pending proposal from approved Current State',risk:'A reader of this answer could treat a proposal as a decision someone made.'}
+  };
+  const ASK_CHECK_ORDER=['forbidden_claims','authority','uncertainty','required_facts','open_item','grounding'];
+  const quote=text=>'“'+String(text).trim().replace(/[.;]$/,'')+'”';
+  function phraseList(items,limit=3){
+    const list=(Array.isArray(items)?items:[]).map(item=>Array.isArray(item)?item.map(quote).join(' or '):quote(item));
+    return list.slice(0,limit).join(', ')+(list.length>limit?' and '+(list.length-limit)+' more':'');
+  }
+  // Explanations written for specific scenarios before #596 (Oct 27 wording for review_tentative_high_consequence was
+  // approved by Paige). Each describes one particular miss, so it is used only when the recorded result is that miss.
+  const REVIEWED_EXPLANATIONS={
+    ask_conflicting_evidence:{when:(action,checks)=>checks.length>0,headline:'Conflicting evidence was not handled cautiously enough',summary:'State did not fully preserve the unresolved conflict between approved Current State and newer contradictory evidence in its answer.',why:'A user could leave believing a disputed project fact is settled when it still needs human review.'},
+    review_direct_reversal:{when:action=>!!action&&!STATE_CHANGE_OUTCOMES.has(action)&&action!=='error',headline:'Authoritative reversal was not applied correctly',summary:'State did not interpret evidence that directly reversed an existing maintained fact the way the product contract expected.',why:'Stale project truth could remain active after authoritative evidence changes it.'},
+    ask_blocker_not_omitted:{when:(action,checks)=>checks.some(check=>['grounding','required_facts','open_item'].includes(check)),headline:'A consequential blocker was omitted from a readiness answer',summary:'The answer did not surface a blocking open item that materially changes whether the project is ready.',why:'A user could make a launch decision without seeing a known blocking dependency.'},
+    review_new_evidence_over_pending_review:{when:action=>action==='preserve_evidence_only',headline:'New authoritative evidence did not supersede a stale pending proposal',summary:'State preserved the new Finance correction as Evidence instead of proposing the corrected budget cap for human review.',why:'A stale pending proposal can remain the apparent next change even after authoritative evidence has corrected it.'},
+    review_tentative_high_consequence:{when:action=>action==='state_at_risk',headline:'An open leadership question was treated as a threat to Current State',summary:'Leadership only asked whether human review could be removed for low-risk cases. State flagged the human-review fact as at risk instead of opening a Question.',why:'Marking a fact at risk on an undecided question makes it look as if a decision is coming that nobody has made.'},
+    review_partial_reversal:{when:action=>action==='preserve_evidence_only',headline:'A scoped reversal was not applied to Current State',summary:'Security paused password-reset automation for privileged accounts only. State kept this as Evidence and did not propose narrowing the maintained fact.',why:'Current State would keep saying automation is approved for every reset after Security paused part of it.'},
+    ask_known_outcome_unknown_reason:{when:(action,checks)=>checks.includes('uncertainty'),headline:'Known outcome was answered without preserving an unknown reason',summary:'State knew that the Northstar pilot was paused, but the answer did not clearly say that the reason for the pause was not established.',why:'A user could mistake an inferred explanation for maintained project truth.'}
+  };
+  const SCENARIO_SOURCE_URL='https://github.com/pedringt/ai-learning/blob/';
+  function scenarioSourceUrl(suite,build){
+    const path=suite==='ask'?'state-project-complete/eval/ask_quality_scenarios.py':suite==='review'?'state-project-complete/eval/review_interpretation_scenarios.py':null;
+    if(!path)return null;
+    return SCENARIO_SOURCE_URL+(/^[0-9a-f]{7,40}$/i.test(String(build||''))?String(build):'main')+'/'+path;
+  }
+  function scenarioPageUrl(id){return 'https://www.contextswitch.tech/state-evals?failure='+encodeURIComponent(String(id||''));}
+  function setupLines(scenario){
+    const lines=[];
+    for(const [,statement] of (scenario?.current_state||[]))lines.push({label:'Current State',text:statement});
+    for(const text of (scenario?.open_questions||[]))lines.push({label:'Open Question',text});
+    for(const text of (scenario?.pending_reviews||[]))lines.push({label:'Pending Review',text});
+    for(const [before,after,when] of (scenario?.history||[]))lines.push({label:'History'+(when?' ('+when+')':''),text:before+' → '+after});
+    for(const text of (Array.isArray(scenario?.evidence)?scenario.evidence:[]))lines.push({label:'Evidence',text});
+    return lines;
+  }
+  // Evidence → Observed behavior → Expected behavior → Consequence → Next step, from recorded and catalog data only.
+  // Observed and Consequence describe what this run did; severity is the scenario's, set in the catalog (#596, Nov 2).
+  function failureStory(detail,run){
     const id=String(detail?.scenario_id||'');
-    if(id==='ask_conflicting_evidence'){
-      return {
-        title:'Conflicting evidence was not handled cautiously enough',
-        whatHappened:'State did not fully preserve the unresolved conflict between approved Current State and newer contradictory evidence in its answer.',
-        expected:'Report the maintained truth, explicitly surface the unresolved conflict, and avoid treating the newer evidence as settled.',
-        why:'A user could leave believing a disputed project fact is settled when it still needs human review.'
-      };
+    const scenario=evalScenario(id);
+    const suite=scenario?.suite||(/^ask_/.test(id)||run?.suite==='ask_quality'?'ask':/^review_/.test(id)||run?.suite==='review_interpretation'?'review':null);
+    const suiteLabel=suite==='ask'?'Answer quality':suite==='review'?'Update understanding':'AI eval';
+    const checks=(Array.isArray(detail?.failed_checks)?detail.failed_checks:[]).map(item=>String(item).toLowerCase());
+    const severity=String(detail?.severity||scenario?.severity||'unknown').toLowerCase();
+    const recorded=suite==='review'?parseReviewObserved(detail?.observed):{action:'',proposal:'',truncated:false};
+    const reviewed=REVIEWED_EXPLANATIONS[id];
+    const reviewedApplies=!!(reviewed&&reviewed.when(recorded.action,checks));
+    const gaps=[];
+    const FROM_RECORD='From the run record.',FROM_CATALOG='From the scenario catalog.';
+    // Whether this run created a Review: the harness counts a Review as recommended when processing created one, and the
+    // review_needed check compares that with the scenario. Unknown without the catalog entry or after an error.
+    const reviewCreated=suite==='review'&&scenario&&recorded.action&&recorded.action!=='error'
+      ?(checks.includes('review_needed')?!scenario.review_needed:!!scenario.review_needed):null;
+    // Evidence: the scenario's synthetic setup.
+    let evidence;
+    if(scenario){
+      evidence=suite==='review'
+        ?{lead:'New Evidence',text:scenario.evidence,setup:setupLines({...scenario,evidence:[]}),source:'From the scenario catalog (synthetic test setup).'}
+        :{lead:'Question asked',text:scenario.question,setup:setupLines(scenario),source:'From the scenario catalog (synthetic test setup).'};
+    }else{
+      evidence={lead:null,text:null,setup:[],source:null};
+      gaps.push('This page’s scenario catalog has no entry for '+(id||'this scenario')+', so its setup cannot be shown. The run may have used a different scenario set.');
     }
-    if(id==='review_direct_reversal'){
-      return {
-        title:'Authoritative reversal was not applied correctly',
-        whatHappened:'State did not interpret evidence that directly reversed an existing maintained fact the way the product contract expected.',
-        expected:'Recognize the authoritative reversal and propose the corresponding Current State change for human review.',
-        why:'Stale project truth could remain active after authoritative evidence changes it.'
-      };
+    // Observed: what the run recorded, no broader than the record supports.
+    const observedParts=[];
+    let observedExcerpt=null,askPrimary=null;
+    if(suite==='review'){
+      if(recorded.action==='error')observedParts.push('Processing failed before producing an outcome.');
+      else if(reviewCreated===false&&recorded.action==='preserve_evidence_only')observedParts.push('No Review was created for this Evidence, so State proposed no Current State change, Question or at-risk flag.');
+      else if(recorded.action)observedParts.push('State '+outcomeText(recorded.action,'observed')+'.');
+      if(checks.includes('review_needed')&&reviewCreated===true)observedParts.push('It created a Review, which this scenario does not need.');
+      else if(checks.includes('review_needed')&&reviewCreated===false&&recorded.action!=='preserve_evidence_only')observedParts.push('No Review was created for this Evidence.');
+      else if(checks.includes('review_needed')&&reviewCreated==null&&recorded.action!=='error')observedParts.push('The review-needed check failed.');
+      if(checks.includes('processing')&&recorded.action!=='error')observedParts.push('Processing did not finish normally.');
+      const allowed=scenario?(scenario.allowed_actions?.length?scenario.allowed_actions:[scenario.expected_action]):[];
+      if(recorded.action&&allowed.includes(recorded.action)&&checks.includes('interpretation'))observedParts.push('That outcome is one this scenario accepts, so the miss was in the wording: a required or forbidden phrase, or the rationale.');
+      if(recorded.proposal)observedExcerpt={text:recorded.proposal,truncated:recorded.truncated};
+      if(!recorded.action)gaps.push('No observed outcome was recorded for this failure.');
+      if(checks.includes('interpretation'))gaps.push('The scorer’s exact reason is not recorded, only which checks failed.');
+      if(!recorded.proposal&&recorded.action&&STATE_CHANGE_OUTCOMES.has(recorded.action))gaps.push('The proposed State text was not recorded for this run.');
+    }else if(suite==='ask'){
+      const named=checks.filter(check=>ASK_CHECKS[check]);
+      const failed=named.filter(check=>!(check==='grounding'&&(named.includes('required_facts')||named.includes('forbidden_claims'))));
+      askPrimary=ASK_CHECK_ORDER.find(check=>failed.includes(check))||null;
+      if(failed.length)observedParts.push('The answer '+failed.map(check=>ASK_CHECKS[check].failed).join('; it ')+'.');
+      else if(detail?.observed)observedParts.push(String(detail.observed));
+      gaps.push('The answer text is not recorded, so its wording cannot be shown here.');
+    }else if(detail?.observed){
+      observedParts.push(String(detail.observed));
     }
-    if(id==='ask_blocker_not_omitted'){
-      return {
-        title:'A consequential blocker was omitted from a readiness answer',
-        whatHappened:'The answer did not surface a blocking open item that materially changes whether the project is ready.',
-        expected:'Include the blocker and make the remaining uncertainty explicit.',
-        why:'A user could make a launch decision without seeing a known blocking dependency.'
-      };
+    if(!observedParts.length)observedParts.push('No observed behavior was recorded for this failure.');
+    // Expected: one line from the scenario's contract; the rest of the contract goes in details.
+    let expectedLine='';
+    const expectedDetails=[];
+    const expectedCode=scenario?.expected_action||String(detail?.expected||'').trim();
+    if(suite==='review'){
+      if(expectedCode)expectedLine='State should '+outcomeText(expectedCode,'expected')+'.'+(scenario&&!scenario.review_needed?' No Review is needed.':'');
+      const others=scenario?(scenario.allowed_actions||[]).filter(code=>code!==expectedCode):[];
+      if(others.length)expectedDetails.push('Also acceptable: '+others.map(code=>outcomeText(code,'expected')).join('; ')+'.');
+      if(scenario){
+        if(scenario.review_needed)expectedDetails.push('A person should be asked to review it.');
+        if(scenario.required_state_update_phrases?.length)expectedDetails.push('A proposed change must include '+phraseList(scenario.required_state_update_phrases)+'.');
+        const forbidden=[...(scenario.forbidden_state_update_phrases||[]),...(scenario.forbidden_review_phrases||[])].filter((item,index,list)=>list.indexOf(item)===index);
+        if(forbidden.length)expectedDetails.push('It must not say '+phraseList(forbidden)+'.');
+        if(scenario.required_rationale_phrases?.length)expectedDetails.push('The rationale must include '+phraseList(scenario.required_rationale_phrases)+'.');
+        if(scenario.must_preserve_uncertainty)expectedDetails.push('What is still uncertain stays uncertain.');
+        if(scenario.unsafe_if&&UNSAFE_DIRECTIONS[scenario.unsafe_if])expectedDetails.push('Unsafe direction: '+UNSAFE_DIRECTIONS[scenario.unsafe_if]+'.');
+      }
+    }else if(suite==='ask'&&scenario){
+      const wants=[];
+      if(scenario.required_facts?.length)wants.push('include the required facts');
+      if(scenario.forbidden_claims?.length)wants.push('avoid the forbidden claims');
+      if(scenario.should_express_uncertainty)wants.push('say what is not established');
+      if(scenario.should_reference_open_item)wants.push('point to the open item');
+      if(scenario.should_distinguish_proposal_from_truth)wants.push('keep pending proposals apart from approved Current State');
+      if(wants.length)expectedLine='The answer should '+(wants.length>1?wants.slice(0,-1).join(', ')+' and '+wants[wants.length-1]:wants[0])+'.';
+      if(scenario.required_facts?.length)expectedDetails.push('Required facts: '+phraseList(scenario.required_facts,6)+'.');
+      if(scenario.forbidden_claims?.length)expectedDetails.push('Forbidden claims: '+phraseList(scenario.forbidden_claims,6)+'.');
+    }else if(detail?.expected){
+      expectedLine=String(detail.expected);
     }
-    if(id==='review_new_evidence_over_pending_review'){
-      return {
-        title:'New authoritative evidence did not supersede a stale pending proposal',
-        whatHappened:'State preserved the new Finance correction as Evidence instead of proposing the corrected budget cap for human review.',
-        expected:'Reuse the existing Review, propose the corrected $35,000 State change, and allow software to supersede the stale $50,000 pending proposal.',
-        why:'A stale pending proposal can remain the apparent next change even after authoritative evidence has corrected it.'
-      };
+    if(!expectedLine)expectedLine='The expected behavior for this scenario is not available here.';
+    // Consequence: what this run did, from the record and the direction of the miss. Not the scenario's severity.
+    let consequence,direction='unknown';
+    const unsafeWords=UNSAFE_DIRECTIONS[scenario?.unsafe_if]||null;
+    if(reviewedApplies){
+      consequence=reviewed.why;direction='reviewed';
+    }else if(suite==='review'&&scenario&&recorded.action){
+      const statement=(scenario.current_state||[])[0]?.[1];
+      const proposesChange=STATE_CHANGE_OUTCOMES.has(recorded.action);
+      const expectsChange=STATE_CHANGE_OUTCOMES.has(scenario.expected_action);
+      if(recorded.action==='error'){
+        direction='error';
+        consequence='This run could not score the scenario. It counts as a failure until it is rerun.';
+      }else if(proposesChange&&scenario.unsafe_if==='state_change'){
+        direction='unsafe';
+        consequence='This run proposed a Current State change, which this scenario marks as the unsafe direction. If a reviewer approved it, Current State would change on Evidence the contract says should not change it.';
+      }else if(proposesChange&&scenario.unsafe_if==='overstatement'){
+        direction='possibly-unsafe';
+        consequence='This run proposed a change, and this scenario’s unsafe direction is overstating what the Evidence establishes. The record does not show whether the wording overstated it; compare any recorded excerpt with the contract before deciding.';
+      }else if(recorded.action==='preserve_evidence_only'&&(expectsChange||['open_question','link_existing_question','answer_question'].includes(scenario.expected_action))){
+        direction='missed';
+        const missing=expectsChange?'no change to Current State was put up for approval'+(statement?', so Current State still says '+quote(statement):'')+'.'
+          :scenario.expected_action==='answer_question'?'no answer to the open Question was proposed, so the Question stays open.'
+          :scenario.expected_action==='link_existing_question'?'the Evidence was not linked to the open Question.'
+          :'no new Question was proposed.';
+        consequence=(reviewCreated===false?'This run missed a needed Review: ':'This run’s Review proposed nothing: ')+missing;
+        // With no Review there is no proposal, Review or rationale text, so nothing could overstate the Evidence.
+        if(unsafeWords&&reviewCreated===false)consequence+=' It did not make this scenario’s unsafe mistake ('+unsafeWords+').';
+        if(reviewCreated===false&&MISSED_REVIEW_CONSEQUENCES[id])consequence=MISSED_REVIEW_CONSEQUENCES[id];
+        else if(unsafeWords&&scenario.unsafe_if==='state_change')consequence+=' No change was proposed, so it did not make this scenario’s unsafe mistake ('+unsafeWords+').';
+      }else if(reviewCreated===true&&!scenario.review_needed){
+        direction='routing';
+        consequence='This run created a Review this scenario does not need, so a person would be asked to look at Evidence that needs no decision. Nothing changes in Current State without approval.';
+      }else{
+        direction='routing';
+        consequence='This run’s Review asks a person to decide something different from what this scenario expects. Nothing changes in Current State without approval.'+
+          (scenario.unsafe_if==='state_change'&&!proposesChange?' No change was proposed, so it did not make this scenario’s unsafe mistake ('+unsafeWords+').':
+           scenario.unsafe_if==='overstatement'?' The record does not show whether its wording overstated the Evidence.':'');
+      }
+    }else if(suite==='ask'){
+      direction=askPrimary?'answer':'unknown';
+      consequence=askPrimary?ASK_CHECKS[askPrimary].risk+' Ask is read-only, so project records are unchanged.':'The recorded result does not say which answer check failed.';
+    }else{
+      consequence='The recorded result does not include enough detail to say what this run’s miss would change.';
     }
-    // Oct 27: wording approved by Paige.
-    if(id==='review_tentative_high_consequence'){
-      return {
-        title:'An open leadership question was treated as a threat to Current State',
-        whatHappened:'Leadership only asked whether human review could be removed for low-risk cases. State flagged the human-review fact as at risk instead of opening a Question.',
-        expected:'Open a Question about the undecided proposal and leave the maintained human-review fact unchanged.',
-        why:'Marking a fact at risk on an undecided question makes it look as if a decision is coming that nobody has made.'
-      };
+    // Heading: what this run did wrong, built from the recorded miss and the scenario's subject.
+    const subject=SCENARIO_SUBJECTS[id]||'The Evidence';
+    let heading;
+    if(reviewedApplies)heading=reviewed.headline;
+    else if(suite==='review'&&recorded.action){
+      const allowed=scenario?(scenario.allowed_actions?.length?scenario.allowed_actions:[scenario.expected_action]):[];
+      if(recorded.action==='error')heading=subject+' could not be scored';
+      else if(reviewCreated===false&&scenario?.review_needed)heading=subject+' didn’t trigger a Review';
+      else if(STATE_CHANGE_OUTCOMES.has(recorded.action)&&scenario?.unsafe_if==='state_change')heading=subject+' led to a proposed Current State change';
+      else if(reviewCreated===true&&scenario&&!scenario.review_needed)heading=subject+' triggered a Review it doesn’t need';
+      else if(allowed.includes(recorded.action)&&checks.includes('interpretation'))heading=subject+': the Review didn’t meet the expected wording requirements';
+      else if(recorded.action==='preserve_evidence_only')heading=subject+': the Review proposed nothing';
+      else heading=subject+': State '+outcomeShort(recorded.action,'observed')+', not '+(expectedCode?outcomeShort(expectedCode,'expected'):'the expected outcome');
+    }else if(suite==='ask'&&askPrimary){
+      heading=(scenario?.question?'The answer to '+quote(scenario.question):'The answer')+' '+ASK_CHECKS[askPrimary].failed;
+    }else{
+      // Not enough recorded to say how it failed: a neutral heading, never the scenario's own (success-sounding) name.
+      const fallbackSubject=SCENARIO_SUBJECTS[id]||(suite==='ask'&&scenario?.question?'The answer to '+quote(scenario.question):'This scenario');
+      heading=fallbackSubject+': failure details weren’t recorded';
     }
-    if(id==='review_partial_reversal'){
-      return {
-        title:'A scoped reversal was not applied to Current State',
-        whatHappened:'Security paused password-reset automation for privileged accounts only. State kept this as Evidence and did not propose narrowing the maintained fact.',
-        expected:'Propose a Current State update: automation stays approved for standard resets and is paused for privileged-account resets.',
-        why:'Current State would keep saying automation is approved for every reset after Security paused part of it.'
-      };
-    }
-    if(id==='ask_known_outcome_unknown_reason'){
-      return {
-        title:'Known outcome was answered without preserving an unknown reason',
-        whatHappened:'State knew that the Northstar pilot was paused, but the answer did not clearly say that the reason for the pause was not established.',
-        expected:'State the known pause and explicitly say the reason is unknown or not established unless a supplied record supports it.',
-        why:'A user could mistake an inferred explanation for maintained project truth.'
-      };
-    }
-    const category=String(detail?.category||detail?.scenario_id||'controlled behavior').replaceAll('_',' ').trim();
+    const contractNote=scenario?.rationale||null;
+    const nextStep='Decide which is wrong, State or the contract: fix State and rerun '+suiteLabel+', or record a product decision before changing the contract.';
     return {
-      title:category.charAt(0).toUpperCase()+category.slice(1)+' needs review',
-      whatHappened:detail?.observed?String(detail.observed).replaceAll('_',' '):'Observed behavior differed from the controlled product expectation.',
-      expected:detail?.expected?String(detail.expected).replaceAll('_',' '):'Follow the controlled product contract for this scenario.',
-      why:evalFailureImpact(detail).replace(/^Risk:\s*/,'')
+      scenarioId:id,suite,suiteLabel,severity,
+      severityLabel:'Scenario severity: '+(['high','medium','low'].includes(severity)?severity:'unknown'),
+      title:scenarioTitle(id,detail?.category||scenario?.category),
+      heading,
+      evidence,
+      observed:{text:reviewedApplies?reviewed.summary:observedParts.join(' '),recorded:reviewedApplies?observedParts.join(' '):null,excerpt:observedExcerpt,source:FROM_RECORD},
+      expected:{text:expectedLine,details:expectedDetails,source:scenario?FROM_CATALOG:FROM_RECORD},
+      consequence:{text:consequence,direction},
+      contractNote,
+      nextStep,
+      gaps,
+      technical:{
+        scenarioId:id,category:detail?.category||scenario?.category||null,severity,failedChecks:checks,
+        expectedCode:detail?.expected??null,observedRaw:detail?.observed??null,
+        build:run?.build||null,model:run?.model_identifier||null,runAt:run?.created_at||null,total:run?.total??null,
+        sourceUrl:scenarioSourceUrl(suite,run?.build),pageUrl:scenarioPageUrl(id)
+      }
+    };
+  }
+  // The older {title, whatHappened, expected, why} shape, used by the investigation report and the Overview.
+  function failureExplanation(detail,run){
+    const story=failureStory(detail,run);
+    return {
+      title:story.heading,
+      whatHappened:story.observed.text,
+      expected:story.expected.text,
+      why:story.consequence.text
     };
   }
   function qualityFailureClassSummary(q){
     const runs=[{suite:'update understanding',run:q?.review},{suite:'answer quality',run:q?.ask}].filter(item=>item.run);
-    const details=runs.flatMap(({suite,run})=>(Array.isArray(run?.failure_details)?run.failure_details:[]).map(item=>({...item,suite})));
+    const details=runs.flatMap(({suite,run})=>(Array.isArray(run?.failure_details)?run.failure_details:[]).map(item=>({...item,suite,run})));
     const high=details.filter(item=>String(item?.severity||'').toLowerCase()==='high');
     const names=[...new Set(high.map(item=>{
       const category=String(item?.category||item?.scenario_id||'').replaceAll('_',' ').trim();
@@ -766,7 +1045,7 @@
     return {
       count:runs.reduce((n,item)=>n+Number(item.run?.high_severity_failures||0),0),
       classes:names.slice(0,3),
-      details:high.map(item=>({...item,...failureExplanation(item)}))
+      details:high.map(item=>{const {run,...rest}=item;return {...rest,...failureExplanation(item,run),story:failureStory(item,run)};})
     };
   }
   function activityTimelineItems(data){
@@ -826,7 +1105,7 @@
     }
     if(p.id==='state'&&Array.isArray(q?.recent)){
       for(const item of q.recent.slice(0,6)){
-        if(item.created_at)items.push({when:item.created_at,type:'Quality check',category:'quality',title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+Number(item.high_severity_failures||0)+' high-impact failures'});
+        if(item.created_at)items.push({when:item.created_at,type:'Quality check',category:'quality',title:evalSuiteLabel(item)+' checked',detail:(evalScore(item)==null?'Score unavailable':percent(evalScore(item)))+' · '+highSeverityFailureText(item.high_severity_failures)});
       }
     }else if(p.id==='tastemake'&&externalQ?.ci?.updated_at){
       items.push({when:externalQ.ci.updated_at,type:'Quality check',category:'quality',title:'Recommendation quality checks updated',detail:externalQ.ci.conclusion==='success'?'Automated recommendation checks passed.':'Latest check result recorded.'});
@@ -890,10 +1169,14 @@
       quality:s.quality||null,
       qualityBehaviorUpdatedAt:s.qualityBehaviorUpdatedAt||null,
       qualityContractUpdatedAt:s.qualityContractUpdatedAt||null,
+      qualityCheckedAt:s.qualityCheckedAt||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
       previousPlatform:s.platform||null,
       activity:s.activity||null,
+      deliveryLoadedAt:s.deliveryLoadedAt||null,
+      activityLoadedAt:s.activityLoadedAt||null,
+      analyticsLoadedAt:s.analyticsLoadedAt||null,
       openPullRequests:Array.isArray(s.openPullRequests)?s.openPullRequests:[],
       runInfo:null,
       checkedAt:s.checkedAt||null,
@@ -937,9 +1220,13 @@
       quality:data.quality,
       qualityBehaviorUpdatedAt:data.qualityBehaviorUpdatedAt||null,
       qualityContractUpdatedAt:data.qualityContractUpdatedAt||null,
+      qualityCheckedAt:data.qualityCheckedAt||null,
       externalQuality:safeExternalQualitySnapshot(data.externalQuality),
       platform:data.platform,
       activity:data.activity,
+      deliveryLoadedAt:data.deliveryLoadedAt||null,
+      activityLoadedAt:data.activityLoadedAt||null,
+      analyticsLoadedAt:data.analyticsLoadedAt||null,
       openPullRequests:data.openPullRequests,
       runInfo:null,
       checkedAt:data.checkedAt,
@@ -966,7 +1253,7 @@
     if(investigation.quickCheck)return investigation.title||'Quick project check completed';
     if(investigation.error)return 'Investigation failed: '+investigation.error;
     if(investigation.report){
-      const first=plainReportLine(investigation.report).split(/\n+/).map(line=>line.trim()).find(line=>line&&!/^(Current assessment|What failed|Why this matters|Recommended next action)$/i.test(line));
+      const first=plainReportLine(investigation.report).split(/\n+/).map(line=>line.trim()).find(line=>line&&!/^(Investigation scope|Current assessment|What failed|Why this matters|Recommended next action)$/i.test(line));
       return first||'Investigation completed';
     }
     return'Investigation completed';
@@ -1046,6 +1333,61 @@
     if(stateEvalContractStale(q))return'The eval contract changed after the latest recorded run.';
     return'';
   }
+  // Where the quality numbers on screen came from (#597), shared by Overview and AI Evals so their labels agree.
+  // resultAt is when the results were recorded (the eval run, or the CI run); confirmedAt is when this page last fetched
+  // them successfully. A refresh in progress or a failed refresh keeps the previous results, labelled as previous.
+  function qualityResultsAt(data){
+    if(data?.project?.quality==='state')return [data?.quality?.review?.created_at,data?.quality?.ask?.created_at].filter(Boolean).sort((a,b)=>(dateMs(a)||0)-(dateMs(b)||0)).pop()||null;
+    return data?.externalQuality?.ci?.updated_at||data?.externalQuality?.recorded?.updated_at||null;
+  }
+  function qualityProvenance(data){
+    const state=data?.project?.quality==='state';
+    const hasResults=state?!!(data?.quality&&(data.quality.review||data.quality.ask)):!!data?.externalQuality;
+    const loading=pendingSet(data).has('Quality');
+    const failure=(Array.isArray(data?.failures)?data.failures:[]).find(item=>item?.label==='Quality');
+    const resultAt=hasResults?qualityResultsAt(data):null;
+    const confirmedAt=data?.qualityCheckedAt||null;
+    const what=state?'AI eval results':'quality results';
+    const recorded=resultAt?'recorded '+fmtDate(resultAt):'recording time unknown';
+    if(loading&&hasResults)return {status:'refreshing',previous:true,resultAt,confirmedAt,label:'Previous results',detail:'Previous '+what+', '+recorded+' \u00b7 checking for newer results\u2026'};
+    if(loading)return {status:'loading',previous:false,resultAt:null,confirmedAt,label:'Checking\u2026',detail:'Loading the latest '+what+'\u2026'};
+    if(failure&&hasResults)return {status:'stale',previous:true,resultAt,confirmedAt,label:'Previous results \u00b7 refresh failed',detail:'Couldn\u2019t refresh the '+what+' ('+failure.reason+'). Showing previous results, '+recorded+(confirmedAt?'; last loaded '+relativeAge(confirmedAt):'')+'.'};
+    if(failure)return {status:'unavailable',previous:false,resultAt:null,confirmedAt,label:'Couldn\u2019t load',detail:'Couldn\u2019t load the '+what+' ('+failure.reason+'). Nothing is shown rather than a guess.'};
+    if(!hasResults)return {status:'none',previous:false,resultAt:null,confirmedAt,label:'No results',detail:'No '+what+' are recorded yet.'};
+    return {status:'current',previous:false,resultAt,confirmedAt,label:resultAt?'Recorded '+fmtDate(resultAt):'Recorded',detail:'Latest '+what+', '+recorded+'.'};
+  }
+  // #597 (Nov 2): the status line describes the refresh attempt (when the page tried and what failed), never when a
+  // result was recorded. A section whose fetch failed keeps its retained data and says so; no success time is invented.
+  function refreshStatus(items,attemptAt){
+    const list=Array.isArray(items)?items:[];
+    const failed=list.flatMap(item=>(Array.isArray(item?.failures)?item.failures:[]).map(failure=>(item.project?.name?item.project.name+' ':'')+String(failure.label||'').toLowerCase()));
+    const attempted=list.reduce((n,item)=>n+Object.keys(item?.timings||{}).length,0);
+    const when=fmtDate(attemptAt);
+    const named=failed.slice(0,3).join(', ')+(failed.length>3?' and '+(failed.length-3)+' more':'');
+    if(!failed.length)return {kind:'refreshed',title:'Refreshed '+when,detail:''};
+    if(attempted&&failed.length>=attempted)return {kind:'failed',title:'Refresh failed '+when,detail:'Couldn’t refresh: '+named+'.'};
+    return {kind:'partial',title:'Partly refreshed '+when,detail:'Couldn’t refresh: '+named+'.'};
+  }
+  function signalRefreshFailure(data,labels){
+    const failures=Array.isArray(data?.failures)?data.failures:[];
+    return failures.find(failure=>labels.includes(failure?.label))||null;
+  }
+  // Freshness for one Overview section: a failed fetch is named, and a result time is never replaced by the fetch time.
+  // A section whose source failed this refresh (#597 follow-up, Nov 3): previously loaded data is marked as such, with the
+  // time it was loaded only when that time was recorded; with nothing loaded before, the section is unavailable.
+  function retainedNotice(data,labels,{hasData,loadedAt}={}){
+    if(!signalRefreshFailure(data,labels))return null;
+    return hasData
+      ?{retained:true,text:'Couldn’t refresh · showing previously loaded data'+(loadedAt&&Number.isFinite(dateMs(loadedAt))?' · last fetched at '+fmtDate(loadedAt):'')}
+      :{retained:false,text:'Couldn’t refresh · no previously loaded data'};
+  }
+  function sectionFreshness(data,labels,resultAt,{hasData=true,staleHours=24,noun='Updated'}={}){
+    const failure=signalRefreshFailure(data,labels);
+    if(failure)return {label:hasData?'Couldn’t refresh · showing retained data'+(resultAt?' from '+fmtDate(resultAt):''):'Couldn’t refresh',stale:true,retained:hasData};
+    if(!resultAt)return {label:noun+' time unknown',stale:true};
+    const meta=freshnessMeta(resultAt,null,staleHours);
+    return noun==='Updated'?meta:{...meta,label:meta.stale?'May be stale · '+noun.toLowerCase()+' '+relativeAge(resultAt):noun+' '+relativeAge(resultAt)};
+  }
   function freshnessMeta(value,fallback,staleHours=24){
     const ts=value||fallback;
     if(!ts)return {label:'Freshness unknown',stale:true};
@@ -1062,6 +1404,8 @@
         askAt:ask?.created_at||null,
         reviewScore:evalScore(review),
         askScore:evalScore(ask),
+        reviewTotal:review?.total??null,
+        askTotal:ask?.total??null,
         severe:Number(review?.high_severity_failures||0)+Number(ask?.high_severity_failures||0)
       };
     }
@@ -1119,16 +1463,21 @@
       items.push({title:improved?'Delivery status improved':'Delivery status changed',detail:healthStateLabel(previousDelivery)+' → '+healthStateLabel(currentDelivery),observedAt:data.delivery.updatedAt||data.checkedAt,tab:'overview',section:'deliveryPanel'});
     }
     const currentQ=qualitySnapshot(data),oldQ=before.quality||{};
+    // #597: a different scenario set or contract is a new baseline, not an improvement or decline.
+    const visitComparison=(kind,name)=>{
+      const comparison=runComparability({total:currentQ[kind+'Total'],created_at:currentQ[kind+'At']},{total:oldQ[kind+'Total'],created_at:oldQ[kind+'At']},data?.quality?.contractUpdatedAt);
+      if(!comparison.comparable)return {title:name+' eval '+(comparison.reason==='unrecorded'?'re-run':'re-run on a different test'),detail:'Not comparable with your last visit: '+comparison.text+' \u00b7 now '+percent(currentQ[kind+'Score'])};
+      const delta=scoreDeltaPoints(currentQ[kind+'Score'],oldQ[kind+'Score']);
+      return {title:name+' eval '+(delta===0?'re-run':'changed'),detail:evalChangeDetail(delta,currentQ[kind+'Score'])};
+    };
     if(currentQ.reviewAt&&oldQ.reviewAt&&String(currentQ.reviewAt)!==String(oldQ.reviewAt)){
-      const delta=scoreDeltaPoints(currentQ.reviewScore,oldQ.reviewScore);
-      items.push({title:'Update-understanding eval '+(delta===0?'re-run':'changed'),detail:evalChangeDetail(delta,currentQ.reviewScore),observedAt:currentQ.reviewAt,tab:'ai-quality'});
+      items.push({...visitComparison('review','Update-understanding'),observedAt:currentQ.reviewAt,tab:'ai-quality'});
     }
     if(currentQ.askAt&&oldQ.askAt&&String(currentQ.askAt)!==String(oldQ.askAt)){
-      const delta=scoreDeltaPoints(currentQ.askScore,oldQ.askScore);
-      items.push({title:'Answer-quality eval '+(delta===0?'re-run':'changed'),detail:evalChangeDetail(delta,currentQ.askScore),observedAt:currentQ.askAt,tab:'ai-quality'});
+      items.push({...visitComparison('ask','Answer-quality'),observedAt:currentQ.askAt,tab:'ai-quality'});
     }
     if(currentQ.severe!=null&&oldQ.severe!=null&&currentQ.severe!==oldQ.severe){
-      items.push({title:'High-impact quality failures changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt,tab:'ai-quality'});
+      items.push({title:'Failures in high-severity scenarios changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt,tab:'ai-quality'});
     }
     const analytics=data.platform?.analytics;
     if(before.analyticsAvailable!==null&&analytics&&before.analyticsAvailable!==analytics.available){
@@ -1360,17 +1709,40 @@
     return value==null||value===''||!Number.isFinite(Number(value))?null:Number(value);
   }
   // The latest two runs of a suite, newest first, compared on one field (or the suite's overall score).
-  function metricChange(recent,suite,field){
+  // Two runs of a suite are compared only when they scored the same number of scenarios under the same contract (#597):
+  // a pass rate over 12 cases and one over 13 differ in what was tested, not only in how State did. The latest commit to
+  // the contract files is all Project Health knows, so a change between the two runs is detected; a same-size swap of
+  // scenarios with no contract commit cannot happen without one.
+  // Two runs are comparable only when the record shows they ran the same scenarios against the same expected-behavior
+  // contract (Paige, Nov 3). An equal count does not establish the same set, and current run records do not list their
+  // scenarios, so without that list a comparison is omitted rather than guessed.
+  function runComparability(current,previous,contractChangedAt){
+    const a=Number(current?.total),b=Number(previous?.total);
+    if(Number.isFinite(a)&&Number.isFinite(b)&&a>0&&b>0&&a!==b)return {comparable:false,reason:'scenario-set',text:'scenario set changed ('+b+' \u2192 '+a+' cases)'};
+    const idsA=Array.isArray(current?.scenario_ids)?[...new Set(current.scenario_ids.map(String))].sort():null;
+    const idsB=Array.isArray(previous?.scenario_ids)?[...new Set(previous.scenario_ids.map(String))].sort():null;
+    if(!idsA||!idsB)return {comparable:false,reason:'unrecorded',text:'the run records don\u2019t show which scenarios ran'};
+    if(idsA.join('\n')!==idsB.join('\n'))return {comparable:false,reason:'scenario-set',text:'scenario set changed'};
+    const fetched=dateMs(contractChangedAt);
+    const changed=Math.max(dateMs(STATE_EVAL_CONTRACT_UPDATED_AT),Number.isFinite(fetched)?fetched:-Infinity);
+    const before=dateMs(previous?.created_at),after=dateMs(current?.created_at);
+    if(Number.isFinite(before)&&Number.isFinite(after)&&before<changed&&changed<=after)return {comparable:false,reason:'contract',text:'eval contract changed between the runs'};
+    return {comparable:true,reason:null,text:''};
+  }
+  function metricChange(recent,suite,field,contractChangedAt){
     const rows=(Array.isArray(recent)?recent:[]).filter(item=>item?.suite===suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
     if(rows.length<2)return {status:'none'};
     const a=metricScore(rows[0],field),b=metricScore(rows[1],field);
     if(a==null||b==null)return {status:'incomparable'};
+    const comparison=runComparability(rows[0],rows[1],contractChangedAt);
+    if(!comparison.comparable)return {status:'not-comparable',reason:comparison.reason,text:comparison.text};
     return {status:'ok',points:Math.round((a-b)*1000)/10};
   }
-  function evalTrend(recent,suite,field){
-    const change=metricChange(recent,suite,field);
+  function evalTrend(recent,suite,field,contractChangedAt){
+    const change=metricChange(recent,suite,field,contractChangedAt);
     if(change.status==='none')return'No earlier run to compare yet';
     if(change.status==='incomparable')return'No comparable score yet';
+    if(change.status==='not-comparable')return'Not comparable with the previous run: '+change.text;
     if(Math.abs(change.points)<0.1)return'Stable vs previous run';
     return (change.points>0?'Up ':'Down ')+Math.abs(change.points)+' points vs previous run';
   }
@@ -1379,8 +1751,12 @@
     return STATE_QUALITY_METRICS.map(m=>{
       const run=q?.[m.run],score=metricScore(run,m.field),severe=failureCheckCount(q,m.check);
       const kind=score==null?'unknown':severe?'bad':score<1?'warn':'good';
-      const signal=score==null?unknownSignal:severe?highImpactText(severe):score<1?'Lower-impact miss':'0 failures';
-      return {label:m.label,score,kind,signal,sub:score==null?m.sub:scenarioPassLabel(run,score),delta:mockDelta(q?.recent,m.suite,m.field),trend:mockTrendValues(q,m.suite,m.field)};
+      const misses=scenarioCounts(run,score)?.failed;
+      // An older run can record failures in high-severity scenarios without per-scenario details; never call those lower-severity.
+      const unattributed=!severe&&Number(run?.high_severity_failures||0)>0&&!(Array.isArray(run?.failure_details)&&run.failure_details.length);
+      if(unattributed&&score!=null&&score<1)return {label:m.label,score,kind:'bad',signal:m.run==='review'?highSeverityFailureText(run.high_severity_failures):'Failures in high-severity scenarios in this suite',sub:scenarioPassLabel(run,score),display:scenarioCountDisplay(run,score),percent:percent(score),delta:mockDelta(q?.recent,m.suite,m.field,q?.contractUpdatedAt),trend:mockTrendValues(q,m.suite,m.field)};
+      const signal=score==null?unknownSignal:severe?highSeverityFailureText(severe):score<1?(misses?misses+' lower-impact miss'+(misses===1?'':'es'):'Lower-impact miss'):'0 failures';
+      return {label:m.label,score,kind,signal,sub:score==null?m.sub:scenarioPassLabel(run,score),display:score==null?null:scenarioCountDisplay(run,score),percent:score==null?null:percent(score),delta:mockDelta(q?.recent,m.suite,m.field,q?.contractUpdatedAt),trend:mockTrendValues(q,m.suite,m.field)};
     });
   }
   function stateEvalCard(title,value,description,trend,note){
@@ -1396,15 +1772,49 @@
     return '<div class="eval-card compact state-scenario-card"><strong>'+esc(title)+'</strong>'+
       '<div class="scenario-result">'+esc(pass.replace(' passed',' scenarios passed'))+'</div>'+
       '<div class="eval-card-meta">'+
-        (note?'<span class="failure">'+esc(note)+'</span>':'<span class="healthy-note">No high-impact failures</span>')+
+        (note?'<span class="failure">'+esc(note)+'</span>':'<span class="healthy-note">No failures in high-severity scenarios</span>')+
         (trend?'<span class="trend '+trendClass+'">'+esc(trend)+'</span>':'')+
         '<span class="score-secondary">'+esc(percent(score))+'</span>'+
       '</div></div>';
   }
+  // "15 of 16 passed" (#597). Rates leave out scenarios that errored, so the count does too: passed of scored.
+  function scenarioCounts(run,score){
+    const total=Number(run?.total||0),errors=Math.max(0,Number(run?.errors||0)),value=Number(score);
+    if(!total||score==null||!Number.isFinite(value))return null;
+    const scored=Math.max(0,total-errors),passed=Math.round(scored*value);
+    return {passed,scored,failed:scored-passed,errors,total};
+  }
   function scenarioPassLabel(run,score){
-    const total=Number(run?.total||0),value=Number(score);
-    if(!total||!Number.isFinite(value))return'';
-    return Math.round(total*value)+' / '+total+' passed';
+    const counts=scenarioCounts(run,score);
+    if(!counts)return'';
+    return counts.passed+' of '+counts.scored+' passed'+(counts.errors?' · '+counts.errors+' could not be scored':'');
+  }
+  function scenarioCountDisplay(run,score){const counts=scenarioCounts(run,score);return counts?counts.passed+' of '+counts.scored:null;}
+  // How the cards' denominators relate (#597): the answer cards share the same Ask answers, so the unique-case total is
+  // the two suites' totals, not the sum of every card. Applicability comes from the scenario catalog, and only when the
+  // catalog has as many Ask scenarios as the run scored, so a different scenario set is never described.
+  function evalScenarioCountsNote(q){
+    const reviewTotal=Number(q?.review?.total||0),askTotal=Number(q?.ask?.total||0);
+    if(!reviewTotal&&!askTotal)return'';
+    const parts=[];
+    if(reviewTotal&&askTotal){
+      parts.push((reviewTotal+askTotal)+' unique scenarios: '+reviewTotal+' update-understanding case'+(reviewTotal===1?'':'s')+' and '+askTotal+' Ask answer'+(askTotal===1?'':'s')+'.');
+    }else if(reviewTotal){
+      parts.push(reviewTotal+' update-understanding case'+(reviewTotal===1?'':'s')+'; no Ask results are recorded.');
+    }else{
+      parts.push(askTotal+' Ask answer'+(askTotal===1?'':'s')+'; no update-understanding results are recorded.');
+    }
+    if(askTotal){
+      parts.push('Evidence grounding, decision authority and uncertainty handling each score the same '+askTotal+' answers, so those three cards do not add up to more cases.');
+      const catalog=evalCatalog(),askScenarios=Array.isArray(catalog?.ask)?catalog.ask:[];
+      if(askScenarios.length===askTotal){
+        const authority=askScenarios.filter(item=>item.should_distinguish_proposal_from_truth).length;
+        const uncertainty=askScenarios.filter(item=>item.should_express_uncertainty).length;
+        parts.push('Decision authority is tested in '+authority+' of them and uncertainty in '+uncertainty+'; the other answers pass those checks automatically.');
+      }
+    }
+    parts.push('These are controlled, synthetic scenarios; they do not measure live answers.');
+    return parts.join(' ');
   }
   function stateEvalHistory(){return'';}
   function mockSparkline(values){
@@ -1418,12 +1828,21 @@
     });
     return '<div class="mock-sparkline"><svg viewBox="0 0 '+w+' '+h+'" aria-hidden="true"><polyline points="'+pts.map(pt=>pt.x.toFixed(1)+','+pt.y.toFixed(1)).join(' ')+'"></polyline>'+pts.map(pt=>'<circle cx="'+pt.x.toFixed(1)+'" cy="'+pt.y.toFixed(1)+'" r="1.6"></circle>').join('')+'</svg></div>';
   }
+  // The trend line covers only the unbroken comparable history ending with the latest run; with fewer than two such
+  // runs there is no line (Paige, Nov 3).
   function mockTrendValues(q,suite,field){
-    return (Array.isArray(q?.recent)?q.recent:[]).filter(item=>item?.suite===suite).map(row=>metricScore(row,field)).filter(v=>v!=null);
+    const rows=(Array.isArray(q?.recent)?q.recent:[]).filter(item=>item?.suite===suite&&metricScore(item,field)!=null).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
+    const comparable=rows.length?[rows[0]]:[];
+    for(const row of rows.slice(1)){
+      if(!runComparability(rows[0],row,q?.contractUpdatedAt).comparable)break;
+      comparable.push(row);
+    }
+    return comparable.length>1?comparable.map(row=>metricScore(row,field)):[];
   }
   // A change in a pass rate is in percentage points, not percent (Oct 27 review).
-  function mockDelta(recent,suite,field){
-    const change=metricChange(recent,suite,field);
+  function mockDelta(recent,suite,field,contractChangedAt){
+    const change=metricChange(recent,suite,field,contractChangedAt);
+    if(change.status==='not-comparable')return {label:'Not comparable',cls:'flat',title:'Not comparable with the previous run: '+change.text};
     if(change.status!=='ok')return {label:'—',cls:'flat'};
     const d=change.points;
     if(Math.abs(d)<0.1)return {label:'0 pts',cls:'flat'};
@@ -1529,9 +1948,9 @@
     const overallLines=[];
     if(review){
       const score=evalScore(review),passed=review?.total!=null&&score!=null?Math.round(Number(review.total)*score):null;
-      overallLines.push('Update understanding: '+percent(score)+(passed!=null?' ('+passed+'/'+review.total+' scenarios)':'')+' · '+highImpactText(review.high_severity_failures));
+      overallLines.push('Update understanding: '+percent(score)+(passed!=null?' ('+passed+'/'+review.total+' scenarios)':'')+' · '+highSeverityFailureText(review.high_severity_failures));
     }
-    if(ask)overallLines.push('Answer quality: '+percent(evalScore(ask))+' · '+highImpactText(ask.high_severity_failures));
+    if(ask)overallLines.push('Answer quality: '+percent(evalScore(ask))+' · '+highSeverityFailureText(ask.high_severity_failures));
 
     if(stateEvalResultsStale(quality)){
       const report=[
@@ -1559,28 +1978,46 @@
       };
     }
 
+    const runFor=detail=>detail?.suiteKey==='review'?review:detail?.suiteKey==='ask'?ask:null;
     const failedLines=details.length?details.map(detail=>{
-      const explanation=failureExplanation(detail);
-      return '- '+detail.suiteLabel+' / '+detail.scenario_id+' ('+(detail.severity||'unknown')+'). '+explanation.whatHappened;
+      const story=failureStory(detail,runFor(detail));
+      return '- '+detail.suiteLabel+' / '+detail.scenario_id+' (scenario severity: '+(detail.severity||'unknown')+'). '+story.heading+'.';
     }):['- Exact scenario metadata is unavailable for this older run, so Project Health can only report the suite-level result.'];
+    // #596: a single failure is explained as Evidence → Observed → Expected → Consequence → Next step.
+    const story=targeted?failureStory(targeted,runFor(targeted)):null;
+    const storyLines=story?[
+      '',
+      'Evidence',
+      story.evidence.text?story.evidence.lead+': '+story.evidence.text+story.evidence.setup.map(item=>'\n- '+item.label+': '+item.text).join(''):'Not available: the scenario setup is not in this page\u2019s catalog.',
+      '',
+      'Observed behavior',
+      story.observed.text+(story.observed.recorded?'\nRecorded: '+story.observed.recorded:'')+(story.observed.excerpt?'\nProposed State (recorded excerpt'+(story.observed.excerpt.truncated?', cut off':'')+'): '+story.observed.excerpt.text:''),
+      '',
+      'Expected behavior',
+      story.expected.text+story.expected.details.map(line=>'\n- '+line).join('')+(story.contractNote?'\nContract note: '+story.contractNote:''),
+      ...(story.gaps.length?['','Not recorded',story.gaps.map(gap=>'- '+gap).join('\n')]:[])
+    ]:[];
 
     const relevantRun=targeted?(targeted.suiteKey==='review'?review:ask):null;
     const previousRelevant=relevantRun?previousEvalRun(quality,relevantRun):null;
     const relevantScore=evalScore(relevantRun),previousScore=evalScore(previousRelevant);
     const changeLines=[];
-    if(relevantRun&&previousRelevant&&relevantScore!=null&&previousScore!=null){
+    const relevantComparison=relevantRun&&previousRelevant?runComparability(relevantRun,previousRelevant,quality.contractUpdatedAt):{comparable:true};
+    if(!relevantComparison.comparable){
+      changeLines.push('- '+targeted.suiteLabel+' is not comparable with the previous run: '+relevantComparison.text+'. Treat this run as a new baseline.');
+    }else if(relevantRun&&previousRelevant&&relevantScore!=null&&previousScore!=null){
       const delta=scoreDeltaPoints(relevantScore,previousScore);
       changeLines.push('- '+targeted.suiteLabel+' '+(delta===0?'unchanged at '+percent(relevantScore)+' since the previous run.':(delta>0?'improved ':'declined ')+Math.abs(delta)+' points from '+percent(previousScore)+' to '+percent(relevantScore)+'.'));
     }
-    if(relevantRun&&previousRelevant&&Number(previousRelevant.high_severity_failures||0)!==Number(relevantRun.high_severity_failures||0)){
-      changeLines.push('- '+targeted.suiteLabel+' high-impact failures changed from '+Number(previousRelevant.high_severity_failures||0)+' to '+Number(relevantRun.high_severity_failures||0)+'.');
+    if(relevantComparison.comparable&&relevantRun&&previousRelevant&&Number(previousRelevant.high_severity_failures||0)!==Number(relevantRun.high_severity_failures||0)){
+      changeLines.push('- '+targeted.suiteLabel+' failures in high-severity scenarios changed from '+Number(previousRelevant.high_severity_failures||0)+' to '+Number(relevantRun.high_severity_failures||0)+'.');
     }
 
     const why=targeted
-      ?failureExplanation(targeted).why
-      :(details.length?'At least one current failure can affect maintained project truth or another high-impact behavior.':'The current miss is a quality/workflow issue rather than a production outage.');
+      ?story.consequence.text
+      :(details.length?'At least one current failure is in a high-severity scenario, which guards maintained project truth or another high-severity behavior.':'The current miss is a quality/workflow issue rather than a production outage.');
     const nextStep=targeted
-      ?'Review this scenario against the product contract. If the expected behavior is still correct, fix State behavior and rerun '+targeted.suiteLabel+'. If the observed behavior is acceptable, update the eval instead.'
+      ?story.nextStep
       :details.length
         ?'Review each failed scenario against the product contract. Fix State behavior only where the contract is still right; update the eval where the observed behavior is acceptable. Then rerun the affected suite.'
         :'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.';
@@ -1591,9 +2028,10 @@
       targeted?(targeted.suiteLabel+' · '+targeted.scenario_id):'Current AI eval failures',
       '',
       'What failed',
-      failedLines.join('\n'),
+      targeted?'- '+story.heading+'. Scenario: '+story.title+' ('+story.severityLabel.toLowerCase()+').':failedLines.join('\n'),
+      ...storyLines,
       '',
-      'Why this matters',
+      targeted?'Consequence':'Why this matters',
       why,
       ...(changeLines.length?['','What changed since the previous run',changeLines.join('\n')]:[]),
       '',
@@ -1626,7 +2064,7 @@
     const latestQuality=data?.project?.quality==='state'&&data.quality
       ?(stateEvalResultsStale(data.quality)
         ?'Needs rerun · '+stateEvalStaleReason(data.quality)+' Historical failures are not treated as current product failures.'
-        :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+highImpactText(run.high_severity_failures)).join('\n'))
+        :[data.quality.review,data.quality.ask].filter(Boolean).map(run=>evalSuiteLabel(run)+': '+percent(evalScore(run))+' · '+highSeverityFailureText(run.high_severity_failures)).join('\n'))
       :projectQualityLabel(data);
     const release=data?.delivery
       ?commitTitle(data.delivery.message)+' · '+fmtDate(data.delivery.updatedAt)
@@ -1690,5 +2128,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

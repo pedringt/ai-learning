@@ -154,7 +154,7 @@
     </section>
 
     <section class="panel">
-      <div class="section-head"><div><h2>Scenario catalog</h2><p class="panel-copy">The scenario catalog is the product contract. Each case describes the setup, expected behavior, and why that behavior matters.</p></div><span class="section-count">23 scenarios</span></div>
+      <div class="section-head"><div><h2>Scenario catalog</h2><p class="panel-copy">The scenario catalog is the product contract. Each case describes the setup, expected behavior, and why that behavior matters.</p></div><span class="section-count" id="scenarioCount">23 scenarios</span></div>
       <div class="tabs" role="tablist" aria-label="Eval suites">
         <button class="tab active" type="button" data-suite="review" role="tab" aria-selected="true">Update understanding · 13</button>
         <button class="tab" type="button" data-suite="ask" role="tab" aria-selected="false">Answer quality · 10</button>
@@ -176,6 +176,8 @@
     <p class="footer">The evals measure behavior rather than exact wording. Human authorization remains separate from model interpretation.</p>
   </main>
 
+  <script src="state-eval-catalog.js"></script>
+  <script src="project-health-model.js"></script>
   <script>
   (function(){
     'use strict';
@@ -212,6 +214,23 @@
       review:{title:'Update understanding',text:'Tests how State interprets new Evidence against Current State and open Questions before anything is allowed to change.'},
       ask:{title:'Answer quality',text:'Tests whether Ask stays grounded, handles uncertainty, surfaces open items, and respects the boundary between proposals and approved truth.'}
     };
+    // #596: scenarios added to the eval files after this list was written come from the generated catalog, so a failure
+    // link never lands on a scenario this page does not show. Setup and expected behavior are the scenario's own contract.
+    const catalog=window.STATE_EVAL_CATALOG,model=window.PROJECT_HEALTH_MODEL;
+    if(catalog&&model){
+      for(const suite of ['review','ask']){
+        const known=new Set(scenarios[suite].map(item=>item.id));
+        for(const item of (catalog[suite]||[])){
+          if(known.has(item.id))continue;
+          const story=model.failureStory({scenario_id:item.id,severity:item.severity});
+          scenarios[suite].push({id:item.id,title:model.scenarioTitle(item.id,item.category),severity:item.severity,
+            setup:(suite==='review'?item.evidence:'Question: '+item.question)+story.evidence.setup.map(row=>' '+row.label+': '+row.text).join(''),
+            expected:story.expected.text,why:item.rationale||'See the scenario source.'});
+        }
+      }
+    }
+    const scenarioCount=document.getElementById('scenarioCount');
+    if(scenarioCount)scenarioCount.textContent=(scenarios.review.length+scenarios.ask.length)+' scenarios';
     const list=document.getElementById('scenarioList');
     const intro=document.getElementById('suiteIntro');
     const tabs=[...document.querySelectorAll('[data-suite]')];
@@ -261,7 +280,7 @@
           failureList.innerHTML=failures.map(item=>{
             const catalog=(scenarios[item.suite]||[]).find(row=>row.id===item.scenario_id)||{};
             const checks=(item.failed_checks||[]).map(check=>'<span>'+esc(check)+'</span>').join('');
-            return '<article class="failure-item"><h3>'+esc(catalog.title||item.scenario_id||'Failed scenario')+'</h3><div class="eyebrow">'+esc(item.scenario_id||'')+'</div>'+
+            return '<article class="failure-item"><h3>'+esc(catalog.title||(model?model.scenarioTitle(item.scenario_id,item.category):item.scenario_id)||'Failed scenario')+'</h3><div class="eyebrow">'+esc(item.scenario_id||'')+'</div>'+
               '<div class="failure-meta"><span>'+esc(item.severity||catalog.severity||'unknown')+' severity</span>'+checks+'</div>'+
               (item.expected?'<p><strong>Expected:</strong> '+esc(item.expected)+'</p>':'')+
               (item.observed?'<p><strong>Observed:</strong> '+esc(item.observed)+'</p>':'')+
@@ -274,7 +293,10 @@
           }));
           const requested=new URLSearchParams(location.search).get('failure');
           const target=failures.find(item=>item.scenario_id===requested)||failures[0];
-          if(target){renderSuite(target.suite);}
+          if(target){
+            renderSuite(target.suite);
+            if(requested)document.querySelector('[data-scenario="'+CSS.escape(target.scenario_id)+'"]')?.scrollIntoView({block:'center'});
+          }
         }else{
           failurePanel.hidden=true;
           renderSuite('review');
