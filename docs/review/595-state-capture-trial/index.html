@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><meta name="robots" content="noindex"/>
+<title>State capture trial (#595) · review only</title>
+<link href="../../../site-shell.css" rel="stylesheet"/><link href="../../../site-components.css" rel="stylesheet"/><link href="../../../implementation-context-case.css?v=r4-title-subtitle" rel="stylesheet"/>
+<style>
+/* #595 trial: one State Review capture, shown at the size a case-study reader would see it. */
+.capture-trial{margin:18px 0 6px}
+.capture-trial img{display:block;width:100%;max-width:790px;height:auto;border:1px solid #e3e6ee;border-radius:10px;background:#fff}
+.capture-trial figcaption{margin-top:10px;max-width:790px;font-size:14px;line-height:1.5;color:var(--muted)}
+.trial-note{border:1px dashed #c9a227;border-radius:8px;padding:10px 14px;font-size:14px;max-width:790px}
+</style>
+</head><body>
+<main class="meridian-page-shell case-system-page" id="main-content"><article class="case-page-content flagship-case">
+<p class="trial-note"><strong>Review-only trial for pedringt/ai-learning#595.</strong> Not linked from the site. The capture shows the Review screen from the unmerged #593 branch, run locally against the seeded Northstar example project. Do not publish until #593 ships.</p>
+<section class="section seam-learning"><div class="kicker">Proposed placement · State case study, “The key product decisions”</div>
+<h2>A person sees the evidence before deciding</h2>
+<p>When new evidence could change what the project treats as true, State opens a Review. The reviewer sees the current understanding, the change the AI proposes, and a short quote from the source it came from, then decides. The proposal does not change Current State on its own; the reviewer’s choice does.</p>
+<figure class="capture-trial">
+<picture>
+<source media="(max-width: 600px)" srcset="state-review-phone@3x.png" width="358" height="615"/>
+<img src="state-review-desktop@2x.png" width="790" height="399" alt="A State Review asking whether launch readiness should explicitly require a severe-failure threshold. Current understanding: pilot launch still requires agreed thresholds for high-risk failures and escalation behavior. Proposed change: pilot launch requires an agreed threshold for severe unsupported-claim failures as well as acceptable escalation behavior. Quoted source, a project note from August 28: “Security asked for explicit launch-blocking thresholds for agreed high-risk failure categories.” Below are three buttons: Update Current State, Adjust, and Leave unchanged."/>
+</picture>
+<figcaption>A Review from State's Northstar example project. The quote is the stored project note; the proposed change is the AI's interpretation of it. The proposal does not change Current State until a person chooses one of the buttons.</figcaption>
+</figure>
+</section>
+</article></main>
+</body></html>
