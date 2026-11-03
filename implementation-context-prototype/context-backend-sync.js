@@ -75,6 +75,13 @@
       current,
       evidence:r.evidence_content||fallbackEvidence,
       evidenceSourceType:r.evidence_source_type||'',
+      // #593: the stored Evidence records behind this Review, newest first, for the source excerpt
+      // beside the proposal. Left undefined when the backend sent no list, so the card claims
+      // nothing either way; an empty list is an explicit "no source evidence recorded".
+      evidenceItems:Array.isArray(r.evidence_items)?r.evidence_items.map(e=>({
+        id:e.id,content:String(e.content||''),
+        label:[sourceLabel(e.source_type),e.source_name,formatBackendDate(e.submitted_at)].filter(Boolean).join(' · '),
+      })):undefined,
       // Only an explicit backend resolves_question_ids counts as a resolving
       // link -- a review is never inferred to resolve a question just
       // because its evidence happened to come from answering one (that used

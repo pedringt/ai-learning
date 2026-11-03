@@ -2,6 +2,36 @@
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const cleanReviewCopy=value=>String(value||'').replace(/\*\*/g,'').replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'').replace(/\s*\((?:\s*(?:k|q|jq)-[a-z0-9-]+\s*[,;]?)+\)/g,'').replace(/(?<![A-Za-z0-9_-])(?:q|jq)-[a-z0-9-]+\b/g,'the linked Question').replace(/(?<![A-Za-z0-9_-])k-[a-z0-9-]+\b/g,'the related Current State item').replace(/\b(?:ask-evidence|state|question|evidence|review|proposal)-[a-z0-9-]+\b/gi,'').replace(/\s+([,.;:])/g,'$1').replace(/\s{2,}/g,' ').trim();
 
+  // #593: a short quote of the stored source Evidence beside the proposed change, so the basis for
+  // the proposal is visible at the decision point. It quotes only Evidence records the backend
+  // returned (r.evidenceItems, newest first) -- never the AI rationale, which stays under Why /
+  // source -- and is cut at a word boundary with a visible "…" plus a note that the full text is
+  // under Why / source. No list at all (undefined) claims nothing; an empty list says so plainly.
+  const SOURCE_EXCERPT_CHARS=220;
+  function sourceExcerpt(text){
+    const clean=String(text||'').replace(/\s+/g,' ').trim();
+    if(clean.length<=SOURCE_EXCERPT_CHARS)return {text:clean,truncated:false};
+    const cut=clean.slice(0,SOURCE_EXCERPT_CHARS),space=cut.lastIndexOf(' ');
+    return {text:(space>SOURCE_EXCERPT_CHARS*0.6?cut.slice(0,space):cut).replace(/[\s,;:.–—-]+$/,''),truncated:true};
+  }
+  function recordedSources(r){
+    return Array.isArray(r.evidenceItems)?r.evidenceItems.filter(e=>String(e?.content||'').trim()):null;
+  }
+  function sourceExcerptHtml(r){
+    const sources=recordedSources(r);
+    if(!sources)return '';
+    if(!sources.length)return '<figure class="review-source-excerpt is-missing"><figcaption>Source</figcaption><p>No source evidence is recorded for this Review.</p></figure>';
+    const first=sources[0],excerpt=sourceExcerpt(first.content),more=sources.length-1;
+    const notes=[excerpt.truncated?'Shortened':'',more?`${more} more ${more===1?'source':'sources'}`:''].filter(Boolean);
+    return `<figure class="review-source-excerpt"><figcaption>Source${first.label?` · ${esc(first.label)}`:''}</figcaption><blockquote><p>&ldquo;${esc(excerpt.text)}${excerpt.truncated?'&hellip;':''}&rdquo;</p></blockquote>${notes.length?`<p class="review-source-note">${esc(notes.join(' · '))}. Full text under Why / source.</p>`:''}</figure>`;
+  }
+  function fullSourcesHtml(r){
+    const sources=recordedSources(r);
+    if(!sources)return `<p><strong>Evidence:</strong> ${esc(r.evidence)}</p>`;
+    if(!sources.length)return '<p><strong>Evidence:</strong> No source evidence is recorded for this Review.</p>';
+    return sources.map(e=>`<p class="review-source-full"><strong>Source${e.label?` (${esc(e.label)})`:''}:</strong> ${esc(e.content)}</p>`).join('');
+  }
+
   // sourceNote: the note this review's evidence came from (state.data.notes
   // resolved by evidenceId), or undefined. Passed in rather than looked up
   // here so this module never needs the whole notes array just for one field.
@@ -53,7 +83,7 @@
     const relatedBlock=(r.relatedOpenReviews||[]).length
       ? `<div class="review-context-block review-related-block"><span>${r.relatedOpenReviews.length>1?'Related open reviews':'Related open review'}</span>${r.relatedOpenReviews.map(x=>`<p>&ldquo;${esc(x.decisionQuestion)}&rdquo;</p>`).join('')}</div>`
       : '';
-    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${isQuestionReview?(questionProposal?.existing_question_id?'Already tracked':'Question to track'):checkOnly?'What the evidence says':'Proposed change'}</span><p>${esc(isQuestionReview?(questionReady?questionProposal.existing_question_text||questionProposal.text:'Question suggestion unavailable. Refresh and review it again.'):checkOnly?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p></div>${!checkOnly&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}${relatedBlock}</div><div class="review-actions">${actions}</div><details class="reasoning"><summary>Why / source</summary><p><strong>Evidence:</strong> ${esc(r.evidence)}</p><p><strong>Establishes:</strong> ${esc(cleanReviewCopy(r.establishes))}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
+    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${isQuestionReview?(questionProposal?.existing_question_id?'Already tracked':'Question to track'):checkOnly?'What the evidence says':'Proposed change'}</span><p>${esc(isQuestionReview?(questionReady?questionProposal.existing_question_text||questionProposal.text:'Question suggestion unavailable. Refresh and review it again.'):checkOnly?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p>${checkOnly?'':sourceExcerptHtml(r)}</div>${!checkOnly&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}${relatedBlock}</div><div class="review-actions">${actions}</div><details class="reasoning"><summary>Why / source</summary>${fullSourcesHtml(r)}<p><strong>Establishes:</strong> ${esc(cleanReviewCopy(r.establishes))}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
     if(accordion) return `<article class="review-record is-expanded" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="true">${head}</button><div class="review-card-body" style="padding:0 16px 16px 16px!important;box-sizing:border-box">${body}</div></article>`;
     return `<article class="review-card compact-review" data-review-card="${r.id}"><span class="review-row-head open-question-copy"><span class="open-item-label review">Review</span><span class="review-card-title open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><div class="review-card-body">${body}</div></article>`;
   }
