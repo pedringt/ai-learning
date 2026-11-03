@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,refreshStatus,signalRefreshFailure,sectionFreshness}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -212,12 +212,12 @@
   };
   async function loadExternalQuality(project){if(project.noQualitySource)return null;return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}
   async function loadActivity(project){const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:14000});return payload?.activity||null;}
+  // A failed GitHub fetch is a failed "Open work" refresh, not an empty list; otherwise a refresh where every source
+  // failed reads as "Partly refreshed" (#597 follow-up, Nov 3).
   async function loadOpenPullRequests(project,root,data){
-    try{
-      const summary=await githubSummary(project,root,data);
-      const pulls=summary?.openPullRequests?.ok?summary.openPullRequests.value:[];
-      return Array.isArray(pulls)?pulls:[];
-    }catch(_){return[];}
+    const summary=await githubSummary(project,root,data);
+    const pulls=summary?.openPullRequests?.ok?summary.openPullRequests.value:[];
+    return Array.isArray(pulls)?pulls:[];
   }
 
   function snapshotKey(root){return 'project-health-snapshot:'+pageEnvironment(root);}
@@ -264,9 +264,9 @@
     const run=makeRunner(data,onUpdate);
     // Deployment activity is the slowest call (a Vercel deployment list plus a bounded log read). It
     // runs alongside the core signals but does not hold back the project's core status.
-    const activityTask=run('Activity',loadActivity(project),value=>{data.activity=value;});
+    const activityTask=run('Activity',loadActivity(project),value=>{data.activity=value;data.activityLoadedAt=new Date().toISOString();});
     const core=[
-      run('Delivery',loadGitHubProject(project,root,data),value=>{data.delivery=value;}),
+      run('Delivery',loadGitHubProject(project,root,data),value=>{data.delivery=value;data.deliveryLoadedAt=new Date().toISOString();}),
       run('Run controls',loadRunInfo(project,root),value=>{data.runInfo=value;})
     ];
     if(project.id==='state'){
@@ -473,9 +473,15 @@
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
     const changesPanel=doc.getElementById('changesPanel');
+    // Without this refresh's delivery, activity or quality data, "no changes" cannot be confirmed (#597 follow-up).
+    const changeSourcesFailed=['Delivery','Activity','Quality'].filter(label=>signalRefreshFailure(data,[label]));
     changesPanel.classList.toggle('compact-zero',!changes.length);
     changesPanel.innerHTML=changes.length
       ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:6px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><div class="change-item-head"><strong>'+esc(item.title)+'</strong><span class="change-time">'+esc(relativeAge(item.observedAt))+'</span></div><span class="change-detail">'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
+      :changeSourcesFailed.length
+      ?(()=>{const names=changeSourcesFailed.map(label=>({Delivery:'release data',Activity:'deployment activity',Quality:'AI eval results'})[label]);
+        const list=names.length>1?names.slice(0,-1).join(', ')+' and '+names[names.length-1]:names[0];
+        return '<div class="changes-zero changes-unconfirmed" role="status"><span aria-hidden="true">?</span><strong>Couldn’t confirm changes since your last visit.</strong><span class="changes-unconfirmed-detail">'+esc(list.charAt(0).toUpperCase()+list.slice(1))+' didn’t refresh.</span></div>';})()
       :'<div class="changes-zero" role="status"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></div>';
     doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>System health</h3></div>'+
       '<div class="overview-health" style="margin-top:10px">'+healthRows.map(item=>{
@@ -601,8 +607,12 @@
       }
 
       const dKind=deliveryAttentionForData(data).kind||'unknown';
-      const latestRelease=d?.message?commitTitle(d.message):'No recent release data';
-      const releaseStatus=dKind==='good'?'Stable':dKind==='bad'?'Needs attention':dKind==='warn'?'Watch':'Unknown';
+      // #597 follow-up: when Delivery failed this refresh, the card says its data was loaded before and that the status
+      // is the previous assessment, or that no release data is available.
+      const releaseNotice=retainedNotice(data,['Delivery'],{hasData:!!d,loadedAt:data.deliveryLoadedAt});
+      const latestRelease=d?.message?commitTitle(d.message):releaseNotice?'Release data unavailable':'No recent release data';
+      const currentReleaseStatus=dKind==='good'?'Stable':dKind==='bad'?'Needs attention':dKind==='warn'?'Watch':'Unknown';
+      const releaseStatus=releaseNotice?.retained?'Previous assessment: '+currentReleaseStatus:releaseNotice?'Unknown':currentReleaseStatus;
       const releaseClass=dKind==='good'?'mock-release-stable':'mock-release-stable';
 
       const a=platform?.analytics;
@@ -650,6 +660,7 @@
           '<div class="mock-card-title"><span class="mock-card-title-icon">◇</span><h3>Latest release</h3></div>'+
           '<div class="mock-release-version"><strong>'+esc(latestRelease)+'</strong><span class="'+releaseClass+'">'+esc(releaseStatus)+'</span></div>'+
           '<div class="mock-release-meta">'+(d?.updatedAt?esc(fmtDate(d.updatedAt)):'No release date')+'</div>'+
+          (releaseNotice?'<p class="section-retained-note" role="status">'+esc(releaseNotice.text)+'</p>':'')+
           '<p class="mock-release-copy">Production release'+(d?.branch?' · '+esc(d.branch):'')+'</p>'+
           '<button class="button small" type="button" data-tab-target="releases">View release details →</button>'+
         '</section>'+
@@ -866,7 +877,9 @@
       ?'<div class="activity-day-groups">'+groupedDays.map(group=>'<section class="activity-day"><h4>'+esc(group.label)+'</h4><div class="timeline">'+group.items.map(activityItemMarkup).join('')+'</div></section>').join('')+'</div>'
       :'<div class="empty">No activity matches this filter yet.</div>';
     const activityFilters=[['all','All'],['releases','Releases'],['quality','Quality'],['investigations','Investigations'],['decisions','Decisions']];
+    const activityNotice=retainedNotice(data,['Activity'],{hasData:!!data.activity,loadedAt:data.activityLoadedAt});
     doc.getElementById('historyPanel').innerHTML='<div class="panel-title-row"><div><h3>Activity</h3><p class="panel-copy">A chronological operating history across releases, quality checks, investigations, and recovery.</p></div></div>'+
+      (activityNotice?'<p class="section-retained-note" role="status">Deployment activity: '+esc(activityNotice.text)+'</p>':'')+
       '<div class="activity-filters" role="group" aria-label="Filter activity">'+activityFilters.map(([key,label])=>'<button class="activity-filter '+(activityFilter===key?'active':'')+'" type="button" data-activity-filter="'+key+'" aria-pressed="'+(activityFilter===key?'true':'false')+'">'+label+'</button>').join('')+'</div>'+
       '<div style="margin-top:12px">'+timelineHtml+'</div>';
     const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';

@@ -314,6 +314,15 @@ function cachedSnapshot(){
     const other=M.failureStory({scenario_id:'review_partial_question_answer',severity:'high',observed:'preserve_evidence_only',failed_checks:['review_needed','action']},review());
     assert.match(other.consequence.text,/^This run missed a needed Review: no change to Current State was put up for approval/);
   });
+  await check('a retained section names previously loaded data, with a time only when one was recorded',()=>{
+    const failed={failures:[{label:'Delivery'}]};
+    assert.strictEqual(M.retainedNotice({failures:[]},['Delivery'],{hasData:true,loadedAt:'2026-11-02T22:00:00Z'}),null);
+    assert.match(M.retainedNotice(failed,['Delivery'],{hasData:true,loadedAt:'2026-11-02T22:00:00Z'}).text,/^Couldn’t refresh · showing previously loaded data from .+/);
+    assert.strictEqual(M.retainedNotice(failed,['Delivery'],{hasData:true,loadedAt:null}).text,'Couldn’t refresh · showing previously loaded data');
+    assert.strictEqual(M.retainedNotice(failed,['Delivery'],{hasData:true,loadedAt:'not a date'}).text,'Couldn’t refresh · showing previously loaded data');
+    const none=M.retainedNotice(failed,['Delivery'],{hasData:false});
+    assert.deepStrictEqual([none.retained,none.text],[false,'Couldn’t refresh · no previously loaded data']);
+  });
   await check('no user-facing text says "high-impact"; severity stays the scenario’s',()=>{
     const fs=require('fs');
     for(const file of ['../project-health.js','../project-health-model.js','../project-health.html']){
@@ -414,6 +423,44 @@ function cachedSnapshot(){
         assert.match(panel,/29 unique scenarios/);
       }finally{cleanup();}
     });
+    await check('a failed refresh marks Latest release and Activity as previously loaded, and does not claim "no changes"',async()=>{
+      const loaded=new Date(Date.now()-7200000).toISOString();
+      const snapshot=cachedSnapshot();
+      Object.assign(snapshot.projects[0],{
+        delivery:{sha:'6f27fa0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',message:'State: keep Workspace badges clear',updatedAt:'2026-10-31T04:11:00Z',branch:'main',vercel:{kind:'good',state:'success'}},
+        deliveryLoadedAt:loaded,
+        activity:{available:true,deployments:{recent_failures:[]}},
+        lastVisit:{savedAt:loaded,deliverySha:'6f27fa0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
+      });
+      const {root,elements,cleanup}=stubRoot(snapshot);
+      global.fetch=stubFetch({quality:async()=>({status:200,body:qualityPayload()})});
+      try{
+        await H.init(root);
+        const overview=()=>elements.get('mockDashboardOverview').innerHTML;
+        assert.ok(await waitFor(()=>/section-retained-note/.test(overview())),overview().slice(0,400));
+        assert.match(overview(),/State: keep Workspace badges clear/,'the previously loaded release stays visible');
+        assert.match(overview(),/>Previous assessment: [A-Z][a-z ]+</,'the status is labelled as the previous assessment');
+        assert.match(overview(),/Couldn’t refresh · showing previously loaded data from /,'a recorded load time is shown');
+        const history=elements.get('historyPanel').innerHTML;
+        assert.match(history,/Deployment activity: Couldn’t refresh · showing previously loaded data</,'no load time was recorded for activity, so none is shown');
+        const changes=elements.get('changesPanel').innerHTML;
+        assert.doesNotMatch(changes,/No meaningful changes/);
+        assert.match(changes,/Couldn’t confirm changes since your last visit\./);
+      }finally{cleanup();}
+    });
+    await check('a first load whose release and activity sources fail shows them as unavailable',async()=>{
+      const {root,elements,cleanup}=stubRoot(null);
+      global.fetch=stubFetch({quality:async()=>({status:200,body:qualityPayload()})});
+      try{
+        await H.init(root);
+        const overview=()=>elements.get('mockDashboardOverview').innerHTML;
+        assert.ok(await waitFor(()=>/Release data unavailable/.test(overview())),overview().slice(0,400));
+        assert.match(overview(),/Couldn’t refresh · no previously loaded data/);
+        assert.doesNotMatch(overview(),/Previous assessment|>Stable</);
+        assert.match(elements.get('historyPanel').innerHTML,/Deployment activity: Couldn’t refresh · no previously loaded data/);
+        assert.doesNotMatch(elements.get('changesPanel').innerHTML,/No meaningful changes/);
+      }finally{cleanup();}
+    });
     await check('the attention banner lists every item it counts',async()=>{
       const {root,elements,cleanup}=stubRoot(null);
       global.fetch=stubFetch({quality:async()=>({status:200,body:qualityPayload()})});
@@ -427,6 +474,15 @@ function cachedSnapshot(){
         assert.ok(count>=2,'this fixture fails several sources, so more than one item is counted: '+count);
         assert.strictEqual(rows,count,'rows shown = items counted');
         assert.match(banner,/Couldn(?:'|&#39;|&#x27;)t check: /);
+      }finally{cleanup();}
+    });
+    await check('a refresh where every source returns a server error says "Refresh failed", not "Partly refreshed"',async()=>{
+      const {root,elements,cleanup}=stubRoot(cachedSnapshot());
+      global.fetch=async()=>({ok:false,status:500,json:async()=>({detail:'server error'})});
+      try{
+        await H.init(root);
+        assert.ok(await waitFor(()=>/Refresh failed|Partly refreshed/.test(elements.get('status').innerHTML)),elements.get('status').innerHTML);
+        assert.match(elements.get('status').innerHTML,/^<strong>Refresh failed [^<]+<\/strong> · Couldn’t refresh: /);
       }finally{cleanup();}
     });
   }finally{global.fetch=realFetch;}
