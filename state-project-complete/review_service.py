@@ -22,6 +22,9 @@ class ReviewConflictError(RuntimeError):
     pass
 
 
+MISSING_SOURCE_MESSAGE = "This Review has no recorded source Evidence, so it cannot change Current State. You can leave it unchanged."
+
+
 Decision = Literal["accept", "keep", "reject"]
 
 
@@ -308,6 +311,20 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             for p in proposals
             if p["id"] in adjustments
         )
+
+        if decision == "accept" and proposals:
+            # A Review that would create, change or retire a fact must still
+            # have the Evidence it was built from (Nov 2, Paige): a damaged or
+            # incomplete record stays readable and can be left unchanged, but
+            # it cannot write Current State. Accept with no proposals changes
+            # no fact, so it is unaffected.
+            has_source = connection.execute(
+                "SELECT 1 FROM review_evidence re JOIN evidence e ON e.id=re.evidence_id "
+                "WHERE re.review_id=? LIMIT 1",
+                (review_id,),
+            ).fetchone()
+            if has_source is None:
+                raise ReviewConflictError(MISSING_SOURCE_MESSAGE)
 
         if decision == "accept":
             for proposal in proposals:

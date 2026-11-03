@@ -354,6 +354,9 @@ def test_history_records_effective_date_carried_forward_on_update(tmp_path):
     conn.execute("INSERT INTO current_state_items(id, topic, statement, version, effective_date) VALUES ('s1','timing','Old',1,'2026-09-01')")
     conn.execute("INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status) VALUES ('r1','proposed_update','Change?','Because','open')")
     conn.execute("INSERT INTO proposed_state_changes(id, review_id, operation, state_item_id, expected_state_version, proposed_statement, rationale, effective_date, status) VALUES ('p1','r1','update','s1',1,'New','Evidence',NULL,'pending')")
+    # A Review that changes a fact needs its source Evidence linked (missing-source rule).
+    conn.execute("INSERT INTO evidence(id, content) VALUES ('e1','Source note.')")
+    conn.execute("INSERT INTO review_evidence(review_id, evidence_id) VALUES ('r1','e1')")
     conn.commit()
     resolve_review(conn, 'r1', 'accept')
     row = conn.execute("SELECT old_effective_date, new_effective_date FROM history_transitions WHERE proposed_change_id='p1'").fetchone()
@@ -377,6 +380,9 @@ def test_accept_create_records_history_and_effective_date():
         "INSERT INTO proposed_state_changes(id,review_id,operation,state_item_id,expected_state_version,proposed_statement,rationale,effective_date,status) "
         "VALUES('p-create','r-create','create',NULL,NULL,'Tier 2 joins the pilot September 15.','Evidence establishes it.','2026-09-15','pending')"
     )
+    # A Review that changes a fact needs its source Evidence linked (missing-source rule).
+    connection.execute("INSERT INTO evidence(id, content) VALUES ('e-create','Tier 2 joins September 15.')")
+    connection.execute("INSERT INTO review_evidence(review_id, evidence_id) VALUES ('r-create','e-create')")
     connection.commit()
 
     resolve_review(connection, 'r-create', 'accept')
