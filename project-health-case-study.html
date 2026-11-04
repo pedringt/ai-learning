@@ -121,7 +121,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 
 <div class="ph-example">
   <span class="example-label">Earlier State eval · not in today’s dashboard</span>
-  <p><span class="lead-in">What failed.</span> One saved run of State’s answer-quality checks passed 9 of 10. The miss: State knew the Northstar pilot was paused, but its answer didn’t say that the reason for the pause wasn’t on record. A user could have mistaken an inferred explanation for maintained project truth.</p>
+  <p><span class="lead-in">What failed.</span> One saved run of State’s answer-quality checks passed 9 of 10. The miss: State knew the pilot in its fictional example project, Northstar, was paused, but its answer didn’t say that the reason for the pause wasn’t on record. A user could have mistaken an inferred explanation for maintained project truth.</p>
   <p><span class="lead-in">What Project Health showed.</span> It put the failed scenario at the top of the quality view, with the failed check, the expected behavior, and the scenario evidence. It did not diagnose the cause.</p>
   <p><span class="lead-in">What it left to me.</span> Whether State’s behavior or the test expectation needed to change.</p>
   <p><span class="lead-in">What happened next.</span> The same scenario had passed in the three earlier saved runs, and it passed again in the next two. One failure among passing runs is exactly when a dashboard should show the evidence and leave the judgment to a person, rather than declare a regression or wave it away.</p>
@@ -141,7 +141,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <h2>QA changed the product</h2>
 <h3>The dashboard said “Healthy” when it didn’t know.</h3>
 <p><span class="lead-in">What QA found.</span> In an October production check, two projects read “Everything looks healthy right now” without the evidence to back it:</p>
-<ul><li>A slow first load timed out before State’s quality data arrived.</li><li>Authority Lab had no quality checks connected at all.</li></ul>
+<ul><li>A slow first load timed out before State’s quality data arrived.</li><li>Authority Lab, another of my prototypes, had no quality checks connected at all.</li></ul>
 <p><span class="lead-in">What changed.</span> A signal that fails to load now marks the project Incomplete, names what couldn’t be checked, and offers a retry. A project with nothing measuring quality says so instead of calling itself healthy. Authority Lab later gained automated tests, and its status now reads “Healthy on what’s measured”, naming the one thing still unmeasured: the full lifecycle walkthrough.</p>
 <p><span class="lead-in">What it taught me.</span> A dashboard shouldn’t reassure someone when it lacks the evidence to justify reassurance.</p>
 <table class="ph-changes">
@@ -156,7 +156,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <div class="kicker">Where I landed</div>
 <h2>What held up</h2>
 <p>Bringing project information into one dashboard was only part of the problem. The harder part was making sure that missing information, outdated results, and failed checks didn’t create a misleading picture of how a project was doing. Project Health became as much about knowing when not to trust a status as knowing where to investigate next.</p>
-<div class="case-meta case-credits"><span><b>My role</b> Product framing, requirements, UX direction, decisions, eval review, QA, and release review</span><span><b>AI’s role</b> All code, test implementation, technical research, and copy assistance (ChatGPT and Claude)</span></div>
+<div class="case-meta case-credits"><span><b>My role</b> Product framing, requirements, UX direction, decisions, eval review, QA, and release review</span><span><b>AI collaborator</b> All code, test implementation, technical research, and copy assistance (ChatGPT and Claude)</span></div>
 </section>
 
 </article>

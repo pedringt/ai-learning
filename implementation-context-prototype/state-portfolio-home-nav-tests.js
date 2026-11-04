@@ -11,13 +11,16 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const between=(start,end)=>{const i=html.indexOf(start);return i<0?'':html.slice(i,html.indexOf(end,i));};
 
 const hero=between('<div class="rd-hero-copy">','</aside>');
-// Nov 3 (Paige): no identity line above the headline; her name stays in the contact footer and the résumé.
-check('the hero opens with the headline, with no name or role line above it',/^<div class="rd-hero-copy"><h1/.test(hero)&&!/rd-identity|rd-descriptor/.test(html));
+// Nov 4 (Paige): her name and professional descriptor sit above the headline (reverses the Nov 3 removal).
+check('the hero opens with her name and descriptor, then the headline',
+  /^<div class="rd-hero-copy"><p class="rd-identity"><span class="rd-name">Paige Edrington<\/span><span class="rd-descriptor">Software QA and project management, applied to AI\.<\/span><\/p><h1/.test(hero));
+check('the identity line appears once on the page',(html.match(/class="rd-identity"/g)||[]).length===1);
 check('her name is still in the contact footer',/<span class="portfolio-contact-name">Paige Edrington<\/span>/.test(html));
 check('the existing headline is kept',hero.includes('AI doesn’t know <span>what it doesn’t know.</span></h1>'));
 check('no spoken "I\'m Paige" introduction',!/I[’']m Paige/.test(html));
-// Nov 3 (Paige): the introduction no longer repeats the descriptor's background.
-check('the hero introduction does not repeat the descriptor',hero.includes('I look for where AI needs more context, clearer direction, or closer review.')&&!/My background in/.test(hero));
+// Nov 4 (Paige): the approved subheading sits under the headline and doesn't repeat the descriptor or Experience intro.
+check('the hero subheading is the approved wording',hero.includes('</h1><p class="lead">AI can move work forward quickly. Knowing what to ask, what’s missing, and whether the result holds up takes judgment.</p>'));
+check('the hero introduction does not repeat the descriptor or Experience intro',!/My background in|eight years/.test(hero));
 
 const actions=[...between('<div class="rd-actions">','</div>').matchAll(/<a class="([^"]*)" href="([^"]*)">([^<]*)</g)].map(m=>({cls:m[1],href:m[2],text:m[3]}));
 check('See the work is the first, primary action and opens Applied Work',
