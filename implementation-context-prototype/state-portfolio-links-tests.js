@@ -68,4 +68,12 @@ const reviewPages=fs.existsSync(reviewRoot)?fs.readdirSync(reviewRoot).map(d=>pa
 const relativeAssets=reviewPages.flatMap(f=>[...fs.readFileSync(f,'utf8').matchAll(/\b(?:src|srcset|href)="([^"#]*)"/g)]
   .map(m=>m[1]).filter(u=>u&&!/^(\/|https?:|mailto:|data:)/.test(u)).map(u=>path.relative(root,f)+': '+u));
 check('review folder pages use root-absolute asset paths (the site drops trailing slashes)',vercelConfig.trailingSlash!==false||relativeAssets.length===0,relativeAssets.join(', '));
+
+// Nov 4 (Paige): the #595 capture trial is an internal review artifact. It stays in the repository but is never
+// deployed, and no site page links to it.
+const vercelIgnorePath=path.join(root,'.vercelignore');
+const vercelIgnore=fs.existsSync(vercelIgnorePath)?fs.readFileSync(vercelIgnorePath,'utf8').split('\n').map(l=>l.trim()):[];
+check('the #595 capture trial is excluded from deployment',vercelIgnore.includes('docs/review/595-state-capture-trial'));
+const trialLinks=anchors.filter(a=>a.href.includes('595-state-capture-trial')).map(a=>a.page);
+check('no site page links to the #595 capture trial',trialLinks.length===0,trialLinks.join(', '));
 if(fail)process.exit(1);
