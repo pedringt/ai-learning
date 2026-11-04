@@ -62,7 +62,7 @@ const longText=`Weekly sync notes. ${'The team walked through every open vendor 
 const longHtml=openItems.reviewCard(api.mapApiReview({...budget,evidence_items:[{id:'e-long',content:longText,source_type:'slack',source_name:'#pilot-security',submitted_at:'2026-09-02'}]},''),true,false);
 const longFig=figure(longHtml);
 check('a long source is cut short with a visible ellipsis',longFig.includes('&hellip;&rdquo;')&&!longFig.includes('retention is thirty days'),longFig);
-check('a shortened excerpt says the full text is under Why / source',longFig.includes('Shortened. Full text under Why / source.'),longFig);
+check('a shortened excerpt offers "Read full note" for the same Evidence',longFig.includes('data-action="open-review-source" data-evidence-id="e-long"')&&longFig.includes('Read full note'),longFig);
 check('the full source text is still under Why / source',why(longHtml).includes('Final line: retention is thirty days.'),why(longHtml));
 check('a named source shows its name in the label',longFig.includes('Slack · #pilot-security · '),longFig);
 
