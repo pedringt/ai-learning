@@ -72,7 +72,8 @@ const contactPages=fs.readdirSync(root).filter(f=>f.endsWith('.html')).filter(f=
 const missing=contactPages.filter(f=>{const page=fs.readFileSync(path.join(root,f),'utf8');const href=f==='404.html'?'/resume.pdf':'resume.pdf';
   const blocks=page.match(/<(nav|footer) class="portfolio-contact"[\s\S]*?<\/(nav|footer)>/g)||[];
   return !blocks.length||!blocks.every(b=>b.includes('<a href="'+href+'" target="_blank" rel="noopener">Résumé (PDF)</a>'));});
-check('every page with a contact footer links the résumé ('+contactPages.length+' pages)',contactPages.length>=17&&!missing.length,missing.join(', '));
+// 16 since the How State Works page was retired behind a redirect (Nov 3).
+check('every page with a contact footer links the résumé ('+contactPages.length+' pages)',contactPages.length>=16&&!missing.length,missing.join(', '));
 const pdf=fs.readFileSync(path.join(root,'resume.pdf'));
 check('resume.pdf is a PDF with two pages',pdf.slice(0,5).toString()==='%PDF-'&&(pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g)||[]).length===2);
 
