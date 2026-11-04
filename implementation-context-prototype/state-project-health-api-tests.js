@@ -281,8 +281,8 @@ console.log('Project Health API tests passed');
   assert.strictEqual(run.costPerRun('not configured'),null);
   assert.strictEqual(run.costPerRun('$0.10-$0.25'),0.25);
   const H=require('../project-health-model.js');
-  assert.strictEqual(H.paidRunSpendText({count:6,cost_upper_usd:1.5}),'Paid eval runs in the last 30 days: 6 (at most $1.50 at the configured estimate). Counts every finished run, from any trigger.');
-  assert.strictEqual(H.paidRunSpendText({count:100,cost_upper_usd:null}),'Paid eval runs in the last 30 days: 100. Counts every finished run, from any trigger.');
+  assert.strictEqual(H.paidRunSpendText({count:6,cost_upper_usd:1.5}),'Paid eval workflow runs in the last 30 days, all environments: 6 (at most $1.50 at the configured estimate). Counts every finished GitHub run from any branch or trigger, wherever it recorded results, so it can differ from the results shown here.');
+  assert.strictEqual(H.paidRunSpendText({count:100,cost_upper_usd:null}),'Paid eval workflow runs in the last 30 days, all environments: 100. Counts every finished GitHub run from any branch or trigger, wherever it recorded results, so it can differ from the results shown here.');
 }
 
 // Authority Lab's Run tests button: a free GitHub Actions run, no inputs (Oct 19).
