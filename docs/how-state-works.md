@@ -257,8 +257,12 @@ same underlying fact.
   reuse an open Question rather than offer a new one
   (`context-ask-question-handoff.js`). Nothing is created without that
   person's action.
-- **Interaction**: the UI can stream answers, accept follow-up questions,
-  and cancel in-progress requests. Those interaction features do not weaken
+- **Interaction**: the UI can stream answers and cancel in-progress
+  requests. Each Ask request is answered from the project context. To refine
+  an answer, edit the question and ask again; Ask does not retain a
+  conversational thread. (The live drawer, `context-product-polish.js`'s
+  `runAsk()`, always passes no previous answer. The API still accepts an
+  optional `previous_answer` field, but the UI does not send it.) Those interaction features do not weaken
   the read-only authority boundary.
 
 (Implementation: `ask_service.py`. Selection and synthesis are separate

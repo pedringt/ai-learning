@@ -51,7 +51,7 @@
 <div class="case-meta"><span><b>My role</b> Product framing, requirements, UX direction, decisions, evaluation, QA, and release review</span><span><b>AI’s role</b> All code, plus technical research and implementation support (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, not yet tested with outside users</span></div>
 </header>
 
-<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Build and correct a Taste Profile</strong><p>Pick a few favorites or rate familiar titles in Browse, react to recommendations, and see which patterns Tastemake infers.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>: my real profile, with 55 rated titles, one pattern I confirmed and one I marked partly accurate. It is read-only and makes no AI calls.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
+<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Build and correct a Taste Profile</strong><p>Pick a few favorites or rate familiar titles in Browse, react to recommendations, and see which patterns Tastemake infers.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>: my real profile, with 55 rated titles and 6 bookmarked titles, one pattern I confirmed and one I marked partly accurate. It is read-only and makes no AI calls.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
 
 <article class="case-page-content flagship-case">
 
@@ -87,7 +87,7 @@
 <section class="section next-tests">
 <div class="kicker">What testing changed</div>
 <h2>Testing made the product simpler.</h2>
-<p><span class="lead-in">Cold-start friction.</span> Browse offers another way to get started: find something familiar and rate it instead of recalling four favorites from memory. You still choose four favorites before the first recommendations, but you can choose them from titles you loved in Browse. Those ratings become taste evidence; simply viewing or saving a title does not.</p>
+<p><span class="lead-in">Cold-start friction.</span> Browse helps you find familiar titles and star the four favorites needed to get started. Ratings become taste evidence; simply viewing or saving a title does not.</p>
 <p><span class="lead-in">Too much feedback at once.</span> I moved deeper taste questions behind the first reaction. The card first asks whether you’ve tried something and how it landed; the questions about why only appear after that.</p>
 </section>
 
@@ -95,7 +95,7 @@
 <div class="kicker">Evidence from the build</div>
 <h2>What I tested—and what remains unproven</h2>
 <p>Software and AI have separate jobs. Software retrieves real catalog candidates across books, movies, TV, and games, removes anything you’ve already seen or ruled out, and picks the six that best match everything you’ve rated. A live AI call orders those six and writes a one-line reason that cites something you tried. Software checks that answer, and if the call fails it shows its own picks instead. A second AI call drafts the Taste Profile’s patterns, and software decides what counts as evidence and rejects patterns the evidence doesn’t support.</p>
-<p><span class="lead-in">Latency.</span> In September’s production timing logs, the live recommendation call commonly took 8–16 seconds, most of it spent generating the answer. I capped the answer’s length and staged the loading messages so the wait reads as progress rather than a frozen page.</p>
+<p><span class="lead-in">Latency.</span> In September, production timing showed the live AI call for recommendations commonly taking roughly 8–16 seconds, most of it spent generating the answer. I capped the answer’s length and staged the loading messages so the wait reads as progress rather than a frozen page. I didn’t measure the cap’s effect, and these figures don’t describe current performance.</p>
 <p><span class="lead-in">Automated checks.</span> Tests cover the evidence rules, AI output validation, profile corrections, accessibility, and layout at several screen widths. They show those rules hold. They don’t show that the recommendations are useful.</p>
 <p><span class="lead-in">Unproven.</span> Whether corrections improve later recommendations, and whether anyone other than me finds the recommendations better. Tastemake hasn’t been tested with outside users.</p>
 </section>
