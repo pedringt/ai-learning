@@ -48,7 +48,7 @@
 <div><dt>Observed behavior</dt><dd>In a controlled State agent exercise, the investigator found the relevant files and correctly recognized an open Review proposing an owner. Its final answer then presented that proposed owner as established fact.</dd></div>
 <div><dt>Failure location</dt><dd>Not retrieval, which worked. The failure was in interpretation and authority: the final synthesis promoted a pending proposal into project truth.</dd></div>
 <div><dt>Decision</dt><dd>Change the product: tighten the authority rule so open Reviews are explicitly pending.</dd></div>
-<div><dt>Verification</dt><dd>The same case was rerun and behaved correctly. It had to pass again before I treated the fix as real.</dd></div>
+<div><dt>Verification</dt><dd>The same case (Q-103) was rerun and the agent then said ownership was not established. It had to pass again before I treated the fix as real.</dd></div>
 </dl>
 <p class="section-note">This example used a controlled fake State dataset. It is evidence of the debugging method, not production performance. The full trace is in the <a href="state-managed-agent-tracing.html">agent tracing exercise</a>.</p>
 </section>
@@ -60,7 +60,7 @@
 <div><dt>Observed behavior</dt><dd>In later State eval work, one scenario expected an answer-only action. The product answered and also proposed a State update that the evidence supported. The eval marked it a failure because the action did not match exactly.</dd></div>
 <div><dt>Failure location</dt><dd>The eval expectation. The extra proposal was supported by the evidence and still left the decision to a person, so it met the product rules. The test was stricter than the product contract.</dd></div>
 <div><dt>Decision</dt><dd>Revise the eval, not the product. Forcing answer-only behavior would have made the test more important than the product contract.</dd></div>
-<div><dt>Verification</dt><dd>Product review against the product rules, not the pass rate, settled it.</dd></div>
+<div><dt>Verification</dt><dd>Product review, not the pass rate, found the additional proposal consistent with the product rules, and the expectation was revised. No saved result shows the scenario was rerun after the change, so I don&rsquo;t claim it passed.</dd></div>
 </dl>
 <p class="section-note"><strong>The rule I applied:</strong> revise the eval when the behavior meets the product rules and the test rejects it, change the product when the behavior breaks them, and clarify ambiguous intent before changing either. A higher pass rate alone is never a reason to loosen an expectation.</p>
 <footer class="case-study-footer"><a href="state-managed-agent-tracing.html">Agent tracing exercise →</a><a href="index.html#portfolio">Back to Applied Work →</a></footer>
