@@ -16,7 +16,7 @@ body:has(> main.case-system-page){background:var(--bg);color:var(--ink)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55}
 .case-system-page .meridian-case-hero{padding-top:18px;padding-bottom:30px}
 .case-system-page .meridian-case-hero .lead{max-width:900px}
-.case-system-page .case-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:26px}
+.case-system-page .case-meta{display:grid;grid-template-columns:1fr;gap:7px;margin-top:26px}
 .case-system-page .case-meta span{min-width:0;line-height:1.45;color:var(--muted)}
 .case-system-page .case-meta b{color:var(--ink);margin-right:6px}
 .case-system-page .meridian-product-callout{margin-top:24px}
@@ -27,7 +27,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 .ph-example{margin:16px 0;padding:16px 18px;border:1px solid var(--border);border-radius:16px;background:var(--card)}.ph-example p{margin:8px 0 0}.ph-example .example-label{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
 .ph-changes{width:100%;margin:14px 0 0;border-collapse:collapse;font-size:14px;line-height:1.55}.ph-changes th,.ph-changes td{padding:10px 14px 10px 0;text-align:left;vertical-align:top}.ph-changes thead th{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);border-bottom:1px solid var(--border)}.ph-changes tbody th{width:20%;font-weight:700}
 
-@media(max-width:760px){.grid2{grid-template-columns:1fr}.case-system-page .case-meta{grid-template-columns:1fr}.ph-changes,.ph-changes tbody,.ph-changes tr,.ph-changes th,.ph-changes td{display:block;width:auto}.ph-changes thead{display:none}.ph-changes tbody th{padding-bottom:2px}.ph-changes td{padding-top:0;padding-bottom:10px}.ph-changes td[data-label]::before{content:attr(data-label) ": ";font-weight:700}}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}.case-system-page .case-meta{grid-template-columns:1fr}.ph-changes,.ph-changes tbody,.ph-changes tr,.ph-changes th,.ph-changes td{display:block;width:auto}.ph-changes thead{display:none}.ph-changes tbody th{padding-bottom:2px;width:auto}.ph-changes td{padding-top:0;padding-bottom:10px}.ph-changes td[data-label]::before{content:attr(data-label) ": ";font-weight:700}}
 </style>
 <script>
 (function () {
@@ -88,7 +88,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <header class="meridian-case-hero flagship-hero">
 <h1>Project Health</h1>
 <p class="lead">Project Health is a dashboard that brings product quality, incidents, delivery, and usage signals from my projects into one place.</p>
-<div class="case-meta"><span><b>My role</b> Product framing, requirements, UX direction, decisions, eval review, QA, and release review</span><span><b>AI’s role</b> All code, test implementation, technical research, and copy assistance (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, built around my own projects</span></div>
+<div class="case-meta"><span><b>Status</b> Working prototype · live, built around my own projects</span></div>
 </header>
 <aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Open the dashboard</strong><p>It shows quality, delivery, and monitoring for my own projects, with links to the underlying tools.</p></div><a class="meridian-primary-action" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health <span aria-hidden="true">↗</span></a></aside>
 
@@ -98,7 +98,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker">The problem</div>
 <h2>A failed release, a lower eval score, and a runtime warning all lived in different places.</h2>
-<p>As I built and maintained several prototypes, checking on them meant opening too many separate tools and pages. I wanted one place to see failures across projects and jump into the relevant tool when something needed attention. That became Project Health: a central dashboard for seeing what needed attention and opening the right tool to investigate.</p>
+<p>As I built and maintained several prototypes, checking on them meant opening too many separate tools and pages. I wanted one place to see failures across projects and jump into the relevant tool when something needed attention.</p>
 <p>The information already existed in deployments, evals, analytics, and logs. The product work was bringing it together without losing where each signal came from.</p>
 </section>
 
@@ -108,7 +108,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <p>I chose which signals mattered and how to order them. The overview leads with what needs attention, so I can decide where to look first, and it answers two questions.</p>
 <div class="grid2">
   <div class="card"><h3>What needs attention?</h3><p>See the project’s current goal, known concerns, next decision, and changes since your last visit.</p></div>
-  <div class="card"><h3>Is anything blocking release?</h3><p>Review quality failures, delivery status, potential user impact, and missing checks before deciding whether to ship.</p></div>
+  <div class="card"><h3>Is anything blocking release?</h3><p>Review quality failures, delivery status, whether users are likely affected, and missing checks before deciding whether to ship.</p></div>
 </div>
 <p><span class="lead-in">Keep different kinds of health separate.</span> Product quality, delivery, incidents, and usage answer different questions. Project Health keeps them distinct instead of collapsing them into one score.</p>
 <p><span class="lead-in">Unknown is not healthy.</span> If Project Health cannot evaluate something, it shows that gap instead of treating missing information as a healthy result. Signals link back to the tools they came from.</p>
@@ -121,12 +121,13 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 
 <div class="ph-example">
   <span class="example-label">Earlier State eval · not in today’s dashboard</span>
-  <p><span class="lead-in">What failed.</span> Most of State’s AI quality checks passed, but in one scenario State knew the Northstar pilot was paused and its answer did not preserve an important unknown: the reason for the pause. A user could have mistaken an inferred explanation for maintained project truth.</p>
-  <p><span class="lead-in">What Project Health showed.</span> It put the failed scenario at the top of the quality view, with the recorded failure, the expected behavior, and the scenario evidence. It did not diagnose the cause.</p>
-  <p><span class="lead-in">What I still had to decide.</span> Whether State’s behavior or the test expectation needed to change, and what the smallest justified change was before rerunning the affected suite.</p>
+  <p><span class="lead-in">What failed.</span> One saved run of State’s answer-quality checks passed 9 of 10. The miss: State knew the Northstar pilot was paused, but its answer didn’t say that the reason for the pause wasn’t on record. A user could have mistaken an inferred explanation for maintained project truth.</p>
+  <p><span class="lead-in">What Project Health showed.</span> It put the failed scenario at the top of the quality view, with the failed check, the expected behavior, and the scenario evidence. It did not diagnose the cause.</p>
+  <p><span class="lead-in">What it left to me.</span> Whether State’s behavior or the test expectation needed to change.</p>
+  <p><span class="lead-in">What happened next.</span> The same scenario had passed in the three earlier saved runs, and it passed again in the next two. One failure among passing runs is exactly when a dashboard should show the evidence and leave the judgment to a person, rather than declare a regression or wave it away.</p>
 </div>
 
-<p>Delivery and quality can also diverge. When one portfolio deployment failed while the previous version stayed live, Project Health flagged the release for engineering attention without marking the product’s quality as failing.</p>
+<p><span class="lead-in">Delivery and quality are judged separately.</span> If a release fails to deploy while the previous version stays live, Project Health flags the release for engineering and reports no confirmed impact on users, without marking product quality as failing.</p>
 </section>
 
 <section class="section">
@@ -138,11 +139,15 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker">What testing changed</div>
 <h2>QA changed the product</h2>
+<h3>The dashboard said “Healthy” when it didn’t know.</h3>
+<p><span class="lead-in">What QA found.</span> In an October production check, two projects read “Everything looks healthy right now” without the evidence to back it:</p>
+<ul><li>A slow first load timed out before State’s quality data arrived.</li><li>Authority Lab had no quality checks connected at all.</li></ul>
+<p><span class="lead-in">What changed.</span> A signal that fails to load now marks the project Incomplete, names what couldn’t be checked, and offers a retry. A project with nothing measuring quality says so instead of calling itself healthy. Authority Lab later gained automated tests, and its status now reads “Healthy on what’s measured”, naming the one thing still unmeasured: the full lifecycle walkthrough.</p>
+<p><span class="lead-in">What it taught me.</span> A dashboard shouldn’t reassure someone when it lacks the evidence to justify reassurance.</p>
 <table class="ph-changes">
 <thead><tr><th scope="col">Area</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
 <tbody>
 <tr><th scope="row">Activity feed</th><td data-label="Before">Each failed deployment attempt appeared as its own “Deployment failed” entry.</td><td data-label="After">Failed attempts a few minutes apart are grouped into one incident that shows how many attempts failed.</td></tr>
-<tr><th scope="row">Refreshes</th><td data-label="Before">Testing exposed cases where failed refreshes left reassuring old messages on screen.</td><td data-label="After">I added clearer distinctions between current results, previously loaded data, and checks that couldn’t be completed.</td></tr>
 </tbody>
 </table>
 </section>
@@ -150,7 +155,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker">Where I landed</div>
 <h2>What held up</h2>
-<p>Project Health still summarizes health. What makes it useful is fewer places to check, clearer reasons to investigate, and direct routes to the underlying tools.</p>
+<p>Bringing project information into one dashboard was only part of the problem. The harder part was making sure that missing information, outdated results, and failed checks didn’t create a misleading picture of how a project was doing. Project Health became as much about knowing when not to trust a status as knowing where to investigate next.</p>
+<div class="case-meta case-credits"><span><b>My role</b> Product framing, requirements, UX direction, decisions, eval review, QA, and release review</span><span><b>AI’s role</b> All code, test implementation, technical research, and copy assistance (ChatGPT and Claude)</span></div>
 </section>
 
 </article>
