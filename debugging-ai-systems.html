@@ -9,6 +9,7 @@
 <link href="site-shell.css" rel="stylesheet"/>
 <link href="site-components.css" rel="stylesheet"/>
 <link href="implementation-context-case.css?v=r6-final-cleanup" rel="stylesheet"/>
+<style>.debug-trace{display:grid;gap:12px;margin:18px 0 0}.debug-trace>div{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px}.debug-trace dt{color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;padding-top:3px}.debug-trace dd{margin:0}.debug-trace+.section-note{margin-top:18px}@media(max-width:640px){.debug-trace>div{grid-template-columns:1fr;gap:4px}}</style>
 
 <!-- social-preview:begin -->
 <meta content="website" property="og:type"/>
@@ -34,64 +35,39 @@
 
 <header class="meridian-case-hero">
 <h1>Debugging AI Systems</h1>
-<p class="lead">A failed AI check tells me something went wrong. It does not tell me what is wrong. I learned to find the first meaningful failure before choosing a fix.</p>
-<div class="case-meta"><span><b>My role</b> Expected behavior, severity, investigation &amp; product decisions</span><span><b>AI collaborator</b> Test support, trace review, implementation &amp; documentation</span><span><b>Scope</b> Controlled State exercises and product QA</span></div>
-</header><p class="in-short"><span>In short</span>When an AI check fails, I look for the first meaningful failure before choosing a fix, then rerun the same case to prove the fix worked.</p>
+<p class="lead">A failed AI check says something went wrong, not what. The same bad answer can come from retrieval, missing context, interpretation, authority handling, deterministic logic, the eval expectation or presentation. Reaching for the prompt first can fix the wrong layer. I look for the first place the system stopped matching the intended behavior, change only that layer, and check the same case again.</p>
+<p class="section-note"><strong>The rule I apply:</strong> if the behavior breaks the product rules, change the product. If it meets them and the test rejects it, change the test. If the intended behavior is unclear, settle that before changing either. A higher pass rate alone is never a reason to loosen an expectation.</p>
+<p class="case-scope">Controlled State exercises and eval work on synthetic data. Evidence of the method, not production performance.</p>
+<div class="human-flow"><span>Observed behavior</span><b>→</b><span class="accent">Failure location</span><b>→</b><span>Decision</span><b>→</b><span>Verification</span></div>
+</header>
 
 <article class="case-page-content flagship-case">
-<section class="section narrative-open">
-<div class="kicker">The recurring problem</div>
-<h2>Very different failures can look the same at the surface.</h2>
-<p>A bad answer might come from retrieval, missing context, interpretation, authority handling, deterministic logic, the eval expectation, or the final presentation. Reaching for the prompt first can fix the wrong layer.</p>
-<div class="question-shift"><span>The question I use instead</span><strong>Where is the first place the system stopped matching the intended behavior?</strong></div>
-</section>
-
-<section class="section evolution">
-<div class="kicker">Investigation model</div>
-<h2>Diagnose before changing anything.</h2>
-<div class="human-flow"><span>Observed failure</span><b>→</b><span>Expected behavior</span><b>→</b><span>Trace the system</span><b>→</b><span class="accent">Locate the failure</span><b>→</b><span>Choose the fix</span><b>→</b><span>Rerun</span></div>
-<p>I use the failed case as evidence, then classify the problem before changing anything: product behavior, the eval contract, missing evidence, deterministic logic, or presentation. The goal is to change the product only when the product is actually the problem, then rerun the same case to verify the behavior changed for the intended reason.</p>
-</section>
-
 <section class="section seam-learning">
-<div class="kicker">Example A · product behavior was wrong</div>
+<div class="kicker">Example A · The agent&rsquo;s behavior needed to change</div>
 <h2>The agent found the right evidence and still gave the wrong answer.</h2>
-<p>In a controlled State agent exercise, the investigator correctly found an open Review proposing an owner. Its final answer then presented that proposed owner as established fact.</p>
-<div class="surface-grid">
-<article><span>Retrieval</span><strong>Working</strong><p>The agent found the relevant files and recognized that the Review was still open.</p></article>
-<article><span>Failure location</span><strong>Interpretation and authority</strong><p>The final synthesis promoted a pending proposal into project truth.</p></article>
-<article><span>Fix</span><strong>Tighten the authority rule</strong><p>Open Reviews were made explicitly pending, then the same case was rerun and behaved correctly.</p></article>
-</div>
-<p class="section-note">This example used a controlled fake State dataset. It is evidence of the debugging method, not production performance.</p>
+<dl class="debug-trace">
+<div><dt>Observed behavior</dt><dd>In a controlled exercise (case Q-103), a read-only State agent investigated an open Question: who owns customer support training? It found the right records, including an open Review proposing Priya as owner. Its final answer then said Priya owned the training.</dd></div>
+<div><dt>Failure location</dt><dd>Not retrieval. The trace showed the agent had the right sources and knew the Review was still open. The error appeared when it summarized them: a pending proposal became an established fact. That crosses State&rsquo;s authority boundary, where only a person can make something official.</dd></div>
+<div><dt>Decision</dt><dd>Change the agent&rsquo;s instructions. Retrieval worked, and the agent couldn&rsquo;t write anything, so the layer that failed was its reasoning about what the sources established. I made the rule explicit: an open Review is still a proposal, and one person&rsquo;s offer is not a group decision. Changing the prompt was right here because the trace located the failure there, not because the prompt was the easiest thing to change.</dd></div>
+<div><dt>Verification</dt><dd>I reran the same Q-103 case. The agent then said ownership was not established and pointed the reviewer to the open Review. I didn&rsquo;t count the fix as real until that rerun passed.</dd></div>
+</dl>
+<p class="section-note">Synthetic dataset. The full trace is in the <a href="state-managed-agent-tracing.html">agent tracing exercise</a>.</p>
 </section>
 
 <section class="section seam-learning">
-<div class="kicker">Example B · the eval expectation needed revision</div>
-<h2>Sometimes satisfying the test would make the product worse.</h2>
-<p>In later State eval work, one scenario expected an answer-only action but observed an answer plus a proposed state update supported by the evidence. Product review found that the broader behavior could be acceptable when the evidence justified it.</p>
-<div class="surface-grid">
-<article><span>What the eval said</span><strong>Failure</strong><p>The observed action did not match the original expected action exactly.</p></article>
-<article><span>Product review</span><strong>The behavior was not necessarily wrong</strong><p>The evidence supported proposing the additional update for a person to approve, so forcing answer-only behavior would have made the test more important than the product contract.</p></article>
-<article><span>Decision</span><strong>Revise the eval</strong><p>The expectation was updated rather than changing acceptable product behavior just to make the check pass.</p></article>
-</div>
-</section>
-
-<section class="section product-model">
-<div class="kicker">What I keep from this</div>
-<h2>A failing eval is evidence, not an oracle.</h2>
-<div class="state-model-grid">
-<article><span>Localize first</span><strong>Find the failing layer</strong><p>Separate retrieval, context, interpretation, authority, validation, and presentation before choosing a fix.</p></article>
-<article><span>Retest the same case</span><strong>Prove the failure changed</strong><p>Rerun the exact scenario, then add nearby regression cases so a narrow fix does not simply move the problem.</p></article>
-<article><span>Protect uncertainty</span><strong>Fluent is not the same as correct</strong><p>Authority and uncertainty failures matter even when the answer sounds plausible.</p></article>
-<article><span>Review the test too</span><strong>Evals need maintenance</strong><p>If the expected behavior no longer matches the product contract, the eval should change.</p></article>
-</div>
-</section>
-
-<section class="section current-conclusion">
-<div class="kicker">Attribution</div>
-<h2>How I split the work.</h2>
-<p>I defined expected behavior, judged severity, classified where the failure belonged, and decided what should change. The same scenario then had to pass again before I treated the fix as real. AI supported case drafting, trace summaries, implementation, and regression coverage.</p>
-<footer class="case-study-footer"><a href="state-managed-agent-tracing.html">Agent tracing exercise →</a><a href="index.html#portfolio">Back to Applied Work →</a></footer>
+<div class="kicker">Example B · The test needed to change</div>
+<h2>The answer met the product rules, and the test still failed it.</h2>
+<dl class="debug-trace">
+<div><dt>Observed behavior</dt><dd>In State&rsquo;s update-interpretation evals, scenario <code>review_question_answer_only</code> gives State a note from Legal: the proposed vendor contract does not permit the disputed retention behavior. An open Question asks exactly that, and Current State says the contract review is still underway. The test expected State to answer the Question and do nothing else. State answered it and also proposed recording Legal&rsquo;s finding in Current State, so the eval marked it a failure.</dd></div>
+<div><dt>Failure location</dt><dd>The eval expectation. Legal&rsquo;s answer supported the proposed update, and the update still went to a person for approval, so it met the product rules. The test was stricter than the product contract.</dd></div>
+<div><dt>Decision</dt><dd>I reviewed the result against the product rules and revised the expectation, not the product. Answering alone, or answering plus a supported update, now both pass. I also added a check the old test lacked: a proposed update fails if it says the overall contract review is complete or approved. The test now accepts more correct answers and catches more overclaiming.</dd></div>
+<div><dt>Verification</dt><dd>Two fixed-input tests confirm the revised grader accepts the supported update and rejects one claiming the review is complete. After the change, the scenario passed in every saved full run of the suite I checked: six runs between October 16 and November 2, each scoring all 16 scenarios with no errors.</dd></div>
+</dl>
+<div class="case-meta case-credits"><span><b>My role</b> Expected behavior, severity, failure classification, and the product and eval decisions</span><span><b>AI collaborator</b> All code, plus test cases, trace summaries, regression coverage and documentation (ChatGPT and Claude)</span></div>
+<footer class="case-study-footer">
+<a href="state-managed-agent-tracing.html">Agent tracing exercise →</a>
+<a href="index.html#portfolio">Back to Applied Work →</a>
+</footer>
 </section>
 </article>
 <footer class="portfolio-contact" aria-label="Contact Paige Edrington"><span class="portfolio-contact-name">Paige Edrington</span><a href="mailto:paige.edrington@gmail.com">paige.edrington@gmail.com</a><a href="https://www.linkedin.com/in/paige-edrington-38214722" target="_blank" rel="noopener noreferrer">LinkedIn</a><a href="resume.pdf" target="_blank" rel="noopener">Résumé (PDF)</a></footer>

@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highImpactText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,failureReason,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -212,12 +212,12 @@
   };
   async function loadExternalQuality(project){if(project.noQualitySource)return null;return await jsonFetch('/api/project-health-project-quality?project='+encodeURIComponent(project.id),{timeoutMs:7000});}
   async function loadActivity(project){const payload=await jsonFetch('/api/project-health-activity?project='+encodeURIComponent(project.id),{timeoutMs:14000});return payload?.activity||null;}
+  // A failed GitHub fetch is a failed "Open work" refresh, not an empty list; otherwise a refresh where every source
+  // failed reads as "Partly refreshed" (#597 follow-up, Nov 3).
   async function loadOpenPullRequests(project,root,data){
-    try{
-      const summary=await githubSummary(project,root,data);
-      const pulls=summary?.openPullRequests?.ok?summary.openPullRequests.value:[];
-      return Array.isArray(pulls)?pulls:[];
-    }catch(_){return[];}
+    const summary=await githubSummary(project,root,data);
+    const pulls=summary?.openPullRequests?.ok?summary.openPullRequests.value:[];
+    return Array.isArray(pulls)?pulls:[];
   }
 
   function snapshotKey(root){return 'project-health-snapshot:'+pageEnvironment(root);}
@@ -238,9 +238,21 @@
 
   // The decision log lives in the State backend since Oct 27 (Paige: server storage, key-only writes); it used to be
   // per-browser localStorage. Anyone can read it; adding or removing an entry needs the decision log key.
+  // Staging's State API sleeps when idle, so a first read can time out (Nov 3 staging review): retry once, like Quality.
   async function loadDecisionLog(projectId){
-    const payload=await jsonFetch('/api/project-health-decisions?project='+encodeURIComponent(projectId),{timeoutMs:10000});
-    return Array.isArray(payload?.entries)?payload.entries:[];
+    const url='/api/project-health-decisions?project='+encodeURIComponent(projectId);
+    for(let attempt=0;;attempt++){
+      try{
+        const payload=await jsonFetch(url,{timeoutMs:10000});
+        return Array.isArray(payload?.entries)?payload.entries:[];
+      }catch(error){
+        if(attempt===0&&(error?.status===502||error?.status===503||error?.status===504||error?.name==='AbortError')){
+          await new Promise(resolve=>setTimeout(resolve,650));
+          continue;
+        }
+        throw error;
+      }
+    }
   }
   async function addDecisionEntry(projectId,type,text,key){
     return await jsonFetch('/api/project-health-decisions',{method:'POST',timeoutMs:12000,headers:{'Content-Type':'application/json','X-Project-Health-Decision-Key':key},body:JSON.stringify({project:projectId,type,text})});
@@ -264,9 +276,9 @@
     const run=makeRunner(data,onUpdate);
     // Deployment activity is the slowest call (a Vercel deployment list plus a bounded log read). It
     // runs alongside the core signals but does not hold back the project's core status.
-    const activityTask=run('Activity',loadActivity(project),value=>{data.activity=value;});
+    const activityTask=run('Activity',loadActivity(project),value=>{data.activity=value;data.activityLoadedAt=new Date().toISOString();});
     const core=[
-      run('Delivery',loadGitHubProject(project,root,data),value=>{data.delivery=value;}),
+      run('Delivery',loadGitHubProject(project,root,data),value=>{data.delivery=value;data.deliveryLoadedAt=new Date().toISOString();}),
       run('Run controls',loadRunInfo(project,root),value=>{data.runInfo=value;})
     ];
     if(project.id==='state'){
@@ -274,8 +286,8 @@
       core.push(run('Quality behavior',loadStateEvalBehavior(project,root,data),value=>{data.qualityBehaviorUpdatedAt=value?.updatedAt||null;data.qualityContractUpdatedAt=value?.contractUpdatedAt||null;if(data.quality){data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;data.quality.contractUpdatedAt=data.qualityContractUpdatedAt;}}));
     }
     const qualityTask=project.quality==='state'
-      ? run('Quality',loadStateQuality(root),value=>{data.quality=value;if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;if(data.qualityContractUpdatedAt)data.quality.contractUpdatedAt=data.qualityContractUpdatedAt;})
-      : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;});
+      ? run('Quality',loadStateQuality(root),value=>{data.quality=value;data.qualityCheckedAt=new Date().toISOString();if(data.qualityBehaviorUpdatedAt)data.quality.behaviorUpdatedAt=data.qualityBehaviorUpdatedAt;if(data.qualityContractUpdatedAt)data.quality.contractUpdatedAt=data.qualityContractUpdatedAt;})
+      : run('Quality',loadExternalQuality(project),value=>{data.externalQuality=value;data.qualityCheckedAt=new Date().toISOString();});
     data.qualityPromise=qualityTask;
     await Promise.all([...core,qualityTask]);
     data.fresh=true;
@@ -291,7 +303,7 @@
     data.detailLoading=true;
     const project=data.project,run=makeRunner(data,onUpdate);
     const tasks=[
-      run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);}),
+      run('Analytics',loadPlatformSignal(project,'analytics'),value=>{data.platform=mergePlatform(data.platform,value);data.analyticsLoadedAt=new Date().toISOString();}),
       run('AI operations',loadPlatformSignal(project,'ai-telemetry'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Neon',loadPlatformSignal(project,'neon'),value=>{data.platform=mergePlatform(data.platform,value);}),
       run('Open work',loadOpenPullRequests(project,root,data),value=>{data.openPullRequests=Array.isArray(value)?value:[];})
@@ -345,7 +357,7 @@
     }
     const projectCheckButton=doc.getElementById('projectCheckButton');
     const headerRunChecksButton=doc.getElementById('headerRunChecksButton');
-    const currentQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
+    const currentQuality=p.quality==='state'?qualityAttention(q,data):externalQualityAttention(externalQ);
     const noRecordedStateRuns=p.id==='state'&&![q?.review,q?.ask].filter(Boolean).length;
     const shouldRunChecksFirst=!!(run?.configured&&(p.id!=='state'||noRecordedStateRuns||stateEvalResultsStale(q)));
     const shouldInvestigateFirst=currentQuality?.kind==='bad'||deliveryAttentionForData(data).kind==='bad'||activityReviewItems(data).some(item=>!item.resolved);
@@ -447,10 +459,10 @@
       '</div>'+
       '<div class="decision-log"><div class="decision-log-head"><strong>Decision & change log</strong><span>Shared · only the owner can add entries</span></div>'+
         (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span>'+(canRemove?'<button class="text-button" type="button" data-remove-product-note="'+esc(note.id)+'">Remove</button>':'')+'</div>').join('')+'</div>'
-          :'<div class="empty compact-empty">'+esc(notesStatus==='loading'?'Loading the decision log…':notesStatus==='error'?'The decision log could not be loaded. Refresh to try again.':'No product decisions or changes recorded yet.')+'</div>')+
+          :'<div class="empty compact-empty">'+esc(notesStatus==='loading'?'Loading the decision log…':notesStatus==='error'?(/timed out|504|waking/i.test(String(data.productNotesError||''))?'The decision log’s server didn’t respond in time (it may be starting up), so its entries aren’t shown. Refresh to try again.':'The decision log could not be loaded, so its entries aren’t shown. Refresh to try again.'):'No product decisions or changes recorded yet.')+'</div>')+
       '</div>';
 
-    const overviewQuality=p.quality==='state'?qualityAttention(q):externalQualityAttention(externalQ);
+    const overviewQuality=p.quality==='state'?qualityAttention(q,data):externalQualityAttention(externalQ);
     const overviewDelivery=deliveryAttentionForData(data);
     const overviewInfra=infrastructureAttention(platform);
     const runtimeStatus=productionRuntime(data);
@@ -458,20 +470,31 @@
     const statusLabel=kind=>kind==='bad'?'Needs attention':kind==='warn'?'Watch':kind==='good'?'Healthy':kind==='available'?'Data available':'Unknown';
     const qualityTime=p.quality==='state'
       ?[q?.review?.created_at,q?.ask?.created_at].filter(Boolean).sort().pop()
-      :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||data.checkedAt);
+      :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||null);
+    // #597: a section whose fetch failed this refresh says it shows retained data; Quality shows when its results were
+    // recorded, never the time the page fetched them.
+    const retainedOr=(labels,hasData,fallback,loadedAt)=>signalRefreshFailure(data,labels)?sectionFreshness(data,labels,null,{hasData,loadedAt}):fallback;
+    const qualityHas=p.quality==='state'?!!(q?.review||q?.ask):!!externalQ;
     const healthRows=[
-      {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||(p.noQualitySource?'Not connected yet':'Quality status unavailable'),tab:'ai-quality',fresh:freshnessMeta(qualityTime,data.checkedAt,72)},
-      {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24)},
-      {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:freshnessMeta(d?.updatedAt,data.checkedAt,24)},
-      ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6)}]:[]),
-      {label:'Site analytics',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking site analytics…':aSummary?.available?(analyticsSignal(aSummary).status+'. '+analyticsSignal(aSummary).detail):(aSummary?.configured?'Connected, but comparison data is not available yet':'Site analytics are not connected'),tab:'overview',section:aSummary?.available?'analyticsPanel':'systemsDetails',fresh:freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24)}
+      {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||(p.noQualitySource?'Not connected yet':'Quality status unavailable'),tab:'ai-quality',fresh:signalRefreshFailure(data,['Quality'])?{label:retainedNotice(data,['Quality'],{hasData:qualityHas,loadedAt:data.qualityCheckedAt}).text,stale:true,retained:qualityHas}:sectionFreshness(data,['Quality'],qualityTime,{hasData:qualityHas,staleHours:72,noun:'Recorded'})},
+      {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:retainedOr(['Production backend','Delivery'],!!(platform||d),freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24),data.deliveryLoadedAt)},
+      {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:retainedOr(['Delivery'],!!d,freshnessMeta(d?.updatedAt,data.checkedAt,24),data.deliveryLoadedAt)},
+      ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:retainedOr(['Neon','AI operations'],!!platform,freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6))}]:[]),
+      {label:'Site analytics',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking site analytics…':aSummary?.available?(analyticsSignal(aSummary).status+'. '+analyticsSignal(aSummary).detail):(aSummary?.configured?'Connected, but comparison data is not available yet':'Site analytics are not connected'),tab:'overview',section:aSummary?.available?'analyticsPanel':'systemsDetails',fresh:retainedOr(['Analytics'],!!aSummary,freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24),data.analyticsLoadedAt)}
     ];
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
     const changesPanel=doc.getElementById('changesPanel');
+    // Without this refresh's delivery, activity, quality or open-work data, "no changes" cannot be confirmed (#597 follow-up;
+    // open work added Nov 3, since "Open work changed" is one of the changes compared).
+    const changeSourcesFailed=['Delivery','Activity','Quality','Open work'].filter(label=>signalRefreshFailure(data,[label]));
     changesPanel.classList.toggle('compact-zero',!changes.length);
     changesPanel.innerHTML=changes.length
       ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:6px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><div class="change-item-head"><strong>'+esc(item.title)+'</strong><span class="change-time">'+esc(relativeAge(item.observedAt))+'</span></div><span class="change-detail">'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
+      :changeSourcesFailed.length
+      ?(()=>{const names=changeSourcesFailed.map(label=>({Delivery:'release data',Activity:'deployment activity',Quality:'AI eval results','Open work':'open pull requests'})[label]);
+        const list=names.length>1?names.slice(0,-1).join(', ')+' and '+names[names.length-1]:names[0];
+        return '<div class="changes-zero changes-unconfirmed" role="status"><span aria-hidden="true">?</span><strong>Couldn’t confirm changes since your last visit.</strong><span class="changes-unconfirmed-detail">'+esc(list.charAt(0).toUpperCase()+list.slice(1))+' didn’t refresh.</span></div>';})()
       :'<div class="changes-zero" role="status"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></div>';
     doc.getElementById('overviewHealthPanel').innerHTML='<div class="panel-title-row"><h3>System health</h3></div>'+
       '<div class="overview-health" style="margin-top:10px">'+healthRows.map(item=>{
@@ -508,9 +531,10 @@
         const askScore=evalScore(ask); // the suite's overall pass rate, matching its overall trend
         const reviewKind=!review?'unknown':Number(review.high_severity_failures||0)>0?'bad':Number(reviewScore)<1?'warn':'good';
         const askKind=!ask?'unknown':Number(ask.high_severity_failures||0)>0?'bad':Number(askScore)<1?'warn':'good';
+        const noRun=pending.has('Quality')?'Loading…':signalRefreshFailure(data,['Quality'])?'Couldn’t load':'No recorded run';
         cards=
-          summaryCard('Update understanding',reviewScore,review?scenarioPassLabel(review,reviewScore):'No recorded run',reviewKind,evalTrend(q?.recent,'review_interpretation'))+
-          summaryCard('Answer quality',askScore,ask?scenarioPassLabel(ask,askScore):'No recorded run',askKind,evalTrend(q?.recent,'ask_quality'));
+          summaryCard('Update understanding',reviewScore,review?scenarioPassLabel(review,reviewScore):noRun,reviewKind,evalTrend(q?.recent,'review_interpretation',undefined,q?.contractUpdatedAt))+
+          summaryCard('Answer quality',askScore,ask?scenarioPassLabel(ask,askScore):noRun,askKind,evalTrend(q?.recent,'ask_quality',undefined,q?.contractUpdatedAt));
         summaryCopy='Controlled evals for how State understands updates and answers from evidence.';
       }else if(QUALITY_VIEWS[p.id]&&externalQ){
         ({cards,summaryCopy}=QUALITY_VIEWS[p.id].summary(externalQ,{summaryCard}));
@@ -567,7 +591,7 @@
         const n=pct(value);
         const display=displayText||(n==null?'—':n+'%');
         return '<div class="mock-kpi">'+
-          '<div class="mock-kpi-top"><div class="mock-kpi-value">'+esc(display)+'</div><span class="mock-kpi-delta '+esc(delta?.cls||'flat')+'">'+esc(delta?.label||'—')+'</span></div>'+
+          '<div class="mock-kpi-top"><div class="mock-kpi-value">'+esc(display)+'</div><span class="mock-kpi-delta '+esc(delta?.cls||'flat')+'"'+(delta?.title?' title="'+esc(delta.title)+'"':'')+'>'+esc(delta?.label||'—')+'</span></div>'+
           '<div class="mock-kpi-label">'+esc(label)+'</div>'+
           '<div class="mock-kpi-signal '+esc(kind||'good')+'">'+esc(signal||'No current failures')+'</div>'+
           (sub?'<div class="mock-kpi-sub">'+esc(sub)+'</div>':'')+
@@ -582,8 +606,9 @@
         const unknownSignal=waiting?'Loading…':(Array.isArray(data.failures)&&data.failures.some(item=>item.label==='Quality'))?'Couldn\'t load':'Not measured';
         // One measurement per card, named as on the AI Evals tab (Oct 27 review).
         const metricCards=stateMetricCards(q,unknownSignal);
-        kpis=metricCards.map(card=>kpi(card.label,card.score,card.delta,card.kind,card.signal,card.sub,card.trend)).join('');
-        qualityCards=metricCards.map(card=>detailCard(card.label,card.score,card.score==null?unknownSignal:card.sub)).join('');
+        // #597: lead with "15 of 16"; the percentage is secondary.
+        kpis=metricCards.map(card=>kpi(card.label,card.score,card.delta,card.kind,card.signal,card.display?'passed · '+card.percent:card.sub,card.trend,card.display)).join('');
+        qualityCards=metricCards.map(card=>detailCard(card.label,card.score,card.score==null?unknownSignal:card.sub,card.display)).join('');
       }else if(QUALITY_VIEWS[p.id]&&(externalQ||QUALITY_VIEWS[p.id].detailWithoutData)){
         ({kpis,qualityCards}=QUALITY_VIEWS[p.id].detail(externalQ,{kpi,pct}));
       }
@@ -595,13 +620,18 @@
       }
 
       const dKind=deliveryAttentionForData(data).kind||'unknown';
-      const latestRelease=d?.message?commitTitle(d.message):'No recent release data';
-      const releaseStatus=dKind==='good'?'Stable':dKind==='bad'?'Needs attention':dKind==='warn'?'Watch':'Unknown';
+      // #597 follow-up: when Delivery failed this refresh, the card says its data was loaded before and that the status
+      // is the previous assessment, or that no release data is available.
+      const releaseNotice=retainedNotice(data,['Delivery'],{hasData:!!d,loadedAt:data.deliveryLoadedAt});
+      const latestRelease=d?.message?commitTitle(d.message):releaseNotice?'Release data unavailable':'No recent release data';
+      const currentReleaseStatus=dKind==='good'?'Stable':dKind==='bad'?'Needs attention':dKind==='warn'?'Watch':'Unknown';
+      const releaseStatus=releaseNotice?.retained?'Previous assessment: '+currentReleaseStatus:releaseNotice?'Unknown':currentReleaseStatus;
       const releaseClass=dKind==='good'?'mock-release-stable':'mock-release-stable';
 
       const a=platform?.analytics;
       // Cowork, Oct 11: the public card shows whether analytics is connected and receiving data, not raw counts.
       const aSignal=analyticsSignal(a);
+      const analyticsNotice=retainedNotice(data,['Analytics'],{hasData:!!a?.available,loadedAt:data.analyticsLoadedAt});
       const analyticsUrl=p.links?.vercel?(p.links.vercel.replace(/\/$/,'')+'/analytics'):null;
 
       const failedItems=[];
@@ -611,7 +641,7 @@
       const nextLook=operationalNextDecision(data);
 
       const testRows=(qDetails.details||[]).slice(0,2).map(item=>
-        '<div class="mock-test-row"><strong>'+esc(item.title||item.scenario_id||'Quality scenario')+'</strong><span class="status-pill bad">Failed</span><span>'+esc(item.expected||'Review scenario')+'</span></div>'
+        '<div class="mock-test-row"><strong>'+esc(item.story?.heading||item.title||item.scenario_id||'Quality scenario')+'</strong><span class="status-pill bad">Failed</span><span>'+esc(item.story?'Scenario: '+item.story.title:(item.expected||'Review scenario'))+'</span></div>'
       ).join('');
 
       // While the only open item is "Still checking", show a neutral loading state instead of an orange warning.
@@ -624,31 +654,44 @@
       const attentionHtml=checking
         ? '<div class="mock-skeleton" aria-hidden="true"><i></i><i></i></div>'
         : actionable.length
-        ? '<div class="mock-issue-row"><span class="mock-issue-dot"></span><div><strong>'+esc(actionable[0].title)+'</strong><p>'+esc(actionable[0].detail||'Review the current signal before changing product behavior.')+'</p></div><span class="mock-issue-meta">'+esc(actionable[0].owner||'Product')+'</span></div>'
+        // Every item the banner counts is listed, so "2 issues" never shows one row (#597 follow-up).
+        ? actionable.map(item=>'<div class="mock-issue-row"><span class="mock-issue-dot"></span><div><strong>'+esc(item.title)+'</strong><p>'+esc(item.detail||'Review the current signal before changing product behavior.')+'</p></div><span class="mock-issue-meta">'+esc(item.owner||'Product')+'</span></div>').join('')
         : '<div class="mock-issue-row"><span class="mock-issue-dot"'+(okSummary.qualityNotMeasured?'':' style="background:#16a36f"')+'></span><div><strong>'+esc(okSummary.rowTitle)+'</strong><p>'+esc(okSummary.rowDetail)+'</p></div><span class="mock-issue-meta">'+esc(okSummary.meta)+'</span></div>';
 
+      // #597: one provenance label for the quality numbers on Overview and AI Evals. Previous results stay visible during a
+      // refresh or after a failed one, marked as previous with the time they were recorded.
+      const provenance=qualityProvenance(data);
+      const provenanceLine=['refreshing','stale','unavailable','loading'].includes(provenance.status)
+        ?'<p class="quality-provenance '+esc(provenance.status)+'" role="status">'+esc(provenance.detail)+'</p>':'';
       mockDashboard.innerHTML=
         '<section class="mock-dashboard-section mock-attention-banner '+(checking?'is-checking':incompleteOnly?'is-incomplete':actionable.length?'has-attention':partialOk?'is-partial':'is-healthy')+'"'+(checking||incompleteOnly||partialOk?' role="status"':'')+'>'+
-          '<div class="mock-attention-icon">'+(checking?'<span class="mock-spinner"></span>':incompleteOnly?'?':actionable.length?'!':partialOk?'–':'✓')+'</div><div class="mock-attention-copy"><h3>'+(checking?'Checking project health…':incompleteOnly?'Couldn\'t check everything':actionable.length?'What needs attention':'Current status')+'</h3><p>'+esc(checking?'Loading the latest signals.':incompleteOnly?'Some signals did not load, so this is not a healthy result.':actionable.length?(actionable.length+' issue'+(actionable.length===1?'':'s')+' needs your review.'):okSummary.headline)+'</p>'+attentionHtml+'</div>'+
+          '<div class="mock-attention-icon">'+(checking?'<span class="mock-spinner"></span>':incompleteOnly?'?':actionable.length?'!':partialOk?'–':'✓')+'</div><div class="mock-attention-copy"><h3>'+(checking?'Checking project health…':incompleteOnly?'Couldn\'t check everything':actionable.length?'What needs attention':'Current status')+'</h3><p>'+esc(checking?'Loading the latest signals.':incompleteOnly?'Some signals did not load, so this is not a healthy result.':actionable.length?(actionable.length+' issue'+(actionable.length===1?' needs':'s need')+' your review.'):okSummary.headline)+'</p>'+attentionHtml+'</div>'+
           (checking?'':incompleteOnly?'<button class="button small" type="button" data-retry-health>Retry check</button>':actionable.length?'<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>':'')+
         '</section>'+
-        '<div class="mock-kpi-grid">'+kpis+'</div>'+
+        provenanceLine+
+        '<div class="mock-kpi-grid'+(provenance.previous?' is-previous':'')+'">'+kpis+'</div>'+
         '<section class="mock-dashboard-section mock-release-card">'+
           '<div class="mock-card-title"><span class="mock-card-title-icon">◇</span><h3>Latest release</h3></div>'+
           '<div class="mock-release-version"><strong>'+esc(latestRelease)+'</strong><span class="'+releaseClass+'">'+esc(releaseStatus)+'</span></div>'+
           '<div class="mock-release-meta">'+(d?.updatedAt?esc(fmtDate(d.updatedAt)):'No release date')+'</div>'+
+          (releaseNotice?'<p class="section-retained-note" role="status">'+esc(releaseNotice.text)+'</p>':'')+
           '<p class="mock-release-copy">Production release'+(d?.branch?' · '+esc(d.branch):'')+'</p>'+
           '<button class="button small" type="button" data-tab-target="releases">View release details →</button>'+
         '</section>'+
         '<section class="mock-dashboard-section mock-usage-card">'+
           '<div class="mock-card-title mock-analytics-title"><span class="mock-card-title-icon">▥</span><h3>Site analytics</h3>'+(analyticsUrl?'<a class="mock-analytics-link" href="'+esc(analyticsUrl)+'" target="_blank" rel="noopener noreferrer">Open analytics ↗</a>':'')+'</div>'+
-          (a?.available
+          // Saved analytics after a failed refresh read as stale and neutral, not as a current green signal (Nov 3).
+          (analyticsNotice?.retained
+            ?'<div class="mock-analytics-signal"><span class="mock-analytics-dot" aria-hidden="true"></span><div><strong>Previous status: '+esc(aSignal.status)+'</strong><p>'+esc(aSignal.detail)+'</p></div></div><p class="section-retained-note" role="status">'+esc(analyticsNotice.text)+'</p>'
+            :analyticsNotice
+            ?'<div class="empty compact-empty">Site analytics unavailable.</div><p class="section-retained-note" role="status">'+esc(analyticsNotice.text)+'</p>'
+            :a?.available
             ?'<div class="mock-analytics-signal"><span class="mock-analytics-dot '+esc(aSignal.kind)+'" aria-hidden="true"></span><div><strong>'+esc(aSignal.status)+'</strong><p>'+esc(aSignal.detail)+'</p></div></div>'
             :'<div class="empty compact-empty">'+esc(pending.has('Analytics')?'Checking site analytics…':a?.configured===false?'Site analytics are not connected for this environment.':a?.configured?analyticsGapDetail(a):'Site analytics could not be checked. Refresh to try again.')+'</div>')+
         '</section>'+
         '<section class="mock-dashboard-section mock-quality-detail">'+
-          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3>'+(pending.has('Quality')?'<span class="mock-refreshing-evals">'+(p.id==='state'?'Refreshing evals':'Refreshing checks')+'… showing last good results</span>':'')+'</div><button class="button small" type="button" data-tab-target="ai-quality">'+(p.id==='state'?'View all evaluations':'View all checks')+' →</button></div>'+
-          '<div class="mock-quality-detail-grid">'+qualityCards+'</div>'+
+          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3><span class="mock-refreshing-evals'+(provenance.previous?' previous':'')+'">'+esc(provenance.previous?provenance.label+' · '+(provenance.resultAt?'recorded '+fmtDate(provenance.resultAt):'recording time unknown'):provenance.label)+'</span></div><button class="button small" type="button" data-tab-target="ai-quality">'+(p.id==='state'?'View all evaluations':'View all checks')+' →</button></div>'+
+          '<div class="mock-quality-detail-grid'+(provenance.previous?' is-previous':'')+'">'+qualityCards+'</div>'+
           (coverage?'<p class="mock-eval-coverage '+esc(coverage.kind)+'">'+esc(coverage.text)+'</p>':'')+
         '</section>'+
         '<section class="mock-dashboard-section mock-investigation-card">'+
@@ -666,58 +709,109 @@
     let qualityHtml='';
     if(p.quality==='state'){
       const review=q?.review,ask=q?.ask,runs=[review,ask].filter(Boolean);
-      if(!q&&pending.has('Quality')){
-        qualityHtml='<h3>Product quality · AI evals</h3><div class="empty" style="margin-top:12px">Checking the latest recorded AI eval results…</div>';
+      const provenance=qualityProvenance(data);
+      if(!runs.length&&provenance.status==='loading'){
+        qualityHtml='<h3>Product quality · AI evals</h3><div class="empty" role="status" style="margin-top:12px">Checking the latest recorded AI eval results…</div>';
+      }else if(!runs.length&&provenance.status==='unavailable'){
+        // A failed first load is not "no evals recorded": say what failed and show no numbers (#597).
+        qualityHtml='<h3>Product quality · AI evals</h3><div class="eval-overview warn" role="status"><div><strong>Couldn’t load AI eval results</strong><span>'+esc(provenance.detail)+' Refresh to try again.</span></div></div>';
       }else if(!runs.length){
         qualityHtml='<h3>Product quality · AI evals</h3>'+
-          '<div class="eval-overview"><div><strong>No recorded AI eval yet</strong><span>Run a controlled check to see how State handles understanding, evidence, uncertainty, and decision authority.</span></div></div>';
+          '<div class="eval-overview"><div><strong>No AI eval results recorded in this environment</strong><span>'+esc(pageEnvironment(doc?.defaultView||null)==='staging'?'Staging’s State backend starts empty after each deploy, and scheduled runs record to production, so results recorded there aren’t shown here. ':'')+'Run a controlled check to see how State handles understanding, evidence, uncertainty, and decision authority.</span></div></div>';
       }else{
         const latestDate=runs.map(item=>item?.created_at).filter(Boolean).sort().pop();
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
-        const severe=runs.reduce((n,item)=>n+Number(item?.high_severity_failures||0),0);
-        const qa=qualityAttention(q);
         const staleResults=stateEvalResultsStale(q);
         const cards=[];
-        const noteFor=check=>{const count=failureCheckCount(q,check);return count?count+' high-impact failure'+(count===1?'':'s'):'';};
+        const noteFor=check=>{const count=failureCheckCount(q,check);return count?highSeverityFailureText(count):'';};
+        const metricSignals=Object.fromEntries(stateMetricCards(q).map(card=>[card.label,card]));
         STATE_QUALITY_METRICS.forEach(m=>{
           const run=q?.[m.run],score=metricScore(run,m.field);
-          if(score!=null) cards.push(stateScenarioCard(m.label,score,run,evalTrend(q.recent,m.suite,m.field),noteFor(m.check)));
+          // A run that recorded failures in high-severity scenarios without scenario details still says so (#597).
+          const card=metricSignals[m.label],note=noteFor(m.check)||(card?.kind==='bad'?card.signal:'');
+          if(score!=null) cards.push(stateScenarioCard(m.label,score,run,evalTrend(q.recent,m.suite,m.field,q.contractUpdatedAt),note));
         });
+        const countsNote=evalScenarioCountsNote(q);
         const failureSummary=qualityFailureClassSummary(q);
-        const failureDetailHtml=failureSummary.details?.length
-          ?'<div class="failure-list">'+failureSummary.details.map(detail=>
-              '<div class="failure-item-compact">'+
-                '<div class="eyebrow">'+esc(detail.suite||'AI eval')+'</div>'+
-                '<h4>'+esc(detail.title)+'</h4>'+
-                '<div class="failure-facts"><strong>Observed</strong><span>'+esc(detail.whatHappened)+'</span><strong>Expected</strong><span>'+esc(detail.expected)+'</span><strong>Why it matters</strong><span>'+esc(detail.why)+'</span></div>'+
-                '<div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality data-failure-id="'+esc(detail.scenario_id||'')+'">Investigate failure</button><a class="button small" href="'+esc(p.links.quality)+'?failure='+encodeURIComponent(detail.scenario_id||'')+'" target="_blank" rel="noopener noreferrer">View scenario ↗</a></div>'+
-              '</div>'
-            ).join('')+'</div>'
-          :'';
+        // #596: each failure reads Evidence → Observed → Expected → Consequence → Next step; identifiers stay one click away.
+        const factBlock=(label,body)=>'<div class="failure-fact"><strong>'+esc(label)+'</strong><div>'+body+'</div></div>';
+        const failureDetailHtml=!failureSummary.details?.length
+          ?'<p class="fact-gap">This run recorded '+highSeverityFailureText(failureSummary.count)+' but no scenario-level details, so they cannot be explained here. Rerun the evals to record them.</p>'
+          :'<div class="failure-list">'+failureSummary.details.map(detail=>{
+              const story=detail.story||failureStory(detail);
+              const tech=story.technical;
+              const evidenceHtml=story.evidence.text
+                ?'<p><span class="fact-lead">'+esc(story.evidence.lead)+':</span> “'+esc(story.evidence.text)+'”</p>'+
+                  (story.evidence.setup.length?'<ul class="failure-setup">'+story.evidence.setup.map(item=>'<li><span class="fact-lead">'+esc(item.label)+':</span> “'+esc(item.text)+'”</li>').join('')+'</ul>':'')+
+                  '<p class="fact-source">'+esc(story.evidence.source)+'</p>'
+                :'<p class="fact-gap">Not available: this page’s scenario catalog has no setup for this scenario.</p>';
+              const sourceHtml=text=>'<p class="fact-source">'+esc(text)+'</p>';
+              const observedHtml='<p>'+esc(story.observed.text)+'</p>'+
+                (story.observed.recorded?'<p class="fact-source">Recorded: '+esc(story.observed.recorded)+'</p>':'')+
+                (story.observed.excerpt?'<p><span class="fact-lead">Proposed State (recorded excerpt'+(story.observed.excerpt.truncated?', cut off':'')+'):</span> “'+esc(story.observed.excerpt.text)+'”</p>':'')+
+                sourceHtml(story.observed.source);
+              // Expected stays one line; alternatives, phrases and the contract note are one click away.
+              const contractLines=[...story.expected.details,...(story.contractNote?['Contract note: '+story.contractNote]:[])];
+              const expectedHtml='<p>'+esc(story.expected.text)+'</p>'+sourceHtml(story.expected.source)+
+                (contractLines.length?'<details class="failure-contract"><summary>Expected behavior details</summary><ul>'+contractLines.map(line=>'<li>'+esc(line)+'</li>').join('')+'</ul></details>':'');
+              const gapsHtml=story.gaps.length?'<div class="failure-gaps"><strong>Not recorded</strong><ul>'+story.gaps.map(gap=>'<li>'+esc(gap)+'</li>').join('')+'</ul></div>':'';
+              const techRows=[
+                ['Scenario ID',tech.scenarioId],['Suite',story.suiteLabel],['Category',tech.category||'—'],['Scenario severity',tech.severity],
+                ['Failed checks',(tech.failedChecks||[]).join(', ')||'—'],['Expected (recorded)',tech.expectedCode||'—'],['Observed (recorded)',tech.observedRaw||'—'],
+                ['Run recorded',tech.runAt?fmtDate(tech.runAt):'—'],['Build',tech.build?shortSha(tech.build):'—'],['Model',tech.model?modelDisplayName(tech.model):'—'],['Scenarios in run',tech.total??'—']
+              ];
+              return '<article class="failure-item-compact" id="failure-'+esc(story.scenarioId)+'">'+
+                '<div class="failure-head"><div class="eyebrow">'+esc(story.suiteLabel)+'</div><span class="severity-chip '+esc(story.severity)+'" title="Set in the scenario catalog; it does not describe this run’s outcome.">'+esc(story.severityLabel)+'</span></div>'+
+                '<h4>'+esc(story.heading)+'</h4>'+
+                '<p class="failure-scenario">Scenario: '+esc(story.title)+'</p>'+
+                '<div class="failure-story">'+
+                  factBlock('Evidence',evidenceHtml)+
+                  factBlock('Observed behavior',observedHtml)+
+                  factBlock('Expected behavior',expectedHtml)+
+                  factBlock('Consequence','<p>'+esc(story.consequence.text)+'</p>')+
+                  factBlock('Next step','<p>'+esc(story.nextStep)+'</p>')+
+                '</div>'+gapsHtml+
+                '<details class="failure-technical"><summary>Technical details</summary><dl>'+techRows.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl>'+
+                  '<p>This explanation uses the recorded result and the scenario catalog. No model was called; reproducing the failure needs a new eval run.</p>'+
+                  '<p>'+(tech.sourceUrl?githubLink('Scenario source at this build ↗',tech.sourceUrl)+' · ':'')+githubLink('Scenario on the State evals page ↗',tech.pageUrl)+'</p></details>'+
+                '<div class="quality-actions"><button class="button small primary" type="button" data-investigate-quality data-failure-id="'+esc(story.scenarioId)+'">Investigate failure</button><a class="button small" href="'+esc(p.links.quality)+'?failure='+encodeURIComponent(story.scenarioId)+'" target="_blank" rel="noopener noreferrer">View scenario ↗</a></div>'+
+              '</article>';
+            }).join('')+'</div>';
         const activeEvalRun=data.qualityRun;
-        const evalStateClass=activeEvalRun?'running':staleResults?'warn':failureSummary.count?'bad':'healthy';
+        const previousShown=provenance.previous;
+        const evalStateClass=activeEvalRun?'running':previousShown?'previous':staleResults?'warn':failureSummary.count?'bad':'healthy';
         const statusTitle=activeEvalRun
           ?(activeEvalRun.state==='delayed'?'AI eval run is taking longer than expected':'AI evals are running')
-          :(staleResults
-            ?'AI evals need to be rerun'
-            :(failureSummary.count?'AI evals need review':'AI evals are healthy'));
+          :provenance.status==='refreshing'
+            ?'Previous results · checking for newer ones'
+            :provenance.status==='stale'
+              ?'Previous results · couldn’t refresh'
+              :(staleResults
+                ?'AI evals need to be rerun'
+                :(failureSummary.count?(failureSummary.count===1?'1 failure in a high-severity scenario needs':failureSummary.count+' failures in high-severity scenarios need')+' review':'AI evals are healthy'));
+        const recordedText=latestDate?'Recorded '+fmtDate(latestDate):'Recording time unknown';
         const statusDetail=activeEvalRun
           ?'Started '+esc(fmtDate(activeEvalRun.startedAt))+' · Previous results stay visible below until this run finishes.'
-          :(staleResults
-            ?(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+'Previous run needs a rerun before these scores are treated as current.'
-            :(latestDate?'Last checked '+esc(fmtDate(latestDate))+' · ':'')+esc(total||'—')+' scenarios · '+(failureSummary.count
-              ?failureSummary.count+' high-impact failure'+(failureSummary.count===1?'':'s')
-              :'no high-impact failures'));
+          :previousShown
+            ?esc(provenance.detail)
+            :(staleResults
+              ?esc(recordedText)+' · Previous run needs a rerun before these scores are treated as current.'
+              :esc(recordedText)+' · '+esc(total||'—')+' scenarios · '+(failureSummary.count
+                ?highSeverityFailureText(failureSummary.count)
+                :'no failures in high-severity scenarios'));
         const statusAction=(!activeEvalRun&&!staleResults&&failureSummary.count)
           ?'<button class="button small eval-overview-action" type="button" data-jump-quality-failures>Review failure'+(failureSummary.count===1?'':'s')+'</button>'
           :'';
+        const countsHtml=countsNote?'<p class="eval-counts-note">'+esc(countsNote)+'</p>':'';
         qualityHtml='<h3>Product quality · AI evals</h3>'+
-          '<div class="eval-overview '+evalStateClass+'" '+(activeEvalRun?'role="status"':'')+'><div><strong>'+statusTitle+'</strong><span>'+statusDetail+'</span>'+statusAction+'</div></div>'+
+          '<div class="eval-overview '+evalStateClass+'" '+(activeEvalRun||previousShown?'role="status"':'')+'><div><strong>'+statusTitle+'</strong><span>'+statusDetail+'</span>'+statusAction+'</div></div>'+
+          '<div class="eval-results'+(previousShown?' is-previous':'')+'">'+
           (staleResults
             ?'<div class="run-callout stale-quality-summary"><strong>Previous results need a rerun</strong><p>'+esc(stateEvalStaleReason(q))+' Run the evals again before treating these scores as current.</p></div>'
             :failureSummary.count
-              ?'<div class="run-callout quality-failure-summary" id="qualityFailures"><strong>Failures requiring review</strong>'+failureDetailHtml+'</div><div class="eval-grid">'+cards.join('')+'</div>'
-              :'<div class="eval-grid">'+cards.join('')+'</div>')+stateEvalHistory(q);
+              ?'<div class="run-callout quality-failure-summary" id="qualityFailures"><strong>Failures requiring review</strong>'+failureDetailHtml+'</div><div class="eval-grid">'+cards.join('')+'</div>'+countsHtml
+              :'<div class="eval-grid">'+cards.join('')+'</div>'+countsHtml)+stateEvalHistory(q)+
+          '</div>';
       }
       qualityHtml+='<p class="footnote"><a href="'+esc(p.links.quality)+'" target="_blank" rel="noopener noreferrer">View full scenario catalog ↗</a></p>';
       if(pending.has('Run controls')&&!run){
@@ -802,7 +896,9 @@
       ?'<div class="activity-day-groups">'+groupedDays.map(group=>'<section class="activity-day"><h4>'+esc(group.label)+'</h4><div class="timeline">'+group.items.map(activityItemMarkup).join('')+'</div></section>').join('')+'</div>'
       :'<div class="empty">No activity matches this filter yet.</div>';
     const activityFilters=[['all','All'],['releases','Releases'],['quality','Quality'],['investigations','Investigations'],['decisions','Decisions']];
+    const activityNotice=retainedNotice(data,['Activity'],{hasData:!!data.activity,loadedAt:data.activityLoadedAt});
     doc.getElementById('historyPanel').innerHTML='<div class="panel-title-row"><div><h3>Activity</h3><p class="panel-copy">A chronological operating history across releases, quality checks, investigations, and recovery.</p></div></div>'+
+      (activityNotice?'<p class="section-retained-note" role="status">Deployment activity: '+esc(activityNotice.text)+'</p>':'')+
       '<div class="activity-filters" role="group" aria-label="Filter activity">'+activityFilters.map(([key,label])=>'<button class="activity-filter '+(activityFilter===key?'active':'')+'" type="button" data-activity-filter="'+key+'" aria-pressed="'+(activityFilter===key?'true':'false')+'">'+label+'</button>').join('')+'</div>'+
       '<div style="margin-top:12px">'+timelineHtml+'</div>';
     const overviewActivity=timelineItems.length?'<div class="activity-list">'+timelineItems.slice(0,3).map(item=>'<div class="activity-item"><span class="activity-type">'+esc(item.type||'Activity')+'</span><strong>'+esc(item.title)+'</strong><span>'+esc(relativeAge(item.when))+' · '+esc(item.detail||'')+'</span></div>').join('')+'</div>':'<div class="empty">No recent activity is available yet.</div>';
@@ -1013,13 +1109,17 @@
     state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=[];item.productNotesStatus='loading';});
     // Held in memory for this page only, never stored, so a removal or a second entry does not ask again.
     let decisionKey='';
-    state.forEach(item=>{
-      // A refresh replaces each project's data object, so write to whichever one is current when the log arrives.
-      const apply=update=>{const current=state.find(entry=>entry.project.id===item.project.id);if(current)Object.assign(current,update);scheduleRender();};
-      loadDecisionLog(item.project.id)
-        .then(entries=>apply({productNotes:entries,productNotesStatus:'ok'}))
-        .catch(()=>apply({productNotesStatus:'error'}));
-    });
+    // Loaded by every Refresh, including the one on page load (Nov 3: Refresh used to skip it, so the page said "Refreshed" while the
+    // log stayed unavailable). Resolves to the names of projects whose log couldn't load; an unavailable log never reads as empty.
+    function loadDecisionLogs(){
+      return Promise.all(state.map(item=>{
+        // A refresh replaces each project's data object, so write to whichever one is current when the log arrives.
+        const apply=update=>{const current=state.find(entry=>entry.project.id===item.project.id);if(current)Object.assign(current,update);scheduleRender();};
+        return loadDecisionLog(item.project.id)
+          .then(entries=>{apply({productNotes:entries,productNotesStatus:'ok',productNotesError:null});return null;})
+          .catch(error=>{apply({productNotesStatus:'error',productNotesError:failureReason(error)});return item.project.name;});
+      })).then(names=>names.filter(Boolean));
+    }
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','releases','decision-support']);
@@ -1370,7 +1470,7 @@
       if(!data)return;
       const liveIncident=activityReviewItems(data).find(item=>!item.resolved);
       if(liveIncident?.kind==='deployment'){await runAgentInvestigation(data,'vercel','production');return;}
-      if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality).kind)){
+      if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality,data).kind)){
         data.investigation=qualityInvestigation(data);recordInvestigation(data,data.investigation,'AI eval');renderNow();revealInvestigation();return;
       }
       if(deliveryAttentionForData(data).kind==='bad'){
@@ -1474,6 +1574,7 @@
       const activityNames=()=>PROJECTS.filter(project=>statusKnown.has(project.id)&&!finished.has(project.id)&&activityStillLoading(state.find(item=>item.project.id===project.id))).map(project=>project.name);
       const showProgress=()=>{if(finished.size<PROJECTS.length)status.textContent=progressText(statusKnown.size,PROJECTS.length,pendingNames(),activityNames());};
       showProgress();
+      const decisionLogs=loadDecisionLogs();
 
       const jobs=PROJECTS.map(async project=>{
         const index=PROJECTS.findIndex(p=>p.id===project.id);
@@ -1498,11 +1599,20 @@
       state.forEach(reconcileInvestigationHistory);
       await ensureDetails(activeId);
       persist();
-      status.innerHTML='<strong>Updated just now</strong>';
+      // #597: the status line is about this refresh attempt, not when any result was recorded; a failed or partial
+      // refresh says so and names what kept its previous value.
+      const attempt=refreshStatus(state,new Date().toISOString());
+      // The decision log is a separate read: its failure is named in the status, and a refresh that only lost the log is partial.
+      const logFailed=await decisionLogs;
+      if(generation!==refreshGeneration)return;
+      const logNote=logFailed.length?'Decision log couldn’t load for '+logFailed.join(', ')+'.':'';
+      const title=logNote&&attempt.kind==='refreshed'?attempt.title.replace(/^Refreshed/,'Partly refreshed'):attempt.title;
+      const detail=[attempt.detail,logNote].filter(Boolean).join(' ');
+      status.innerHTML='<strong>'+esc(title)+'</strong>'+(detail?' · '+esc(detail):'');
       refresh.disabled=false;
     }
 
-    if(cached?.savedAt)status.innerHTML='<strong>Showing the last good snapshot.</strong> Last checked '+esc(fmtDate(cached.savedAt))+'. Refreshing current health…';
+    if(cached?.savedAt)status.innerHTML='<strong>Showing previous results</strong> saved '+esc(fmtDate(cached.savedAt))+' while Project Health checks for newer ones…';
     renderNow();
     refresh.addEventListener('click',refreshAll);
     doc.addEventListener('click',event=>{

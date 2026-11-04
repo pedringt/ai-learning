@@ -28,6 +28,9 @@ def _seed_review_with_update_proposal(conn, review_id, proposal_id, state_id, pr
         "VALUES (?, ?, 'update', ?, ?, 'Evidence says so', ?, 'pending')",
         (proposal_id, review_id, state_id, proposed_statement, expected_version),
     )
+    # A Review that changes a fact needs its source Evidence linked (missing-source rule).
+    conn.execute("INSERT INTO evidence(id, content) VALUES (?, 'Source note for this Review.')", (f"ev-{review_id}",))
+    conn.execute("INSERT INTO review_evidence(review_id, evidence_id) VALUES (?, ?)", (review_id, f"ev-{review_id}"))
     conn.commit()
 
 

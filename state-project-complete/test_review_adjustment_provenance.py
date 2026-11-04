@@ -55,6 +55,7 @@ class ReviewAdjustmentProvenanceTest(unittest.TestCase):
             "VALUES (?, ?, ?, ?, ?, 'Evidence says so', ?, 'pending')",
             (proposal_id, review_id, operation, state_id, proposed_statement, expected_version),
         )
+        self._link_source(review_id)
         self.conn.commit()
 
     def _seed_review_with_create_proposal(self, review_id, proposal_id, proposed_statement):
@@ -69,7 +70,13 @@ class ReviewAdjustmentProvenanceTest(unittest.TestCase):
             "VALUES (?, ?, 'create', NULL, ?, 'Evidence says so', NULL, 'pending')",
             (proposal_id, review_id, proposed_statement),
         )
+        self._link_source(review_id)
         self.conn.commit()
+
+    def _link_source(self, review_id):
+        # A Review that changes a fact needs its source Evidence linked (missing-source rule).
+        self.conn.execute("INSERT INTO evidence(id, content) VALUES (?, 'Source note for this Review.')", (f"ev-{review_id}",))
+        self.conn.execute("INSERT INTO review_evidence(review_id, evidence_id) VALUES (?, ?)", (review_id, f"ev-{review_id}"))
 
     def _link_question(self, review_id, question_id, question_text):
         self.conn.execute(
@@ -244,6 +251,7 @@ class ReviewAdjustmentProvenanceTest(unittest.TestCase):
             "rationale, expected_state_version, status) VALUES "
             "('p-2', 'r-1', 'update', 'k-2', 'Access is five named agents.', 'Evidence says so', 1, 'pending')"
         )
+        self._link_source("r-1")
         self.conn.commit()
         self._link_question("r-1", "q-retention", "What retention terms apply?")
         # Only p-2 is adjusted; p-1 is accepted as proposed.

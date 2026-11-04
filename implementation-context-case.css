@@ -112,3 +112,8 @@
 @media(max-width:900px){.product-model:has(.architecture-split){grid-template-columns:1fr}.product-model:has(.architecture-split)>.kicker,.product-model:has(.architecture-split)>h2{grid-column:auto}}
 
 .role-split .surface-grid ul{margin:0;padding-left:18px}.role-split .surface-grid li+li{margin-top:4px}
+
+/* #590: State's page title is the product name; the descriptive subtitle sits under it. */
+.flagship-hero .case-subtitle{margin:4px 0 14px;font-size:20px;line-height:1.35;font-weight:600;color:var(--muted,#555)}
+@media(max-width:760px){.flagship-hero .case-subtitle{font-size:17px}}
+.role-split .role-note{margin:16px 0 0;max-width:68ch;color:var(--muted);line-height:1.55}

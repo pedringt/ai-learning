@@ -68,7 +68,10 @@ async function waitFor(predicate,ms=4000){
         const settled=await waitFor(()=>cards().every(card=>card.label!=='Checking'));
         assert.ok(settled,'cards still checking: '+JSON.stringify(cards()));
         assert.ok(cards().every(card=>card.label!=='Healthy'),'no card may read Healthy when every signal failed: '+JSON.stringify(cards()));
-        assert.match(elements.get('status').innerHTML,/Updated just now/);
+        // #597 (Nov 2): every core fetch failed here, so "Updated just now" misdescribed this refresh; the status line now
+        // names the attempt and what did not refresh.
+        assert.match(elements.get('status').innerHTML,/^<strong>(Partly refreshed|Refresh failed) [^<]+<\/strong> · Couldn’t refresh: /);
+        assert.doesNotMatch(elements.get('status').innerHTML,/Updated just now/);
         assert.ok(store.has('project-health-snapshot:production'),'the snapshot is saved');
       }finally{cleanup();}
     });

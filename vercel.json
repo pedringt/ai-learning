@@ -108,6 +108,16 @@
       "permanent": true
     },
     {
+      "source": "/state-how-it-works",
+      "destination": "/implementation-context#what-i-built",
+      "permanent": false
+    },
+    {
+      "source": "/state-how-it-works.html",
+      "destination": "/implementation-context#what-i-built",
+      "permanent": false
+    },
+    {
       "source": "/cheat-sheets/AI_Customer_Success_Guide_to_Debugging_Claude_Agents.pdf",
       "destination": "/cheat-sheets/AI_Customer_Success_Guide_to_Debugging_Claude_Agents",
       "permanent": true

@@ -29,6 +29,7 @@ body.v88-dark .topbar{background:rgba(16,16,20,.96)}
 .case-shell h2{font-size:22px;line-height:1.2;letter-spacing:-.015em;margin:38px 0 12px}
 .case-shell h3{font-size:16.5px;line-height:1.3;margin:0 0 8px}
 .small{font-size:12.5px;color:var(--muted);line-height:1.55}
+.case-hero .credit{display:grid;gap:5px;margin:14px 0 0;max-width:820px}.case-hero .credit b{color:var(--ink);margin-right:6px}
 
 .card,.band{border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--soft) 56%,var(--card)));padding:18px;box-shadow:0 6px 20px rgba(20,18,40,.035)}
 body.v88-dark .card,body.v88-dark .band{box-shadow:none}
@@ -42,6 +43,7 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 .qcard b.qnum{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--purple);margin-bottom:4px}
 .qcard .resolution{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:13px;color:var(--muted)}
 .qcard .resolution b{color:var(--ink)}
+.qcard .resolution p{margin:0;font-size:13px}.qcard .resolution p+p{margin-top:6px}
 
 /* metrics blocks */
 .metric{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin:12px 0;background:var(--card)}
@@ -75,7 +77,6 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 .owner-customer .owner-tag{color:var(--cyan)}
 
 .flow-branch-wrap{margin:2px 0 2px 36px}
-.flow-branch-label{font-size:11px;color:var(--muted);margin-bottom:8px}
 .flow-lanes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .flow-lane{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--card)}
 .flow-lane-head{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--border)}
@@ -85,20 +86,11 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 .flow-lane .flow-mini:last-child{border-bottom:0}
 .flow-lane .flow-mini.human{color:var(--ink);font-weight:700}
 .flow-join{font-size:11.5px;color:var(--muted);font-style:italic;margin:8px 0 2px 36px}
-@media(max-width:640px){.flow-lanes{grid-template-columns:1fr}.flow-branch-wrap,.flow-join{margin-left:20px}}
+.flow-return{margin:6px 0 2px 36px;padding:6px 10px;border:1.5px dashed var(--border);border-radius:8px;font-size:12px;color:var(--muted)}
+.flow-caption{margin:8px 0 0}
+@media(max-width:640px){.flow-lanes{grid-template-columns:1fr}.flow-branch-wrap,.flow-join,.flow-return{margin-left:20px}}
 
-.callout{border:1px solid var(--border);border-left:4px solid var(--purple2);background:var(--softp);border-radius:12px;padding:15px 17px;margin:16px 0}
-.callout p:last-child{margin-bottom:0}
 
-.decision-table{width:100%;border-collapse:collapse;margin:14px 0 4px;font-size:13.5px}
-.decision-table th,.decision-table td{padding:12px 14px;border:1px solid var(--border);text-align:left;vertical-align:top}
-.decision-table th{background:var(--softp);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-.decision-table td:first-child{width:42%;color:var(--muted)}
-.boundary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
-.boundary-card{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card)}
-.boundary-card strong{display:block;margin-bottom:6px;font-size:13px}
-.boundary-card p{margin:0;color:var(--muted);font-size:12.5px}
-@media(max-width:720px){.boundary-grid{grid-template-columns:1fr}.decision-table{display:block;overflow-x:auto}}
 </style>
 <link href="site-shell.css" rel="stylesheet"/>
 <link href="site-components.css" rel="stylesheet"/>
@@ -152,36 +144,27 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <header class="case-hero">
 <div class="eyebrow">Supporting exercise · simulated support workflow</div>
 <h1>AI Support Workflow Exercise</h1>
-<p class="lead">I used a fictional company, Meridian, to work through a practical product question: if a support team wants AI help, where should AI actually participate, what should software enforce, and when should a person take over? The useful result was not the fictional pilot plan. It was seeing how quickly the workflow changed once discovery challenged the original assumptions.</p>
-</header><p class="in-short"><span>In short</span>Working through a fictional support team showed how quickly the AI boundaries, software rules and human handoffs changed once discovery challenged the first design.</p>
-
-<div class="card"><span class="tag">How I worked with AI</span>
-<p>I chose the scope, wrote the discovery questions, made the boundary and handoff decisions, and decided which simulated findings were strong enough to change the design. Claude helped generate early simulated stakeholder material and rendered the workflow from rules I specified. The company, interviews, and operating numbers are simulated; the product decisions and reasoning are mine.</p>
-</div>
+<p class="lead">Meridian is a fictional company. I used it to work out where AI should participate in a support team&rsquo;s workflow, what software should enforce, and when a person should take over. The useful result was seeing how much the design changed once discovery challenged my first assumptions.</p>
+<p class="credit small"><span><b>Simulated</b> The company, stakeholder responses, and operating numbers. These were exercise inputs used to test my assumptions, not findings from real research.</span></p>
+</header>
 
 <h2>What discovery changed</h2>
-<p>I started with a fairly generic idea: let AI draft support responses so reps can answer faster. The questions below changed the product more than prompt tuning would have.</p>
+<p>I started with a generic idea: AI drafts replies so support reps can answer faster. By the end of discovery, the design was narrower and more specific. Money, security and account-change requests skip AI drafting, and a separate check guards that boundary. A person reviews and sends every reply. The speed targets became modest. Two problems turned out to need configuration and access, not AI. All of this changed before prompting or model choice mattered.</p>
 
 <div class="qcard"><b class="qnum">Rep workflow</b>How do support reps actually handle first responses today?
-<div class="resolution"><b>What changed:</b> the assumed “mixed workflow” was mostly wrong. Simulated rep discovery showed that a separate quick acknowledgment was uncommon, so I stopped designing around it and became more conservative about expected response-time gains.</div></div>
+<div class="resolution"><p><b>What discovery showed:</b> The simulated PM described a &ldquo;mixed workflow&rdquo;: most reps worked tickets start to finish, but on busy days some sent a quick acknowledgment first and came back later. My first-response target partly counted on that. When I asked the simulated reps directly, only 2 of 8 did it, and only occasionally. I gave their account of their own work more weight than the secondhand one.</p><p><b>What I decided:</b> I revised the exercise&rsquo;s first-response target from about 6 hours to about 7, against a baseline of more than 8. I also stopped expecting handling time to fall much, because a person still reviews every draft. Both are exercise targets, not measured results.</p></div></div>
 
-<div class="qcard"><b class="qnum">Billing and account context</b>Does the AI need a new integration to see the account information reps use?
-<div class="resolution"><b>What changed:</b> the needed field already existed through an overnight sync but was hidden from the Tier 1 view. The better answer was a configuration change, not another AI integration.</div></div>
+<div class="qcard"><b class="qnum">Billing and account context</b>Does the AI need new integrations to see the account information reps use?
+<div class="resolution"><p><b>What discovery showed:</b> Reps were copying billing and account status into tickets from a separate billing system. That field already reached the ticketing tool through a nightly sync, but only in the Tier 2 view. Turning it on for Tier 1 was a configuration change. It would help reps directly, and it would give the AI the same already-approved data without a new integration.</p><p><b>A real access gap:</b> For questions that depend on a customer&rsquo;s plan or setup, reps check the CRM record before answering. The AI would need separate read access to that data. Without it, an answer can be generically correct and still wrong for that customer. The exercise left this as a gap to close.</p><p><b>Unresolved:</b> Because the sync runs nightly, billing data can be up to 24 hours old. The exercise flagged this but didn&rsquo;t decide whether it&rsquo;s current enough for billing questions.</p></div></div>
 
 <div class="qcard"><b class="qnum">High-risk categories</b>Should AI still draft replies for money, account-access, and security issues if a person reviews them?
-<div class="resolution"><b>What changed:</b> I decided those categories should bypass drafting entirely. Classification can route them, but the response itself starts with a person. The risk was not worth treating as a confidence-threshold problem.</div></div>
+<div class="resolution"><p><b>What changed:</b> I decided those categories should bypass drafting entirely. Classification can route them, but the response itself starts with a person. The risk was not worth treating as a confidence-threshold problem.</p></div></div>
 
 <div class="qcard"><b class="qnum">Knowledge quality</b>What happens if the source material the AI retrieves is stale or contradictory?
-<div class="resolution"><b>What changed:</b> I stopped treating every bad answer as “the model was wrong.” Knowledge-base failures became their own root-cause category so the team could distinguish model behavior from bad source material.</div></div>
+<div class="resolution"><p><b>What discovery showed:</b> About 20% of the roughly 180 knowledge-base articles hadn&rsquo;t been reviewed in over a year, and some conflicted. Reps&rsquo; search was basic keyword matching. Leadership kept the pilot timeline, so a cleanup couldn&rsquo;t come first.</p><p><b>What changed:</b> Articles would be fixed when a pilot failure was traced to them. Those failures would get their own root-cause tag, so bad source material wasn&rsquo;t blamed on the model. I also stopped assuming semantic search was the answer and decided the retrieval options needed testing.</p></div></div>
 
 <h2>Support workflow and AI boundaries</h2>
 <p>The resulting design is deliberately bounded. AI helps with interpretation and drafting only where being probabilistic is useful. Software owns the hard stops. People remain responsible for anything consequential and for every message that reaches a customer.</p>
-
-<div class="boundary-grid">
-<div class="boundary-card"><strong>AI</strong><p>Classify standard tickets, retrieve relevant context, draft a response, and surface uncertainty.</p></div>
-<div class="boundary-card"><strong>Software</strong><p>Block high-risk categories from drafting and enforce explicit escalation conditions.</p></div>
-<div class="boundary-card"><strong>Human</strong><p>Approve or rewrite responses, handle high-risk work, and take over when a conversation escalates.</p></div>
-</div>
 
 <div class="flow-diagram">
 <div class="flow-title">Ticket arrives → human handoff</div>
@@ -189,16 +172,15 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 
 <div class="flow-step"><span class="flow-num">1</span><div class="flow-content owner-customer"><span class="owner-tag">Customer</span><b>Ticket arrives</b></div></div>
 <div class="flow-connector"></div>
-<div class="flow-step"><span class="flow-num">2</span><div class="flow-content owner-system"><span class="owner-tag">AI / system</span><b>Classify the ticket</b><span>category determines which path is allowed next</span></div></div>
+<div class="flow-step"><span class="flow-num">2</span><div class="flow-content owner-system"><span class="owner-tag">AI / system</span><b>Classify and check for high risk</b><span>category, plus a separate check of the ticket text for money, security and account-change requests</span></div></div>
 
 <div class="flow-branch-wrap">
-<div class="flow-branch-label">The classification step creates two different authority paths.</div>
 <div class="flow-lanes">
 <div class="flow-lane">
 <div class="flow-lane-head neutral">Standard category</div>
 <div class="flow-mini">Retrieve approved knowledge and account context</div>
 <div class="flow-mini">Draft a response</div>
-<div class="flow-mini">Surface uncertainty or missing context for review</div>
+<div class="flow-mini">Flag uncertainty, conflicting sources or missing information for review</div>
 </div>
 <div class="flow-lane">
 <div class="flow-lane-head gold">Money / security / account access</div>
@@ -212,27 +194,27 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <div class="flow-connector"></div>
 <div class="flow-step"><span class="flow-num">4</span><div class="flow-content owner-human"><span class="owner-tag">Human</span><b>Send to the customer</b><span>nothing customer-facing is sent autonomously in this exercise</span></div></div>
 <div class="flow-connector"></div>
-<div class="flow-step"><span class="flow-num">5</span><div class="flow-content owner-system"><span class="owner-tag">AI / system</span><b>Check for escalation conditions</b><span>customer asks for a person, risk changes mid-thread, or the conversation becomes repetitive or prolonged</span></div></div>
+<div class="flow-step"><span class="flow-num">5</span><div class="flow-content owner-customer"><span class="owner-tag">Customer</span><b>Customer replies</b><span>if there&rsquo;s no follow-up, the ticket closes</span></div></div>
 <div class="flow-connector"></div>
-<div class="flow-step"><span class="flow-num">6</span><div class="flow-content owner-human"><span class="owner-tag">Human</span><b>Move to human-only handling when needed</b><span>carry the conversation history forward instead of making the customer start over</span></div></div>
+<div class="flow-step"><span class="flow-num">6</span><div class="flow-content owner-system"><span class="owner-tag">AI / system</span><b>Check for escalation conditions</b><span>customer asks for a person, risk changes mid-thread, or the conversation becomes repetitive or prolonged</span></div></div>
+<div class="flow-return"><span aria-hidden="true">↺</span> If none apply, the reply goes back to step 2 before anything new is drafted.</div>
+<div class="flow-connector"></div>
+<div class="flow-step"><span class="flow-num">7</span><div class="flow-content owner-human"><span class="owner-tag">Human</span><b>Move to human-only handling when needed</b><span>carry the conversation history forward instead of making the customer start over</span></div></div>
 </div>
-
-<h2>How the design changed</h2>
-<table class="decision-table">
-<thead><tr><th>Early assumption</th><th>After discovery</th></tr></thead>
-<tbody>
-<tr><td>AI could draft nearly every support ticket for review.</td><td>Money, security, and account-access categories bypass drafting entirely.</td></tr>
-<tr><td>Faster first response depended on a common “quick acknowledgment” workflow.</td><td>That workflow appeared uncommon, so expected gains became more modest and were not tied to it.</td></tr>
-<tr><td>Billing context required a new AI-facing integration.</td><td>The data already existed. A view/configuration change solved the need more directly.</td></tr>
-<tr><td>Bad AI answers would mainly be model-quality failures.</td><td>Stale or conflicting source material needed to be tracked as a separate failure class.</td></tr>
-<tr><td>Success could be summarized with aggressive speed targets.</td><td>Mandatory human review limits the plausible efficiency gain. Quality, boundary adherence, and root cause matter separately.</td></tr>
-</tbody>
-</table>
+<p class="small flow-caption"><em>Designed workflow. The learning prototype covered classification, the high-risk text check and retrieval; the escalation checks were designed but not built.</em></p>
 
 <h2>What I would measure in a real pilot</h2>
-<p>I would not carry the exercise's fictional target numbers forward. In a real team I would establish baselines first, then track response and handling time alongside draft acceptance/editing, escalation reasons, knowledge-source failures, boundary violations, and customer outcomes. A faster workflow would not count as a success if reps spend the saved time correcting bad drafts or if risky categories leak through the boundary.</p>
+<p>I would not carry the exercise&rsquo;s fictional target numbers forward. A real pilot would set baselines first, then track response and handling time alongside draft acceptance and editing, escalation reasons, knowledge-source failures, boundary violations, and customer outcomes. A faster workflow would not count as a success if reps spend the saved time correcting bad drafts or if risky categories leak through the boundary.</p>
 
-<div class="callout"><p><strong>What I took from the exercise:</strong> an AI workflow can change substantially before model selection or prompting becomes the important question. Several things that initially looked like AI problems turned out to be workflow, access, source-quality, or policy problems. Discovery is what exposed the difference. The limitation is equally important: simulated stakeholders can sharpen reasoning, but they cannot substitute for watching real people do the work.</p></div>
+<h2>Testing the high-risk boundary</h2>
+<p>Classification can be wrong, so I didn&rsquo;t want the decision to draft to rest on the category alone. The design adds a second check that reads the ticket text for money, security and account-change requests, whatever category the ticket was given.</p>
+<p>A rules-based learning prototype included a rough version of that check. It used simple pattern matching, ran no AI model and handled no real customers. During the exercise it was rechecked against only a handful of cases. A later recheck of the saved prototype, in November 2026, found it caught some high-risk requests and missed three. One of the misses was the prototype&rsquo;s own test case: &ldquo;I need to change my admin password immediately&rdquo; still got a draft. That test passed anyway, because it checked the ticket&rsquo;s category, not whether a draft was produced. A passing test hadn&rsquo;t shown that the boundary held.</p>
+<p>A real pilot would have to measure how many high-risk tickets get past both checks, decide whether the check should lean toward over-escalating, test how uncertain tickets are routed, and confirm that confidence scores mean what they say. Mandatory human review is another checkpoint, not a guarantee that someone notices a misrouted ticket.</p>
+
+<h2>What the exercise showed</h2>
+<p>Several things that first looked like AI problems turned out to be workflow, access, source-quality, or policy problems, and the design changed before model choice or prompting became the important question. Simulated stakeholders sharpened that reasoning, but they cannot substitute for watching real people do the work, so real discovery would still come first.</p>
+
+<div class="case-meta case-credits"><span><b>My role</b> Scope, discovery questions, boundary and handoff decisions, and which simulated findings were strong enough to change the design</span><span><b>AI collaborator</b> Rendering the workflow diagram from rules I specified, editing help on this page, and the November 2026 prototype recheck (Claude)</span></div>
 
 <footer class="case-study-footer"><a href="index.html#portfolio">Back to Applied Work →</a></footer>
 <footer class="portfolio-contact" aria-label="Contact Paige Edrington"><span class="portfolio-contact-name">Paige Edrington</span><a href="mailto:paige.edrington@gmail.com">paige.edrington@gmail.com</a><a href="https://www.linkedin.com/in/paige-edrington-38214722" target="_blank" rel="noopener noreferrer">LinkedIn</a><a href="resume.pdf" target="_blank" rel="noopener">Résumé (PDF)</a></footer>

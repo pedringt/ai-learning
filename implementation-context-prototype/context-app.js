@@ -499,6 +499,27 @@
   function simpleNote(n){ return NOTES_VIEW.simpleNote(withLinkedQuestions([n])[0],state.expandedNotes,state.editingNoteId); }
   function draftNoteRow(n){ return NOTES_VIEW.draftNoteRow(n); }
   function renderNotes(){ root.innerHTML=NOTES_VIEW.render(withLinkedQuestions(state.data.notes),notesUiState()); }
+  // Nov 3: a Review's "Read full note" opens the quoted Evidence record (matched by id) expanded in
+  // Notes, the app's existing full-text view for one Evidence item. It only changes what is shown:
+  // filters are cleared only if they would hide that note, and nothing is written. If Notes has no
+  // row for it (Evidence list unavailable), the text the Review already holds is shown in a dialog.
+  function openReviewSource(evidenceId,reviewId){
+    if(!evidenceId)return;
+    const note=state.data.notes.find(n=>n.evidenceId===evidenceId);
+    if(!note){
+      const review=state.data.reviews.find(r=>r.id===reviewId);
+      const item=(review?.evidenceItems||[]).find(x=>x.id===evidenceId);
+      if(item) showDialog(`<span class="eyebrow">Source note</span><h2 id="dialogTitle">${esc(item.label||'Source')}</h2><p class="note-full-text review-source-dialog-text">${esc(item.content)}</p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Close</button></div>`);
+      return;
+    }
+    if(!overlay.hidden)closeDialog();
+    if(!filteredNotes().some(n=>n.id===note.id)){state.notesFilter='all';state.notesDateFilter='all';state.notesSearch='';}
+    state.expandedNotes.add(note.id);
+    if(state.editingNoteId===note.id)state.editingNoteId=null;
+    navigateTo('notes');
+    const row=root.querySelector?.(`.note-index-row[data-note-id="${CSS.escape(note.id)}"]`);
+    if(row){row.scrollIntoView({block:'center'});row.focus({preventScroll:true});}
+  }
 
   function historySearchText(h){
     const evidence=(h.evidenceItems||h.evidence_items||[]).map(e=>e.content||'').join(' ');
@@ -805,6 +826,7 @@
       else if(ids.length>1){const rows=ids.map(id=>state.data.reviews.find(r=>r.id===id)).filter(Boolean).map(r=>`<button class="related-review-choice" data-action="open-specific-review" data-review-id="${r.id}"><strong>${esc(r.summary||r.title)}</strong><span>${esc(r.whyConsequential||'Needs your decision')}</span></button>`).join('');showDialog(`<span class="eyebrow">In review</span><h2 id="dialogTitle">This note is connected to ${ids.length} Reviews.</h2><div class="related-review-list">${rows}</div><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Close</button></div>`);}
       return;
     }
+    const reviewSource=e.target.closest('[data-action="open-review-source"]'); if(reviewSource){openReviewSource(reviewSource.dataset.evidenceId,reviewSource.dataset.reviewId);return;}
     const noteHistory=e.target.closest('[data-action="open-note-history"]'); if(noteHistory){const n=state.data.notes.find(x=>x.id===noteHistory.dataset.noteId);if(n?.evidenceId){state.historyEvidenceId=n.evidenceId;state.historyTopic=null;state.historySearch='';navigateTo('history',{preserveHistoryEvidence:true});window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null);}return;}
     // A plain URL hash won't survive this: context-history.js's own click
     // listener rewrites location.hash back to the bare view route (e.g.
@@ -863,7 +885,7 @@
     }
     else if(act==='new-project'){
       state.projectMenuOpen=false;
-      showDialog(`<span class="eyebrow">New project</span><h2 id="dialogTitle">Start a blank project</h2><p>Creates an empty project with no seeded Current State, Reviews, or Rules — a fresh place to build understanding from scratch.</p><label for="newProjectName" class="new-project-label">Project name</label><input id="newProjectName" class="dialog-input" type="text" maxlength="200" placeholder="e.g. AI Notes" autofocus required aria-describedby="newProjectNameError" /><p id="newProjectNameError" class="dialog-field-error" role="alert" hidden>Enter a project name.</p><div class="dialog-actions"><button class="btn primary" data-action="save-new-project">Create project</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
+      showDialog(`<span class="eyebrow">New project</span><h2 id="dialogTitle">Start a blank project</h2><p>Creates an empty project with no seeded Current State, Reviews, or Rules — a fresh place to build understanding from scratch.</p><p class="settings-note shared-project-note" id="sharedProjectNote"><strong>Projects here are shared.</strong> Other visitors can see, edit, and delete any project created here, so don’t add anything private.</p><label for="newProjectName" class="new-project-label">Project name</label><input id="newProjectName" class="dialog-input" type="text" maxlength="200" placeholder="e.g. AI Notes" autofocus required aria-describedby="sharedProjectNote newProjectNameError" /><p id="newProjectNameError" class="dialog-field-error" role="alert" hidden>Enter a project name.</p><div class="dialog-actions"><button class="btn primary" data-action="save-new-project">Create project</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
     }
     else if(act==='save-new-project'){
       const name=document.getElementById('newProjectName')?.value.trim();
@@ -1114,7 +1136,7 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry,hydrateBackend,showProjectSettings};
+  window.STATE_ASK_TEST_API={state,openReviewSource,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry,hydrateBackend,showProjectSettings};
   // state.md #115: the live Ask State drawer (context-product-polish.js's
   // runAsk) is the only Ask surface a user actually reaches. Generic
   // inventory questions ("What needs review?") still need to route to a
