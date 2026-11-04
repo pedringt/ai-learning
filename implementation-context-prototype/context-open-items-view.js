@@ -17,13 +17,58 @@
   function recordedSources(r){
     return Array.isArray(r.evidenceItems)?r.evidenceItems.filter(e=>String(e?.content||'').trim()):null;
   }
-  function sourceExcerptHtml(r){
+  // Nov 3: "Read full note" opens the complete text of the quoted Evidence record (the same id) in
+  // the Notes view; a read-only navigation. Shown only when the excerpt is shortened -- a full
+  // excerpt already shows the whole note.
+  function sourceLinkHtml(r,source){
+    if(!source?.id)return '';
+    return `<p class="review-source-actions"><button type="button" class="text-button review-source-link" data-action="open-review-source" data-evidence-id="${esc(source.id)}" data-review-id="${esc(r.id)}"><span class="review-source-link-text">Read full note</span></button></p>`;
+  }
+  function sourceExcerptHtml(r,whyShown=true){
     const sources=recordedSources(r);
     if(!sources)return '';
     if(!sources.length)return '<figure class="review-source-excerpt is-missing"><figcaption>Source</figcaption><p>No source evidence is recorded for this Review.</p></figure>';
     const first=sources[0],excerpt=sourceExcerpt(first.content),more=sources.length-1;
-    const notes=[excerpt.truncated?'Shortened':'',more?`${more} more ${more===1?'source':'sources'}`:''].filter(Boolean);
-    return `<figure class="review-source-excerpt"><figcaption>Source${first.label?` · ${esc(first.label)}`:''}</figcaption><blockquote><p>&ldquo;${esc(excerpt.text)}${excerpt.truncated?'&hellip;':''}&rdquo;</p></blockquote>${notes.length?`<p class="review-source-note">${esc(notes.join(' · '))}. Full text under Why / source.</p>`:''}</figure>`;
+    // Shortening shows as the ellipsis plus "Read full note"; further sources are listed under Why / source.
+    const note=whyShown&&more?`<p class="review-source-note">${more} more ${more===1?'source':'sources'}. Full text under Why / source.</p>`:'';
+    return `<figure class="review-source-excerpt"><figcaption>Source${first.label?` · ${esc(first.label)}`:''}</figcaption><blockquote><p>&ldquo;${esc(excerpt.text)}${excerpt.truncated?'&hellip;':''}&rdquo;</p></blockquote>${note}${excerpt.truncated?sourceLinkHtml(r,first):''}</figure>`;
+  }
+
+  // Nov 3 (Paige): Why / source is left out only when existing structured fields show it would
+  // repeat what the card already shows -- no word-overlap guessing, no model call, no new flag:
+  //   - a Review that proposes a Current State change (not a Question Review, not check-only /
+  //     at-risk) and whose source Evidence is recorded;
+  //   - exactly one recorded source (the excerpt, with "Read full note" when shortened, covers it;
+  //     several may disagree);
+  //   - no related open Review, no "Still unresolved" text, no "Does not establish" text;
+  //   - the Establishes text (proposal rationale, else why_consequential) is empty or, after
+  //     whitespace normalization, identical to that source text or to the proposed statement.
+  // A linked Question doesn't by itself keep the block (Paige, Nov 3); the same test applies.
+  // Anything else keeps Why / source.
+  const sameText=(a,b)=>{const n=v=>String(v??'').replace(/\s+/g,' ').trim();return n(a)!==''&&n(a)===n(b);};
+  // #482 (QA-11): "Still unresolved" that only restates the card's title adds nothing.
+  function hasMeaningfulUnresolved(r){
+    const plain=v=>cleanReviewCopy(v).toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+    const unresolvedText=plain(r.unresolved), titleText=plain(r.summary);
+    const repeatsTitle=!!unresolvedText&&!!titleText&&(unresolvedText===titleText||unresolvedText.includes(titleText)||titleText.includes(unresolvedText));
+    return !!(r.unresolved && !repeatsTitle && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved)));
+  }
+  function isStraightforwardReview(r){
+    if(r.reviewType==='open_question'||r.reviewType==='state_at_risk')return false;
+    const proposals=Array.isArray(r.proposals)?r.proposals:[];
+    if(!proposals.length)return false;
+    const sources=recordedSources(r);
+    if(!sources||sources.length!==1)return false;
+    if((r.relatedOpenReviews||[]).length)return false;
+    if(hasMeaningfulUnresolved(r)||String(r.doesNot||'').trim())return false;
+    const establishes=String(r.establishes??'').trim();
+    return !establishes||sameText(establishes,sources[0].content)||sameText(establishes,r.proposed)||proposals.some(p=>sameText(establishes,p.proposed_statement));
+  }
+  // Nov 3: a pure addition (every proposal creates, no existing Current State item involved) has
+  // nothing to compare against, so the empty "Current understanding" box is left out.
+  function isPureAddition(r){
+    const proposals=Array.isArray(r.proposals)?r.proposals:[];
+    return proposals.length>0&&proposals.every(p=>p.operation==='create')&&!(r.affectedStateItems||[]).length;
   }
   function fullSourcesHtml(r){
     const sources=recordedSources(r);
@@ -57,11 +102,9 @@
     const blocked=sourceMissing?` disabled aria-describedby="${blockedId}"`:'';
     const questionProposal=r.questionToCreate;
     const questionReady=!!questionProposal?.id&&questionProposal.status==='pending';
-    // #482 (QA-11): "Still unresolved" that only restates the card's title adds nothing.
-    const plain=v=>cleanReviewCopy(v).toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
-    const unresolvedText=plain(r.unresolved), titleText=plain(r.summary);
-    const repeatsTitle=!!unresolvedText&&!!titleText&&(unresolvedText===titleText||unresolvedText.includes(titleText)||titleText.includes(unresolvedText));
-    const meaningfulUnresolved=r.unresolved && !repeatsTitle && !/^nothing beyond this proposed change/i.test(cleanReviewCopy(r.unresolved));
+    const meaningfulUnresolved=hasMeaningfulUnresolved(r);
+    // Nov 3: Why / source is dropped only when structured fields show it would repeat the card.
+    const simple=!isQuestionReview&&!checkOnly&&!sourceMissing&&isStraightforwardReview(r);
     const sourceMeta=sourceNote?`${sourceNote.date} · ${sourceNote.source}`:'';
     const chevron=accordion&&expanded?'⌃':'›';
     const head=`<span class="open-question-copy"><span class="open-item-label blocking">Review</span><span class="open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><span class="question-card-chevron" aria-hidden="true">${chevron}</span>`;
@@ -88,7 +131,8 @@
     const relatedBlock=(r.relatedOpenReviews||[]).length
       ? `<div class="review-context-block review-related-block"><span>${r.relatedOpenReviews.length>1?'Related open reviews':'Related open review'}</span>${r.relatedOpenReviews.map(x=>`<p>&ldquo;${esc(x.decisionQuestion)}&rdquo;</p>`).join('')}</div>`
       : '';
-    const body=`<div class="review-decision-context"><div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div><div class="review-context-block review-evidence-block"><span>${isQuestionReview?(questionProposal?.existing_question_id?'Already tracked':'Question to track'):checkOnly?'What the evidence says':'Proposed change'}</span><p>${esc(isQuestionReview?(questionReady?questionProposal.existing_question_text||questionProposal.text:'Question suggestion unavailable. Refresh and review it again.'):checkOnly?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p>${checkOnly?'':sourceExcerptHtml(r)}</div>${!checkOnly&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}${relatedBlock}</div>${sourceMissing?`<p class="review-blocked-note" id="${blockedId}">No source Evidence is recorded, so this Review can&rsquo;t change Current State. You can still leave it unchanged.</p>`:''}<div class="review-actions">${actions}</div><details class="reasoning"><summary>Why / source</summary>${fullSourcesHtml(r)}<p><strong>Establishes:</strong> ${esc(cleanReviewCopy(r.establishes))}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`;
+    const addition=!isQuestionReview&&!checkOnly&&!sourceMissing&&isPureAddition(r);
+    const body=`<div class="review-decision-context">${addition?'':`<div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div>`}<div class="review-context-block review-evidence-block"><span>${isQuestionReview?(questionProposal?.existing_question_id?'Already tracked':'Question to track'):checkOnly?'What the evidence says':addition?'Proposed addition to Current State':'Proposed change'}</span><p>${esc(isQuestionReview?(questionReady?questionProposal.existing_question_text||questionProposal.text:'Question suggestion unavailable. Refresh and review it again.'):checkOnly?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p>${checkOnly?'':sourceExcerptHtml(r,!simple)}</div>${!checkOnly&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}${relatedBlock}</div>${sourceMissing?`<p class="review-blocked-note" id="${blockedId}">No source Evidence is recorded, so this Review can&rsquo;t change Current State. You can still leave it unchanged.</p>`:''}<div class="review-actions">${actions}</div>${simple?'':`<details class="reasoning"><summary>Why / source</summary>${fullSourcesHtml(r)}<p><strong>Establishes:</strong> ${esc(cleanReviewCopy(r.establishes))}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`}`;
     if(accordion) return `<article class="review-record is-expanded" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="true">${head}</button><div class="review-card-body" style="padding:0 16px 16px 16px!important;box-sizing:border-box">${body}</div></article>`;
     return `<article class="review-card compact-review" data-review-card="${r.id}"><span class="review-row-head open-question-copy"><span class="open-item-label review">Review</span><span class="review-card-title open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><div class="review-card-body">${body}</div></article>`;
   }
@@ -195,5 +239,5 @@
     return `<section class="page collection-page open-items-page"><div class="page-head"><div><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>${countSummary}Review what State thinks new information means, then decide what happens to Current State.</p>${reviewHelp}</div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable,openItemSections)}${openItemSection('Blocking questions',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable,openItemSections)}${openItemSection('Open questions',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable,openItemSections)}${openItemSection('Draft notes',draftsLoading?'…':draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,draftsStatus==='loaded'&&!draftNotes.length,openItemSections)}</div></section>`;
   }
 
-  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,adjustDialogHtml,questionDialogHtml,cleanReviewCopy});
+  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,isStraightforwardReview,adjustDialogHtml,questionDialogHtml,cleanReviewCopy});
 })();

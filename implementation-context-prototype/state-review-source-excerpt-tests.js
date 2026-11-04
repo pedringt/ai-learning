@@ -43,11 +43,16 @@ check('a backend payload without evidence_items leaves evidenceItems undefined (
 const html=openItems.reviewCard(mapped,true,false);
 const fig=figure(html);
 check('an expanded Review shows a source excerpt',fig.includes('<blockquote>')&&fig.includes('$40,000 for discovery and first implementation'),html);
-check('the excerpt sits with the proposed change, before the decision buttons and Why / source',
-  html.indexOf('Proposed change')<html.indexOf('review-source-excerpt')&&html.indexOf('review-source-excerpt')<html.indexOf('review-actions')&&html.indexOf('review-source-excerpt')<html.indexOf('Why / source'),html);
+check('the excerpt sits with the proposed change, before the decision buttons',
+  html.indexOf('Proposed change')<html.indexOf('review-source-excerpt')&&html.indexOf('review-source-excerpt')<html.indexOf('review-actions'),html);
+// A Review whose rationale adds something (here: a linked Question it would answer) keeps Why / source.
+const reasoned={...mapped,resolvesQuestionIds:['q-budget-owner']};
+const reasonedHtml=openItems.reviewCard(reasoned,true,false);
+check('a Review that keeps its reasoning shows the excerpt before Why / source',
+  reasonedHtml.indexOf('review-source-excerpt')<reasonedHtml.indexOf('review-actions')&&reasonedHtml.indexOf('review-source-excerpt')<reasonedHtml.indexOf('Why / source'),reasonedHtml);
 check('the excerpt names its source',fig.includes('<figcaption>Source · Project update · '),fig);
 check('the excerpt quotes the Evidence, not the AI rationale',!fig.includes('recorded the pilot budget as approved'),fig);
-check('the AI rationale stays under Why / source, apart from the quote',why(html).includes(RATIONALE)&&!fig.includes(RATIONALE),why(html));
+check('the AI rationale stays under Why / source, apart from the quote',why(reasonedHtml).includes(RATIONALE)&&!figure(reasonedHtml).includes(RATIONALE),why(reasonedHtml));
 check('a short source is not marked as shortened',!fig.includes('&hellip;')&&!fig.includes('Shortened'),fig);
 check('Update Current State / Adjust / Leave unchanged are unchanged',
   html.includes('data-action="review-update" data-review="r-budget">Update Current State<')&&html.includes('data-action="open-adjust-review" data-review="r-budget">Adjust<')&&html.includes('data-action="review-keep" data-review="r-budget" title="Do not apply this evidence to Current State.">Leave unchanged<'),html);
@@ -57,7 +62,7 @@ const longText=`Weekly sync notes. ${'The team walked through every open vendor 
 const longHtml=openItems.reviewCard(api.mapApiReview({...budget,evidence_items:[{id:'e-long',content:longText,source_type:'slack',source_name:'#pilot-security',submitted_at:'2026-09-02'}]},''),true,false);
 const longFig=figure(longHtml);
 check('a long source is cut short with a visible ellipsis',longFig.includes('&hellip;&rdquo;')&&!longFig.includes('retention is thirty days'),longFig);
-check('a shortened excerpt says the full text is under Why / source',longFig.includes('Shortened. Full text under Why / source.'),longFig);
+check('a shortened excerpt offers "Read full note" for the same Evidence',longFig.includes('data-action="open-review-source" data-evidence-id="e-long"')&&longFig.includes('Read full note'),longFig);
 check('the full source text is still under Why / source',why(longHtml).includes('Final line: retention is thirty days.'),why(longHtml));
 check('a named source shows its name in the label',longFig.includes('Slack · #pilot-security · '),longFig);
 
