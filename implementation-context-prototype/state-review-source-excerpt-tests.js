@@ -43,11 +43,16 @@ check('a backend payload without evidence_items leaves evidenceItems undefined (
 const html=openItems.reviewCard(mapped,true,false);
 const fig=figure(html);
 check('an expanded Review shows a source excerpt',fig.includes('<blockquote>')&&fig.includes('$40,000 for discovery and first implementation'),html);
-check('the excerpt sits with the proposed change, before the decision buttons and Why / source',
-  html.indexOf('Proposed change')<html.indexOf('review-source-excerpt')&&html.indexOf('review-source-excerpt')<html.indexOf('review-actions')&&html.indexOf('review-source-excerpt')<html.indexOf('Why / source'),html);
+check('the excerpt sits with the proposed change, before the decision buttons',
+  html.indexOf('Proposed change')<html.indexOf('review-source-excerpt')&&html.indexOf('review-source-excerpt')<html.indexOf('review-actions'),html);
+// A Review whose rationale adds something (here: a linked Question it would answer) keeps Why / source.
+const reasoned={...mapped,resolvesQuestionIds:['q-budget-owner']};
+const reasonedHtml=openItems.reviewCard(reasoned,true,false);
+check('a Review that keeps its reasoning shows the excerpt before Why / source',
+  reasonedHtml.indexOf('review-source-excerpt')<reasonedHtml.indexOf('review-actions')&&reasonedHtml.indexOf('review-source-excerpt')<reasonedHtml.indexOf('Why / source'),reasonedHtml);
 check('the excerpt names its source',fig.includes('<figcaption>Source · Project update · '),fig);
 check('the excerpt quotes the Evidence, not the AI rationale',!fig.includes('recorded the pilot budget as approved'),fig);
-check('the AI rationale stays under Why / source, apart from the quote',why(html).includes(RATIONALE)&&!fig.includes(RATIONALE),why(html));
+check('the AI rationale stays under Why / source, apart from the quote',why(reasonedHtml).includes(RATIONALE)&&!figure(reasonedHtml).includes(RATIONALE),why(reasonedHtml));
 check('a short source is not marked as shortened',!fig.includes('&hellip;')&&!fig.includes('Shortened'),fig);
 check('Update Current State / Adjust / Leave unchanged are unchanged',
   html.includes('data-action="review-update" data-review="r-budget">Update Current State<')&&html.includes('data-action="open-adjust-review" data-review="r-budget">Adjust<')&&html.includes('data-action="review-keep" data-review="r-budget" title="Do not apply this evidence to Current State.">Leave unchanged<'),html);
