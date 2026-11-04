@@ -16,15 +16,12 @@
 .case-system-page .case-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:26px}
 .case-system-page .case-meta span{min-width:0;line-height:1.45}
 .case-system-page .meridian-product-callout{margin-top:24px}
-.taste-example{max-width:860px;margin:22px 0;border:1px solid var(--border);border-radius:16px;background:var(--card);overflow:hidden}
-.taste-example>span{display:block;padding:11px 16px;background:var(--soft);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--purple)}
-.taste-example>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-.taste-example article{padding:18px}
-.taste-example article+article{border-left:1px solid var(--border)}
-.taste-example strong{display:block;margin-bottom:5px;font-size:15px}
-.taste-example p{margin:0;font-size:13px;line-height:1.5}
-.product-model-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.evidence-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
-@media(max-width:1000px){.evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:800px){.case-system-page .case-meta{grid-template-columns:1fr}.case-system-page .meridian-case-hero{padding-bottom:24px}.taste-example>div,.product-model-grid,.evidence-grid{grid-template-columns:1fr!important}.taste-example article+article{border-left:0;border-top:1px solid var(--border)}}
+.taste-effects{width:100%;max-width:860px;margin:18px 0 8px;border-collapse:collapse;font-size:14px;line-height:1.5}
+.taste-effects th,.taste-effects td{padding:10px 14px 10px 0;text-align:left;vertical-align:top}
+.taste-effects thead th{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);border-bottom:1px solid var(--border)}
+.taste-effects tbody th{width:28%;font-weight:700}
+.lead-in{font-weight:700}
+@media(max-width:800px){.case-system-page .case-meta{grid-template-columns:1fr}.case-system-page .meridian-case-hero{padding-bottom:24px}.taste-effects,.taste-effects tbody,.taste-effects tr,.taste-effects th,.taste-effects td{display:block;width:auto}.taste-effects thead{display:none}.taste-effects tbody th{padding-bottom:2px}.taste-effects td{padding-top:0;padding-bottom:12px}}
 </style>
 <!-- social-preview:begin -->
 <meta content="website" property="og:type"/>
@@ -50,82 +47,63 @@
 
 <header class="meridian-case-hero flagship-hero">
 <h1>Tastemake</h1>
-<p class="lead">Tastemake is a working product for user-editable personalization. Recommendations are the surface; the harder question is whether people can see, understand, and correct the model an AI builds of their taste.</p>
-<div class="case-meta"><span><b>My role</b> Product model, UX rules, evaluation &amp; testing</span><span><b>AI’s role</b> Most of the coding, plus research and debugging (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, not yet tested with outside users</span></div>
-</header><p class="in-short"><span>In short</span>Tastemake lets people see and correct the taste profile behind their recommendations.</p>
+<p class="lead">Tastemake is a recommendation prototype for books, movies, TV, and games. It makes its inferred taste patterns visible so people can question and correct them.</p>
+<div class="case-meta"><span><b>My role</b> Product framing, requirements, UX direction, decisions, evaluation, QA, and release review</span><span><b>AI’s role</b> All code, plus technical research and implementation support (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, not yet tested with outside users</span></div>
+</header>
 
-<aside class="meridian-product-callout"><div><span>Try Tastemake</span><strong>Build and refine a Taste Profile</strong><p>Start with a few favorites, react to recommendations, and see what Tastemake learns from the result.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>, a real profile with 61 titles, one correction and one confirmed pattern.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
+<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Build and correct a Taste Profile</strong><p>Pick a few favorites or rate familiar titles in Browse, react to recommendations, and see which patterns Tastemake infers.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>: my real profile, with 55 rated titles and 6 bookmarked titles, one pattern I confirmed and one I marked partly accurate. It is read-only and makes no AI calls.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
 
 <article class="case-page-content flagship-case">
 
 <section class="section narrative-open">
 <div class="kicker">The problem</div>
-<h2>My taste was split across apps, and their recommendations were hard to understand.</h2>
-<p>I’ve loved books, games, movies, and TV my whole life, but my taste was split across separate apps. In my experience, those apps mainly helped me log what I’d tried. Recommendations were often weak, and I couldn’t always tell why something had been suggested. I didn’t have a useful way to explain why I liked something or correct what the system inferred.</p>
+<h2>I wanted recommendations that understood why I liked something.</h2>
+<p>I’ve loved books, games, movies, and TV my whole life, but I used separate apps to keep track of them. In my experience, those apps mainly helped me log what I’d tried. Recommendations were often weak, and I couldn’t always tell why something had been suggested. I didn’t have a useful way to explain why I liked something or correct what the system inferred.</p>
 <p>I didn’t want more recommendations. I wanted one place that showed what it thought my taste was, let me fix it, and carried those corrections into future recommendations across books, movies, TV, and games. That became Tastemake.</p>
 </section>
 
 <section class="section product-model">
-<div class="kicker">The product model</div>
-<h2>Feedback gives Tastemake a working theory, not a permanent label.</h2>
-<div class="human-flow"><span>Item feedback</span><b>→</b><span>Inferred pattern</span><b>→</b><span class="accent">User correction</span><b>→</b><span class="accent">Refined profile</span><b>→</b><span>New recommendations</span></div>
-<div class="surface-grid product-model-grid">
-<article><span>Evidence vs. intent</span><strong>Not every action means “I like this”</strong><p>Loved, Liked, and Didn’t like come from something the user actually tried. Saving or browsing does not count as taste evidence on its own.</p></article>
-<article><span>Visible learning</span><strong>The profile shows its work</strong><p>Tastemake shows the patterns it is using instead of hiding them inside a recommendation score.</p></article>
-<article><span>User control</span><strong>Corrections affect what happens next</strong><p>A user can say a pattern is right, partly right, too strong, or just wrong. Tastemake keeps that correction separate from the original AI guess.</p></article>
-</div>
+<div class="kicker">How it works</div>
+<h2>What you tell it, what it infers, and what a correction changes</h2>
+<p><span class="lead-in">What you supply.</span> Favorites, and ratings of things you’ve actually tried: Loved it, Liked it, or Didn’t like it. Saving a title you haven’t tried, or saying you’re not interested, records intent. It never counts as taste evidence.</p>
+<p><span class="lead-in">What Tastemake infers.</span> A short list of taste patterns, such as “Atmosphere-driven horror in games.” Each one names the titles that support it, notes any that cut against it, and says how settled it is: emerging, supported, or strong.</p>
+<p><span class="lead-in">How you correct it.</span> For any pattern you can say it’s accurate, partly accurate, not you, or that you’re not sure. You can also say how much it matters, that it only holds in some contexts, or that it doesn’t apply to a category.</p>
+<table class="taste-effects">
+<thead><tr><th scope="col">Part of the product</th><th scope="col">What a correction changes today</th></tr></thead>
+<tbody>
+<tr><th scope="row">Taste Profile</th><td>Your answer is shown with the pattern and stored separately from Tastemake’s guess. The original pattern and its history stay visible. A correction never raises a pattern’s confidence, which comes only from what you tried.</td></tr>
+<tr><th scope="row">Profile refresh</th><td>The AI that redrafts your patterns receives your answers. Software then drops any pattern you said isn’t you and limits claims you narrowed to some contexts or categories.</td></tr>
+<tr><th scope="row">Candidate selection</th><td>No change. Software chooses which catalog titles to offer from your ratings, not from your corrections.</td></tr>
+<tr><th scope="row">AI ordering and explanations</th><td>The AI that orders the offered titles and explains each pick receives your answers. It is told not to contradict them and to apply a partly accurate pattern narrowly. Software rejects a pick that tests a pattern you said isn’t you.</td></tr>
+</tbody>
+</table>
+<p>Whether a correction makes later recommendations better has not been measured.</p>
 </section>
 
-<section class="section seam-learning">
-<div class="kicker">What changed</div>
-<h2>The biggest improvement was showing what actually changed.</h2>
-<p>Earlier versions could build a Taste Profile, but the user still had to guess what their feedback changed. I redesigned that part so Tastemake explains what it learned and how that will affect future recommendations.</p>
-<div class="taste-example">
-<span>A real correction from my Example Profile</span>
-<div>
-<article><strong>Tastemake inferred</strong><p>“Quirky character-driven comedy”: deadpan, character-led TV comedy, supported by four shows I had tried, including <em>Nathan for You</em> and <em>The Rehearsal</em>.</p></article>
-<article><strong>I told it</strong><p>Partly accurate.</p></article>
-<article><strong>What that changes</strong><p>Tastemake records my answer separately from its guess. The AI that ranks recommendations and refreshes the profile is told to apply the pattern narrowly. My answer does not change the pattern’s weight in Tastemake’s own ranking.</p></article>
-</div>
-</div>
-<p>That correction is recorded, but I have not measured whether it improved later recommendations, and the profile was not refreshed after it.</p>
-<p>Recommendation explanations use the same approach: why this might work, what Tastemake is testing, and what could still be wrong.</p>
-</section>
+<!-- "What changed" (original inference -> user correction -> observed system change) is left out until the
+     Tastemake ranking/feedback work (issues #317, #318, #321, PR #261) is finished and a correction's effect
+     has been verified. "A confident miss" is out for the same reason: no concrete, verified miss to cite. -->
 
 <section class="section next-tests">
 <div class="kicker">What testing changed</div>
 <h2>Testing made the product simpler.</h2>
-<div class="causal-story">
-<div><span>A confident miss</span><strong>When a recommendation missed, I used the failure to refine the underlying taste pattern rather than just suppress that one result.</strong></div>
-<div><span>Cold-start friction</span><strong>Browse gave people another way to find familiar titles when four favorites were hard to recall. Browsing itself still does not count as taste evidence.</strong></div>
-<div><span>Too much feedback at once</span><strong>I moved deeper taste questions behind the first reaction so the recommendation card stays simple unless more detail is useful.</strong></div>
-</div>
+<p><span class="lead-in">Cold-start friction.</span> Browse helps you find familiar titles and star the four favorites needed to get started. Ratings become taste evidence; simply viewing or saving a title does not.</p>
+<p><span class="lead-in">Too much feedback at once.</span> I moved deeper taste questions behind the first reaction. The card first asks whether you’ve tried something and how it landed; the questions about why only appear after that.</p>
 </section>
 
 <section class="section seam-learning">
 <div class="kicker">Evidence from the build</div>
-<h2>The product only worked if feedback meaningfully improved future recommendations.</h2>
-<p>The current version uses live model calls for two distinct AI functions: ranking recommendations and generating the Taste Profile. The surrounding product logic stays deterministic, including catalog constraints, saved-versus-tried state, and the controls that decide what evidence is allowed to influence the profile.</p>
-<div class="surface-grid evidence-grid">
-<article><span>Live AI, bounded by software</span><strong>Two AI functions, clear limits</strong><p>Live AI ranks recommendations and builds Taste Profile hypotheses. Software still decides what counts as evidence, which catalog items are allowed, and whether model output is valid.</p></article><article><span>Latency</span><strong>Speed became a product problem</strong><p>Recommendation generation was taking roughly 10–16 seconds in testing, with model inference dominating the wait. At that point the delay was part of the user experience, not just a backend metric. I reduced unnecessary prompt context and changed the loading experience so the flow stayed understandable while the model was working.</p></article>
-<article><span>Real catalog</span><strong>It works across books, movies, TV, and games</strong><p>Tastemake pulls from real catalog sources, then applies its own rules and stored metadata so the product is not limited to a hand-written demo set.</p></article>
-<article><span>Regression coverage</span><strong>Important rules became tests</strong><p>I built coverage around recommendation quality, AI output validation, evidence rules, profile corrections, accessibility, mobile layout, and the first learning loop.</p></article>
-</div>
-</section>
-
-<section class="section role-split">
-<div class="kicker">My role</div>
-<h2>How I split the work</h2>
-<div class="surface-grid">
-<article><span>My role</span><ul><li>defined the product model and UX rules</li><li>redesigned the Taste Profile so Tastemake explains what it learned and how that will affect future recommendations</li><li>moved deeper taste questions behind the first reaction so the recommendation card stays simple</li><li>led evaluation and testing, including using a confident miss to refine the underlying taste pattern rather than just suppress that one result</li></ul></article>
-<article><span>AI’s part</span><ul><li>most of the coding, through ChatGPT and Claude</li><li>research</li><li>debugging</li></ul></article>
-</div>
+<h2>What I tested—and what remains unproven</h2>
+<p>Software and AI have separate jobs. Software retrieves real catalog candidates across books, movies, TV, and games, removes anything you’ve already seen or ruled out, and picks the six that best match everything you’ve rated. A live AI call orders those six and writes a one-line reason that cites something you tried. Software checks that answer, and if the call fails it shows its own picks instead. A second AI call drafts the Taste Profile’s patterns, and software decides what counts as evidence and rejects patterns the evidence doesn’t support.</p>
+<p><span class="lead-in">Latency.</span> Waiting for recommendations became a product-design concern. I shortened the AI’s answers, sped up candidate retrieval and revised the loading experience, but I did not measure the resulting performance improvement.</p>
+<p><span class="lead-in">Automated checks.</span> Tests cover the evidence rules, AI output validation, profile corrections, accessibility, and layout at several screen widths. They show those rules hold. They don’t show that the recommendations are useful.</p>
+<p><span class="lead-in">Unproven.</span> Whether corrections improve later recommendations, and whether anyone other than me finds the recommendations better. Tastemake hasn’t been tested with outside users.</p>
 </section>
 
 <section class="section current-conclusion">
 <div class="kicker">Where I landed</div>
-<h2>The more interesting product was the editable taste model behind the recommendations.</h2>
-<p>The product got more interesting when feedback became part of the taste profile itself. A useful correction should change how the system understands someone’s taste and what it recommends next.</p>
+<h2>The editable taste model is the interesting part.</h2>
+<p>Tastemake shows the patterns behind its recommendations and lets people correct them. Those corrections reach the AI that orders and explains picks, but I haven’t yet shown that they make recommendations better, and no outside users have tried it.</p>
 <footer class="case-study-footer"><a href="index.html#portfolio">Back to Applied Work →</a></footer>
 </section>
 

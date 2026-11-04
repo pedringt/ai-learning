@@ -97,6 +97,14 @@ original source. Software merges only exact normalized duplicates across
 chunk outputs; it does not fuzzy-guess that two differently worded claims
 mean the same thing (`baseline_setup.py`).
 
+Routine starting facts (open `missing_understanding` Reviews whose pending
+proposals are all `create` operations) can be confirmed together in one
+human-authorized step (`baseline_draft.py`'s `confirm_starting_state()`).
+Every visible routine proposal must be explicitly accepted or rejected, so
+leaving one out cannot authorize it. That step cannot resolve Question,
+conflict, risk, or update Reviews, and a routine fact with a year or amount
+the source never states is held back for its own Review first (#240).
+
 Before Baseline Setup can finish, structural coverage checks require no open
 Reviews and no failed or still-processing Evidence. Finishing setup only
 marks the project as established; it does not itself create Current State or
@@ -119,7 +127,11 @@ If a piece of processed Evidence produced no Review, a person can explicitly
 ask State to reconsider it (`POST /api/evidence/{id}/promote`). That reruns
 the interpretation with user-requested-maintenance context and may create a
 Review. It never writes Current State directly; Current State remains
-unchanged until a resulting Review is accepted. The reconsider/reanalyze
+unchanged until a resulting Review is accepted. In the UI this is the
+**Propose for Current State** action. It stays available after earlier
+Reviews on that Evidence have resolved without a State change, as long as no
+unresolved Review for that Evidence exists (`context-notes-view.js`,
+covered by `state-current-state-promotion-tests.js`). The reconsider/reanalyze
 paths are project-scoped, so Evidence from one project cannot be acted on
 through another project.
 
@@ -239,8 +251,18 @@ same underlying fact.
 - **Cannot do**: create, accept, or modify a Review, Question, or Current
   State. A query that reads like an instruction is redirected to Add
   Evidence instead of acted on.
-- **Interaction**: the UI can stream answers, accept follow-up questions,
-  and cancel in-progress requests. Those interaction features do not weaken
+- **Unknowns**: when the record cannot answer, Ask can point to an existing
+  open Question or hand the unknown to a person to review and add as a
+  Question. The handoff uses a conservative near-duplicate wording check to
+  reuse an open Question rather than offer a new one
+  (`context-ask-question-handoff.js`). Nothing is created without that
+  person's action.
+- **Interaction**: the UI can stream answers and cancel in-progress
+  requests. Each Ask request is answered from the project context. To refine
+  an answer, edit the question and ask again; Ask does not retain a
+  conversational thread. (The live drawer, `context-product-polish.js`'s
+  `runAsk()`, always passes no previous answer. The API still accepts an
+  optional `previous_answer` field, but the UI does not send it.) Those interaction features do not weaken
   the read-only authority boundary.
 
 (Implementation: `ask_service.py`. Selection and synthesis are separate
@@ -308,8 +330,9 @@ these and any newer findings.
 ## 15. Go deeper
 
 - Case study and product decisions: `implementation-context.html`.
-- Public behavioral-contract page (this document's counterpart):
-  `state-how-it-works.html`.
+- The former public explainer page, `state-how-it-works.html`, was retired
+  in November 2026; `/state-how-it-works` now redirects to the case study's
+  "What I built" section, and this document holds the technical detail.
 - Baseline Setup implementation: `state-project-complete/baseline_setup.py`.
 - Source: [repository README](../README.md), `state-project-complete/`
   (backend), `implementation-context-prototype/` (frontend).

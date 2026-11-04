@@ -21,22 +21,13 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 .case-system-page .case-meta b{color:var(--ink);margin-right:6px}
 .case-system-page .meridian-product-callout{margin-top:24px}
 .case-system-page h3{margin:0 0 7px;font-size:16px}.case-system-page .case-page-content p,.case-system-page .case-page-content li{font-size:14px;line-height:1.68}
-.callout{margin:22px 0;padding:18px 20px;border-left:4px solid var(--purple);border-radius:0 12px 12px 0;background:color-mix(in srgb,var(--softp) 55%,var(--card))}
-.callout p{margin:0;font-size:16px}
-.grid2,.grid3{display:grid;gap:14px;margin-top:14px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid2{display:grid;gap:14px;margin-top:14px;grid-template-columns:repeat(2,minmax(0,1fr))}
 .card{padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--card)}.card p{margin:7px 0 0;color:var(--muted)}
-.tag{display:inline-flex;margin-bottom:8px;padding:5px 8px;border:1px solid color-mix(in srgb,var(--purple) 26%,var(--border));border-radius:999px;background:var(--softp);color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}
-.product-model{margin:18px 0;padding:16px;border:1px solid var(--border);border-radius:18px;background:var(--soft)}
-.product-model-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
-.product-panel{padding:15px;border:1px solid var(--border);border-radius:13px;background:var(--card)}
-.product-panel strong{display:block}.product-panel .big{margin:5px 0 7px;font-size:20px;line-height:1.2;font-weight:850}
-.signal{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12px}.signal:first-of-type{border-top:0}.signal b{font-weight:800}
-.example{margin:16px 0;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--card)}.example-head{padding:17px 18px;border-bottom:1px solid var(--border);background:var(--softp)}.example-head p{margin:5px 0 0;color:var(--muted)}.example-row{padding:15px 18px;border-bottom:1px solid var(--border)}.example-row:last-child{border-bottom:0}.example-row p{margin:5px 0 0}.example-label{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
-.flow{display:grid;gap:9px;margin-top:16px}.flow-row{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}.num{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--purple);font-size:11px;font-weight:900}.flow-card{padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:var(--card)}.flow-card p{margin:4px 0 0;color:var(--muted)}
-.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.role-grid ul{margin:8px 0 0;padding-left:18px}.role-grid li+li{margin-top:4px}
-.evidence-list{display:grid;gap:8px;margin-top:12px}.evidence-item{display:grid;grid-template-columns:130px minmax(0,1fr);gap:14px;padding:11px 0;border-top:1px solid var(--border)}.evidence-item:first-child{border-top:0}.evidence-item strong{font-size:12px}.evidence-item span{color:var(--muted);font-size:13px}
+.lead-in{font-weight:700}
+.ph-example{margin:16px 0;padding:16px 18px;border:1px solid var(--border);border-radius:16px;background:var(--card)}.ph-example p{margin:8px 0 0}.ph-example .example-label{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
+.ph-changes{width:100%;margin:14px 0 0;border-collapse:collapse;font-size:14px;line-height:1.55}.ph-changes th,.ph-changes td{padding:10px 14px 10px 0;text-align:left;vertical-align:top}.ph-changes thead th{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);border-bottom:1px solid var(--border)}.ph-changes tbody th{width:20%;font-weight:700}
 
-@media(max-width:760px){.grid2,.grid3,.product-model-grid,.role-grid{grid-template-columns:1fr}.evidence-item{grid-template-columns:1fr;gap:3px}.case-system-page .case-meta{grid-template-columns:1fr}}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}.case-system-page .case-meta{grid-template-columns:1fr}.ph-changes,.ph-changes tbody,.ph-changes tr,.ph-changes th,.ph-changes td{display:block;width:auto}.ph-changes thead{display:none}.ph-changes tbody th{padding-bottom:2px}.ph-changes td{padding-top:0;padding-bottom:10px}.ph-changes td[data-label]::before{content:attr(data-label) ": ";font-weight:700}}
 </style>
 <script>
 (function () {
@@ -96,10 +87,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 
 <header class="meridian-case-hero flagship-hero">
 <h1>Project Health</h1>
-<p class="lead">Project Health brings together product quality, incidents, delivery, and usage signals so teams can see what actually needs attention.</p>
-<div class="case-meta"><span><b>My role</b> Product framing, UX, QA, eval review</span><span><b>AI’s role</b> Most of the coding, plus tests and drafting (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, built around my own projects</span></div>
-</header><p class="in-short"><span>In short</span>Project Health turns scattered product signals into a clearer picture of what needs attention.</p>
-<aside class="meridian-product-callout"><div><span>Try Project Health</span><strong>See the signals come together</strong><p>Open the dashboard I built around my own projects to review quality, delivery, and monitoring in one place.</p></div><a class="meridian-primary-action" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health <span aria-hidden="true">↗</span></a></aside>
+<p class="lead">Project Health is a dashboard that brings product quality, incidents, delivery, and usage signals from my projects into one place.</p>
+<div class="case-meta"><span><b>My role</b> Product framing, requirements, UX direction, decisions, eval review, QA, and release review</span><span><b>AI’s role</b> All code, test implementation, technical research, and copy assistance (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, built around my own projects</span></div>
+</header>
+<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Open the dashboard</strong><p>It shows quality, delivery, and monitoring for my own projects, with links to the underlying tools.</p></div><a class="meridian-primary-action" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health <span aria-hidden="true">↗</span></a></aside>
 
 
 <article class="case-page-content flagship-case">
@@ -107,80 +98,59 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker">The problem</div>
 <h2>A failed release, a lower eval score, and a runtime warning all lived in different places.</h2>
-<p>As I built and maintained several prototypes, checking on them meant opening too many separate tools and pages. I wanted one place to see failures across projects and jump into the relevant tool when something needed attention. That became Project Health: a central dashboard for seeing what needed a closer look and getting to it.</p>
-<p>The information already existed, spread across deployments, commits, evals, analytics, logs and the live products. The product decisions were about bringing it together without losing where each signal came from: link back to the source tool, keep a failed or missing check distinct from a healthy result, and help explain a failure. A failed eval is explained from its recorded results with no model call. Release and deployment problems go to a bounded, read-only AI investigation.</p>
+<p>As I built and maintained several prototypes, checking on them meant opening too many separate tools and pages. I wanted one place to see failures across projects and jump into the relevant tool when something needed attention. That became Project Health: a central dashboard for seeing what needed attention and opening the right tool to investigate.</p>
+<p>The information already existed in deployments, evals, analytics, and logs. The product work was bringing it together without losing where each signal came from.</p>
 </section>
 
 <section class="section">
 <div class="kicker">What I built</div>
-<h2>A dashboard that brings product signals into one place so teams can quickly see what needs attention first.</h2>
-<div class="product-model" aria-label="Simplified Project Health overview">
-  <div class="product-model-grid">
-    <section class="product-panel">
-      <span class="tag">Overview</span>
-      <strong>What needs attention</strong>
-      <div class="big">The first question is what needs attention.</div>
-      <div class="signal"><span>Product focus</span><b>goal · watch · next decision</b></div>
-      <div class="signal"><span>Recent changes</span><b>what changed since the last visit</b></div>
-    </section>
-    <section class="product-panel">
-      <span class="tag">Ship check</span>
-      <strong>Would I hesitate to ship?</strong>
-      <p style="margin:7px 0 0;color:var(--muted);font-size:12px">Project Health brings together product quality, delivery, user impact, and missing signals to help answer whether anything should block or delay a release.</p>
-    </section>
-  </div>
+<h2>One starting point for checking my projects.</h2>
+<p>I chose which signals mattered and how to order them. The overview leads with what needs attention, so I can decide where to look first, and it answers two questions.</p>
+<div class="grid2">
+  <div class="card"><h3>What needs attention?</h3><p>See the project’s current goal, known concerns, next decision, and changes since your last visit.</p></div>
+  <div class="card"><h3>Is anything blocking release?</h3><p>Review quality failures, delivery status, potential user impact, and missing checks before deciding whether to ship.</p></div>
 </div>
-<p>Three product decisions shaped it.</p>
-<div class="grid3">
-  <div class="card"><span class="tag">01</span><h3>Keep different kinds of health separate</h3><p>Product quality, delivery, incidents, and usage answer different questions. Project Health keeps them distinct instead of collapsing them into one score.</p></div>
-  <div class="card"><span class="tag">02</span><h3>Lead with what needs attention</h3><p>The overview brings important failures, changes, and open questions forward so a team can decide where to look first.</p></div>
-  <div class="card"><span class="tag">03</span><h3>Unknown is not healthy</h3><p>If Project Health cannot evaluate something, it shows that gap instead of quietly treating missing data as healthy.</p></div>
-</div>
+<p><span class="lead-in">Keep different kinds of health separate.</span> Product quality, delivery, incidents, and usage answer different questions. Project Health keeps them distinct instead of collapsing them into one score.</p>
+<p><span class="lead-in">Unknown is not healthy.</span> If Project Health cannot evaluate something, it shows that gap instead of treating missing information as a healthy result. Signals link back to the tools they came from.</p>
 </section>
 
 <section class="section">
 <div class="kicker">Failure handling</div>
 <h2>What does the failure mean?</h2>
-<p>A failed AI check does not always mean the same thing. One failure may point to a real product bug. Another may show that the test expectation is wrong or that the available evidence is incomplete. Project Health shows what was observed, what was expected, and why the difference matters before I decide what should change.</p>
+<p>A failed AI check does not always mean the same thing. It may point to a real product bug, a test expectation that is wrong, or incomplete evidence. Project Health shows what was observed and what was expected; deciding what should change is still my job.</p>
 
-<div class="example">
-  <div class="example-head"><span class="example-label">Earlier eval example · AI quality</span><h3>One scenario failed in a way that mattered</h3><p>Most of State's AI quality checks passed, but one scenario failed in a way that could change what a user believed was true.</p></div>
-  <div class="example-row"><span class="example-label">What happened</span><p>State knew the Northstar pilot was paused, but its answer did not clearly preserve that the reason for the pause was still unknown.</p></div>
-  <div class="example-row"><span class="example-label">Why it mattered</span><p>A user could mistake an inferred explanation for maintained project truth. Project Health put the failed scenario at the top of the quality view and pointed the next review at the scenario evidence.</p></div>
-  <div class="example-row"><span class="example-label">Next decision</span><p>Review whether the product behavior or the eval contract is wrong, make the smallest justified change, then rerun the affected suite.</p></div>
+<div class="ph-example">
+  <span class="example-label">Earlier State eval · not in today’s dashboard</span>
+  <p><span class="lead-in">What failed.</span> Most of State’s AI quality checks passed, but in one scenario State knew the Northstar pilot was paused and its answer did not preserve an important unknown: the reason for the pause. A user could have mistaken an inferred explanation for maintained project truth.</p>
+  <p><span class="lead-in">What Project Health showed.</span> It put the failed scenario at the top of the quality view, with the recorded failure, the expected behavior, and the scenario evidence. It did not diagnose the cause.</p>
+  <p><span class="lead-in">What I still had to decide.</span> Whether State’s behavior or the test expectation needed to change, and what the smallest justified change was before rerunning the affected suite.</p>
 </div>
 
-<p>Delivery and quality can also diverge. When one portfolio deployment failed while the previous version stayed live, Project Health flagged the release for engineering attention without marking the product's quality as failing.</p>
+<p>Delivery and quality can also diverge. When one portfolio deployment failed while the previous version stayed live, Project Health flagged the release for engineering attention without marking the product’s quality as failing.</p>
 </section>
 
 <section class="section">
 <div class="kicker">Investigate</div>
 <h2>Investigate starts with the specific problem</h2>
-<p>When a signal needs more context, Investigate produces a handoff that shows what happened, what is known, what is still uncertain, and what should happen next. It takes one of two paths depending on the signal:</p><ul><li><strong>A failed eval</strong> is explained from the eval results already recorded. Rules assemble the handoff, and no new model call is made.</li><li><strong>A release or deployment problem</strong> goes to a read-only AI investigator that reads bounded evidence, such as deployment status and logs, and drafts the handoff. It cannot change code, configuration, or deployments.</li></ul><p>Either way, Investigate does not make the decision. A person does.</p>
+<p>When a signal needs more context, Investigate drafts a handoff: what happened, what is known, what is still uncertain, and what should happen next. It takes one of two paths:</p><ul><li><strong>A failed eval.</strong> Rules use the recorded results to assemble the explanation, without another model call.</li><li><strong>A release or deployment problem.</strong> A bounded, read-only AI investigation examines the available evidence, such as deployment status and logs, and drafts the handoff.</li></ul><p>Neither path changes code, configuration, or deployments. A person makes the decision.</p>
 </section>
 
 <section class="section">
 <div class="kicker">What testing changed</div>
 <h2>QA changed the product</h2>
-<div class="grid2">
-  <div class="card"><span class="tag">Easier to scan</span><h3>Activity became less noisy</h3><p>Repeated failures are grouped into one incident, so the activity feed is easier to scan.</p></div>
-  <div class="card"><span class="tag">More trustworthy</span><h3>Missing data stopped looking healthy</h3><p>The dashboard now calls out monitoring gaps, stale quality results, and contradictions between signals instead of smoothing them over.</p></div>
-</div>
-</section>
-
-<section class="section">
-<div class="kicker">My role</div>
-<h2>How I split the work</h2>
-<div class="role-grid">
-  <div class="card"><span class="tag">My role</span><ul><li>framed the problem and chose which signals mattered</li><li>designed the information hierarchy</li><li>reviewed failed evals and decided whether product behavior or the test should change</li><li>used QA findings to reshape the product</li></ul></div>
-  <div class="card"><span class="tag">AI’s part</span><ul><li>most of the coding, through ChatGPT and Claude</li><li>testing and regression-coverage code</li><li>drafting and interface iteration</li></ul></div>
-</div>
+<table class="ph-changes">
+<thead><tr><th scope="col">Area</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+<tbody>
+<tr><th scope="row">Activity feed</th><td data-label="Before">Each failed deployment attempt appeared as its own “Deployment failed” entry.</td><td data-label="After">Failed attempts a few minutes apart are grouped into one incident that shows how many attempts failed.</td></tr>
+<tr><th scope="row">Refreshes</th><td data-label="Before">Testing exposed cases where failed refreshes left reassuring old messages on screen.</td><td data-label="After">I added clearer distinctions between current results, previously loaded data, and checks that couldn’t be completed.</td></tr>
+</tbody>
+</table>
 </section>
 
 <section class="section">
 <div class="kicker">Where I landed</div>
 <h2>What held up</h2>
-<div class="callout"><p>The dashboard became useful when it stopped trying to summarize health and started helping me decide where to look next.</p></div>
+<p>Project Health still summarizes health. What makes it useful is fewer places to check, clearer reasons to investigate, and direct routes to the underlying tools.</p>
 </section>
 
 </article>
