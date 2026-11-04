@@ -318,9 +318,9 @@ browser regression coverage.
 - `project_areas.id` is a bare global primary key, not project-scoped yet.
   Fine with today's two seeded projects; needs a composite key before a
   third project with colliding area ids is added.
-- The portfolio deployment does not yet provide durable persistence for
-  user-created project data across backend redeploys. Seeded data comes back;
-  user-created data can be lost until the storage architecture is fixed.
+- Production stores State's data in SQLite on a persistent Render disk, so
+  user-created projects survive ordinary backend redeploys. Staging is
+  ephemeral and re-seeds on every deploy.
 - Ask's generated prose occasionally has minor grammar issues, since that's
   live model output rather than something a code fix reliably controls.
 
