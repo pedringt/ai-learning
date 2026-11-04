@@ -1392,9 +1392,10 @@
       ?{retained:true,text:'Couldn’t refresh · showing previously loaded data'+(loadedAt&&Number.isFinite(dateMs(loadedAt))?' · last fetched at '+fmtDate(loadedAt):'')}
       :{retained:false,text:'Couldn’t refresh · no previously loaded data'};
   }
-  function sectionFreshness(data,labels,resultAt,{hasData=true,staleHours=24,noun='Updated'}={}){
+  function sectionFreshness(data,labels,resultAt,{hasData=true,staleHours=24,noun='Updated',loadedAt=null}={}){
     const failure=signalRefreshFailure(data,labels);
-    if(failure)return {label:hasData?'Couldn’t refresh · showing retained data'+(resultAt?' from '+fmtDate(resultAt):''):'Couldn’t refresh',stale:true,retained:hasData};
+    // Nov 3: one saved-data wording everywhere, with the last successful fetch time rather than an ambiguous "from".
+    if(failure)return {label:hasData?'Couldn’t refresh · showing previously loaded data'+(loadedAt&&Number.isFinite(dateMs(loadedAt))?' · last fetched at '+fmtDate(loadedAt):''):'Couldn’t refresh',stale:true,retained:hasData};
     if(!resultAt)return {label:noun+' time unknown',stale:true};
     const meta=freshnessMeta(resultAt,null,staleHours);
     return noun==='Updated'?meta:{...meta,label:meta.stale?'May be stale · '+noun.toLowerCase()+' '+relativeAge(resultAt):noun+' '+relativeAge(resultAt)};
@@ -1417,6 +1418,9 @@
         askScore:evalScore(ask),
         reviewTotal:review?.total??null,
         askTotal:ask?.total??null,
+        // Saved so a later visit can apply the scenario-set rule (Nov 3); without them no visit comparison is possible.
+        reviewScenarioIds:Array.isArray(review?.scenario_ids)?review.scenario_ids.map(String):null,
+        askScenarioIds:Array.isArray(ask?.scenario_ids)?ask.scenario_ids.map(String):null,
         severe:Number(review?.high_severity_failures||0)+Number(ask?.high_severity_failures||0)
       };
     }
@@ -1476,8 +1480,10 @@
     const currentQ=qualitySnapshot(data),oldQ=before.quality||{};
     // #597: a different scenario set or contract is a new baseline, not an improvement or decline.
     const visitComparison=(kind,name)=>{
-      const comparison=runComparability({total:currentQ[kind+'Total'],created_at:currentQ[kind+'At']},{total:oldQ[kind+'Total'],created_at:oldQ[kind+'At']},data?.quality?.contractUpdatedAt);
-      if(!comparison.comparable)return {title:name+' eval '+(comparison.reason==='unrecorded'?'re-run':'re-run on a different test'),detail:'Not comparable with your last visit: '+comparison.text+' \u00b7 now '+percent(currentQ[kind+'Score'])};
+      const comparison=runComparability({total:currentQ[kind+'Total'],scenario_ids:currentQ[kind+'ScenarioIds'],created_at:currentQ[kind+'At']},{total:oldQ[kind+'Total'],scenario_ids:oldQ[kind+'ScenarioIds'],created_at:oldQ[kind+'At']},data?.quality?.contractUpdatedAt);
+      // A visit saved before Nov 3 has no scenario list: say that, rather than blaming the run records.
+      const text=comparison.reason==='unrecorded'&&currentQ[kind+'ScenarioIds']&&!oldQ[kind+'ScenarioIds']?'your last visit didn\u2019t save which scenarios ran':comparison.text;
+      if(!comparison.comparable)return {title:name+' eval '+(comparison.reason==='unrecorded'?'re-run':'re-run on a different test'),detail:'Not comparable with your last visit: '+text+' \u00b7 now '+percent(currentQ[kind+'Score'])};
       const delta=scoreDeltaPoints(currentQ[kind+'Score'],oldQ[kind+'Score']);
       return {title:name+' eval '+(delta===0?'re-run':'changed'),detail:evalChangeDetail(delta,currentQ[kind+'Score'])};
     };
@@ -1645,7 +1651,8 @@
   function paidRunSpendText(spend){
     if(!spend)return '';
     const n=Number(spend.count||0);
-    return 'Paid eval runs in the last 30 days: '+n+(spend.cost_upper_usd!=null?' (at most $'+Number(spend.cost_upper_usd).toFixed(2)+' at the configured estimate)':'')+'. Counts every finished run, from any trigger.';
+    // Scope (Nov 3): GitHub workflow runs from every branch, trigger and record destination, not results in this environment.
+    return 'Paid eval workflow runs in the last 30 days, all environments: '+n+(spend.cost_upper_usd!=null?' (at most $'+Number(spend.cost_upper_usd).toFixed(2)+' at the configured estimate)':'')+'. Counts every finished GitHub run from any branch or trigger, wherever it recorded results, so it can differ from the results shown here.';
   }
   function investigationSpendText(spend){
     if(!spend)return '';
@@ -1963,6 +1970,14 @@
     }
     if(ask)overallLines.push('Answer quality: '+percent(evalScore(ask))+' · '+highSeverityFailureText(ask.high_severity_failures));
 
+    // Loading, empty and unavailable results are not a quality failure (Paige, Nov 3): say what is missing and what to do.
+    if(!runs.length){
+      const attention=qualityAttention(data?.quality,data);
+      const nextStep=attention.unavailable?'Restore the missing checks before assessing project health.':'Run the controlled AI evals to get a quality result.';
+      const report=['Current assessment',attention.title+'. '+attention.detail,'','Recommended next action',nextStep].join('\n');
+      return {report,sources:[],observedAt:new Date().toISOString(),qualityInvestigation:true,noQualityResult:true,nextCheckpoint:attention.unavailable?'After the quality check loads.':'After the first controlled AI eval run is recorded.'};
+    }
+
     if(stateEvalResultsStale(quality)){
       const report=[
         'Current assessment',
@@ -2026,12 +2041,13 @@
 
     const why=targeted
       ?story.consequence.text
-      :(details.length?'At least one current failure is in a high-severity scenario, which guards maintained project truth or another high-severity behavior.':'The current miss is a quality/workflow issue rather than a production outage.');
+      :(details.length?'At least one current failure is in a high-severity scenario, which guards maintained project truth or another high-severity behavior.':affected.length?'The current miss is a quality/workflow issue rather than a production outage.':'No recorded scenario failed; some quality signals are not measured yet.');
     const nextStep=targeted
       ?story.nextStep
       :details.length
         ?'Review each failed scenario against the product contract. Fix State behavior only where the contract is still right; update the eval where the observed behavior is acceptable. Then rerun the affected suite.'
-        :'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.';
+        :affected.length?'Inspect the affected suite and rerun after the next change so future failures record scenario-level evidence.'
+        :(qualityAttention(quality,data).nextAction||'Run the controlled AI evals to get a quality result.');
     const nextCheckpoint=targeted?'After '+targeted.suiteLabel+' is rerun.':'After the affected eval suite is rerun.';
     const technical=[modelDisplayName((targeted?.suiteKey==='review'?review?.model_identifier:targeted?.suiteKey==='ask'?ask?.model_identifier:(review?.model_identifier||ask?.model_identifier))),shortSha((targeted?.suiteKey==='review'?review?.build:targeted?.suiteKey==='ask'?ask?.build:(review?.build||ask?.build)))].filter(Boolean).join(' · ');
     const report=[

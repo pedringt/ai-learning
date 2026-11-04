@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,failureReason,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,healthStateLabel,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -238,9 +238,21 @@
 
   // The decision log lives in the State backend since Oct 27 (Paige: server storage, key-only writes); it used to be
   // per-browser localStorage. Anyone can read it; adding or removing an entry needs the decision log key.
+  // Staging's State API sleeps when idle, so a first read can time out (Nov 3 staging review): retry once, like Quality.
   async function loadDecisionLog(projectId){
-    const payload=await jsonFetch('/api/project-health-decisions?project='+encodeURIComponent(projectId),{timeoutMs:10000});
-    return Array.isArray(payload?.entries)?payload.entries:[];
+    const url='/api/project-health-decisions?project='+encodeURIComponent(projectId);
+    for(let attempt=0;;attempt++){
+      try{
+        const payload=await jsonFetch(url,{timeoutMs:10000});
+        return Array.isArray(payload?.entries)?payload.entries:[];
+      }catch(error){
+        if(attempt===0&&(error?.status===502||error?.status===503||error?.status===504||error?.name==='AbortError')){
+          await new Promise(resolve=>setTimeout(resolve,650));
+          continue;
+        }
+        throw error;
+      }
+    }
   }
   async function addDecisionEntry(projectId,type,text,key){
     return await jsonFetch('/api/project-health-decisions',{method:'POST',timeoutMs:12000,headers:{'Content-Type':'application/json','X-Project-Health-Decision-Key':key},body:JSON.stringify({project:projectId,type,text})});
@@ -447,7 +459,7 @@
       '</div>'+
       '<div class="decision-log"><div class="decision-log-head"><strong>Decision & change log</strong><span>Shared · only the owner can add entries</span></div>'+
         (productNotes.length?'<div class="decision-log-list">'+productNotes.slice(0,5).map(note=>'<div class="decision-log-item"><span class="activity-type">'+esc(note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision')+'</span><strong>'+esc(note.text)+'</strong><span>'+esc(fmtDate(note.createdAt))+'</span>'+(canRemove?'<button class="text-button" type="button" data-remove-product-note="'+esc(note.id)+'">Remove</button>':'')+'</div>').join('')+'</div>'
-          :'<div class="empty compact-empty">'+esc(notesStatus==='loading'?'Loading the decision log…':notesStatus==='error'?'The decision log could not be loaded. Refresh to try again.':'No product decisions or changes recorded yet.')+'</div>')+
+          :'<div class="empty compact-empty">'+esc(notesStatus==='loading'?'Loading the decision log…':notesStatus==='error'?(/timed out|504|waking/i.test(String(data.productNotesError||''))?'The decision log’s server didn’t respond in time (it may be starting up), so its entries aren’t shown. Refresh to try again.':'The decision log could not be loaded, so its entries aren’t shown. Refresh to try again.'):'No product decisions or changes recorded yet.')+'</div>')+
       '</div>';
 
     const overviewQuality=p.quality==='state'?qualityAttention(q,data):externalQualityAttention(externalQ);
@@ -461,25 +473,26 @@
       :(externalQ?.ci?.updated_at||externalQ?.recorded?.updated_at||null);
     // #597: a section whose fetch failed this refresh says it shows retained data; Quality shows when its results were
     // recorded, never the time the page fetched them.
-    const retainedOr=(labels,hasData,fallback)=>signalRefreshFailure(data,labels)?sectionFreshness(data,labels,null,{hasData}):fallback;
+    const retainedOr=(labels,hasData,fallback,loadedAt)=>signalRefreshFailure(data,labels)?sectionFreshness(data,labels,null,{hasData,loadedAt}):fallback;
     const qualityHas=p.quality==='state'?!!(q?.review||q?.ask):!!externalQ;
     const healthRows=[
       {label:p.qualityLabel||'Quality',kind:overviewQuality?.kind||'unknown',detail:overviewQuality?.title||(p.noQualitySource?'Not connected yet':'Quality status unavailable'),tab:'ai-quality',fresh:signalRefreshFailure(data,['Quality'])?{label:retainedNotice(data,['Quality'],{hasData:qualityHas,loadedAt:data.qualityCheckedAt}).text,stale:true,retained:qualityHas}:sectionFreshness(data,['Quality'],qualityTime,{hasData:qualityHas,staleHours:72,noun:'Recorded'})},
-      {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:retainedOr(['Production backend','Delivery'],!!(platform||d),freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24))},
-      {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:retainedOr(['Delivery'],!!d,freshnessMeta(d?.updatedAt,data.checkedAt,24))},
+      {label:'Production',kind:runtimeStatus.kind,status:runtimeStatus.label,detail:runtimeStatus.detail,tab:'overview',section:'deliveryPanel',fresh:retainedOr(['Production backend','Delivery'],!!(platform||d),freshnessMeta(data.detailCheckedAt||d?.updatedAt||data.checkedAt,data.checkedAt,24),data.deliveryLoadedAt)},
+      {label:'Release pipeline',kind:overviewDelivery?.kind||'unknown',detail:overviewDelivery?.title||'Release status unavailable',tab:'overview',section:'deliveryPanel',fresh:retainedOr(['Delivery'],!!d,freshnessMeta(d?.updatedAt,data.checkedAt,24),data.deliveryLoadedAt)},
       ...(overviewInfra&&['bad','warn'].includes(overviewInfra.kind)?[{label:'Infrastructure',kind:overviewInfra.kind,detail:overviewInfra.title,tab:'overview',section:'systemsDetails',fresh:retainedOr(['Neon','AI operations'],!!platform,freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,6))}]:[]),
-      {label:'Site analytics',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking site analytics…':aSummary?.available?(analyticsSignal(aSummary).status+'. '+analyticsSignal(aSummary).detail):(aSummary?.configured?'Connected, but comparison data is not available yet':'Site analytics are not connected'),tab:'overview',section:aSummary?.available?'analyticsPanel':'systemsDetails',fresh:retainedOr(['Analytics'],!!aSummary,freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24))}
+      {label:'Site analytics',kind:pending.has('Analytics')?'unknown':aSummary?.available?'available':'unknown',status:aSummary?.available?'Data available':null,detail:pending.has('Analytics')?'Checking site analytics…':aSummary?.available?(analyticsSignal(aSummary).status+'. '+analyticsSignal(aSummary).detail):(aSummary?.configured?'Connected, but comparison data is not available yet':'Site analytics are not connected'),tab:'overview',section:aSummary?.available?'analyticsPanel':'systemsDetails',fresh:retainedOr(['Analytics'],!!aSummary,freshnessMeta(data.detailCheckedAt||data.checkedAt,data.checkedAt,24),data.analyticsLoadedAt)}
     ];
     const changes=meaningfulChanges(data);
     const sinceLabel=data.lastVisit?.savedAt?fmtDate(data.lastVisit.savedAt):'your previous saved visit';
     const changesPanel=doc.getElementById('changesPanel');
-    // Without this refresh's delivery, activity or quality data, "no changes" cannot be confirmed (#597 follow-up).
-    const changeSourcesFailed=['Delivery','Activity','Quality'].filter(label=>signalRefreshFailure(data,[label]));
+    // Without this refresh's delivery, activity, quality or open-work data, "no changes" cannot be confirmed (#597 follow-up;
+    // open work added Nov 3, since "Open work changed" is one of the changes compared).
+    const changeSourcesFailed=['Delivery','Activity','Quality','Open work'].filter(label=>signalRefreshFailure(data,[label]));
     changesPanel.classList.toggle('compact-zero',!changes.length);
     changesPanel.innerHTML=changes.length
       ?'<div class="panel-title-row"><div><h3>Changed since last visit</h3><p class="panel-copy">Compared with '+esc(sinceLabel)+'. Only meaningful changes are shown.</p></div><span class="readiness-pill watch">'+esc(changes.length)+' change'+(changes.length===1?'':'s')+'</span></div><div class="change-list" style="margin-top:6px">'+changes.slice(0,8).map(item=>'<button class="change-item" type="button" data-tab-target="'+esc(item.tab||'activity')+'"'+(item.section?' data-section-target="'+esc(item.section)+'"':'')+'><span class="change-dot"></span><div><div class="change-item-head"><strong>'+esc(item.title)+'</strong><span class="change-time">'+esc(relativeAge(item.observedAt))+'</span></div><span class="change-detail">'+esc(item.detail)+'</span></div></button>').join('')+'</div>'
       :changeSourcesFailed.length
-      ?(()=>{const names=changeSourcesFailed.map(label=>({Delivery:'release data',Activity:'deployment activity',Quality:'AI eval results'})[label]);
+      ?(()=>{const names=changeSourcesFailed.map(label=>({Delivery:'release data',Activity:'deployment activity',Quality:'AI eval results','Open work':'open pull requests'})[label]);
         const list=names.length>1?names.slice(0,-1).join(', ')+' and '+names[names.length-1]:names[0];
         return '<div class="changes-zero changes-unconfirmed" role="status"><span aria-hidden="true">?</span><strong>Couldn’t confirm changes since your last visit.</strong><span class="changes-unconfirmed-detail">'+esc(list.charAt(0).toUpperCase()+list.slice(1))+' didn’t refresh.</span></div>';})()
       :'<div class="changes-zero" role="status"><span aria-hidden="true">✓</span><strong>No meaningful changes since your last visit</strong></div>';
@@ -704,7 +717,7 @@
         qualityHtml='<h3>Product quality · AI evals</h3><div class="eval-overview warn" role="status"><div><strong>Couldn’t load AI eval results</strong><span>'+esc(provenance.detail)+' Refresh to try again.</span></div></div>';
       }else if(!runs.length){
         qualityHtml='<h3>Product quality · AI evals</h3>'+
-          '<div class="eval-overview"><div><strong>No recorded AI eval yet</strong><span>Run a controlled check to see how State handles understanding, evidence, uncertainty, and decision authority.</span></div></div>';
+          '<div class="eval-overview"><div><strong>No AI eval results recorded in this environment</strong><span>'+esc(pageEnvironment(doc?.defaultView||null)==='staging'?'Staging’s State backend starts empty after each deploy, and scheduled runs record to production, so results recorded there aren’t shown here. ':'')+'Run a controlled check to see how State handles understanding, evidence, uncertainty, and decision authority.</span></div></div>';
       }else{
         const latestDate=runs.map(item=>item?.created_at).filter(Boolean).sort().pop();
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
@@ -1096,13 +1109,18 @@
     state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=[];item.productNotesStatus='loading';});
     // Held in memory for this page only, never stored, so a removal or a second entry does not ask again.
     let decisionKey='';
-    state.forEach(item=>{
-      // A refresh replaces each project's data object, so write to whichever one is current when the log arrives.
-      const apply=update=>{const current=state.find(entry=>entry.project.id===item.project.id);if(current)Object.assign(current,update);scheduleRender();};
-      loadDecisionLog(item.project.id)
-        .then(entries=>apply({productNotes:entries,productNotesStatus:'ok'}))
-        .catch(()=>apply({productNotesStatus:'error'}));
-    });
+    // Loaded at start and again on every Refresh (Nov 3: Refresh used to skip it, so the page said "Refreshed" while the
+    // log stayed unavailable). Resolves to the names of projects whose log couldn't load; an unavailable log never reads as empty.
+    function loadDecisionLogs(){
+      return Promise.all(state.map(item=>{
+        // A refresh replaces each project's data object, so write to whichever one is current when the log arrives.
+        const apply=update=>{const current=state.find(entry=>entry.project.id===item.project.id);if(current)Object.assign(current,update);scheduleRender();};
+        return loadDecisionLog(item.project.id)
+          .then(entries=>{apply({productNotes:entries,productNotesStatus:'ok',productNotesError:null});return null;})
+          .catch(error=>{apply({productNotesStatus:'error',productNotesError:failureReason(error)});return item.project.name;});
+      })).then(names=>names.filter(Boolean));
+    }
+    loadDecisionLogs();
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','releases','decision-support']);
@@ -1557,6 +1575,7 @@
       const activityNames=()=>PROJECTS.filter(project=>statusKnown.has(project.id)&&!finished.has(project.id)&&activityStillLoading(state.find(item=>item.project.id===project.id))).map(project=>project.name);
       const showProgress=()=>{if(finished.size<PROJECTS.length)status.textContent=progressText(statusKnown.size,PROJECTS.length,pendingNames(),activityNames());};
       showProgress();
+      const decisionLogs=loadDecisionLogs();
 
       const jobs=PROJECTS.map(async project=>{
         const index=PROJECTS.findIndex(p=>p.id===project.id);
@@ -1584,7 +1603,13 @@
       // #597: the status line is about this refresh attempt, not when any result was recorded; a failed or partial
       // refresh says so and names what kept its previous value.
       const attempt=refreshStatus(state,new Date().toISOString());
-      status.innerHTML='<strong>'+esc(attempt.title)+'</strong>'+(attempt.detail?' · '+esc(attempt.detail):'');
+      // The decision log is a separate read: its failure is named in the status, and a refresh that only lost the log is partial.
+      const logFailed=await decisionLogs;
+      if(generation!==refreshGeneration)return;
+      const logNote=logFailed.length?'Decision log couldn’t load for '+logFailed.join(', ')+'.':'';
+      const title=logNote&&attempt.kind==='refreshed'?attempt.title.replace(/^Refreshed/,'Partly refreshed'):attempt.title;
+      const detail=[attempt.detail,logNote].filter(Boolean).join(' ');
+      status.innerHTML='<strong>'+esc(title)+'</strong>'+(detail?' · '+esc(detail):'');
       refresh.disabled=false;
     }
 
