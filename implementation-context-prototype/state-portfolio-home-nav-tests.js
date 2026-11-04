@@ -31,10 +31,11 @@ const stateLinks=(html.match(/<a [^>]*data-state-app-link[^>]*>/g)||[]).length;
 check('all three State entry points remain (hero, homepage card, Applied Work)',stateLinks===3,String(stateLinks));
 const homeCard=between('<article class="home-feature-card home-feature-state-anchor">','</article>');
 const catalog=between('<h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3>','</div></div>');
+// Nov 3 (Paige): the card names the scattered-decisions problem and who proposes and approves changes.
 check('the homepage State card describes the practical problem and keeps demo + case-study links',
-  homeCard.includes('what a team should treat as true right now')&&!/documents/i.test(homeCard)&&homeCard.includes('data-state-app-link')&&homeCard.includes('href="implementation-context.html"'));
+  homeCard.includes('As a project moves forward, decisions and open questions get scattered across notes and conversations. State keeps a current project record, with AI proposing updates and people approving changes.')&&!/documents/i.test(homeCard)&&homeCard.includes('data-state-app-link')&&homeCard.includes('href="implementation-context.html"'));
 check('the authority-boundary explanation is not repeated in the homepage card or the catalog entry',
-  ![homeCard,catalog].some(t=>/authoriz|human-approved|boundary|people approve/i.test(t)));
+  ![homeCard,catalog].some(t=>/authoriz|human-approved|boundary/i.test(t)));
 
 // #589: decorative notes hidden; the real State link and card copy stay exposed.
 for(const cls of ['rd-review-human','rd-review-authority','rd-review-current'])
