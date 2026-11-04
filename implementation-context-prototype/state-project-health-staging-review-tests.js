@@ -123,6 +123,27 @@ const MISS=/quality miss/i;
       const data={...M.emptyProjectData(project),quality:{review:failing,ask:null,recent:[failing]},failures:[{label:'Delivery',reason:'server error 502'}]};
       assert.match(M.operationalNextDecision(data),/^Review the failed high-severity scenarios/);
     });
+    await check('without recorded scenario IDs there is no trend line and no point change, even when counts match (Paige, Nov 3)',()=>{
+      const run=(score,at)=>({suite:'review_interpretation',total:16,high_severity_failures:0,interpretation_accuracy:score,failure_details:[],created_at:at});
+      const recent=[run(0.9375,'2026-11-02 10:00:00'),run(0.8125,'2026-10-27 10:00:00'),run(0.875,'2026-10-20 10:00:00')];
+      const q={review:recent[0],ask:null,recent};
+      assert.deepStrictEqual(M.mockTrendValues(q,'review_interpretation','interpretation_accuracy'),[],'no trend line');
+      assert.strictEqual(M.mockSparkline(M.mockTrendValues(q,'review_interpretation','interpretation_accuracy')),'');
+      const delta=M.mockDelta(recent,'review_interpretation','interpretation_accuracy');
+      assert.strictEqual(delta.label,'Not comparable');
+      assert.doesNotMatch(delta.label+' '+(delta.title||''),/\d+(\.\d+)? pts|points/);
+      const project=H.PROJECTS.find(p=>p.id==='state');
+      const before={...M.emptyProjectData(project),quality:{review:recent[1],ask:null,recent:recent.slice(1)}};
+      const data={...M.emptyProjectData(project),quality:q,lastVisit:{...M.visitBaseline({projectId:'state',quality:before.quality,checkedAt:'2026-10-28T00:00:00Z'})}};
+      const visit=M.meaningfulChanges(data).find(item=>/Update-understanding eval/.test(item.title));
+      assert.ok(visit,'the re-run is listed');
+      assert.doesNotMatch(visit.detail,/points|pts|↑|↓/,visit.detail);
+      // With matching recorded scenario lists the change is shown.
+      const ids=Array.from({length:16},(_,i)=>'r'+i);
+      const withIds=recent.map(item=>({...item,scenario_ids:ids}));
+      assert.strictEqual(M.mockTrendValues({review:withIds[0],recent:withIds},'review_interpretation','interpretation_accuracy').length,3);
+      assert.match(M.mockDelta(withIds,'review_interpretation','interpretation_accuracy').label,/pts/);
+    });
   }finally{global.fetch=realFetch;}
 
   console.log(`\n${pass} passed, ${fail} failed`);
