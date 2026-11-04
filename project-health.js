@@ -1109,7 +1109,7 @@
     state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=[];item.productNotesStatus='loading';});
     // Held in memory for this page only, never stored, so a removal or a second entry does not ask again.
     let decisionKey='';
-    // Loaded at start and again on every Refresh (Nov 3: Refresh used to skip it, so the page said "Refreshed" while the
+    // Loaded by every Refresh, including the one on page load (Nov 3: Refresh used to skip it, so the page said "Refreshed" while the
     // log stayed unavailable). Resolves to the names of projects whose log couldn't load; an unavailable log never reads as empty.
     function loadDecisionLogs(){
       return Promise.all(state.map(item=>{
@@ -1120,7 +1120,6 @@
           .catch(error=>{apply({productNotesStatus:'error',productNotesError:failureReason(error)});return item.project.name;});
       })).then(names=>names.filter(Boolean));
     }
-    loadDecisionLogs();
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','releases','decision-support']);
