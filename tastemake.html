@@ -48,7 +48,7 @@
 <header class="meridian-case-hero flagship-hero">
 <h1>Tastemake</h1>
 <p class="lead">Tastemake is a recommendation prototype for books, movies, TV, and games. It makes its inferred taste patterns visible so people can question and correct them.</p>
-<div class="case-meta"><span><b>My role</b> Product framing, requirements, UX direction, decisions, evaluation, QA, and release review</span><span><b>AI’s role</b> All code, plus technical research and implementation support (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, not yet tested with outside users</span></div>
+<div class="case-meta"><span><b>My role</b> Product framing, requirements, UX direction, decisions, evaluation, QA, and release review</span><span><b>AI’s role</b> All code and technical research (ChatGPT and Claude)</span><span><b>Status</b> Working prototype · live, not yet tested with outside users</span></div>
 </header>
 
 <aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Build and correct a Taste Profile</strong><p>Pick a few favorites or rate familiar titles in Browse, react to recommendations, and see which patterns Tastemake infers.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>: my real profile, with 55 rated titles and 6 bookmarked titles, one pattern I confirmed and one I marked partly accurate. It is read-only and makes no AI calls.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
@@ -66,7 +66,7 @@
 <div class="kicker">How it works</div>
 <h2>What you tell it, what it infers, and what a correction changes</h2>
 <p><span class="lead-in">What you supply.</span> Favorites, and ratings of things you’ve actually tried: Loved it, Liked it, or Didn’t like it. Saving a title you haven’t tried, or saying you’re not interested, records intent. It never counts as taste evidence.</p>
-<p><span class="lead-in">What Tastemake infers.</span> A short list of taste patterns, such as “Atmosphere-driven horror in games.” Each one names the titles that support it, notes any that cut against it, and says how settled it is: emerging, supported, or strong.</p>
+<p><span class="lead-in">What Tastemake infers.</span> A short list of taste patterns, such as “Atmosphere-driven horror in games.” Each one shows the titles cited as support, notes any that cut against it, and says how settled it is: emerging, supported, or strong.</p>
 <p><span class="lead-in">How you correct it.</span> For any pattern you can say it’s accurate, partly accurate, not you, or that you’re not sure. You can also say how much it matters, that it only holds in some contexts, or that it doesn’t apply to a category.</p>
 <table class="taste-effects">
 <thead><tr><th scope="col">Part of the product</th><th scope="col">What a correction changes today</th></tr></thead>
@@ -94,10 +94,10 @@
 <section class="section seam-learning">
 <div class="kicker">Evidence from the build</div>
 <h2>What I tested—and what remains unproven</h2>
-<p>Software and AI have separate jobs. Software retrieves real catalog candidates across books, movies, TV, and games, removes anything you’ve already seen or ruled out, and picks the six that best match everything you’ve rated. A live AI call orders those six and writes a one-line reason that cites something you tried. Software checks that answer, and if the call fails it shows its own picks instead. A second AI call drafts the Taste Profile’s patterns, and software decides what counts as evidence and rejects patterns the evidence doesn’t support.</p>
+<p>Software and AI have separate jobs. Software retrieves real catalog candidates across books, movies, TV, and games, removes anything you’ve already seen or ruled out, ranks the rest using your ratings, and selects six. A live AI call orders those six and generates a short explanation referencing something you’ve tried. Software checks that answer, and if the call fails it shows its own picks instead. A second AI call drafts the Taste Profile’s patterns. Software keeps only cited titles you actually rated, limits how settled a pattern can claim to be by that evidence, and removes patterns you said aren’t you. It doesn’t check whether a cited title really fits the pattern.</p>
 <p><span class="lead-in">Latency.</span> Waiting for recommendations became a product-design concern. I shortened the AI’s answers, sped up candidate retrieval and revised the loading experience, but I did not measure the resulting performance improvement.</p>
 <p><span class="lead-in">Automated checks.</span> Tests cover the evidence rules, AI output validation, profile corrections, accessibility, and layout at several screen widths. They show those rules hold. They don’t show that the recommendations are useful.</p>
-<p><span class="lead-in">Unproven.</span> Whether corrections improve later recommendations, and whether anyone other than me finds the recommendations better. Tastemake hasn’t been tested with outside users.</p>
+<p><span class="lead-in">Unproven.</span> Whether corrections improve later recommendations, and whether anyone other than me finds the recommendations better. Some cited support titles don’t fit their pattern, and some explanations misdescribe a title; both are still open problems. Tastemake hasn’t been tested with outside users.</p>
 </section>
 
 <section class="section current-conclusion">
