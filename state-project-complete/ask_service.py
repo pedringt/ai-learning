@@ -720,6 +720,56 @@ def _parse_streamed_json(text: str) -> Mapping[str, Any]:
         return json.loads(match.group(1))
 
 
+def _max_length(field: str) -> int:
+    return next(m.max_length for m in AskSynthesis.model_fields[field].metadata if getattr(m, "max_length", None))
+
+
+OVERFLOW_HEADLINE = "Answer"
+_HEADLINE_LIMIT = _max_length("headline")
+
+
+def _whitespace_and_case_folded(text: str) -> str:
+    return " ".join(text.split()).lower()
+
+
+def _recover_headline_overflow(answer_raw: Any) -> Any:
+    """Nov 4 (Paige): an over-long headline was the only thing wrong with an answer (eval matrix run
+    41891991008), but validation rejected the whole answer and production paid for a second model call.
+    When headline length is the only validation problem, the heading becomes "Answer" and the complete
+    original headline opens the summary, unless the summary already contains it (ignoring whitespace and
+    case). Nothing is dropped and nothing judges what the headline means: the moved text then goes through
+    every check the summary already gets. Anything else returns the answer unchanged, so the caller's
+    validation raises the original error and the existing retry still applies."""
+    if not isinstance(answer_raw, Mapping):
+        return answer_raw
+    headline, summary = answer_raw.get("headline"), answer_raw.get("summary")
+    if not isinstance(headline, str) or len(headline) <= _HEADLINE_LIMIT or not isinstance(summary, str):
+        return answer_raw
+    try:
+        # The headline must be the only problem: with just the heading replaced, the answer is valid.
+        # (Moving the text into an empty summary must not repair a second error.)
+        AskSynthesis.model_validate({**answer_raw, "headline": OVERFLOW_HEADLINE})
+    except ValueError:
+        return answer_raw
+    original = headline.strip()
+    if _whitespace_and_case_folded(original) in _whitespace_and_case_folded(summary):
+        repaired_summary = summary
+    else:
+        opening = original if original[-1:] in ".!?" else original + "."
+        repaired_summary = f"{opening} {summary.strip()}".strip()
+    repaired = {**answer_raw, "headline": OVERFLOW_HEADLINE, "summary": repaired_summary}
+    try:
+        AskSynthesis.model_validate(repaired)
+    except ValueError:
+        return answer_raw
+    # Lengths only: answer text stays out of the logs.
+    logger.warning(
+        "Ask headline over %s characters (%s); moved into the summary (%s -> %s characters)",
+        _HEADLINE_LIMIT, len(headline), len(summary), len(repaired_summary),
+    )
+    return repaired
+
+
 def _finalize_ask_result(
     candidates: Mapping[str, list[dict]],
     selection_raw: Mapping[str, Any],
@@ -738,7 +788,7 @@ def _finalize_ask_result(
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
     context = _selected_context(selection, candidates)
-    answer = apply_refinement_transform(query, _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(answer_raw), selection, context, candidates)))
+    answer = apply_refinement_transform(query, _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(_recover_headline_overflow(answer_raw)), selection, context, candidates)))
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
 
     selected_open = set(selection.review_ids + selection.blocking_question_ids + selection.question_ids)
