@@ -21,17 +21,33 @@ for(const page of caseStudies){
   const heroEnd=html.indexOf('</header>',html.indexOf('meridian-case-hero'));
   check(`${page}: credits come after the last section heading, not in the hero`,
     html.indexOf(block)>lastH2&&html.indexOf(block)>heroEnd);
+  // Nov 5 (staging QA): the v7.3 Tastemake rewrite dropped this link; every case study keeps it.
+  check(`${page}: ends with the Back to Applied Work link`,
+    /<footer class="case-study-footer">[\s\S]*?<a href="index\.html#portfolio">Back to Applied Work →<\/a>[\s\S]*?<\/footer>/.test(html));
 }
 
 const tastemake=fs.readFileSync(path.join(root,'tastemake.html'),'utf8');
 const tasteHero=tastemake.slice(tastemake.indexOf('<header class="meridian-case-hero'),tastemake.indexOf('</header>'));
 check('Tastemake hero keeps only the Status line',/<div class="case-meta"><span><b>Status<\/b>/.test(tasteHero)&&!/My role|AI collaborator/.test(tasteHero));
+// Nov 4 (Paige): the v7.3 case study is five sections, with one comparison figure and a findings list.
+const tasteH2s=[...tastemake.matchAll(/<h2>([^<]+)<\/h2>/g)].map(m=>m[1]);
+check('Tastemake: five section headings, in order',JSON.stringify(tasteH2s)===JSON.stringify([
+  'Recommendations didn’t understand why I liked something.','An editable model of personal taste',
+  'A more accurate citation wasn’t a better explanation.','What else changed through testing',
+  'Can understanding why someone liked something outperform genre matching?']));
+check('Tastemake: the two tests are one labelled figure, 98% beside 53%',
+  /<figure class="test-compare" aria-labelledby="test-compare-label">[\s\S]*>98%<[\s\S]*>53%<[\s\S]*<\/figure>/.test(tastemake));
+check('Tastemake: the three findings are a list with their own headings',
+  (tastemake.match(/<li class="finding"><h3 class="finding-title">/g)||[]).length===3&&tastemake.includes('<ul class="findings-list" role="list">'));
+check('Tastemake: the old correction table and pipeline list are gone',!tastemake.includes('taste-effects')&&!tastemake.includes('How the work is split today'));
 
 const legal=fs.readFileSync(path.join(root,'legal-ai-governance.html'),'utf8');
 for(const label of ['How I tested the idea','What held up','What I corrected along the way'])
   check(`Legal AI: "${label}" is an h2 heading`,legal.includes(`<h2 class="kicker">${label}</h2>`)&&!legal.includes(`<div class="kicker">${label}</div>`));
 check('Legal AI: the label headings keep the kicker look',/\.legal-paper \.paper-section>h2\.kicker:not\(#_\):not\(#_\)\{font-size:12px!important/.test(legal));
-check('Legal AI: "Where I landed" stays a label above its own h2 (no duplicate heading)',legal.includes('<div class="kicker">Where I landed</div><h2>'));
+// Nov 4 (Paige): the recommendation section opens with its own heading; the old "Where I landed" label is gone.
+check('Legal AI: the recommendation opens with its own h2, with no extra label or duplicate heading',
+  legal.includes('<section class="paper-section"><h2>Why I wouldn&rsquo;t pursue an offering yet</h2>')&&!legal.includes('Where I landed'));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);

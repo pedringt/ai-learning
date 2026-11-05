@@ -11,10 +11,8 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const between=(start,end)=>{const i=html.indexOf(start);return i<0?'':html.slice(i,html.indexOf(end,i));};
 
 const hero=between('<div class="rd-hero-copy">','</aside>');
-// Nov 4 (Paige): her name and professional descriptor sit above the headline (reverses the Nov 3 removal).
-check('the hero opens with her name and descriptor, then the headline',
-  /^<div class="rd-hero-copy"><p class="rd-identity"><span class="rd-name">Paige Edrington<\/span><span class="rd-descriptor">Software QA and project management, applied to AI\.<\/span><\/p><h1/.test(hero));
-check('the identity line appears once on the page',(html.match(/class="rd-identity"/g)||[]).length===1);
+// Nov 5 (Paige): the name and descriptor line above the headline is removed again; her name stays in the contact footer.
+check('the hero opens with the headline, with no name or role line above it',/^<div class="rd-hero-copy"><h1/.test(hero)&&!/rd-identity|rd-descriptor/.test(html));
 check('her name is still in the contact footer',/<span class="portfolio-contact-name">Paige Edrington<\/span>/.test(html));
 check('the existing headline is kept',hero.includes('AI doesn’t know <span>what it doesn’t know.</span></h1>'));
 check('no spoken "I\'m Paige" introduction',!/I[’']m Paige/.test(html));

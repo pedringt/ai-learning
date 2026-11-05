@@ -1231,11 +1231,11 @@ html body main :is(.surface-grid, .state-model-grid) > * > :is(span, small, .lab
 }
 @media (min-width: 621px) and (max-width: 700px){
   /* 3 cards never become 2 + 1: one column until there is room for three */
-  html body main :is(.surface-grid, .state-model-grid, .architecture-split, .grid3):has(> :nth-child(3):last-child) { grid-template-columns: 1fr !important; }
+  html body main :is(.surface-grid, .state-model-grid, .grid3):has(> :nth-child(3):last-child) { grid-template-columns: 1fr !important; }
 }
 @media (min-width: 701px){
   /* 3 cards -> 3 across */
-  html body main :is(.surface-grid, .state-model-grid, .architecture-split, .grid3):has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  html body main :is(.surface-grid, .state-model-grid, .grid3):has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 }
 @media (min-width: 981px){
   /* 6 cards -> 3 x 2 */
@@ -1246,7 +1246,6 @@ html body main :is(.surface-grid, .state-model-grid) > * > :is(span, small, .lab
 /* sections that hold a card grid plus a full-width box stack normally: cards in a row, the box underneath */
 html body main.case-system-page section:has(> .architecture-split) { display: block; }
 html body main.case-system-page section:has(> .architecture-split) > .architecture-split { width: 100%; max-width: none; }
-html body main.case-system-page section > .architecture-split + p { margin-top: 18px; }
 html body main.case-system-page .architecture-infra {
   box-sizing: border-box;
   width: 100%;

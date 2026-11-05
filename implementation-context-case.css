@@ -117,3 +117,50 @@
 .flagship-hero .case-subtitle{margin:4px 0 14px;font-size:20px;line-height:1.35;font-weight:600;color:var(--muted,#555)}
 @media(max-width:760px){.flagship-hero .case-subtitle{font-size:17px}}
 .role-split .role-note{margin:16px 0 0;max-width:68ch;color:var(--muted);line-height:1.55}
+
+/* State case study (Nov 2026): three visuals that replace prose. Text carries every meaning; colour and arrows are decoration. */
+.unknown-zero{max-width:720px;margin:22px 0}
+.uz-pair{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:stretch}
+.uz-card{display:flex;flex-direction:column;gap:3px;padding:16px 18px;border:1px solid var(--border);border-radius:14px;background:var(--card)}
+.uz-recorded{border-color:var(--purple)}
+.uz-label{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.uz-subject{font-size:14px}
+.unknown-zero .uz-value{font-size:26px;line-height:1.2}
+.uz-meaning{color:var(--muted);font-size:13.5px}
+.uz-arrow{align-self:center;color:var(--muted);font-size:20px}
+.unknown-zero figcaption,.authority-map figcaption{margin-top:10px;color:var(--muted);font-size:13px;line-height:1.5}
+@media(max-width:640px){.uz-pair{grid-template-columns:1fr;gap:6px}.uz-arrow{justify-self:start;margin-left:18px;transform:rotate(90deg)}}
+
+.authority-map{margin:24px 0;padding:20px;border:1px solid var(--border);border-radius:16px;background:var(--card)}
+.am-title,.am-outcomes-title{margin:0 0 12px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.am-outcomes-title{margin-top:22px}
+.am-steps,.am-outcomes{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.am-steps{grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.am-outcomes{grid-template-columns:repeat(3,minmax(0,1fr))}
+.am-steps li,.am-outcomes li{position:relative;display:flex;flex-direction:column;gap:4px;margin:0;padding:14px;border:1px solid var(--border);border-radius:12px}
+.am-steps li+li::before{content:"→";content:"→"/"";position:absolute;top:50%;left:-19px;color:var(--muted);transform:translateY(-50%)}
+.am-owner{color:var(--purple);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.authority-map :is(.am-steps,.am-outcomes) strong{font-size:14.5px;line-height:1.3}
+.am-text,.am-outcomes span{color:var(--muted);font-size:13px;line-height:1.45}
+.am-ask{margin:14px 0 0;padding:10px 14px;border-radius:10px;background:var(--softp);font-size:13.5px;font-weight:700}
+@media(max-width:760px){.am-steps{grid-template-columns:1fr;gap:20px}.am-steps li+li::before{content:"↓";content:"↓"/"";top:-19px;left:16px;transform:none}.am-outcomes{grid-template-columns:1fr}}
+
+.claude-project-note{margin:18px 0 0;padding-top:12px;border-top:1px solid var(--border)}
+.claude-project-note summary{cursor:pointer;font-weight:700}
+.claude-project-note summary:focus-visible{outline:2px solid var(--purple);outline-offset:3px;border-radius:4px}
+.claude-project-note p{margin:10px 0 0}
+
+.ask-mismatch{width:100%;max-width:820px;margin:16px 0;border-collapse:collapse;font-size:14.5px}
+.ask-mismatch caption{padding-bottom:8px;color:var(--muted);font-size:13px;text-align:left}
+.ask-mismatch th,.ask-mismatch td{padding:10px 12px 10px 0;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+.ask-mismatch thead th{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.ask-mismatch tbody th{width:26%;font-weight:800}
+/* Phones: each row becomes a labelled card. The explicit ARIA roles keep table semantics once display changes. */
+@media(max-width:640px){
+  .ask-mismatch,.ask-mismatch caption,.ask-mismatch tbody,.ask-mismatch tr,.ask-mismatch th,.ask-mismatch td{display:block;width:auto}
+  .ask-mismatch thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .ask-mismatch tr{margin:0 0 10px;padding:12px 14px;border:1px solid var(--border);border-radius:12px}
+  .ask-mismatch th,.ask-mismatch td{padding:3px 0;border:0}
+  .ask-mismatch tbody th{width:auto}
+  .ask-mismatch td[data-label]::before{content:attr(data-label);content:attr(data-label)/"";display:block;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+}

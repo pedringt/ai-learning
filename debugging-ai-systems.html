@@ -9,7 +9,7 @@
 <link href="site-shell.css" rel="stylesheet"/>
 <link href="site-components.css" rel="stylesheet"/>
 <link href="implementation-context-case.css?v=r6-final-cleanup" rel="stylesheet"/>
-<style>.debug-trace{display:grid;gap:12px;margin:18px 0 0}.debug-trace>div{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px}.debug-trace dt{color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;padding-top:3px}.debug-trace dd{margin:0}.debug-trace+.section-note{margin-top:18px}@media(max-width:640px){.debug-trace>div{grid-template-columns:1fr;gap:4px}}</style>
+
 
 <!-- social-preview:begin -->
 <meta content="website" property="og:type"/>
@@ -26,6 +26,7 @@
 <meta content="https://www.contextswitch.tech/assets/social/debugging-ai-systems.png?v=2" name="twitter:image"/>
 <meta content="Debugging AI Systems · Context Switch" name="twitter:image:alt"/>
 <!-- social-preview:end -->
+<style>.diag-rows{display:grid;gap:12px;margin:16px 0 0}.diag-rows>div{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px}.diag-rows dt{color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;padding-top:4px}.diag-rows dd{margin:0;font-size:16px;line-height:1.65;color:var(--muted)}.case-system-page .case-page-content .diag-rows+p.section-note{margin-top:22px}.method-strip{margin:18px 0 0}@media(max-width:640px){html body main .human-flow.method-strip{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;gap:6px!important}html body main .human-flow.method-strip>b{transform:none!important;margin:0!important}html body main .human-flow.method-strip>span{padding:6px 9px!important}}@media(max-width:640px){.diag-rows>div{grid-template-columns:1fr;gap:3px}}</style>
 </head>
 <body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a aria-current="page" href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Library</a></nav><div class="top-actions"><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option selected value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Library</option></select></div></div></div>
@@ -35,34 +36,26 @@
 
 <header class="meridian-case-hero">
 <h1>Debugging AI Systems</h1>
-<p class="lead">A failed AI check says something went wrong, not what. The same bad answer can come from retrieval, missing context, interpretation, authority handling, deterministic logic, the eval expectation or presentation. Reaching for the prompt first can fix the wrong layer. I look for the first place the system stopped matching the intended behavior, change only that layer, and check the same case again.</p>
-<p class="section-note"><strong>The rule I apply:</strong> if the behavior breaks the product rules, change the product. If it meets them and the test rejects it, change the test. If the intended behavior is unclear, settle that before changing either. A higher pass rate alone is never a reason to loosen an expectation.</p>
+<p class="lead">Working in QA taught me that a failed test is the beginning of an investigation, not the answer. That matters even more with AI, where the same incorrect response can have several different causes. I used two State exercises to work through that distinction. In one, the AI needed fixing. In the other, the test was wrong.</p>
+<div class="human-flow method-strip" aria-label="How I investigate a failure"><span>Observed behavior</span><b aria-hidden="true">→</b><span class="accent">Failure location</span><b aria-hidden="true">→</b><span>Decision</span><b aria-hidden="true">→</b><span>Verification</span></div>
 <p class="case-scope">Controlled State exercises and eval work on synthetic data. Evidence of the method, not production performance.</p>
-<div class="human-flow"><span>Observed behavior</span><b>→</b><span class="accent">Failure location</span><b>→</b><span>Decision</span><b>→</b><span>Verification</span></div>
 </header>
 
 <article class="case-page-content flagship-case">
 <section class="section seam-learning">
-<div class="kicker">Example A · The agent&rsquo;s behavior needed to change</div>
-<h2>The agent found the right evidence and still gave the wrong answer.</h2>
-<dl class="debug-trace">
-<div><dt>Observed behavior</dt><dd>In a controlled exercise (case Q-103), a read-only State agent investigated an open Question: who owns customer support training? It found the right records, including an open Review proposing Priya as owner. Its final answer then said Priya owned the training.</dd></div>
-<div><dt>Failure location</dt><dd>Not retrieval. The trace showed the agent had the right sources and knew the Review was still open. The error appeared when it summarized them: a pending proposal became an established fact. That crosses State&rsquo;s authority boundary, where only a person can make something official.</dd></div>
-<div><dt>Decision</dt><dd>Change the agent&rsquo;s instructions. Retrieval worked, and the agent couldn&rsquo;t write anything, so the layer that failed was its reasoning about what the sources established. I made the rule explicit: an open Review is still a proposal, and one person&rsquo;s offer is not a group decision. Changing the prompt was right here because the trace located the failure there, not because the prompt was the easiest thing to change.</dd></div>
-<div><dt>Verification</dt><dd>I reran the same Q-103 case. The agent then said ownership was not established and pointed the reviewer to the open Review. I didn&rsquo;t count the fix as real until that rerun passed.</dd></div>
-</dl>
+<h2>The right evidence, the wrong answer</h2>
+<dl class="diag-rows"><div><dt>Observed</dt><dd>In a controlled State debugging exercise, a read-only AI agent found an open proposal naming someone as the person responsible for a project task, but answered as though the decision was final.</dd></div><div><dt>Where it failed</dt><dd>I checked the agent&rsquo;s trace and found that it had retrieved the right information. The mistake happened when it interpreted that information in its answer, not when it retrieved it.</dd></div><div><dt>What I changed</dt><dd>I clarified the instructions and reran the test. This time, the agent correctly reported that responsibility hadn&rsquo;t been decided.</dd></div></dl>
 <p class="section-note">Synthetic dataset. The full trace is in the <a href="state-managed-agent-tracing.html">agent tracing exercise</a>.</p>
 </section>
 
 <section class="section seam-learning">
-<div class="kicker">Example B · The test needed to change</div>
-<h2>The answer met the product rules, and the test still failed it.</h2>
-<dl class="debug-trace">
-<div><dt>Observed behavior</dt><dd>In State&rsquo;s update-interpretation evals, scenario <code>review_question_answer_only</code> gives State a note from Legal: the proposed vendor contract does not permit the disputed retention behavior. An open Question asks exactly that, and Current State says the contract review is still underway. The test expected State to answer the Question and do nothing else. State answered it and also proposed recording Legal&rsquo;s finding in Current State, so the eval marked it a failure.</dd></div>
-<div><dt>Failure location</dt><dd>The eval expectation. Legal&rsquo;s answer supported the proposed update, and the update still went to a person for approval, so it met the product rules. The test was stricter than the product contract.</dd></div>
-<div><dt>Decision</dt><dd>I reviewed the result against the product rules and revised the expectation, not the product. Answering alone, or answering plus a supported update, now both pass. I also added a check the old test lacked: a proposed update fails if it says the overall contract review is complete or approved. The test now accepts more correct answers and catches more overclaiming.</dd></div>
-<div><dt>Verification</dt><dd>Two fixed-input tests confirm the revised grader accepts the supported update and rejects one claiming the review is complete. After the change, the scenario passed in every saved full run of the suite I checked: six runs between October 16 and November 2, each scoring all 16 scenarios with no errors.</dd></div>
-</dl>
+<h2>When the test was too strict</h2>
+<dl class="diag-rows"><div><dt>Observed</dt><dd>In another evaluation, State behaved as intended, but the test marked it as a failure because it expected a narrower response.</dd></div><div><dt>Where it failed</dt><dd>In the test&rsquo;s expectation, not in State. The evidence supported State&rsquo;s update, and the update still went to a person for approval.</dd></div><div><dt>What I changed</dt><dd>I reviewed the evidence and product rules, then corrected the test to allow the valid behavior. Fixed-input tests now confirm it accepts the supported update and still rejects one that claims more than the evidence supports.</dd></div></dl>
+</section>
+
+<section class="section current-conclusion">
+<h2>Fix the right problem</h2>
+<p>The lesson from both cases was the same: figure out what correct behavior should look like before trying to improve the score. Sometimes that means changing the system. Other times it means changing the test.</p>
 <div class="case-meta case-credits"><span><b>My role</b> Expected behavior, severity, failure classification, and the product and eval decisions</span><span><b>AI collaborator</b> All code, plus test cases, trace summaries, regression coverage and documentation (ChatGPT and Claude)</span></div>
 <footer class="case-study-footer">
 <a href="state-managed-agent-tracing.html">Agent tracing exercise →</a>
