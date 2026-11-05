@@ -202,10 +202,6 @@ html body .home-state-secondary {
 }
 
 /* #588: name label and professional description above the headline (removed Nov 3, restored Nov 4). */
-html body #ai-cs-mock .rd-identity{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;max-width:660px;margin:0 0 22px;font-size:16px;line-height:1.4}
-html body #ai-cs-mock .rd-name{color:var(--ink);font-weight:900;letter-spacing:-.01em}
-html body #ai-cs-mock .rd-descriptor{color:var(--muted);font-weight:600}
-@media(max-width:680px){html body #ai-cs-mock .rd-identity{flex-direction:column;gap:2px;margin-bottom:18px;font-size:15px}}
 
 /* #589: view headings receive focus on user-initiated view changes; show it for keyboard users only. */
 html body #ai-cs-mock [data-page] [tabindex="-1"]:focus{outline:none}
