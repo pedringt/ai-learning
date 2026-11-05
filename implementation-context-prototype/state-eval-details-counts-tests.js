@@ -1,0 +1,78 @@
+// Nov 5 (staging QA): state-evals.html showed 23 scenarios (13 + 10) while it listed 29 (16 + 13), because the hero and
+// tab labels were hardcoded and the #596 catalog merge added six newer scenarios. Every catalog count now comes from the
+// assembled lists, and run counts read "1 high-impact failure" rather than "1 high-impact failures". No model calls, no network.
+const assert=require('assert');
+const fs=require('fs'),path=require('path'),vm=require('vm');
+const root=path.join(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'state-evals.html'),'utf8');
+const catalog=require('../state-eval-catalog.js');
+const model=require('../project-health-model.js');
+
+let pass=0,fail=0;
+async function check(name,fn){try{await fn();pass++;console.log('✓',name);}catch(error){fail++;console.error('✗',name,'\n ',error.message);}}
+
+const inline=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+const pageScript=inline[inline.length-1];
+
+function element(id){
+  return {id,innerHTML:'',textContent:'',hidden:false,dataset:{},
+    classList:{toggle(){},add(){},remove(){}},setAttribute(){},addEventListener(){},
+    querySelectorAll(){return [];},scrollIntoView(){}};
+}
+// Runs the page's own script against a stub page and the given quality payload, then returns the stub elements.
+async function renderPage(payload){
+  const ids=['catalogScenarioCount','scenarioCount','scenarioList','suiteIntro','reviewSummary','askSummary','failurePanel','failureList','runHistory'];
+  const els=Object.fromEntries(ids.map(id=>[id,element(id)]));
+  const tabs=['review','ask'].map(suite=>Object.assign(element('tab-'+suite),{dataset:{suite}}));
+  const document={getElementById:id=>els[id]||null,querySelectorAll:selector=>selector==='[data-suite]'?tabs:[],querySelector:()=>null};
+  const window={STATE_EVAL_CATALOG:catalog,PROJECT_HEALTH_MODEL:model};
+  const fetch=()=>Promise.resolve({ok:true,json:()=>Promise.resolve(payload)});
+  vm.runInNewContext(pageScript,{window,document,fetch,location:{search:''},URLSearchParams,CSS:{escape:value=>value},console});
+  for(let i=0;i<5;i++)await new Promise(resolve=>setImmediate(resolve));
+  return {els,tabs};
+}
+const run=(suite,total,failures,extra={})=>({suite,total,high_severity_failures:failures,created_at:'2026-11-02T12:00:00Z',
+  interpretation_accuracy:0.9375,overall_pass_rate:1,...extra});
+const payload=(review,ask,recent)=>({controlled_evals:{latest_review_interpretation:review,latest_ask_quality:ask,recent}});
+
+(async()=>{
+  await check('the markup carries no hardcoded scenario counts',()=>{
+    assert.doesNotMatch(html,/\d+ scenarios<\/span>/);
+    assert.doesNotMatch(html,/(Update understanding|Answer quality) · \d+<\/button>/);
+  });
+
+  await check('hero, heading and tabs all match the assembled catalog',async()=>{
+    const {els,tabs}=await renderPage(payload(null,null,[]));
+    const review=catalog.review.length,ask=catalog.ask.length;
+    assert.strictEqual(els.catalogScenarioCount.textContent,(review+ask)+' scenarios');
+    assert.strictEqual(els.scenarioCount.textContent,(review+ask)+' scenarios');
+    assert.strictEqual(tabs[0].textContent,'Update understanding · '+review);
+    assert.strictEqual(tabs[1].textContent,'Answer quality · '+ask);
+    assert.strictEqual((els.scenarioList.innerHTML.match(/<article class="scenario/g)||[]).length,review,'listed review scenarios');
+  });
+
+  await check('a single high-impact failure is singular; zero and several are plural',async()=>{
+    const {els}=await renderPage(payload(run('review_interpretation',16,1),run('ask_quality',13,0),
+      [run('review_interpretation',16,1),run('ask_quality',13,2),run('review_interpretation',1,0)]));
+    assert.match(els.reviewSummary.innerHTML,/16 scenarios · 1 high-impact failure ·/);
+    assert.match(els.askSummary.innerHTML,/13 scenarios · 0 high-impact failures ·/);
+    assert.match(els.runHistory.innerHTML,/16 scenarios · 1 high-impact failure</);
+    assert.match(els.runHistory.innerHTML,/13 scenarios · 2 high-impact failures</);
+    assert.match(els.runHistory.innerHTML,/1 scenario · 0 high-impact failures</);
+    assert.doesNotMatch(els.runHistory.innerHTML+els.reviewSummary.innerHTML,/\b1 high-impact failures|\b1 scenarios/);
+  });
+
+  await check('each saved run keeps the scenario count it actually ran',async()=>{
+    const {els}=await renderPage(payload(run('review_interpretation',13,0),null,[run('review_interpretation',13,0),run('review_interpretation',16,1)]));
+    assert.match(els.reviewSummary.innerHTML,/13 scenarios/);
+    assert.match(els.runHistory.innerHTML,/13 scenarios[\s\S]*16 scenarios/);
+  });
+
+  await check('a run with no recorded total still renders',async()=>{
+    const {els}=await renderPage(payload(run('review_interpretation',null,0),null,[]));
+    assert.match(els.reviewSummary.innerHTML,/— scenarios · 0 high-impact failures/);
+  });
+
+  console.log(`\n${pass} passed, ${fail} failed`);
+  if(fail)process.exit(1);
+})();

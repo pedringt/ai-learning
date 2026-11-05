@@ -134,7 +134,7 @@
         <p class="lede">The evidence behind State's Project Health quality signals: controlled scenarios for update understanding and grounded answers.</p>
       </div>
       <div class="hero-meta" aria-label="Eval catalog metadata">
-        <span class="meta-chip">23 scenarios</span>
+        <span class="meta-chip" id="catalogScenarioCount">Scenarios</span>
         <span class="meta-chip">2 suites</span>
         <span class="meta-chip">Read-only</span>
       </div>
@@ -154,10 +154,10 @@
     </section>
 
     <section class="panel">
-      <div class="section-head"><div><h2>Scenario catalog</h2><p class="panel-copy">The scenario catalog is the product contract. Each case describes the setup, expected behavior, and why that behavior matters.</p></div><span class="section-count" id="scenarioCount">23 scenarios</span></div>
+      <div class="section-head"><div><h2>Scenario catalog</h2><p class="panel-copy">The scenario catalog is the product contract. Each case describes the setup, expected behavior, and why that behavior matters.</p></div><span class="section-count" id="scenarioCount">Scenarios</span></div>
       <div class="tabs" role="tablist" aria-label="Eval suites">
-        <button class="tab active" type="button" data-suite="review" role="tab" aria-selected="true">Update understanding · 13</button>
-        <button class="tab" type="button" data-suite="ask" role="tab" aria-selected="false">Answer quality · 10</button>
+        <button class="tab active" type="button" data-suite="review" role="tab" aria-selected="true">Update understanding</button>
+        <button class="tab" type="button" data-suite="ask" role="tab" aria-selected="false">Answer quality</button>
       </div>
       <div id="suiteIntro" class="suite-intro"></div>
       <div id="scenarioList" class="scenario-list"></div>
@@ -229,11 +229,14 @@
         }
       }
     }
-    const scenarioCount=document.getElementById('scenarioCount');
-    if(scenarioCount)scenarioCount.textContent=(scenarios.review.length+scenarios.ask.length)+' scenarios';
+    // Every catalog count comes from the assembled lists above, so the hero, heading and tabs can't drift from what is shown.
+    const countLabel=(value,one,many)=>{const n=Number(value);return value==null||value===''||!Number.isFinite(n)?'— '+many:n+' '+(n===1?one:many);};
+    const catalogTotal=countLabel(scenarios.review.length+scenarios.ask.length,'scenario','scenarios');
+    for(const id of ['catalogScenarioCount','scenarioCount']){const element=document.getElementById(id);if(element)element.textContent=catalogTotal;}
     const list=document.getElementById('scenarioList');
     const intro=document.getElementById('suiteIntro');
     const tabs=[...document.querySelectorAll('[data-suite]')];
+    tabs.forEach(tab=>{const name=tab.dataset.suite;if(suiteCopy[name]&&scenarios[name])tab.textContent=suiteCopy[name].title+' · '+scenarios[name].length;});
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const pct=value=>value==null||Number.isNaN(Number(value))?'Not measured':(Math.round(Number(value)*1000)/10)+'%';
     const fmt=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});};
@@ -258,7 +261,7 @@
 
     function suiteSummary(element,label,run,metric){
       if(!run){element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">No run yet</div><p>No recorded aggregate result is available.</p>';return;}
-      element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">'+esc(pct(metric))+'</div><p>'+esc(run.total??'—')+' scenarios · '+esc(run.high_severity_failures??0)+' high-impact failures · '+esc(fmt(run.created_at))+'</p>';
+      element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">'+esc(pct(metric))+'</div><p>'+esc(countLabel(run.total,'scenario','scenarios'))+' · '+esc(countLabel(run.high_severity_failures??0,'high-impact failure','high-impact failures'))+' · '+esc(fmt(run.created_at))+'</p>';
     }
     fetch('/api/project-health-state-quality?env=production',{headers:{Accept:'application/json'}})
       .then(response=>response.ok?response.json():Promise.reject(new Error('Quality data unavailable')))
@@ -306,7 +309,7 @@
           const metric=run.suite==='review_interpretation'?run.interpretation_accuracy:run.overall_pass_rate;
           const label=run.suite==='review_interpretation'?'Update understanding':'Answer quality';
           const tech=[run.provider,run.model_identifier,run.build].filter(Boolean).join(' · ');
-          return '<div class="run-row"><div><strong>'+esc(label)+' · '+esc(pct(metric))+'</strong><span>'+esc(fmt(run.created_at))+' · '+esc(run.total??'—')+' scenarios · '+esc(run.high_severity_failures??0)+' high-impact failures</span></div><span>'+esc(tech||'Technical record unavailable')+'</span></div>';
+          return '<div class="run-row"><div><strong>'+esc(label)+' · '+esc(pct(metric))+'</strong><span>'+esc(fmt(run.created_at))+' · '+esc(countLabel(run.total,'scenario','scenarios'))+' · '+esc(countLabel(run.high_severity_failures??0,'high-impact failure','high-impact failures'))+'</span></div><span>'+esc(tech||'Technical record unavailable')+'</span></div>';
         }).join(''):'<div class="status">No recorded runs yet.</div>';
       })
       .catch(()=>{

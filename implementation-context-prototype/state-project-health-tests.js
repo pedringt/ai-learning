@@ -738,7 +738,9 @@ assert.match(quickHandoff.handoffText,/Production deployment: Healthy/);
 
 const evalDetailsHtml=fs.readFileSync(require.resolve('../state-evals.html'),'utf8');
 assert.match(evalDetailsHtml,/State eval details/);
-assert.match(evalDetailsHtml,/23 scenarios/);
+// Nov 5: catalog counts are computed from the assembled scenario lists (state-eval-details-counts-tests.js), not written in.
+assert.doesNotMatch(evalDetailsHtml,/\d+ scenarios<\/span>/);
+assert.match(evalDetailsHtml,/id="catalogScenarioCount"/);
 assert.match(evalDetailsHtml,/Update understanding/);
 assert.match(evalDetailsHtml,/Answer quality/);
 // The page must keep saying the eval cases are constructed test data and that raw content is not published (reworded in PR #422).
