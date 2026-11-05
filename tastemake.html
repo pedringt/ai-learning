@@ -17,12 +17,29 @@
 .case-system-page .case-meta span{min-width:0;line-height:1.45}
 .case-system-page .case-credits span{color:var(--muted)}.case-system-page .case-credits b{color:var(--ink);margin-right:6px}
 .case-system-page .meridian-product-callout{margin-top:24px}
-.taste-effects{width:100%;max-width:860px;margin:18px 0 8px;border-collapse:collapse;font-size:14px;line-height:1.5}
-.taste-effects th,.taste-effects td{padding:10px 14px 10px 0;text-align:left;vertical-align:top}
-.taste-effects thead th{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);border-bottom:1px solid var(--border)}
-.taste-effects tbody th{width:28%;font-weight:700}
 .lead-in{font-weight:700}
-@media(max-width:800px){.case-system-page .case-meta{grid-template-columns:1fr}.case-system-page .meridian-case-hero{padding-bottom:24px}.taste-effects,.taste-effects tbody,.taste-effects tr,.taste-effects th,.taste-effects td{display:block;width:auto}.taste-effects thead{display:none}.taste-effects tbody th{width:auto;padding-bottom:2px}.taste-effects td{padding-top:0;padding-bottom:12px}}
+@media(max-width:800px){.case-system-page .case-meta{grid-template-columns:1fr}.case-system-page .meridian-case-hero{padding-bottom:24px}}
+.case-system-page .case-page-content cite{font-style:italic}
+.case-system-page .case-page-content .correction-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0 20px}
+.case-system-page .case-page-content .split-col{padding:16px 18px;border:1px solid var(--border);border-radius:14px;background:var(--card)}
+.case-system-page .case-page-content .split-col h3{margin:0 0 6px;font-size:15px;font-weight:700;color:var(--ink)}
+.case-system-page .case-page-content .split-text{font-size:15px;line-height:1.6;color:var(--muted)}
+.case-system-page .case-page-content .test-compare{margin:22px 0 22px;padding:18px 20px;border:1px solid var(--border);border-radius:16px;background:var(--card)}
+.case-system-page .case-page-content .test-compare .example-label{display:block;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
+.case-system-page .case-page-content .test-compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+.case-system-page .case-page-content .test-metric{padding:0 20px 0 0;min-width:0}.case-system-page .case-page-content .test-metric+.test-metric{padding:0 0 0 20px;border-left:1px solid var(--border)}
+.case-system-page .case-page-content .test-metric h3{margin:0;font-size:14px;font-weight:700;color:var(--ink)}
+.case-system-page .case-page-content .test-metric .metric-value{margin:6px 0 0;font-size:44px;font-weight:800;line-height:1.05;letter-spacing:-.02em;color:var(--ink)}
+.case-system-page .case-page-content .test-metric .metric-detail{margin:8px 0 0;font-size:15px;line-height:1.55;color:var(--muted)}
+.case-system-page .case-page-content .test-compare-note{margin:16px 0 0;padding-top:12px;border-top:1px dashed var(--border);font-size:15px;line-height:1.55;color:var(--muted)}
+@media(max-width:640px){.case-system-page .case-page-content .correction-split{grid-template-columns:1fr}}
+@media(max-width:420px){.case-system-page .case-page-content .test-compare{padding:14px}.case-system-page .case-page-content .test-metric{padding-right:12px}.case-system-page .case-page-content .test-metric+.test-metric{padding-left:12px}.case-system-page .case-page-content .test-metric .metric-value{font-size:34px}}
+.case-system-page .case-page-content .findings-list{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--border)}
+.case-system-page .case-page-content .finding{display:grid;grid-template-columns:190px minmax(0,1fr);column-gap:24px;margin:0;padding:16px 0;border-bottom:1px solid var(--border)}
+.case-system-page .case-page-content .finding:last-child{border-bottom:0;padding-bottom:4px}
+.case-system-page .case-page-content .finding-title{margin:0;font-size:15px;font-weight:700;line-height:1.65;color:var(--ink)}
+.case-system-page .case-page-content .finding-text{font-size:16px;line-height:1.65;color:var(--muted);max-width:620px}
+@media(max-width:640px){.case-system-page .case-page-content .finding{grid-template-columns:1fr;row-gap:2px;padding:14px 0}}
 </style>
 <!-- social-preview:begin -->
 <meta content="website" property="og:type"/>
@@ -49,86 +66,63 @@
 <header class="meridian-case-hero flagship-hero">
 <h1>Tastemake</h1>
 <p class="lead">Tastemake is a recommendation prototype for books, movies, TV, and games. It makes its inferred taste patterns visible so people can question and correct them.</p>
-<div class="case-meta"><span><b>Status</b> Working prototype · live, not yet tested with outside users</span></div>
+<div class="case-meta"><span><b>Status</b> Working prototype. Not yet tested with outside users.</span></div>
 </header>
 
-<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Build and correct a Taste Profile</strong><p>Star four favorites or rate familiar titles in Browse, react to recommendations, and see which patterns Tastemake infers.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Or explore Paige's Example Profile ↗</a>: my real profile, with 55 rated titles and 6 bookmarked titles, one pattern I confirmed and one I marked partly accurate. It is read-only and makes no AI calls.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
+<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Explore Tastemake</strong><p>Rate familiar titles, get recommendations, and correct your Taste Profile.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Example Profile ↗</a>: Explore my read-only profile with 55 rated titles and 6 bookmarked titles. It makes no AI calls.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
 
 <article class="case-page-content flagship-case">
 
 <section class="section narrative-open">
 <div class="kicker">The problem</div>
-<h2>I wanted recommendations that understood why I liked something.</h2>
-<p>I’ve loved books, games, movies, and TV my whole life, but I used separate apps to keep track of them. In my experience, those apps mainly helped me log what I’d tried. Recommendations were often weak, and I couldn’t always tell why something had been suggested. I didn’t have a useful way to explain why I liked something or correct what the system inferred.</p>
-<p>I didn’t want more recommendations. I wanted one place that showed what it thought my taste was, let me fix it, and carried those corrections into future recommendations across books, movies, TV, and games. That became Tastemake.</p>
+<h2>Recommendations didn’t understand why I liked something.</h2>
+<p>I used separate apps to track books, games, movies, and TV. Their recommendations often felt generic and rarely explained why a title might appeal to me. I wanted one place where I could see what the system inferred about my taste, correct it, and use those corrections to improve future recommendations.</p>
 </section>
 
 <section class="section product-model">
-<div class="kicker">How it works</div>
-<h2>What you tell it, what it infers, and what a correction changes</h2>
-<p><span class="lead-in">What you supply.</span> Favorites, and ratings of things you’ve actually tried: Loved it, Liked it, or Didn’t like it. Saving a title you haven’t tried, or saying you’re not interested, records intent. It never counts as taste evidence.</p>
-<p><span class="lead-in">What Tastemake infers.</span> A short list of taste patterns, such as “Atmosphere-driven horror in games.” Each one shows the titles cited as support, notes any that cut against it, and says how settled it is: emerging, supported, or strong.</p>
-<p><span class="lead-in">How you correct it.</span> For any pattern you can say it’s accurate, partly accurate, not you, or that you’re not sure. You can also say how much it matters, that it only holds in some contexts, or that it doesn’t apply to a category.</p>
-<p><span class="lead-in">Correcting a pattern isn’t rejecting the favorite.</span> Saying a pattern isn’t you rejects Tastemake’s reading of your ratings, not the ratings themselves. What you loved still counts as evidence.</p>
-<table class="taste-effects">
-<thead><tr><th scope="col">Part of the product</th><th scope="col">What a correction changes today (November 2026)</th></tr></thead>
-<tbody>
-<tr><th scope="row">Taste Profile</th><td>Your answer is shown with the pattern, stored separately from Tastemake’s guess, and recorded in the pattern’s history. A correction never raises a pattern’s confidence, which comes only from what you tried.</td></tr>
-<tr><th scope="row">Profile refresh</th><td>The AI that redrafts your patterns receives your answers. Software then drops any pattern you said isn’t you, rejects claims in a category you excluded, and caps how settled a pattern can be when you said it only holds in some contexts.</td></tr>
-<tr><th scope="row">Choosing candidates</th><td>No change. Software finds and scores catalog titles from your ratings only, so a title that resembles a pattern you rejected can still be recommended, because the original ratings still count. This is a current limitation.</td></tr>
-<tr><th scope="row">AI ordering and explanations</th><td>The AI that orders the six offered titles and explains each pick receives your answers and is told not to contradict them. That is an instruction; software doesn’t yet check that each pick follows it.</td></tr>
-<tr><th scope="row">When AI is unavailable</th><td>No change. Picks come straight from the catalog shortlist.</td></tr>
-</tbody>
-</table>
-<p>Software enforces corrections in the Taste Profile. In recommendations, they currently guide the AI rather than bind it.</p>
-</section>
-
-<section class="section next-tests">
-<div class="kicker">What my own testing changed</div>
-<h2>Testing made the product simpler.</h2>
-<p><span class="lead-in">Cold-start friction.</span> Browse helps you find familiar titles and star the four favorites needed to get started. Ratings become taste evidence; simply viewing or saving a title does not.</p>
-<p><span class="lead-in">Too much feedback at once.</span> I moved deeper taste questions behind the first reaction. The card first asks whether you’ve tried something and how it landed; the questions about why only appear after that.</p>
-<p><span class="lead-in">When the product promised too much.</span> Reviewing the correction flow against the code revealed that Tastemake claimed some feedback changed recommendations when it didn’t. It also labeled catalog-generated picks as Live AI and sometimes reported changes that never happened. I separated what the software actually enforced from what it only asked the AI to do, corrected the misleading copy, and required the affected flows to be verified before release.</p>
+<div class="kicker">What I built</div>
+<h2>An editable model of personal taste</h2>
+<p>Tastemake uses favorites and ratings to propose taste patterns across four types of media. Each pattern includes supporting titles, conflicting evidence, and an indication of how well-supported it is.</p>
+<p>People can confirm patterns, reject them, qualify them, or limit them to certain contexts. Rejecting an interpretation doesn’t erase the original ratings.</p>
+<div class="correction-split" role="group" aria-label="What corrections change">
+  <div class="split-col split-yes"><h3>What corrections change today</h3><div class="split-text">The visible Taste Profile, pattern history, and profile refreshes. Software enforces certain corrections, including rejected patterns and excluded categories.</div></div>
+  <div class="split-col split-not"><h3>What corrections don’t yet control</h3><div class="split-text">Which catalog titles software retrieves and scores. The recommendation AI receives corrections as instructions, but software doesn’t yet verify that every pick follows them.</div></div>
+</div>
+<p>Saving a title you haven’t tried or marking it Not interested doesn’t count as evidence of taste. When AI is unavailable, recommendations fall back to catalog picks.</p>
 </section>
 
 <section class="section seam-learning">
-<div class="kicker">Evidence from the build</div>
-<h2>What I tested, and what it revealed</h2>
-<p><span class="lead-in">How the work is split today.</span></p>
-<ol>
-<li>Software retrieves real catalog candidates across books, movies, TV, and games, and removes anything you’ve already seen or ruled out.</li>
-<li>Software scores the rest against your ratings and shortlists six.</li>
-<li>A live AI call orders those six and writes a short explanation that cites something you’ve tried.</li>
-<li>Software checks that answer. If the call fails or the AI budget is used up, Tastemake shows the catalog shortlist instead and labels it as catalog picks.</li>
-<li>A second AI call drafts the Taste Profile’s patterns. Software keeps only cited titles you actually rated, limits how settled a pattern can claim to be by that evidence, and removes patterns you said aren’t you. It doesn’t check whether a cited title really fits the pattern.</li>
-</ol>
-<p><span class="lead-in">I started conservative.</span> Software decides what’s eligible and what counts as evidence; AI only orders and explains. That kept every AI answer checkable. Evaluation suggests that may also limit quality: the AI can only choose among the titles it’s given.</p>
-<p><span class="lead-in">Experiment: give the AI more to choose from</span> <em>(November 2026, exploratory offline evaluation)</em></p>
-<ul>
-<li><span class="lead-in">Hypothesis.</span> Letting the AI choose six of eight candidates, instead of ordering a fixed six, would make recommendations follow corrections better.</li>
-<li><span class="lead-in">What I measured.</span> How often recommendations conflicted with a taste pattern the person had rejected, as classified in an offline evaluation, alongside other quality measures.</li>
-<li><span class="lead-in">Result.</span> In this exploratory evaluation, the change reduced those conflicts only slightly, and some other measures got worse. It wasn’t the fix it looked like.</li>
-<li><span class="lead-in">What it revealed.</span> The limited shortlist appeared to be one important constraint. In many cases, the AI couldn’t choose a suitable same-medium alternative from the eight titles offered. That pointed to candidate retrieval and scoring as problems worth investigating, rather than assuming a different AI ranking strategy would solve them.</li>
-<li><span class="lead-in">What it doesn’t show.</span> That the wider catalog lacked good titles, or that real users would prefer either version. These were exploratory offline results, not independently reproduced, and no outside users were involved.</li>
-</ul>
-<p><span class="lead-in">Why the shortlist is weak.</span> A follow-up diagnosis found that scoring leans on broad genre overlap, that blending scores with retrieval order can push higher-scoring titles off the shortlist, and that title synopses already in the catalog aren’t used by the scorer. None of these changes has shipped.</p>
-<p><span class="lead-in">Latency.</span> Waiting for recommendations became a product-design concern. I shortened the AI’s answers, sped up candidate retrieval, and revised the loading experience. In the 30 days ending November 3, 2026, the recommendation AI call took 3.3 seconds at the median and 4.5 seconds at the 95th percentile, measured across 49 successful calls. That excludes calls that failed and covers the AI step only, not the full wait from click to cards. I don’t have a comparable before figure.</p>
-<p><span class="lead-in">Automated checks.</span> Tests cover the evidence rules, AI output validation, profile corrections, accessibility, and layout at several screen widths. They show those rules hold. They don’t show that the recommendations are useful.</p>
+<div class="kicker">What testing revealed</div>
+<h2>A more accurate citation wasn’t a better explanation.</h2>
+<p>A diagnostic trace exposed a mismatch: Tastemake’s explanations often cited a different rating from the one that actually determined a recommendation. I tested a requirement that explanations cite the rating the scorer used to select the title.</p>
+<figure class="test-compare" aria-labelledby="test-compare-label">
+  <figcaption id="test-compare-label" class="example-label">Two tests, different outcomes</figcaption>
+  <div class="test-compare-grid">
+    <div class="test-metric"><h3>Trace alignment</h3><div class="metric-value">98%</div><div class="metric-detail">Up from about 65%. In automated tests across 12 test profiles, 62 of 63 eligible explanations cited the deciding rating.</div></div>
+    <div class="test-metric"><h3>Explanation quality</h3><div class="metric-value">53%</div><div class="metric-detail">Rated specific and true, down from 69%, in a separate blind review of my 16-title profile.</div></div>
+  </div>
+  <div class="test-compare-note">In 15 paired comparisons, three explanations became worse and none improved. These were small offline tests, not outside-user research.</div>
+</figure>
+<p>For <cite>Breath of the Wild</cite>, the original explanation connected the game to <cite>Piranesi</cite>. That connection was rated specific and true. Requiring the deciding rating instead produced a genre-based comparison with <cite>Return of the Obra Dinn</cite>, which was rated incorrect.</p>
+<p>The intervention improved alignment with the scoring trace but made some explanations less meaningful. The deciding rating was often a broad genre match rather than the most useful reason for recommending a title.</p>
+<p><span class="lead-in">Decision:</span> I didn’t ship the requirement. I kept the diagnostic trace and turned my attention to candidate selection.</p>
 </section>
 
-<section class="section next-steps">
-<div class="kicker">What I’d test next</div>
-<h2>Does knowing why beat matching on genre?</h2>
-<p>First, I want to find out whether knowing <em>why</em> someone loved a title produces better recommendations than matching on genre. Tastemake already asks for reasons. The next step is to let reasons and synopses shape which candidates are offered, make corrections reach that stage too, and rerun the same offline evaluation against the same measures.</p>
-<p>Then, with outside users: do the picks appeal to them, and do their corrections make the next set better? No one but me has used Tastemake yet.</p>
+<section class="section next-tests">
+<h2>What else changed through testing</h2>
+<ul class="findings-list" role="list">
+  <li class="finding"><h3 class="finding-title">Honest feedback</h3><div class="finding-text">Code review exposed claims that some corrections changed recommendations when they didn’t, plus misleading Live AI labels and success messages. I corrected the claims to match actual behavior.</div></li>
+  <li class="finding"><h3 class="finding-title">Simpler onboarding</h3><div class="finding-text">Browse helps people find and rate familiar titles. Detailed questions about why they liked something appear after the initial reaction.</div></li>
+  <li class="finding"><h3 class="finding-title">Candidate quality</h3><div class="finding-text">Scoring relies heavily on genre, retrieval order can affect the shortlist, and available synopses aren’t used by the scorer. Proposed improvements haven’t shipped.</div></li>
+</ul>
 </section>
 
 <section class="section current-conclusion">
-<div class="kicker">Where I landed</div>
-<h2>The editable taste model is the interesting part.</h2>
-<p>Tastemake makes its inferred taste patterns visible and lets people correct them. The hard part is making those corrections reach every stage that chooses what you see, and grounding recommendations in why people like things, not just what genre they are.</p>
+<div class="kicker">What’s next</div>
+<h2>Can understanding why someone liked something outperform genre matching?</h2>
+<p>The next experiment is to use reasons, synopses, and appeal qualities when selecting candidates, with corrections influencing that stage too.</p>
+<p>The larger unanswered question is whether outside users find the recommendations useful and whether correcting a Taste Profile improves their next set. The next challenge is making Tastemake’s understanding of taste shape which titles it considers, not just how it orders and explains them.</p>
 <div class="case-meta case-credits"><span><b>My role</b> Product concept, experience design, feedback model, evaluation direction and review, and hands-on testing</span><span><b>AI collaborator</b> Code implementation and technical research support (ChatGPT and Claude)</span></div>
-<footer class="case-study-footer"><a href="index.html#portfolio">Back to Applied Work →</a></footer>
 </section>
 
 </article>
