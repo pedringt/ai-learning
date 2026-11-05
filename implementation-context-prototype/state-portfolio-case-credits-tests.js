@@ -21,6 +21,9 @@ for(const page of caseStudies){
   const heroEnd=html.indexOf('</header>',html.indexOf('meridian-case-hero'));
   check(`${page}: credits come after the last section heading, not in the hero`,
     html.indexOf(block)>lastH2&&html.indexOf(block)>heroEnd);
+  // Nov 5 (staging QA): the v7.3 Tastemake rewrite dropped this link; every case study keeps it.
+  check(`${page}: ends with the Back to Applied Work link`,
+    /<footer class="case-study-footer">[\s\S]*?<a href="index\.html#portfolio">Back to Applied Work →<\/a>[\s\S]*?<\/footer>/.test(html));
 }
 
 const tastemake=fs.readFileSync(path.join(root,'tastemake.html'),'utf8');
