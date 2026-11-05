@@ -41,9 +41,11 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 /* discovery-question cards */
 .qcard{border:1px solid var(--border);border-left:3px solid var(--purple);background:var(--softp);border-radius:10px;padding:13px 16px;margin:10px 0}
 .qcard b.qnum{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--purple);margin-bottom:4px}
-.qcard .resolution{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:13px;color:var(--muted)}
-.qcard .resolution b{color:var(--ink)}
-.qcard .resolution p{margin:0;font-size:13px}.qcard .resolution p+p{margin-top:6px}
+.qcard.finding p{margin:0}.qcard.finding p+p{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.finding-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.finding-grid .qcard{margin:0}
+.finding-head{margin:0 0 8px;font-size:15px;line-height:1.3;color:var(--ink)}
+.check-contrast{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.check-contrast>div{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--card)}.check-contrast span{display:block;margin-bottom:4px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.check-contrast>div+div{border-left:3px solid var(--purple)}
+@media(max-width:760px){.finding-grid,.check-contrast{grid-template-columns:1fr}}
 
 /* metrics blocks */
 .metric{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin:12px 0;background:var(--card)}
@@ -144,27 +146,21 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <header class="case-hero">
 <div class="eyebrow">Supporting exercise · simulated support workflow</div>
 <h1>AI Support Workflow Exercise</h1>
-<p class="lead">Meridian is a fictional company. I used it to work out where AI should participate in a support team&rsquo;s workflow, what software should enforce, and when a person should take over. The useful result was seeing how much the design changed once discovery challenged my first assumptions.</p>
-<p class="credit small"><span><b>Simulated</b> The company, stakeholder responses, and operating numbers. These were exercise inputs used to test my assumptions, not findings from real research.</span></p>
+<p class="lead">I used a fictional support team to practice figuring out where AI would actually help, rather than assuming it belonged everywhere. I started with a simple idea: let AI draft replies to customer tickets. As I worked through the team&rsquo;s simulated workflows and constraints, I found reasons to narrow that idea considerably. Some problems didn&rsquo;t need AI at all.</p>
+<p class="credit small"><span><b>Simulated</b> Meridian, stakeholder statements, operating data and numerical targets are simulated exercise inputs, not real customer interviews or measured pilot results.</span></p>
 </header>
 
 <h2>What discovery changed</h2>
-<p>I started with a generic idea: AI drafts replies so support reps can answer faster. By the end of discovery, the design was narrower and more specific. Money, security and account-change requests skip AI drafting, and a separate check guards that boundary. A person reviews and sends every reply. The speed targets became modest. Two problems turned out to need configuration and access, not AI. All of this changed before prompting or model choice mattered.</p>
+<p>Discovery changed the proposal in several ways. I narrowed AI drafting to lower-risk requests, kept people responsible for every customer reply, and reconsidered how much time the workflow could realistically save. I also found problems that could be addressed by improving access to existing information rather than adding AI.</p>
 
-<div class="qcard"><b class="qnum">Rep workflow</b>How do support reps actually handle first responses today?
-<div class="resolution"><p><b>What discovery showed:</b> The simulated PM described a &ldquo;mixed workflow&rdquo;: most reps worked tickets start to finish, but on busy days some sent a quick acknowledgment first and came back later. My first-response target partly counted on that. When I asked the simulated reps directly, only 2 of 8 did it, and only occasionally. I gave their account of their own work more weight than the secondhand one.</p><p><b>What I decided:</b> I revised the exercise&rsquo;s first-response target from about 6 hours to about 7, against a baseline of more than 8. I also stopped expecting handling time to fall much, because a person still reviews every draft. Both are exercise targets, not measured results.</p></div></div>
+<div class="finding-grid">
+<div class="qcard finding"><h3 class="finding-head">Rep workflow</h3><p>The simulated project manager described a workflow where support representatives often sent quick acknowledgments before returning to tickets. But when I checked with the simulated representatives, that wasn&rsquo;t how most of them worked.</p><p>I&rsquo;d based part of my response-time target on that assumption. I revised the target and lowered my expectations for time savings, especially since every AI-drafted reply would still need human review.</p></div>
+<div class="qcard finding"><h3 class="finding-head">Billing and account information</h3><p>The simulated team was spending time looking up billing information that was already available in its ticketing system, just not visible to everyone. A configuration change could solve that problem without a new AI integration.</p><p>Other gaps weren&rsquo;t as simple. The proposed AI workflow still needed access to customer-specific account information, and some billing data could be a day old. I treated those as unresolved requirements rather than assuming AI could work around them.</p></div>
+<div class="qcard finding"><h3 class="finding-head">High-risk requests</h3><p>I decided that requests involving money, account access, or security should go directly to a person rather than receive an AI-drafted reply. Even with human review, these requests carried risks that didn&rsquo;t justify automated drafting. I also included a separate software check to help enforce that boundary.</p></div>
+<div class="qcard finding"><h3 class="finding-head">Knowledge quality</h3><p>The simulated team&rsquo;s knowledge base included outdated and conflicting information. That meant AI could produce an incorrect answer even if it retrieved and summarized the source material correctly.</p><p>Since a full cleanup wasn&rsquo;t realistic before the proposed pilot, I decided to track failures caused by bad source information separately and correct those articles as problems appeared. I also wanted to test different search approaches rather than assume a more sophisticated retrieval system would automatically be better.</p></div>
+</div>
 
-<div class="qcard"><b class="qnum">Billing and account context</b>Does the AI need new integrations to see the account information reps use?
-<div class="resolution"><p><b>What discovery showed:</b> Reps were copying billing and account status into tickets from a separate billing system. That field already reached the ticketing tool through a nightly sync, but only in the Tier 2 view. Turning it on for Tier 1 was a configuration change. It would help reps directly, and it would give the AI the same already-approved data without a new integration.</p><p><b>A real access gap:</b> For questions that depend on a customer&rsquo;s plan or setup, reps check the CRM record before answering. The AI would need separate read access to that data. Without it, an answer can be generically correct and still wrong for that customer. The exercise left this as a gap to close.</p><p><b>Unresolved:</b> Because the sync runs nightly, billing data can be up to 24 hours old. The exercise flagged this but didn&rsquo;t decide whether it&rsquo;s current enough for billing questions.</p></div></div>
-
-<div class="qcard"><b class="qnum">High-risk categories</b>Should AI still draft replies for money, account-access, and security issues if a person reviews them?
-<div class="resolution"><p><b>What changed:</b> I decided those categories should bypass drafting entirely. Classification can route them, but the response itself starts with a person. The risk was not worth treating as a confidence-threshold problem.</p></div></div>
-
-<div class="qcard"><b class="qnum">Knowledge quality</b>What happens if the source material the AI retrieves is stale or contradictory?
-<div class="resolution"><p><b>What discovery showed:</b> About 20% of the roughly 180 knowledge-base articles hadn&rsquo;t been reviewed in over a year, and some conflicted. Reps&rsquo; search was basic keyword matching. Leadership kept the pilot timeline, so a cleanup couldn&rsquo;t come first.</p><p><b>What changed:</b> Articles would be fixed when a pilot failure was traced to them. Those failures would get their own root-cause tag, so bad source material wasn&rsquo;t blamed on the model. I also stopped assuming semantic search was the answer and decided the retrieval options needed testing.</p></div></div>
-
-<h2>Support workflow and AI boundaries</h2>
-<p>The resulting design is deliberately bounded. AI helps with interpretation and drafting only where being probabilistic is useful. Software owns the hard stops. People remain responsible for anything consequential and for every message that reaches a customer.</p>
+<h2>Where AI, software, and people fit</h2>
 
 <div class="flow-diagram">
 <div class="flow-title">Ticket arrives → human handoff</div>
@@ -201,18 +197,22 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <div class="flow-connector"></div>
 <div class="flow-step"><span class="flow-num">7</span><div class="flow-content owner-human"><span class="owner-tag">Human</span><b>Move to human-only handling when needed</b><span>carry the conversation history forward instead of making the customer start over</span></div></div>
 </div>
-<p class="small flow-caption"><em>Designed workflow. The learning prototype covered classification, the high-risk text check and retrieval; the escalation checks were designed but not built.</em></p>
+<p class="small flow-caption"><em>The diagram shows the proposed division of responsibility between AI, software, and support representatives. The learning prototype covered basic classification, high-risk checks, and retrieval, but not the full escalation workflow.</em></p>
 
-<h2>What I would measure in a real pilot</h2>
-<p>I would not carry the exercise&rsquo;s fictional target numbers forward. A real pilot would set baselines first, then track response and handling time alongside draft acceptance and editing, escalation reasons, knowledge-source failures, boundary violations, and customer outcomes. A faster workflow would not count as a success if reps spend the saved time correcting bad drafts or if risky categories leak through the boundary.</p>
+<h2>The safety check that passed the wrong test</h2>
+<p>The learning prototype used fixed rules to classify requests and assemble draft responses. It did not call an AI model or handle real customers.</p>
+<p>When I revisited the rules-based prototype, I found that its high-risk check missed several requests. One involved an administrator password and should have bypassed drafting entirely.</p>
+<div class="check-contrast" role="list"><div role="listitem"><span>What the test checked</span><strong>The request&rsquo;s category</strong></div><div role="listitem"><span>What it needed to check</span><strong>Whether drafting was blocked</strong></div></div>
+<p>The test passed anyway because it checked how the request was categorized, not whether drafting had actually been blocked. That exposed a gap in the test itself. A real pilot would need to test the actual routing outcome, not just whether the classification looked correct.</p>
 
-<h2>Testing the high-risk boundary</h2>
-<p>Classification can be wrong, so I didn&rsquo;t want the decision to draft to rest on the category alone. The design adds a second check that reads the ticket text for money, security and account-change requests, whatever category the ticket was given.</p>
-<p>A rules-based learning prototype included a rough version of that check. It used simple pattern matching, ran no AI model and handled no real customers. During the exercise it was rechecked against only a handful of cases. A later recheck of the saved prototype, in November 2026, found it caught some high-risk requests and missed three. One of the misses was the prototype&rsquo;s own test case: &ldquo;I need to change my admin password immediately&rdquo; still got a draft. That test passed anyway, because it checked the ticket&rsquo;s category, not whether a draft was produced. A passing test hadn&rsquo;t shown that the boundary held.</p>
-<p>A real pilot would have to measure how many high-risk tickets get past both checks, decide whether the check should lean toward over-escalating, test how uncertain tickets are routed, and confirm that confidence scores mean what they say. Mandatory human review is another checkpoint, not a guarantee that someone notices a misrouted ticket.</p>
+<h2>What I&rsquo;d measure in a real pilot</h2>
+<p>Before running a real pilot, I&rsquo;d establish baselines for response times, handling time, and customer outcomes. I&rsquo;d also measure how often representatives needed to correct AI drafts, why requests were escalated, and whether sensitive requests were being routed correctly.</p>
+<p>Faster responses wouldn&rsquo;t count as a success if the time savings came at the expense of accuracy, customer experience, or safety.</p>
+<p>I&rsquo;d also want to know whether the benefits justified the cost of building and maintaining the system. Saving time isn&rsquo;t automatically a positive return on investment. The savings need to translate into meaningful business value.</p>
 
-<h2>What the exercise showed</h2>
-<p>Several things that first looked like AI problems turned out to be workflow, access, source-quality, or policy problems, and the design changed before model choice or prompting became the important question. Simulated stakeholders sharpened that reasoning, but they cannot substitute for watching real people do the work, so real discovery would still come first.</p>
+<h2>What I learned</h2>
+<p>I started with an idea for using AI to make customer support faster. By the end, I had a narrower proposal and a much clearer understanding of what needed to be solved first.</p>
+<p>The biggest lesson was not to assume AI is the answer before understanding the workflow. Some problems needed better information, some needed clearer rules, and others required human judgment. Real customer research would be the next step.</p>
 
 <div class="case-meta case-credits"><span><b>My role</b> Scope, discovery questions, boundary and handoff decisions, and which simulated findings were strong enough to change the design</span><span><b>AI collaborator</b> Rendering the workflow diagram from rules I specified, editing help on this page, and the November 2026 prototype recheck (Claude)</span></div>
 

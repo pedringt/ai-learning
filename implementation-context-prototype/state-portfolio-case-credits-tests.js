@@ -31,7 +31,9 @@ const legal=fs.readFileSync(path.join(root,'legal-ai-governance.html'),'utf8');
 for(const label of ['How I tested the idea','What held up','What I corrected along the way'])
   check(`Legal AI: "${label}" is an h2 heading`,legal.includes(`<h2 class="kicker">${label}</h2>`)&&!legal.includes(`<div class="kicker">${label}</div>`));
 check('Legal AI: the label headings keep the kicker look',/\.legal-paper \.paper-section>h2\.kicker:not\(#_\):not\(#_\)\{font-size:12px!important/.test(legal));
-check('Legal AI: "Where I landed" stays a label above its own h2 (no duplicate heading)',legal.includes('<div class="kicker">Where I landed</div><h2>'));
+// Nov 4 (Paige): the recommendation section opens with its own heading; the old "Where I landed" label is gone.
+check('Legal AI: the recommendation opens with its own h2, with no extra label or duplicate heading',
+  legal.includes('<section class="paper-section"><h2>Why I wouldn&rsquo;t pursue an offering yet</h2>')&&!legal.includes('Where I landed'));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);
