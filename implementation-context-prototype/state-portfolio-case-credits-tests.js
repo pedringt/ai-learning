@@ -26,6 +26,17 @@ for(const page of caseStudies){
 const tastemake=fs.readFileSync(path.join(root,'tastemake.html'),'utf8');
 const tasteHero=tastemake.slice(tastemake.indexOf('<header class="meridian-case-hero'),tastemake.indexOf('</header>'));
 check('Tastemake hero keeps only the Status line',/<div class="case-meta"><span><b>Status<\/b>/.test(tasteHero)&&!/My role|AI collaborator/.test(tasteHero));
+// Nov 4 (Paige): the v7.3 case study is five sections, with one comparison figure and a findings list.
+const tasteH2s=[...tastemake.matchAll(/<h2>([^<]+)<\/h2>/g)].map(m=>m[1]);
+check('Tastemake: five section headings, in order',JSON.stringify(tasteH2s)===JSON.stringify([
+  'Recommendations didn’t understand why I liked something.','An editable model of personal taste',
+  'A more accurate citation wasn’t a better explanation.','What else changed through testing',
+  'Can understanding why someone liked something outperform genre matching?']));
+check('Tastemake: the two tests are one labelled figure, 98% beside 53%',
+  /<figure class="test-compare" aria-labelledby="test-compare-label">[\s\S]*>98%<[\s\S]*>53%<[\s\S]*<\/figure>/.test(tastemake));
+check('Tastemake: the three findings are a list with their own headings',
+  (tastemake.match(/<li class="finding"><h3 class="finding-title">/g)||[]).length===3&&tastemake.includes('<ul class="findings-list" role="list">'));
+check('Tastemake: the old correction table and pipeline list are gone',!tastemake.includes('taste-effects')&&!tastemake.includes('How the work is split today'));
 
 const legal=fs.readFileSync(path.join(root,'legal-ai-governance.html'),'utf8');
 for(const label of ['How I tested the idea','What held up','What I corrected along the way'])
