@@ -164,6 +164,7 @@
         ?`<section class="settings-section settings-danger"><div class="settings-section-head"><div><h3>Example data</h3><p>Restore ${esc(project.name)} to its seeded starting scenario.</p></div><div class="settings-actions"><button class="btn secondary" type="button" data-settings-action="confirm-reset-demo">Reset example data</button></div></div></section>`
         :`<section class="settings-section settings-danger"><div class="settings-section-head"><div><h3>Delete project</h3><p>Permanently remove ${esc(project.name)} and everything in it: Notes, Evidence, Reviews, Questions, Current State, and History. This cannot be undone.</p></div><div class="settings-actions"><button class="btn secondary" type="button" data-settings-action="confirm-delete-project">Delete project</button></div></div></section>`}
     </article>`;
+    if(typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('state:view-rendered',{detail:{view:'settings'}}));
     // A caller (the Workspace Sources banner's "Connect your apps" button)
     // can request landing directly on this section instead of the top of
     // Settings via window.__stateScrollAnchor, cleared once consumed so it
@@ -205,5 +206,8 @@
     if(action==='delete-project'){control.disabled=true;const {name,projectId}=activeProjectInfo();showSettingsDialog(`<span class="eyebrow">Deleting</span><h2 id="dialogTitle">Deleting ${esc(name)}…</h2><p>This page reloads once it's done.</p>`);try{await api()?.deleteProject?.(projectId);window.location.reload();}catch(error){console.error('Could not delete project.',error);control.disabled=false;showSettingsDialog(`<span class="eyebrow">Couldn't delete project</span><h2 id="dialogTitle">${esc(name)} was not deleted.</h2><p>${esc(error.message)}</p><div class="dialog-actions"><button class="btn secondary" type="button" data-action="close-dialog">Close</button></div>`);}}
   });
 
-  const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');let settingsWasActive=!!settingsNav?.classList.contains('active');if(settingsWasActive)load();if(settingsNav){new MutationObserver(()=>{const active=settingsNav.classList.contains('active');if(active&&!settingsWasActive)load();settingsWasActive=active;}).observe(settingsNav,{attributes:true,attributeFilter:['class']});}
+  const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');let settingsWasActive=!!settingsNav?.classList.contains('active');if(settingsWasActive)load();
+  // Load once on arriving at Settings; navigation's render() announces every view, including this one. Mark Settings
+  // active before load(): load() draws Settings, which announces it again, and must not start another load.
+  document.addEventListener('state:view-rendered',event=>{const active=event.detail?.view==='settings';const arriving=active&&!settingsWasActive;settingsWasActive=active;if(arriving)load();});
 })();

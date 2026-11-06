@@ -14,6 +14,16 @@
   };
 
   const root = document.getElementById('viewRoot');
+  // Every write of a whole view goes through here, so modules that decorate a view after it is drawn listen for
+  // one event instead of watching #viewRoot with MutationObservers (Nov 5 cleanup, step 3).
+  function paintView(html){
+    root.innerHTML=html;
+    announceView(state.view);
+  }
+  // Also used by the Node test harnesses, which load this file without a browser event system.
+  function announceView(view){
+    if(typeof CustomEvent==='function'&&document.dispatchEvent)document.dispatchEvent(new CustomEvent('state:view-rendered',{detail:{view}}));
+  }
   const overlay = document.getElementById('overlay');
   const dialogBody = document.getElementById('dialogBody');
   // Modal must always start closed, independent of stale DOM/CSS state.
@@ -61,8 +71,8 @@
   // the later modules call, under their original names. Order matters: each module only
   // receives functions from modules installed above it.
   const {showToast,showDemoHelp,showDialog,closeDialog,showProjectSettings,addDialogHtml,showAddDialog,analyzingDialog,startAnalysisClock,stopAnalysisClock}=window.STATE_APP_DIALOGS.install({baselineSetupActive,dialogBody,esc,overlay,state});
-  const {updateNav,updateProjectSubnavActive,render,navigateTo,scrollProjectTarget}=window.STATE_APP_NAVIGATION.install({ASK,PROJECT_VIEW,esc,openQuestions,renderHistory,renderNotes,renderOpenItems,renderOverview,renderProjectOverview,root,state,uiPendingReviews});
-  const {upsertBackendReview,replaceBackendOpenReviews,mapApiReview,refreshOpenReviews,formatBackendDate,sourceLabel,historyType,syncApiHistory,syncApiState,syncApiQuestions,createBackendQuestion,submitEvidence,retryEvidenceAnalysis,activateProject,hydrateBackend}=window.STATE_APP_HYDRATION.install({API,BACKEND_SYNC,currentProjectStage,renderWorkspaceAttentionOnly,renderWorkspaceBelowGridOnly,root,state,workspaceAttentionHtml,closeDialog,updateNav,render});
+  const {updateNav,updateProjectSubnavActive,render,navigateTo,scrollProjectTarget}=window.STATE_APP_NAVIGATION.install({ASK,PROJECT_VIEW,announceView,esc,openQuestions,renderHistory,renderNotes,renderOpenItems,renderOverview,renderProjectOverview,root,state,uiPendingReviews});
+  const {upsertBackendReview,replaceBackendOpenReviews,mapApiReview,refreshOpenReviews,formatBackendDate,sourceLabel,historyType,syncApiHistory,syncApiState,syncApiQuestions,createBackendQuestion,submitEvidence,retryEvidenceAnalysis,activateProject,hydrateBackend}=window.STATE_APP_HYDRATION.install({announceView,API,BACKEND_SYNC,currentProjectStage,renderWorkspaceAttentionOnly,renderWorkspaceBelowGridOnly,root,state,workspaceAttentionHtml,closeDialog,updateNav,render});
   const {decideReview,openAdjustDialog,executeReviewDecision,confirmReviewAdjust}=window.STATE_APP_REVIEW_ACTIONS.install({API,OPEN_ITEMS_VIEW,clone,esc,norm,questionDialogHtml,state,todayISO,todayLabel,truncateText,showToast,showDialog,closeDialog,updateNav,render,replaceBackendOpenReviews,syncApiState,syncApiQuestions,hydrateBackend});
 
   // #113: "Project stage"/"Project outcome" are matched by topic label, not
@@ -126,7 +136,7 @@
   }
 
   function renderProjectOverview(){
-    root.innerHTML=PROJECT_VIEW.render({backendState:state.backendStatus.state,projectName:state.data.project.name,knowledge:state.data.knowledge,history:state.data.history,pendingFor});
+    paintView(PROJECT_VIEW.render({backendState:state.backendStatus.state,projectName:state.data.project.name,knowledge:state.data.knowledge,history:state.data.history,pendingFor}));
     decorateProjectProvenance();
     requestAnimationFrame(()=>updateProjectSubnavActive());
   }
@@ -322,6 +332,7 @@
     const next=holder.firstElementChild;
     if(!next) return false;
     current.replaceWith(next);
+    announceView(state.view);
     return true;
   }
   // Sibling to renderWorkspaceAttentionOnly(): the fast attention-only
@@ -335,6 +346,7 @@
     const current=root.querySelector('.workspace-below-grid');
     if(!current) return false;
     current.innerHTML=whatChangedHtml()+currentStateHtml();
+    announceView(state.view);
     return true;
   }
   function liveRecordStatus(){
@@ -363,14 +375,14 @@
     // Ask no longer has an inline instance in Workspace -- it's a global
     // read-only utility reached from the floating Ask State control
     // (context-product-polish.js), not a Workspace feature.
-    root.innerHTML = `<section class="overview pristine">
+    paintView(`<section class="overview pristine">
       <section class="overview-heading"><div class="overview-heading-row"><div><h2>Workspace</h2><p class="workspace-record-orientation">See what needs attention, what changed, and what the team currently treats as true.</p>${workspaceStageHtml(currentProjectStage())}</div><button class="btn secondary overview-add" data-action="add-info">+ Add Evidence</button></div></section>
       ${workspaceAttentionHtml()}
       <div class="workspace-below-grid">
         ${whatChangedHtml()}
         ${currentStateHtml()}
       </div>
-    </section>`;
+    </section>`);
     // Keep Workspace decorations in the same render task as their container.
     // Their observers remain as a fallback for other DOM changes, but should
     // not insert the banner or source strip in a later frame after navigation.
@@ -498,7 +510,7 @@
   }
   function simpleNote(n){ return NOTES_VIEW.simpleNote(withLinkedQuestions([n])[0],state.expandedNotes,state.editingNoteId); }
   function draftNoteRow(n){ return NOTES_VIEW.draftNoteRow(n); }
-  function renderNotes(){ root.innerHTML=NOTES_VIEW.render(withLinkedQuestions(state.data.notes),notesUiState()); }
+  function renderNotes(){ paintView(NOTES_VIEW.render(withLinkedQuestions(state.data.notes),notesUiState())); }
   // Nov 3: a Review's "Read full note" opens the quoted Evidence record (matched by id) expanded in
   // Notes, the app's existing full-text view for one Evidence item. It only changes what is shown:
   // filters are cleared only if they would hide that note, and nothing is written. If Notes has no
@@ -576,7 +588,7 @@
     const list=document.getElementById('historyList');
     const entries=historyEntries();
     const topicKnowledge=state.historyTopic?state.data.knowledge.find(k=>k.id===state.historyTopic):null;
-    if(list) list.innerHTML=entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>');
+    if(list){ list.innerHTML=entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>'); announceView(state.view); }
     const count=document.getElementById('historyResultCount');
     const total=(state.historyEvidenceId?state.data.history.filter(h=>(h.evidenceItems||h.evidence_items||[]).some(e=>e.id===state.historyEvidenceId)):state.historyTopic?state.data.history.filter(h=>h.knowledgeId===state.historyTopic):state.data.history).length;
     if(count) count.textContent=`${entries.length} of ${total} changes`;
@@ -585,11 +597,11 @@
 
   function renderHistory(){
     if(state.backendStatus.history==='error'){
-      root.innerHTML=`<section class="page collection-page history-page"><div class="empty-state unavailable-state"><h2>History is temporarily unavailable.</h2><p>Accepted project changes cannot be loaded right now.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></section>`;
+      paintView(`<section class="page collection-page history-page"><div class="empty-state unavailable-state"><h2>History is temporarily unavailable.</h2><p>Accepted project changes cannot be loaded right now.</p><button class="btn secondary" data-action="retry-hydration">Try again</button></div></section>`);
       return;
     }
     if(state.backendStatus.history!=='loaded'){
-      root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><h2>History</h2><p role="status">Loading History…</p></div></div></section>`;
+      paintView(`<section class="page collection-page history-page"><div class="page-head"><div><h2>History</h2><p role="status">Loading History…</p></div></div></section>`);
       return;
     }
     const entries=historyEntries();
@@ -597,7 +609,7 @@
     const topicKnowledge=topic?state.data.knowledge.find(k=>k.id===topic):null;
     const evidenceNote=state.historyEvidenceId?state.data.notes.find(n=>n.evidenceId===state.historyEvidenceId):null;
     const total=(state.historyEvidenceId?state.data.history.filter(h=>(h.evidenceItems||h.evidence_items||[]).some(e=>e.id===state.historyEvidenceId)):topic?state.data.history.filter(h=>h.knowledgeId===topic):state.data.history).length;
-    root.innerHTML=`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">Changes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'Every accepted change to Current State, whether it came from Notes, Starting State setup, or a direct edit. This is the bridge between what came in and what the Project says now.'}</p></div></div>${evidenceNote?`<div class="history-context"><strong>From note: ${esc(evidenceNote.title)}</strong><span>${total} accepted change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-evidence">View all history →</button></div>`:topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${total} recorded change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}<div class="history-toolbar"><input class="history-search" id="historySearch" type="search" placeholder="Search history" aria-label="Search accepted project changes" value="${esc(state.historySearch)}"><span class="history-result-count" id="historyResultCount" aria-live="polite">${entries.length} of ${total} changes</span><button class="text-button" id="clearHistorySearch" data-action="clear-history-search"${state.historySearch?'':' hidden'}>Clear search</button></div><div class="history-list" id="historyList">${entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>')}</div></section>`;
+    paintView(`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">Changes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'Every accepted change to Current State, whether it came from Notes, Starting State setup, or a direct edit. This is the bridge between what came in and what the Project says now.'}</p></div></div>${evidenceNote?`<div class="history-context"><strong>From note: ${esc(evidenceNote.title)}</strong><span>${total} accepted change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-evidence">View all history →</button></div>`:topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${total} recorded change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}<div class="history-toolbar"><input class="history-search" id="historySearch" type="search" placeholder="Search history" aria-label="Search accepted project changes" value="${esc(state.historySearch)}"><span class="history-result-count" id="historyResultCount" aria-live="polite">${entries.length} of ${total} changes</span><button class="text-button" id="clearHistorySearch" data-action="clear-history-search"${state.historySearch?'':' hidden'}>Clear search</button></div><div class="history-list" id="historyList">${entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>')}</div></section>`);
   }
 
   /* ----------------------------------------------------------------------
@@ -634,7 +646,7 @@
     // rule"), and Open Questions defaults to collapsed once there are more
     // than 5, so a `null` check alone left the target section collapsed.
     if(section) state.openItemSections[section]=false;
-    root.innerHTML=OPEN_ITEMS_VIEW.render(openItemsProps());
+    paintView(OPEN_ITEMS_VIEW.render(openItemsProps()));
     if(section){
       delete window.__stateScrollAnchor;
       setTimeout(()=>document.querySelector(`.open-items-${section}`)?.scrollIntoView({block:'start'}),60);

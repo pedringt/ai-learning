@@ -17,8 +17,6 @@
     'those points','that source','that review','that question','that item','that decision','that change'
   ];
 
-  let lastRenderedPayload = null;
-
   function followupIntent(query, previousPayload) {
     if (!previousPayload) return 'new';
     const q = norm(query);
@@ -73,7 +71,6 @@
 
   function render(payload, liveStatus) {
     const cleaned = dedupeAnswerPayload(payload);
-    lastRenderedPayload = cleaned || null;
     const html = prior.render(cleaned, liveStatus);
     if (typeof html !== 'string') return html;
     return html.replace(/<aside class="ask-state-actions">[\s\S]*?<\/aside>/g, '');
@@ -106,13 +103,12 @@
     } catch (_) {}
   }
 
-
   // Blank-project bug report (2026-09-15): a brand-new project showed the
   // exact same "Exploring State?" tour banner as an established one, even
   // though Open Items/Current State -- what that banner points at -- are
   // both empty. onboardingStage() reads the app's own state (exposed via
   // context-app.js's window.STATE_ASK_TEST_API, available by the time this
-  // runs off a MutationObserver callback, i.e. after a real render) to pick
+  // runs after a view is drawn, from the 'state:view-rendered' event) to pick
   // one of three banners. Absence of that hook (older bundle, test harness
   // without context-app.js loaded) falls back to the original banner.
   function onboardingStage() {
@@ -167,49 +163,8 @@
     if (existing.dataset.guideStage !== stage) existing.outerHTML = guideMarkup(stage);
   }
 
-  function decorateAskCurrentStateLinks() {
-    if (!root || !lastRenderedPayload?.answer) return;
-    const stateItems = (lastRenderedPayload.answer.sections || [])
-      .flatMap(section => section.items || [])
-      .filter(item => item.record_type === 'state' && item.record_id);
-    if (!stateItems.length) return;
-    const rows = [...root.querySelectorAll('.ask-answer-item')]
-      .filter(row => row.querySelector('.ask-record-state'));
-    rows.forEach((row, index) => {
-      const item = stateItems[index];
-      if (!item || row.querySelector('[data-action="ask-open-current-state"]')) return;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'text-button ask-item-link ask-item-action ask-current-state-link';
-      button.dataset.action = 'ask-open-current-state';
-      button.dataset.stateId = item.record_id;
-      button.textContent = 'View current →';
-      row.appendChild(button);
-    });
-  }
-
-  function focusCurrentStateFact(stateId) {
-    const nav = document.querySelector('.sidebar-nav [data-view="project-overview"], .mobile-primary-nav [data-view="project-overview"]');
-    if (!nav || !stateId) return;
-    nav.click();
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const target = [...document.querySelectorAll('.project-maintained-fact[data-state-id]')]
-        .find(el => el.dataset.stateId === stateId);
-      if (!target) return;
-      const disclosure = target.closest('details');
-      if (disclosure) disclosure.open = true;
-      target.classList.add('is-ask-target');
-      target.scrollIntoView({behavior:'smooth', block:'center'});
-      setTimeout(() => target.classList.remove('is-ask-target'), 2400);
-    }));
-  }
 
   document.addEventListener('click', event => {
-    const askCurrent = event.target.closest?.('[data-action="ask-open-current-state"]');
-    if (askCurrent) {
-      focusCurrentStateFact(askCurrent.dataset.stateId);
-      return;
-    }
     const dismiss = event.target.closest?.('[data-action="dismiss-reviewer-guide"]');
     if (dismiss) {
       setDismissed(true);
@@ -238,20 +193,12 @@
     }
   }, true);
 
-  if (root) {
-    const observer = new MutationObserver(() => requestAnimationFrame(() => {
-      syncReviewerGuide();
-      decorateAskCurrentStateLinks();
-    }));
-    observer.observe(root, {childList:true, subtree:true});
-  }
+  document.addEventListener('state:view-rendered', () => requestAnimationFrame(syncReviewerGuide));
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => {
     syncReviewerGuide();
-    decorateAskCurrentStateLinks();
   }, {once:true});
   else {
     syncReviewerGuide();
-    decorateAskCurrentStateLinks();
   }
 
   window.STATE_ONBOARDING_TEST_API = {onboardingStage, guideMarkup, syncReviewerGuide};

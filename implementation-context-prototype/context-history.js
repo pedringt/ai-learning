@@ -81,9 +81,7 @@
 
   document.addEventListener('click', () => window.setTimeout(pushIfChanged, 0));
 
-  const navObserver = new MutationObserver(() => requestAnimationFrame(pushIfChanged));
-  const nav = document.querySelector('.sidebar-nav');
-  if (nav) navObserver.observe(nav, {subtree: true, attributes: true, attributeFilter: ['class']});
+  document.addEventListener('state:view-rendered', () => requestAnimationFrame(pushIfChanged));
 
   window.addEventListener('popstate', event => {
     const route = String(window.location.hash || '').replace(/^#/, '').split('/')[0].toLowerCase();
