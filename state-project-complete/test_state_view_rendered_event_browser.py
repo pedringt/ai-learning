@@ -136,3 +136,5 @@ def test_opening_the_page_on_settings_loads_it_once(app):
     page.wait_for_selector('#settings-slack')
     page.wait_for_timeout(1500)
     assert requests[start:].count('/api/integrations/slack/health') == 1
+
+
