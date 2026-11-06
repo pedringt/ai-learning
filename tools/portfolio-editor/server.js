@@ -33,13 +33,17 @@ function runChecks(dir){
   const suiteDir=path.join(dir,'implementation-context-prototype');
   const suites=fs.existsSync(suiteDir)?fs.readdirSync(suiteDir).filter(f=>/^state-portfolio-.*-tests\.js$/.test(f)).sort():[];
   if(!suites.length)return {ok:false,output:'No portfolio checks were found.'};
-  let output='';
+  // Run every suite and report only the failing checks, so one publish
+  // attempt shows everything that needs attention.
+  const failed=[];
   for(const f of suites){
     const r=spawnSync(process.execPath,[f],{cwd:suiteDir,encoding:'utf8',timeout:120000});
-    output+=`==> ${f}\n${r.stdout}${r.stderr}`;
-    if(r.status!==0)return {ok:false,output};
+    if(r.status!==0){
+      const lines=`${r.stdout}${r.stderr}`.split('\n').filter(l=>/^(✗|FAIL)|Error|failed/.test(l));
+      failed.push(`==> ${f}\n${lines.join('\n')||`${r.stdout}${r.stderr}`.slice(-1500)}`);
+    }
   }
-  return {ok:true,output};
+  return failed.length?{ok:false,output:failed.join('\n\n')}:{ok:true,output:''};
 }
 
 function pageLabel(file,name){
