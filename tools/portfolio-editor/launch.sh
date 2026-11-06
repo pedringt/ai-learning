@@ -45,4 +45,5 @@ if ! curl -fsS -o /dev/null "${url}__editor/api/ping" 2>/dev/null; then
   curl -fsS -o /dev/null "${url}__editor/api/ping" 2>/dev/null || fail "The editor didn't start in time. Ask Claude to check $log."
 fi
 
-open "$url"
+# PE_NO_OPEN=1 starts the editor without opening a browser (for checks).
+[[ -n "${PE_NO_OPEN:-}" ]] || open "$url"

@@ -14,7 +14,8 @@
 
   async function call(method,route,body){
     try{
-      const r=await fetch(API+route,{method,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+      const post=method==='POST';// the server only accepts JSON posts (blocks cross-site forms)
+      const r=await fetch(API+route,{method,headers:post?{'Content-Type':'application/json'}:{},body:post?JSON.stringify(body||{}):undefined});
       return await r.json();
     }catch{return {error:'The editor isn’t running. Open it again from the Dock.'}}
   }

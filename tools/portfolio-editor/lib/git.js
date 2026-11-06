@@ -33,12 +33,12 @@ function ensureClone({dir,remote,base}){
     fs.mkdirSync(path.dirname(dir),{recursive:true});
     const filter=/^https?:/.test(remote)?['--filter=blob:none']:[];
     git(path.dirname(dir),['clone',...filter,'--no-checkout',remote,dir]);
-    git(dir,['checkout','-b',BRANCH,remoteBase(base)]);
+    git(dir,['switch','--quiet','-c',BRANCH,remoteBase(base)]);
   }
   const current=git(dir,['rev-parse','--abbrev-ref','HEAD']);
   if(current!==BRANCH){
     const exists=git(dir,['rev-parse','--verify','--quiet',`refs/heads/${BRANCH}`],{allowFail:true}).status===0;
-    git(dir,exists?['checkout',BRANCH]:['checkout','-b',BRANCH,remoteBase(base)]);
+    git(dir,exists?['switch','--quiet',BRANCH]:['switch','--quiet','-c',BRANCH,remoteBase(base)]);
   }
 }
 
@@ -126,7 +126,7 @@ function replay({dir,base}){
 }
 
 function log(dir,range,limit){
-  const out=git(dir,['log','--no-merges',...(limit?[`-n${limit}`]:[]),'--format=%H%x1f%cI%x1f%s',range]);
+  const out=git(dir,['log','--no-merges',...(limit?[`-n${limit}`]:[]),'--format=%H%x1f%cI%x1f%s',range,'--']);// the repo has a content/ folder, so separate revisions from paths
   return out?out.split('\n').map(l=>{const [sha,date,subject]=l.split('\x1f');return {sha,date,subject}}):[];
 }
 
