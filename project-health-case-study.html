@@ -25,9 +25,11 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 .card{padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--card)}.card p{margin:7px 0 0;color:var(--muted)}
 .lead-in{font-weight:700}
 .ph-example{margin:16px 0;padding:16px 18px;border:1px solid var(--border);border-radius:16px;background:var(--card)}.ph-example p{margin:8px 0 0}.ph-example .example-label{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
-.ph-changes{width:100%;margin:14px 0 0;border-collapse:collapse;font-size:14px;line-height:1.55}.ph-changes th,.ph-changes td{padding:10px 14px 10px 0;text-align:left;vertical-align:top}.ph-changes thead th{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);border-bottom:1px solid var(--border)}.ph-changes caption{caption-side:top;text-align:left;font-size:14px;font-weight:700;color:var(--ink);padding:0 0 6px}.ph-changes td{width:50%}
+.ph-changes{width:100%;margin:26px 0 0;border-collapse:collapse;font-size:14px;line-height:1.55}.ph-changes th,.ph-changes td{padding:10px 14px 10px 0;text-align:left;vertical-align:top}.ph-changes thead th{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);border-bottom:1px solid var(--border)}.ph-changes caption{caption-side:top;text-align:left;font-size:14px;font-weight:700;color:var(--ink);padding:0 0 6px}.ph-changes td{width:50%}
 
-@media(max-width:760px){.grid2{grid-template-columns:1fr}.case-system-page .case-meta{grid-template-columns:1fr}.ph-changes,.ph-changes tbody,.ph-changes tr,.ph-changes th,.ph-changes td{display:block;width:auto}.ph-changes thead{display:none}.ph-changes caption{display:block}.ph-changes td{padding-top:0;padding-bottom:10px}.ph-changes td[data-label]::before{content:attr(data-label) ": ";font-weight:700}}
+/* Nov 4–5 (Paige): room after the intro cards and before the Activity feed comparison. */
+.case-system-page .section>.grid2+p{margin-top:28px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}.case-system-page .section>.grid2+p{margin-top:24px}.ph-changes{margin-top:22px}.case-system-page .case-meta{grid-template-columns:1fr}.ph-changes,.ph-changes tbody,.ph-changes tr,.ph-changes th,.ph-changes td{display:block;width:auto}.ph-changes thead{display:none}.ph-changes caption{display:block}.ph-changes td{padding-top:0;padding-bottom:10px}.ph-changes td[data-label]::before{content:attr(data-label) ": ";font-weight:700}}
 </style>
 <script>
 (function () {
