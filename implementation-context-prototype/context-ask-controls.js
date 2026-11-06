@@ -38,7 +38,7 @@
     document.addEventListener('pointerup',e=>{
       if(!matchMedia('(max-width:760px)').matches)return;
       const close=e.target.closest?.('#askStateDrawer .ask-state-drawer-close');
-      if(close){e.preventDefault();e.stopImmediatePropagation();const d=document.getElementById('askStateDrawer'),l=document.getElementById('askStateLauncher');if(d)d.hidden=true;if(l)l.classList.remove('is-hidden');return}
+      if(close){e.preventDefault();e.stopImmediatePropagation();if(window.STATE_ASK_UI?.closeAskDrawer){window.STATE_ASK_UI.closeAskDrawer();return}const d=document.getElementById('askStateDrawer'),l=document.getElementById('askStateLauncher');if(d)d.hidden=true;if(l)l.classList.remove('is-hidden');return}
       const starter=e.target.closest?.('#askStateDrawer [data-review-batch-prompt]');
       // Re-fire a real click on the same element rather than reimplementing
       // "fill the input and submit" here: that reimplementation used

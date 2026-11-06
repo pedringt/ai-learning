@@ -15,13 +15,4 @@
   // the portfolio) only flipped a handful of rules to dark and left the app half-dark.
   // Never add the dark class.
   body.classList.remove('v88-dark');
-
-  let askPageY=0;let askScrollLocked=false;
-  const askDrawerIsOpen=()=>{const drawer=document.getElementById('askStateDrawer');if(!drawer||drawer.hidden||drawer.getAttribute('aria-hidden')==='true') return false;const style=window.getComputedStyle(drawer);return style.display!=='none'&&style.visibility!=='hidden';};
-  const lockAskBackground=()=>{if(askScrollLocked)return;askPageY=window.scrollY||window.pageYOffset||0;body.style.position='fixed';body.style.top=`-${askPageY}px`;body.style.left='0';body.style.right='0';body.style.width='100%';body.style.overflow='hidden';askScrollLocked=true;};
-  const unlockAskBackground=()=>{if(!askScrollLocked)return;body.style.position='';body.style.top='';body.style.left='';body.style.right='';body.style.width='';body.style.overflow='';askScrollLocked=false;window.scrollTo(0,askPageY);};
-  const syncAskBackground=()=>{askDrawerIsOpen()?lockAskBackground():unlockAskBackground();};
-  const stateUiObserver=new MutationObserver(syncAskBackground);
-  stateUiObserver.observe(body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','aria-hidden','class','style']});
-  syncAskBackground();
 })();

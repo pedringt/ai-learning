@@ -198,8 +198,19 @@
   function syncAskInputs(){
     const drawer=document.getElementById('askStateDrawerInput');if(drawer && drawer.value!==ui.query && document.activeElement!==drawer)drawer.value=ui.query;
   }
+  // The page behind the open drawer must not scroll (iOS scrolls it through the drawer otherwise). Moved here from a
+  // page-wide MutationObserver in state-shell.js that checked the drawer on every DOM change (Nov 5 cleanup, step 4).
+  let backgroundScrollY=0,backgroundLocked=false;
+  function lockBackground(){
+    if(backgroundLocked)return;backgroundScrollY=window.scrollY||window.pageYOffset||0;
+    Object.assign(document.body.style,{position:'fixed',top:`-${backgroundScrollY}px`,left:'0',right:'0',width:'100%',overflow:'hidden'});backgroundLocked=true;
+  }
+  function unlockBackground(){
+    if(!backgroundLocked)return;
+    Object.assign(document.body.style,{position:'',top:'',left:'',right:'',width:'',overflow:''});backgroundLocked=false;window.scrollTo(0,backgroundScrollY);
+  }
   function openAskDrawer({focus=true}={}){
-    ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
+    ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');lockBackground();syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
   }
   function closeAskDrawer(){
     // QA follow-up (2026-09-14): closing while an answer was still loading
@@ -215,7 +226,7 @@
     // requestId. running is cleared immediately either way, so a new
     // question can be asked right away instead of waiting out the old one.
     if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();ui.requestId++;ui.running=false;ui.streamRaw='';}
-    ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();
+    ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');unlockBackground();syncLauncherVisibility();
   }
   // state.md QA follow-up: Ask's drawer state (the last-rendered answer,
   // in-flight query, resolved-context signature) used to survive a project
@@ -238,7 +249,7 @@
     const holder=document.querySelector('.ask-state-starters');
     if(holder)holder.innerHTML=starterButtonsHtml(starters);
   }
-  window.STATE_ASK_UI={resetForProjectSwitch};
+  window.STATE_ASK_UI={resetForProjectSwitch,closeAskDrawer};
   function syncLauncherVisibility(){
     const launcher=document.getElementById('askStateLauncher');if(!launcher)return;
     const hide=ui.drawerOpen;

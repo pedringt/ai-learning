@@ -36,7 +36,9 @@ def flow(tmp_path):
                 html = (ROOT/'implementation-context-prototype/index.html').read_text()
                 body = re.search(r'<body>(.*)</body>', html, flags=re.S).group(1)
                 body = re.sub(r'<script\b.*?</script>', '', body, flags=re.S|re.I)
-                css = (ROOT/'implementation-context-prototype/state-shell.css').read_text() + '\n' + (ROOT/'implementation-context-prototype/context-tool.css').read_text()
+                # state-app.css positions the Ask drawer; without it the drawer sits in page flow, which the drawer's
+                # background scroll lock (context-product-polish.js since Nov 5) then hides.
+                css = (ROOT/'implementation-context-prototype/state-shell.css').read_text() + '\n' + (ROOT/'implementation-context-prototype/context-tool.css').read_text() + '\n' + (ROOT/'implementation-context-prototype/state-app.css').read_text()
                 css += '\n' + '\n'.join(re.findall(r'<style[^>]*>(.*?)</style>', html, flags=re.S))
                 page.set_content('<html><head><style>'+css+'</style></head><body>'+body+'</body></html>')
                 # Local transport only: exercise the real HTTP client against

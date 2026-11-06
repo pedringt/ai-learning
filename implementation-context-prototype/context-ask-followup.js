@@ -35,18 +35,20 @@
     return responseMode(followupIntent(query, previousPayload));
   }
 
-  async function submitStream(query, previousPayload = null, handlers = {}) {
+  // Forward the cancel signal: closeAskDrawer() aborts it so a closed drawer stops the request. These wrappers used to
+  // drop it, so closing Ask never cancelled anything (found Nov 5, step 4 of the patch-layer cleanup).
+  async function submitStream(query, previousPayload = null, handlers = {}, signal) {
     const intent = followupIntent(query, previousPayload);
     const contextualPrevious = intent === 'new' ? null : previousPayload;
-    const payload = await prior.submitStream(query, contextualPrevious, handlers);
+    const payload = await prior.submitStream(query, contextualPrevious, handlers, signal);
     if (payload && typeof payload === 'object') payload.followup_mode = responseMode(intent);
     return payload;
   }
 
-  async function submit(query, previousPayload = null) {
+  async function submit(query, previousPayload = null, signal) {
     const intent = followupIntent(query, previousPayload);
     const contextualPrevious = intent === 'new' ? null : previousPayload;
-    const payload = await prior.submit(query, contextualPrevious);
+    const payload = await prior.submit(query, contextualPrevious, signal);
     if (payload && typeof payload === 'object') payload.followup_mode = responseMode(intent);
     return payload;
   }
