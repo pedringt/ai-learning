@@ -1,3 +1,6 @@
 # Internal review artifacts stay in the repository but are never deployed (Paige, Nov 4).
 # The #595 State capture trial was a review-only page; it must not be publicly reachable.
 docs/review/595-state-capture-trial
+
+# The local portfolio editor (#617) runs only on Paige's Mac.
+tools/portfolio-editor

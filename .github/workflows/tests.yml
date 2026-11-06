@@ -148,3 +148,7 @@ jobs:
             echo "::endgroup::"
           done
           exit $status
+
+      # The local portfolio editor (#617): sanitizer, block edits, drafts/publish git flow.
+      - name: Run portfolio editor tests
+        run: node --test tools/portfolio-editor/test/*.test.js

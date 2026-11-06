@@ -64,37 +64,37 @@
 <div class="meridian-heading"><nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">Tastemake</li></ol></nav></div>
 
 <header class="meridian-case-hero flagship-hero">
-<h1>Tastemake</h1>
-<p class="lead">Tastemake is a recommendation prototype for books, movies, TV, and games. It makes its inferred taste patterns visible so people can question and correct them.</p>
-<div class="case-meta"><span><b>Status</b> Working prototype. Not yet tested with outside users.</span></div>
+<h1 data-edit="tastemake-1">Tastemake</h1>
+<p class="lead" data-edit="tastemake-2">Tastemake is a recommendation prototype for books, movies, TV, and games. It makes its inferred taste patterns visible so people can question and correct them.</p>
+<div class="case-meta" data-edit="tastemake-3"><span><b>Status</b> Working prototype. Not yet tested with outside users.</span></div>
 </header>
 
-<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Explore Tastemake</strong><p>Rate familiar titles, get recommendations, and correct your Taste Profile.</p><p class="callout-example"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Example Profile ↗</a>: Explore my read-only profile with 55 rated titles and 6 bookmarked titles. It makes no AI calls.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
+<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Explore Tastemake</strong><p data-edit="tastemake-4">Rate familiar titles, get recommendations, and correct your Taste Profile.</p><p class="callout-example" data-edit="tastemake-5"><a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Example Profile ↗</a>: Explore my read-only profile with 55 rated titles and 6 bookmarked titles. It makes no AI calls.</p></div><a class="meridian-primary-action" href="https://tastemake.vercel.app/" target="_blank" rel="noopener noreferrer">Open Tastemake <span aria-hidden="true">↗</span></a></aside>
 
 <article class="case-page-content flagship-case">
 
 <section class="section narrative-open">
-<div class="kicker">The problem</div>
-<h2>Recommendations didn’t understand why I liked something.</h2>
-<p>I used separate apps to track books, games, movies, and TV. Their recommendations often felt generic and rarely explained why a title might appeal to me. I wanted one place where I could see what the system inferred about my taste, correct it, and use those corrections to improve future recommendations.</p>
+<div class="kicker" data-edit="tastemake-6">The problem</div>
+<h2 data-edit="tastemake-7">Recommendations didn’t understand why I liked something.</h2>
+<p data-edit="tastemake-8">I used separate apps to track books, games, movies, and TV. Their recommendations often felt generic and rarely explained why a title might appeal to me. I wanted one place where I could see what the system inferred about my taste, correct it, and use those corrections to improve future recommendations.</p>
 </section>
 
 <section class="section product-model">
-<div class="kicker">What I built</div>
-<h2>An editable model of personal taste</h2>
-<p>Tastemake uses favorites and ratings to propose taste patterns across four types of media. Each pattern includes supporting titles, conflicting evidence, and an indication of how well-supported it is.</p>
-<p>People can confirm patterns, reject them, qualify them, or limit them to certain contexts. Rejecting an interpretation doesn’t erase the original ratings.</p>
+<div class="kicker" data-edit="tastemake-9">What I built</div>
+<h2 data-edit="tastemake-10">An editable model of personal taste</h2>
+<p data-edit="tastemake-11">Tastemake uses favorites and ratings to propose taste patterns across four types of media. Each pattern includes supporting titles, conflicting evidence, and an indication of how well-supported it is.</p>
+<p data-edit="tastemake-12">People can confirm patterns, reject them, qualify them, or limit them to certain contexts. Rejecting an interpretation doesn’t erase the original ratings.</p>
 <div class="correction-split" role="group" aria-label="What corrections change">
-  <div class="split-col split-yes"><h3>What corrections change today</h3><div class="split-text">The visible Taste Profile, pattern history, and profile refreshes. Software enforces certain corrections, including rejected patterns and excluded categories.</div></div>
-  <div class="split-col split-not"><h3>What corrections don’t yet control</h3><div class="split-text">Which catalog titles software retrieves and scores. The recommendation AI receives corrections as instructions, but software doesn’t yet verify that every pick follows them.</div></div>
+  <div class="split-col split-yes"><h3 data-edit="tastemake-13">What corrections change today</h3><div class="split-text" data-edit="tastemake-14">The visible Taste Profile, pattern history, and profile refreshes. Software enforces certain corrections, including rejected patterns and excluded categories.</div></div>
+  <div class="split-col split-not"><h3 data-edit="tastemake-15">What corrections don’t yet control</h3><div class="split-text" data-edit="tastemake-16">Which catalog titles software retrieves and scores. The recommendation AI receives corrections as instructions, but software doesn’t yet verify that every pick follows them.</div></div>
 </div>
-<p>Saving a title you haven’t tried or marking it Not interested doesn’t count as evidence of taste. When AI is unavailable, recommendations fall back to catalog picks.</p>
+<p data-edit="tastemake-17">Saving a title you haven’t tried or marking it Not interested doesn’t count as evidence of taste. When AI is unavailable, recommendations fall back to catalog picks.</p>
 </section>
 
 <section class="section seam-learning">
-<div class="kicker">What testing revealed</div>
-<h2>A more accurate citation wasn’t a better explanation.</h2>
-<p>A diagnostic trace exposed a mismatch: Tastemake’s explanations often cited a different rating from the one that actually determined a recommendation. I tested a requirement that explanations cite the rating the scorer used to select the title.</p>
+<div class="kicker" data-edit="tastemake-18">What testing revealed</div>
+<h2 data-edit="tastemake-19">A more accurate citation wasn’t a better explanation.</h2>
+<p data-edit="tastemake-20">A diagnostic trace exposed a mismatch: Tastemake’s explanations often cited a different rating from the one that actually determined a recommendation. I tested a requirement that explanations cite the rating the scorer used to select the title.</p>
 <figure class="test-compare" aria-labelledby="test-compare-label">
   <figcaption id="test-compare-label" class="example-label">Two tests, different outcomes</figcaption>
   <div class="test-compare-grid">
@@ -103,26 +103,26 @@
   </div>
   <div class="test-compare-note">In 15 paired comparisons, three explanations became worse and none improved. These were small offline tests, not outside-user research.</div>
 </figure>
-<p>For <cite>Breath of the Wild</cite>, the original explanation connected the game to <cite>Piranesi</cite>. That connection was rated specific and true. Requiring the deciding rating instead produced a genre-based comparison with <cite>Return of the Obra Dinn</cite>, which was rated incorrect.</p>
-<p>The intervention improved alignment with the scoring trace but made some explanations less meaningful. The deciding rating was often a broad genre match rather than the most useful reason for recommending a title.</p>
-<p><span class="lead-in">Decision:</span> I didn’t ship the requirement. I kept the diagnostic trace and turned my attention to candidate selection.</p>
+<p data-edit="tastemake-21">For <cite>Breath of the Wild</cite>, the original explanation connected the game to <cite>Piranesi</cite>. That connection was rated specific and true. Requiring the deciding rating instead produced a genre-based comparison with <cite>Return of the Obra Dinn</cite>, which was rated incorrect.</p>
+<p data-edit="tastemake-22">The intervention improved alignment with the scoring trace but made some explanations less meaningful. The deciding rating was often a broad genre match rather than the most useful reason for recommending a title.</p>
+<p data-edit="tastemake-23"><span class="lead-in">Decision:</span> I didn’t ship the requirement. I kept the diagnostic trace and turned my attention to candidate selection.</p>
 </section>
 
 <section class="section next-tests">
-<h2>What else changed through testing</h2>
+<h2 data-edit="tastemake-24">What else changed through testing</h2>
 <ul class="findings-list" role="list">
-  <li class="finding"><h3 class="finding-title">Honest feedback</h3><div class="finding-text">Code review exposed claims that some corrections changed recommendations when they didn’t, plus misleading Live AI labels and success messages. I corrected the claims to match actual behavior.</div></li>
-  <li class="finding"><h3 class="finding-title">Simpler onboarding</h3><div class="finding-text">Browse helps people find and rate familiar titles. Detailed questions about why they liked something appear after the initial reaction.</div></li>
-  <li class="finding"><h3 class="finding-title">Candidate quality</h3><div class="finding-text">Scoring relies heavily on genre, retrieval order can affect the shortlist, and available synopses aren’t used by the scorer. Proposed improvements haven’t shipped.</div></li>
+  <li class="finding"><h3 class="finding-title" data-edit="tastemake-25">Honest feedback</h3><div class="finding-text" data-edit="tastemake-26">Code review exposed claims that some corrections changed recommendations when they didn’t, plus misleading Live AI labels and success messages. I corrected the claims to match actual behavior.</div></li>
+  <li class="finding"><h3 class="finding-title" data-edit="tastemake-27">Simpler onboarding</h3><div class="finding-text" data-edit="tastemake-28">Browse helps people find and rate familiar titles. Detailed questions about why they liked something appear after the initial reaction.</div></li>
+  <li class="finding"><h3 class="finding-title" data-edit="tastemake-29">Candidate quality</h3><div class="finding-text" data-edit="tastemake-30">Scoring relies heavily on genre, retrieval order can affect the shortlist, and available synopses aren’t used by the scorer. Proposed improvements haven’t shipped.</div></li>
 </ul>
 </section>
 
 <section class="section current-conclusion">
-<div class="kicker">What’s next</div>
-<h2>Can understanding why someone liked something outperform genre matching?</h2>
-<p>The next experiment is to use reasons, synopses, and appeal qualities when selecting candidates, with corrections influencing that stage too.</p>
-<p>The larger unanswered question is whether outside users find the recommendations useful and whether correcting a Taste Profile improves their next set. The next challenge is making Tastemake’s understanding of taste shape which titles it considers, not just how it orders and explains them.</p>
-<div class="case-meta case-credits"><span><b>My role</b> Product concept, experience design, feedback model, evaluation direction and review, and hands-on testing</span><span><b>AI collaborator</b> Code implementation and technical research support (ChatGPT and Claude)</span></div>
+<div class="kicker" data-edit="tastemake-31">What’s next</div>
+<h2 data-edit="tastemake-32">Can understanding why someone liked something outperform genre matching?</h2>
+<p data-edit="tastemake-33">The next experiment is to use reasons, synopses, and appeal qualities when selecting candidates, with corrections influencing that stage too.</p>
+<p data-edit="tastemake-34">The larger unanswered question is whether outside users find the recommendations useful and whether correcting a Taste Profile improves their next set. The next challenge is making Tastemake’s understanding of taste shape which titles it considers, not just how it orders and explains them.</p>
+<div class="case-meta case-credits" data-edit="tastemake-35"><span><b>My role</b> Product concept, experience design, feedback model, evaluation direction and review, and hands-on testing</span><span><b>AI collaborator</b> Code implementation and technical research support (ChatGPT and Claude)</span></div>
 </section>
 
 </article>

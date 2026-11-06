@@ -5,20 +5,24 @@
 // The browser check (keyboard, Back/Forward, phone picker, viewports) is in the #588/#589 report.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
+// Editor markers (#617) are invisible attributes; compare the markup without them.
+const withoutEditMarkers=s=>s.replace(/ data-edit(?:="[^"]*"|-skip)/g,'');
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
-const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const html=withoutEditMarkers(fs.readFileSync(path.join(root,'index.html'),'utf8'));
 const between=(start,end)=>{const i=html.indexOf(start);return i<0?'':html.slice(i,html.indexOf(end,i));};
 
 const hero=between('<div class="rd-hero-copy">','</aside>');
 // Nov 5 (Paige): the name and descriptor line above the headline is removed again; her name stays in the contact footer.
 check('the hero opens with the headline, with no name or role line above it',/^<div class="rd-hero-copy"><h1/.test(hero)&&!/rd-identity|rd-descriptor/.test(html));
 check('her name is still in the contact footer',/<span class="portfolio-contact-name">Paige Edrington<\/span>/.test(html));
-check('the existing headline is kept',hero.includes('AI doesn’t know <span>what it doesn’t know.</span></h1>'));
+// Nov 5 (Paige): headline and subheading wording is edited in the portfolio editor (#617), so these
+// checks cover structure, not words. The Nov 4 rule against repeating "eight years" here is dropped.
+// Plain <span>s are the pink words; any number (including none) is fine.
+const headline=(hero.match(/^<div class="rd-hero-copy"><h1 tabindex="-1">((?:[^<]|<span>[^<]*<\/span>)*)<\/h1>/)||[])[1];
+check('the headline is plain text, with pink words as plain spans',!!headline&&/\S/.test(headline.replace(/<[^>]*>/g,'')),hero.slice(0,200));
 check('no spoken "I\'m Paige" introduction',!/I[’']m Paige/.test(html));
-// Nov 4 (Paige): the approved subheading sits under the headline and doesn't repeat the descriptor or Experience intro.
-check('the hero subheading is the approved wording',hero.includes('</h1><p class="lead">AI can move work forward quickly. Knowing what to ask, what’s missing, and whether the result holds up takes judgment.</p>'));
-check('the hero introduction does not repeat the descriptor or Experience intro',!/My background in|eight years/.test(hero));
+check('the subheading sits directly under the headline',/<\/h1><p class="lead">[^<]*\S[^<]*<\/p>/.test(hero));
 
 const actions=[...between('<div class="rd-actions">','</div>').matchAll(/<a class="([^"]*)" href="([^"]*)">([^<]*)</g)].map(m=>({cls:m[1],href:m[2],text:m[3]}));
 check('See the work is the first, primary action and opens Applied Work',
