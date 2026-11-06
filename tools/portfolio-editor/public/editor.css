@@ -27,6 +27,7 @@ body.pe-on [data-edit].pe-active{outline:2px solid #7c3aed;background:rgba(124,5
 .pe-toolbar{position:fixed;z-index:2147483001;display:flex;align-items:center;gap:6px;padding:6px;background:#fff;border:1px solid #d9d3ea;border-radius:10px;box-shadow:0 6px 20px rgba(20,10,50,.18)}
 .pe-toolbar[hidden]{display:none}
 .pe-toolbar button{padding:4px 9px}
+.pe-toolbar button[hidden]{display:none}
 .pe-sep{width:1px;align-self:stretch;background:#e3def0;margin:0 2px}
 
 .pe-dialog{width:min(560px,calc(100vw - 32px));max-height:80vh;overflow:auto;padding:20px 22px;border:1px solid #d9d3ea;border-radius:14px;background:#fff;box-shadow:0 20px 50px rgba(20,10,50,.25)}

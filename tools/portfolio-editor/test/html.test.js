@@ -9,7 +9,7 @@ test('sanitize keeps allowed inline markup as written',()=>{
 
 test('sanitize removes scripts, styles, event handlers and unsafe links',()=>{
   assert.equal(sanitize('Hi<script>alert(1)</script> there'),'Hi there');
-  assert.equal(sanitize('<span onclick="x()" style="color:red">t</span>'),'<span>t</span>');
+  assert.equal(sanitize('<span onclick="x()">t</span>'),'<span>t</span>');
   assert.equal(sanitize('<a href="javascript:alert(1)">bad</a>'),'bad');
   assert.equal(sanitize('<a href="//evil.example">x</a>'),'x');
   assert.equal(sanitize('<a href="https://ok.example" target="_top" rel="opener">ok</a>'),'<a href="https://ok.example">ok</a>');
@@ -63,4 +63,9 @@ test('auditPage finds unmarked copy, duplicates, and unsafe markers',()=>{
   assert.deepEqual(a.duplicates,['x-1']);
   assert.equal(a.missing.length,1);
   assert.equal(a.unsafe.length,1);
+});
+
+test('browser styling spans are unwrapped, so un-bolding never turns headline text pink',()=>{
+  assert.equal(sanitize('Making <span style="font-weight: normal;">AI</span> useful <span>human judgment.</span>'),'Making AI useful <span>human judgment.</span>');
+  assert.equal(sanitize('<span class="accent" style="color:red">kept</span>'),'<span class="accent">kept</span>');
 });

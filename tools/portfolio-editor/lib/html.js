@@ -84,6 +84,9 @@ function sanitize(html,mode='inline'){
       while(stack.length>i)out+=`</${stack.pop()}>`;
       continue;
     }
+    // A span carrying only browser styling is an editing leftover, not page
+    // markup (on the homepage headline a plain span means pink).
+    if(name==='span'&&attr(m[3],'style')!==undefined&&attr(m[3],'class')===undefined)continue;
     const attrs=cleanAttrs(name,m[3]);
     if(attrs===null)continue;
     out+=`<${name}${attrs}>`;

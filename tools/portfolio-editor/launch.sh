@@ -25,6 +25,13 @@ if ! curl -fsS -o /dev/null "${url}__editor/api/ping" 2>/dev/null; then
   done
   [[ -n "$node" ]] || fail "Node.js isn't installed, so the editor can't start. Ask Claude to set it up."
 
+  # Bring the drafts clone up to date first, so this launch already runs the
+  # newest editor code. Any conflict is left for the editor to report.
+  if [[ -d "$CONTENT_DIR/.git" && -z "$(git -C "$CONTENT_DIR" status --porcelain 2>/dev/null)" ]]; then
+    git -C "$CONTENT_DIR" fetch -q origin 2>/dev/null &&
+      { git -C "$CONTENT_DIR" rebase -q "origin/$BASE_BRANCH" >/dev/null 2>&1 || git -C "$CONTENT_DIR" rebase --abort >/dev/null 2>&1; }
+  fi
+
   # Prefer the editor code in the drafts clone, so it updates with the site;
   # fall back to the copy inside this app on the first run.
   server="$CONTENT_DIR/tools/portfolio-editor/server.js"
