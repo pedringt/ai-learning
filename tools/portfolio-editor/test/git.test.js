@@ -12,6 +12,7 @@ function setup(){
   const remote=path.join(tmp,'remote.git'),seed=path.join(tmp,'seed'),dir=path.join(tmp,'content');
   g.git(tmp,['init','--quiet','--bare','-b','staging',remote]);
   g.git(tmp,['clone','--quiet',remote,seed],{allowFail:true});
+  fs.mkdirSync(path.join(seed,'content'));fs.writeFileSync(path.join(seed,'content','note.md'),'x\n');// like the real repo's content/ folder
   fs.writeFileSync(path.join(seed,'page.html'),'<p data-edit="a-1">One</p>\n<p data-edit="a-2">Two</p>\n');
   g.git(seed,['checkout','--quiet','-b','staging']);
   g.git(seed,['add','.']);g.git(seed,['commit','--quiet','-m','seed']);g.git(seed,['push','--quiet','origin','staging']);
