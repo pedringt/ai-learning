@@ -3,68 +3,10 @@
 /* State's own shell behavior.
  * Copied from the portfolio's site-shell.js so the State app no longer depends on the portfolio deployment (#228).
  * The portfolio traffic-analytics loader was removed: State visits must not be counted in portfolio analytics.
- * Portfolio-page patches below are no-ops inside State; trimming them is a separate cleanup. */
+ * The portfolio-page patches (title/hero/Applied Work/validation rewrites, mobile nav, secondary menu) matched
+ * nothing in State and were removed in the Nov 5 cleanup. */
 (()=>{
-  const root=document.documentElement;
   const body=document.body;
-  const mobile=document.getElementById('v922MobileNav');
-
-  /* Keep portfolio branding consistent across standalone pages. */
-  document.title=document.title
-    .replace('AI Learning Portfolio','Context Switch')
-    .replace('Applied AI Product Portfolio','Context Switch');
-  document.querySelectorAll('meta[property="og:title"],meta[name="twitter:title"]').forEach(meta=>{
-    meta.content=(meta.content||'')
-      .replace('AI Learning Portfolio','Context Switch')
-      .replace('Applied AI Product Portfolio','Context Switch');
-  });
-  const homeHero=document.querySelector('[data-page="home"] .hero');
-  if(homeHero&&!homeHero.querySelector('.professional-context')){
-    const context=document.createElement('p');
-    context.className='professional-context';
-    context.textContent='QA and project management background, now focused on applied AI product work.';
-    homeHero.insertBefore(context,homeHero.firstChild);
-  }
-
-  /* Applied Work should show the State family as a coherent set: flagship
-     product plus supporting validation and feasibility studies. Reuse the
-     existing supporting grid so this stays visually consistent with the page. */
-  const portfolioPage=document.querySelector('[data-page="portfolio"]');
-  if(portfolioPage){
-    const supportingGrid=portfolioPage.querySelector('.applied-secondary-grid');
-    if(supportingGrid){
-      // index.html's own card already carries the correct href/title/copy as
-      // of 2026-09-13 -- this used to rewrite a stale state-ai-search-learning.html
-      // href and its text at runtime; kept only as the insertion anchor below.
-      const oldCostCard=supportingGrid.querySelector('a[href="state-architecture-cost.html"]');
-      if(!supportingGrid.querySelector('a[href="state-testing-debugging.html"]')){
-        const testing=document.createElement('a');
-        testing.className='card nav-card applied-secondary';
-        testing.href='state-testing-debugging.html';
-        testing.innerHTML='<span class="tag">State · Validation</span><h3>Testing & Debugging State</h3><p class="card-intro">How I used hands-on testing, AI-assisted automated coverage, and failure investigation to distinguish model, retrieval, implementation, and product-design problems instead of treating every bad AI result as a prompt problem.</p>';
-        supportingGrid.insertBefore(testing,oldCostCard||supportingGrid.firstChild);
-      }
-      if(!supportingGrid.querySelector('a[href="state-managed-agent-tracing.html"]')){
-        const tracing=document.createElement('a');
-        tracing.className='card nav-card applied-secondary';
-        tracing.href='state-managed-agent-tracing.html';
-        tracing.innerHTML='<span class="tag">Agent tracing &amp; authority</span><h3>Debugging a Read-Only Agent</h3><p class="card-intro">A controlled State Question Investigator exercise where tracing showed that the agent found the right evidence but overstated what it established, leading to a targeted authority fix and exact-case retest.</p>';
-        const testingCard=supportingGrid.querySelector('a[href="state-testing-debugging.html"]');
-        if(testingCard?.nextSibling) supportingGrid.insertBefore(tracing,testingCard.nextSibling); else supportingGrid.appendChild(tracing);
-      }
-    }
-  }
-
-  /* Keep the validation story precise about the user's actual background:
-     hands-on QA was primarily manual; broader testing familiarity came from
-     working closely with software teams in project management. */
-  const validationHeading=document.querySelector('.flagship-case .section .kicker')&&[...document.querySelectorAll('.flagship-case .section')].find(section=>section.querySelector('.kicker')?.textContent.trim()==='How I validated it');
-  if(validationHeading){
-    const h2=validationHeading.querySelector('h2');
-    const intro=h2?.nextElementSibling;
-    if(h2) h2.textContent='My background in QA and project management shaped how I validated State.';
-    if(intro?.tagName==='P') intro.textContent='Most of my hands-on QA experience was manual, but working closely with software teams as a project manager gave me familiarity with the broader testing approaches a production product needs. I used AI to help implement more comprehensive coverage, including automated testing I would not have been able to build myself, while I focused on hands-on testing, investigating failures, and deciding whether the product was actually behaving correctly.';
-  }
 
   /* final-freeze-polish.css and this file's two style blocks now load statically from state-app.css (#450). */
 
@@ -73,8 +15,6 @@
   // the portfolio) only flipped a handful of rules to dark and left the app half-dark.
   // Never add the dark class.
   body.classList.remove('v88-dark');
-  if(mobile) mobile.addEventListener('change',()=>{ location.href=mobile.value; });
-  document.addEventListener('click',e=>{document.querySelectorAll('.secondary-menu[open]').forEach(d=>{if(!d.contains(e.target))d.removeAttribute('open');});});
 
   const normalizeAuthorityCopy=()=>{
     document.querySelectorAll('.demo-flow-principle').forEach(node=>{if(node.textContent.trim()==='AI interprets → software enforces → people decide') node.textContent='AI interprets → software enforces → people authorize';});
