@@ -4,6 +4,7 @@
   'use strict';
   const API='/__editor/api';
   const LIST=new Set(['UL','OL']);
+  const HEADING=new Set(['H1','H2','H3','H4']);
   let enabled=true,active=null,original='',savedRange=null,status=null;
 
   const file=(()=>{
@@ -67,18 +68,92 @@
 
   // ---- Toolbar -------------------------------------------------------------
   const keep=e=>e.preventDefault();// keep the text selection when clicking toolbar buttons
+  let boldBtn,pinkBtn,formatBtns;
   const tool=(label,title,fn)=>button(label,fn,{title,'aria-label':title,onmousedown:keep});
   const toolbar=el('div',{className:'pe-ui pe-toolbar',role:'toolbar','aria-label':'Text formatting'},
-    tool('B','Bold',()=>exec('bold')),
-    tool('I','Italic',()=>exec('italic')),
-    tool('Link','Add or change a link',addLink),
-    tool('Unlink','Remove link',()=>exec('unlink')),
+    boldBtn=tool('B','Bold',()=>exec('bold')),
+    pinkBtn=tool('Pink','Make the selected words pink, or black again',togglePink),
+    ...(formatBtns=[
+      tool('I','Italic',()=>exec('italic')),
+      tool('Link','Add or change a link',addLink),
+      tool('Unlink','Remove link',()=>exec('unlink'))]),
     el('span',{className:'pe-sep'}),
     button('Save draft',save,{className:'pe-primary',onmousedown:keep}),
     button('Cancel',()=>finish(true),{onmousedown:keep}));
   toolbar.hidden=true;
 
-  function exec(cmd,value){document.execCommand(cmd,false,value);active&&active.focus()}
+  function exec(cmd,value){document.execCommand(cmd,false,value);tidy();active&&active.focus()}
+
+  // Browsers express some formatting as <span style="...">, which the page
+  // can't keep (the save drops styles). Unwrap those spans right away so the
+  // block looks exactly like what will be saved.
+  function tidy(){
+    if(!active)return;
+    for(const s of active.querySelectorAll('span[style]:not([class]),font'))s.replaceWith(...s.childNodes);
+    for(const s of active.querySelectorAll('[style]'))s.removeAttribute('style');
+    active.normalize();
+  }
+
+  // Headings are already bold. Where the page colors plain <span> text (the
+  // homepage headline is pink), the toolbar offers Pink instead of Bold.
+  function hasAccent(block){
+    if(!HEADING.has(block.tagName))return false;
+    const probe=document.createElement('span');
+    probe.textContent='x';
+    block.append(probe);
+    const differs=getComputedStyle(probe).color!==getComputedStyle(block).color;
+    probe.remove();
+    return differs;
+  }
+
+  // Character offsets of the selection within the block's text.
+  function selectionOffsets(block){
+    const sel=getSelection();
+    if(!sel.rangeCount)return null;
+    const r=sel.getRangeAt(0);
+    if(!block.contains(r.startContainer)||!block.contains(r.endContainer))return null;
+    const at=(node,off)=>{const pre=document.createRange();pre.selectNodeContents(block);pre.setEnd(node,off);return pre.toString().length};
+    return [at(r.startContainer,r.startOffset),at(r.endContainer,r.endOffset)];
+  }
+
+  function selectOffsets(block,start,end){
+    const walker=document.createTreeWalker(block,NodeFilter.SHOW_TEXT);
+    const r=document.createRange();
+    let pos=0,n,setStart=false;
+    while((n=walker.nextNode())){
+      const len=n.textContent.length;
+      if(!setStart&&start<=pos+len){r.setStart(n,start-pos);setStart=true}
+      if(end<=pos+len){r.setEnd(n,end-pos);break}
+      pos+=len;
+    }
+    const sel=getSelection();sel.removeAllRanges();sel.addRange(r);
+  }
+
+  function togglePink(){
+    const block=active;
+    if(block.querySelector('*:not(span)')||block.querySelector('span span')){say('This heading has other formatting, so Pink can’t be used here. Ask Claude to change it.','warn');return}
+    const range=selectionOffsets(block);
+    if(!range||range[0]===range[1]){say('Select the words you want pink (or black) first.','warn');return}
+    // One flag per character: is it inside the pink span?
+    const flags=[];
+    for(const n of block.childNodes){
+      const pink=n.nodeType===1;
+      for(const _ of n.textContent)flags.push(pink);
+    }
+    const [a,b]=range,text=block.textContent;
+    const makePink=!flags.slice(a,b).every(Boolean);
+    for(let i=a;i<b;i++)flags[i]=makePink;
+    const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\u00a0/g,'&nbsp;');
+    let html='';
+    for(let i=0;i<text.length;){
+      let j=i;while(j<text.length&&flags[j]===flags[i])j++;
+      html+=flags[i]?`<span>${esc(text.slice(i,j))}</span>`:esc(text.slice(i,j));
+      i=j;
+    }
+    block.innerHTML=html;
+    selectOffsets(block,a,b);
+    block.focus();
+  }
 
   function place(){
     if(!active)return;
@@ -109,6 +184,12 @@
     block.contentEditable='true';
     block.spellcheck=true;
     block.classList.add('pe-active');
+    // The pink-accent headline gets only Pink: other formatting there would
+    // fight with the accent, and headings are already bold.
+    const accent=hasAccent(block);
+    pinkBtn.hidden=!accent;
+    for(const b of formatBtns)b.hidden=accent;
+    boldBtn.hidden=accent||HEADING.has(block.tagName);
     toolbar.hidden=false;place();
     block.focus();
     say(LIST.has(block.tagName)?'Editing a list. Press Return for a new item.':'Editing. Save draft when you’re done, or press Esc to cancel.');
@@ -128,6 +209,7 @@
 
   async function save(){
     if(!active)return;
+    tidy();
     const block=active,html=block.innerHTML;
     if(html===original){finish(true);say('No changes to save.');return}
     say('Saving…');
@@ -153,6 +235,7 @@
     if(!active||!active.contains(e.target))return;
     if(e.key==='Escape'){e.preventDefault();finish(true)}
     else if(e.key==='s'&&(e.metaKey||e.ctrlKey)){e.preventDefault();save()}
+    else if(e.key==='b'&&(e.metaKey||e.ctrlKey)&&HEADING.has(active.tagName)){e.preventDefault();say('Headings are already bold.','warn')}
     else if(e.key==='Enter'&&!LIST.has(active.tagName)){e.preventDefault();say('Each block is one paragraph or heading. Ask Claude to add a new one.','warn')}
   },true);
 
