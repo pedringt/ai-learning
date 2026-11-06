@@ -85,7 +85,7 @@
 <p data-edit="tastemake-11">Tastemake uses favorites and ratings to propose taste patterns across four types of media. Each pattern includes supporting titles, conflicting evidence, and an indication of how well-supported it is.</p>
 <p data-edit="tastemake-12">People can confirm patterns, reject them, qualify them, or limit them to certain contexts. Rejecting an interpretation doesn’t erase the original ratings.</p>
 <div class="correction-split" role="group" aria-label="What corrections change">
-  <div class="split-col split-yes"><h3 data-edit="tastemake-13">What corrections change today</h3><div class="split-text" data-edit="tastemake-14">The visible Taste Profile, pattern history, and profile refreshes. Software enforces certain corrections, including rejected patterns and excluded categories.</div></div>
+  <div class="split-col split-yes"><h3 data-edit="tastemake-13">What corrections change today</h3><div class="split-text" data-edit="tastemake-14">The visible Taste Profile, pattern history, and profile refreshes. Software enforces certain corrections, including rejected patterns and areas excluded from a pattern.</div></div>
   <div class="split-col split-not"><h3 data-edit="tastemake-15">What corrections don’t yet control</h3><div class="split-text" data-edit="tastemake-16">Which catalog titles software retrieves and scores. The recommendation AI receives corrections as instructions, but software doesn’t yet verify that every pick follows them.</div></div>
 </div>
 <p data-edit="tastemake-17">Saving a title you haven’t tried or marking it Not interested doesn’t count as evidence of taste. When AI is unavailable, recommendations fall back to catalog picks.</p>
@@ -113,14 +113,14 @@
 <ul class="findings-list" role="list">
   <li class="finding"><h3 class="finding-title" data-edit="tastemake-25">Honest feedback</h3><div class="finding-text" data-edit="tastemake-26">Code review exposed claims that some corrections changed recommendations when they didn’t, plus misleading Live AI labels and success messages. I corrected the claims to match actual behavior.</div></li>
   <li class="finding"><h3 class="finding-title" data-edit="tastemake-27">Simpler onboarding</h3><div class="finding-text" data-edit="tastemake-28">Browse helps people find and rate familiar titles. Detailed questions about why they liked something appear after the initial reaction.</div></li>
-  <li class="finding"><h3 class="finding-title" data-edit="tastemake-29">Candidate quality</h3><div class="finding-text" data-edit="tastemake-30">Scoring relies heavily on genre, retrieval order can affect the shortlist, and available synopses aren’t used by the scorer. Proposed improvements haven’t shipped.</div></li>
+  <li class="finding"><h3 class="finding-title" data-edit="tastemake-29">Candidate quality</h3><div class="finding-text" data-edit="tastemake-30">Scoring relies heavily on genre, retrieval order can affect the shortlist, and available synopses aren’t used by the scorer. A reason added to a Liked or Loved rating gives that rating more weight, but the scorer doesn’t use what the reason says. Richer title descriptions haven’t shipped. Their first held-out ranking test showed promise but failed its predefined success criteria, including a check against overgeneralizing dislikes.</div></li>
 </ul>
 </section>
 
 <section class="section current-conclusion">
 <div class="kicker" data-edit="tastemake-31">What’s next</div>
 <h2 data-edit="tastemake-32">Can understanding why someone liked something outperform genre matching?</h2>
-<p data-edit="tastemake-33">The next experiment is to use reasons, synopses, and appeal qualities when selecting candidates, with corrections influencing that stage too.</p>
+<p data-edit="tastemake-33">A first held-out test compared ways of ranking a fixed set of titles using richer descriptions and personal preferences. Structured matching showed promise but didn’t meet the experiment’s success criteria, and the sample couldn’t establish whether it improved film or TV recommendations. The bigger lesson was that knowing which part of a title someone disliked isn’t the same as understanding why. That’s the next problem to solve.</p>
 <p data-edit="tastemake-34">The larger unanswered question is whether outside users find the recommendations useful and whether correcting a Taste Profile improves their next set. The next challenge is making Tastemake’s understanding of taste shape which titles it considers, not just how it orders and explains them.</p>
 <div class="case-meta case-credits" data-edit="tastemake-35"><span><b>My role</b> Product concept, experience design, feedback model, evaluation direction and review, and hands-on testing</span><span><b>AI collaborator</b> Code implementation and technical research support (ChatGPT and Claude)</span></div>
 </section>
