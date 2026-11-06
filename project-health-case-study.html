@@ -88,64 +88,64 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <div class="meridian-heading"><nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">Project Health</li></ol></nav></div>
 
 <header class="meridian-case-hero flagship-hero">
-<h1>Project Health</h1>
-<p class="lead">Project Health is a dashboard that brings product quality, incidents, delivery, and usage signals from my projects into one place.</p>
-<div class="case-meta"><span><b>Status</b> Working prototype · live, built around my own projects</span></div>
+<h1 data-edit="project-health-1">Project Health</h1>
+<p class="lead" data-edit="project-health-2">Project Health is a dashboard that brings product quality, incidents, delivery, and usage signals from my projects into one place.</p>
+<div class="case-meta" data-edit="project-health-3"><span><b>Status</b> Working prototype · live, built around my own projects</span></div>
 </header>
-<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Open the dashboard</strong><p>It shows quality, delivery, and monitoring for my own projects, with links to the underlying tools.</p></div><a class="meridian-primary-action" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health <span aria-hidden="true">↗</span></a></aside>
+<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Open the dashboard</strong><p data-edit="project-health-4">It shows quality, delivery, and monitoring for my own projects, with links to the underlying tools.</p></div><a class="meridian-primary-action" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health <span aria-hidden="true">↗</span></a></aside>
 
 
 <article class="case-page-content flagship-case">
 
 <section class="section">
-<div class="kicker">The problem</div>
-<h2>A failed release, a lower eval score, and a runtime warning all lived in different places.</h2>
-<p>As I built and maintained several prototypes, checking on them meant opening too many separate tools and pages. I wanted one place to see failures across projects and jump into the relevant tool when something needed attention.</p>
-<p>The information already existed in deployments, evals, analytics, and logs. The product work was bringing it together without losing where each signal came from.</p>
+<div class="kicker" data-edit="project-health-5">The problem</div>
+<h2 data-edit="project-health-6">A failed release, a lower eval score, and a runtime warning all lived in different places.</h2>
+<p data-edit="project-health-7">As I built and maintained several prototypes, checking on them meant opening too many separate tools and pages. I wanted one place to see failures across projects and jump into the relevant tool when something needed attention.</p>
+<p data-edit="project-health-8">The information already existed in deployments, evals, analytics, and logs. The product work was bringing it together without losing where each signal came from.</p>
 </section>
 
 <section class="section">
-<div class="kicker">What I built</div>
-<h2>One starting point for checking my projects.</h2>
-<p>I chose which signals mattered and how to order them. The overview leads with what needs attention, so I can decide where to look first, and it answers two questions.</p>
+<div class="kicker" data-edit="project-health-9">What I built</div>
+<h2 data-edit="project-health-10">One starting point for checking my projects.</h2>
+<p data-edit="project-health-11">I chose which signals mattered and how to order them. The overview leads with what needs attention, so I can decide where to look first, and it answers two questions.</p>
 <div class="grid2">
-  <div class="card"><h3>What needs attention?</h3><p>See the project’s current goal, known concerns, next decision, and changes since your last visit.</p></div>
-  <div class="card"><h3>Is anything blocking release?</h3><p>Review quality failures, delivery status, whether users are likely affected, and missing checks before deciding whether to ship.</p></div>
+  <div class="card"><h3 data-edit="project-health-12">What needs attention?</h3><p data-edit="project-health-13">See the project’s current goal, known concerns, next decision, and changes since your last visit.</p></div>
+  <div class="card"><h3 data-edit="project-health-14">Is anything blocking release?</h3><p data-edit="project-health-15">Review quality failures, delivery status, whether users are likely affected, and missing checks before deciding whether to ship.</p></div>
 </div>
-<p><span class="lead-in">Keep different kinds of health separate.</span> Product quality, delivery, incidents, and usage answer different questions. Project Health keeps them distinct instead of collapsing them into one score.</p>
-<p><span class="lead-in">Unknown is not healthy.</span> If Project Health cannot evaluate something, it shows that gap instead of treating missing information as a healthy result. Signals link back to the tools they came from.</p>
+<p data-edit="project-health-16"><span class="lead-in">Keep different kinds of health separate.</span> Product quality, delivery, incidents, and usage answer different questions. Project Health keeps them distinct instead of collapsing them into one score.</p>
+<p data-edit="project-health-17"><span class="lead-in">Unknown is not healthy.</span> If Project Health cannot evaluate something, it shows that gap instead of treating missing information as a healthy result. Signals link back to the tools they came from.</p>
 </section>
 
 <section class="section">
-<div class="kicker">Failure handling</div>
-<h2>What does the failure mean?</h2>
-<p>A failed AI check does not always mean the same thing. It may point to a real product bug, a test expectation that is wrong, or incomplete evidence. Project Health shows what was observed and what was expected; deciding what should change is still my job.</p>
+<div class="kicker" data-edit="project-health-18">Failure handling</div>
+<h2 data-edit="project-health-19">What does the failure mean?</h2>
+<p data-edit="project-health-20">A failed AI check does not always mean the same thing. It may point to a real product bug, a test expectation that is wrong, or incomplete evidence. Project Health shows what was observed and what was expected; deciding what should change is still my job.</p>
 
 <div class="ph-example">
   <span class="example-label">Earlier State eval · not in today’s dashboard</span>
-  <p><span class="lead-in">What failed.</span> One saved run of State’s answer-quality checks passed 9 of 10. The miss: State knew the pilot in its fictional example project, Northstar, was paused, but its answer didn’t say that the reason for the pause wasn’t on record. A user could have mistaken an inferred explanation for maintained project truth.</p>
-  <p><span class="lead-in">What Project Health showed.</span> It put the failed scenario at the top of the quality view, with the failed check, the expected behavior, and the scenario evidence. It did not diagnose the cause.</p>
-  <p><span class="lead-in">What it left to me.</span> Whether State’s behavior or the test expectation needed to change.</p>
-  <p><span class="lead-in">What happened next.</span> The same scenario had passed in the three earlier saved runs, and it passed again in the next two. One failure among passing runs is exactly when a dashboard should show the evidence and leave the judgment to a person, rather than declare a regression or wave it away.</p>
+  <p data-edit="project-health-21"><span class="lead-in">What failed.</span> One saved run of State’s answer-quality checks passed 9 of 10. The miss: State knew the pilot in its fictional example project, Northstar, was paused, but its answer didn’t say that the reason for the pause wasn’t on record. A user could have mistaken an inferred explanation for maintained project truth.</p>
+  <p data-edit="project-health-22"><span class="lead-in">What Project Health showed.</span> It put the failed scenario at the top of the quality view, with the failed check, the expected behavior, and the scenario evidence. It did not diagnose the cause.</p>
+  <p data-edit="project-health-23"><span class="lead-in">What it left to me.</span> Whether State’s behavior or the test expectation needed to change.</p>
+  <p data-edit="project-health-24"><span class="lead-in">What happened next.</span> The same scenario had passed in the three earlier saved runs, and it passed again in the next two. One failure among passing runs is exactly when a dashboard should show the evidence and leave the judgment to a person, rather than declare a regression or wave it away.</p>
 </div>
 
-<p><span class="lead-in">Delivery and quality are judged separately.</span> If a release fails to deploy while the previous version stays live, Project Health flags the release for engineering and reports no confirmed impact on users, without marking product quality as failing.</p>
+<p data-edit="project-health-25"><span class="lead-in">Delivery and quality are judged separately.</span> If a release fails to deploy while the previous version stays live, Project Health flags the release for engineering and reports no confirmed impact on users, without marking product quality as failing.</p>
 </section>
 
 <section class="section">
-<div class="kicker">Investigate</div>
-<h2>Investigate starts with the specific problem</h2>
-<p>When a signal needs more context, Investigate drafts a handoff: what happened, what is known, what is still uncertain, and what should happen next. It takes one of two paths:</p><ul><li><strong>A failed eval.</strong> Rules use the recorded results to assemble the explanation, without another model call.</li><li><strong>A release or deployment problem.</strong> A bounded, read-only AI investigation examines the available evidence, such as deployment status and logs, and drafts the handoff.</li></ul><p>Neither path changes code, configuration, or deployments. A person makes the decision.</p>
+<div class="kicker" data-edit="project-health-26">Investigate</div>
+<h2 data-edit="project-health-27">Investigate starts with the specific problem</h2>
+<p data-edit="project-health-28">When a signal needs more context, Investigate drafts a handoff: what happened, what is known, what is still uncertain, and what should happen next. It takes one of two paths:</p><ul data-edit="project-health-29"><li><strong>A failed eval.</strong> Rules use the recorded results to assemble the explanation, without another model call.</li><li><strong>A release or deployment problem.</strong> A bounded, read-only AI investigation examines the available evidence, such as deployment status and logs, and drafts the handoff.</li></ul><p data-edit="project-health-30">Neither path changes code, configuration, or deployments. A person makes the decision.</p>
 </section>
 
 <section class="section">
-<div class="kicker">What testing changed</div>
-<h2>QA changed the product</h2>
-<h3>The dashboard said “Healthy” when it didn’t know.</h3>
-<p><span class="lead-in">What QA found.</span> In an October production check, two projects read “Everything looks healthy right now” without the evidence to back it:</p>
-<ul><li>A slow first load timed out before State’s quality data arrived.</li><li>Authority Lab, another of my prototypes, had no quality checks connected at all.</li></ul>
-<p><span class="lead-in">What changed.</span> A signal that fails to load now marks the project Incomplete, names what couldn’t be checked, and offers a retry. A project with nothing measuring quality says so instead of calling itself healthy. Authority Lab later gained automated tests, and its status now reads “Healthy on what’s measured”, naming the one thing still unmeasured: the full lifecycle walkthrough.</p>
-<p><span class="lead-in">What it taught me.</span> A dashboard shouldn’t reassure someone when it lacks the evidence to justify reassurance.</p>
+<div class="kicker" data-edit="project-health-31">What testing changed</div>
+<h2 data-edit="project-health-32">QA changed the product</h2>
+<h3 data-edit="project-health-33">The dashboard said “Healthy” when it didn’t know.</h3>
+<p data-edit="project-health-34"><span class="lead-in">What QA found.</span> In an October production check, two projects read “Everything looks healthy right now” without the evidence to back it:</p>
+<ul data-edit="project-health-35"><li>A slow first load timed out before State’s quality data arrived.</li><li>Authority Lab, another of my prototypes, had no quality checks connected at all.</li></ul>
+<p data-edit="project-health-36"><span class="lead-in">What changed.</span> A signal that fails to load now marks the project Incomplete, names what couldn’t be checked, and offers a retry. A project with nothing measuring quality says so instead of calling itself healthy. Authority Lab later gained automated tests, and its status now reads “Healthy on what’s measured”, naming the one thing still unmeasured: the full lifecycle walkthrough.</p>
+<p data-edit="project-health-37"><span class="lead-in">What it taught me.</span> A dashboard shouldn’t reassure someone when it lacks the evidence to justify reassurance.</p>
 <table class="ph-changes">
 <caption>Activity feed</caption>
 <thead><tr><th scope="col">Before</th><th scope="col">After</th></tr></thead>
@@ -156,10 +156,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 </section>
 
 <section class="section">
-<div class="kicker">Where I landed</div>
-<h2>What held up</h2>
-<p>Bringing project information into one dashboard was only part of the problem. The harder part was making sure that missing information, outdated results, and failed checks didn’t create a misleading picture of how a project was doing. Project Health became as much about knowing when not to trust a status as knowing where to investigate next.</p>
-<div class="case-meta case-credits"><span><b>My role</b> Product framing, requirements, UX direction, decisions, eval review, QA, and release review</span><span><b>AI collaborator</b> All code, test implementation, technical research, and copy assistance (ChatGPT and Claude)</span></div>
+<div class="kicker" data-edit="project-health-38">Where I landed</div>
+<h2 data-edit="project-health-39">What held up</h2>
+<p data-edit="project-health-40">Bringing project information into one dashboard was only part of the problem. The harder part was making sure that missing information, outdated results, and failed checks didn’t create a misleading picture of how a project was doing. Project Health became as much about knowing when not to trust a status as knowing where to investigate next.</p>
+<div class="case-meta case-credits" data-edit="project-health-41"><span><b>My role</b> Product framing, requirements, UX direction, decisions, eval review, QA, and release review</span><span><b>AI collaborator</b> All code, test implementation, technical research, and copy assistance (ChatGPT and Claude)</span></div>
 </section>
 
 </article>

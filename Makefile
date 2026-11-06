@@ -17,6 +17,7 @@ qa-js:
 	files=$$(find . -maxdepth 1 -type f -name 'state-*-tests.js' -print | sort); \
 	if [ -z "$$files" ]; then echo "No state-*-tests.js files found"; exit 1; fi; \
 	for f in $$files; do echo "==> $$f"; node "$$f"; done
+	node --test tools/portfolio-editor/test/*.test.js
 
 qa-real-model:
 	@if [ -z "$${ANTHROPIC_API_KEY:-}" ]; then \

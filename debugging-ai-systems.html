@@ -35,28 +35,28 @@
 <div class="meridian-heading"><nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">Debugging AI Systems</li></ol></nav></div>
 
 <header class="meridian-case-hero">
-<h1>Debugging AI Systems</h1>
-<p class="lead">Working in QA taught me that a failed test is the beginning of an investigation, not the answer. That matters even more with AI, where the same incorrect response can have several different causes. I used two State exercises to work through that distinction. In one, the AI needed fixing. In the other, the test was wrong.</p>
-<div class="human-flow method-strip" aria-label="How I investigate a failure"><span>Observed behavior</span><b aria-hidden="true">→</b><span class="accent">Failure location</span><b aria-hidden="true">→</b><span>Decision</span><b aria-hidden="true">→</b><span>Verification</span></div>
-<p class="case-scope">Controlled State exercises and eval work on synthetic data. Evidence of the method, not production performance.</p>
+<h1 data-edit="debugging-1">Debugging AI Systems</h1>
+<p class="lead" data-edit="debugging-2">Working in QA taught me that a failed test is the beginning of an investigation, not the answer. That matters even more with AI, where the same incorrect response can have several different causes. I used two State exercises to work through that distinction. In one, the AI needed fixing. In the other, the test was wrong.</p>
+<div class="human-flow method-strip" aria-label="How I investigate a failure" data-edit-skip><span>Observed behavior</span><b aria-hidden="true">→</b><span class="accent">Failure location</span><b aria-hidden="true">→</b><span>Decision</span><b aria-hidden="true">→</b><span>Verification</span></div>
+<p class="case-scope" data-edit="debugging-3">Controlled State exercises and eval work on synthetic data. Evidence of the method, not production performance.</p>
 </header>
 
 <article class="case-page-content flagship-case">
 <section class="section seam-learning">
-<h2>The right evidence, the wrong answer</h2>
-<dl class="diag-rows"><div><dt>Observed</dt><dd>In a controlled State debugging exercise, a read-only AI agent found an open proposal naming someone as the person responsible for a project task, but answered as though the decision was final.</dd></div><div><dt>Where it failed</dt><dd>I checked the agent&rsquo;s trace and found that it had retrieved the right information. The mistake happened when it interpreted that information in its answer, not when it retrieved it.</dd></div><div><dt>What I changed</dt><dd>I clarified the instructions and reran the test. This time, the agent correctly reported that responsibility hadn&rsquo;t been decided.</dd></div></dl>
-<p class="section-note">Synthetic dataset. The full trace is in the <a href="state-managed-agent-tracing.html">agent tracing exercise</a>.</p>
+<h2 data-edit="debugging-4">The right evidence, the wrong answer</h2>
+<dl class="diag-rows"><div><dt data-edit="debugging-5">Observed</dt><dd data-edit="debugging-6">In a controlled State debugging exercise, a read-only AI agent found an open proposal naming someone as the person responsible for a project task, but answered as though the decision was final.</dd></div><div><dt data-edit="debugging-7">Where it failed</dt><dd data-edit="debugging-8">I checked the agent&rsquo;s trace and found that it had retrieved the right information. The mistake happened when it interpreted that information in its answer, not when it retrieved it.</dd></div><div><dt data-edit="debugging-9">What I changed</dt><dd data-edit="debugging-10">I clarified the instructions and reran the test. This time, the agent correctly reported that responsibility hadn&rsquo;t been decided.</dd></div></dl>
+<p class="section-note" data-edit="debugging-11">Synthetic dataset. The full trace is in the <a href="state-managed-agent-tracing.html">agent tracing exercise</a>.</p>
 </section>
 
 <section class="section seam-learning">
-<h2>When the test was too strict</h2>
-<dl class="diag-rows"><div><dt>Observed</dt><dd>In another evaluation, State behaved as intended, but the test marked it as a failure because it expected a narrower response.</dd></div><div><dt>Where it failed</dt><dd>In the test&rsquo;s expectation, not in State. The evidence supported State&rsquo;s update, and the update still went to a person for approval.</dd></div><div><dt>What I changed</dt><dd>I reviewed the evidence and product rules, then corrected the test to allow the valid behavior. Fixed-input tests now confirm it accepts the supported update and still rejects one that claims more than the evidence supports.</dd></div></dl>
+<h2 data-edit="debugging-12">When the test was too strict</h2>
+<dl class="diag-rows"><div><dt data-edit="debugging-13">Observed</dt><dd data-edit="debugging-14">In another evaluation, State behaved as intended, but the test marked it as a failure because it expected a narrower response.</dd></div><div><dt data-edit="debugging-15">Where it failed</dt><dd data-edit="debugging-16">In the test&rsquo;s expectation, not in State. The evidence supported State&rsquo;s update, and the update still went to a person for approval.</dd></div><div><dt data-edit="debugging-17">What I changed</dt><dd data-edit="debugging-18">I reviewed the evidence and product rules, then corrected the test to allow the valid behavior. Fixed-input tests now confirm it accepts the supported update and still rejects one that claims more than the evidence supports.</dd></div></dl>
 </section>
 
 <section class="section current-conclusion">
-<h2>Fix the right problem</h2>
-<p>The lesson from both cases was the same: figure out what correct behavior should look like before trying to improve the score. Sometimes that means changing the system. Other times it means changing the test.</p>
-<div class="case-meta case-credits"><span><b>My role</b> Expected behavior, severity, failure classification, and the product and eval decisions</span><span><b>AI collaborator</b> All code, plus test cases, trace summaries, regression coverage and documentation (ChatGPT and Claude)</span></div>
+<h2 data-edit="debugging-19">Fix the right problem</h2>
+<p data-edit="debugging-20">The lesson from both cases was the same: figure out what correct behavior should look like before trying to improve the score. Sometimes that means changing the system. Other times it means changing the test.</p>
+<div class="case-meta case-credits" data-edit="debugging-21"><span><b>My role</b> Expected behavior, severity, failure classification, and the product and eval decisions</span><span><b>AI collaborator</b> All code, plus test cases, trace summaries, regression coverage and documentation (ChatGPT and Claude)</span></div>
 <footer class="case-study-footer">
 <a href="state-managed-agent-tracing.html">Agent tracing exercise →</a>
 <a href="index.html#portfolio">Back to Applied Work →</a>

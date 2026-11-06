@@ -144,23 +144,23 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 </nav>
 
 <header class="case-hero">
-<div class="eyebrow">Supporting exercise · simulated support workflow</div>
-<h1>AI Support Workflow Exercise</h1>
-<p class="lead">I used a fictional support team to practice figuring out where AI would actually help, rather than assuming it belonged everywhere. I started with a simple idea: let AI draft replies to customer tickets. As I worked through the team&rsquo;s simulated workflows and constraints, I found reasons to narrow that idea considerably. Some problems didn&rsquo;t need AI at all.</p>
-<p class="credit small"><span><b>Simulated</b> Meridian, stakeholder statements, operating data and numerical targets are simulated exercise inputs, not real customer interviews or measured pilot results.</span></p>
+<div class="eyebrow" data-edit="meridian-1">Supporting exercise · simulated support workflow</div>
+<h1 data-edit="meridian-2">AI Support Workflow Exercise</h1>
+<p class="lead" data-edit="meridian-3">I used a fictional support team to practice figuring out where AI would actually help, rather than assuming it belonged everywhere. I started with a simple idea: let AI draft replies to customer tickets. As I worked through the team&rsquo;s simulated workflows and constraints, I found reasons to narrow that idea considerably. Some problems didn&rsquo;t need AI at all.</p>
+<p class="credit small" data-edit="meridian-4"><span><b>Simulated</b> Meridian, stakeholder statements, operating data and numerical targets are simulated exercise inputs, not real customer interviews or measured pilot results.</span></p>
 </header>
 
-<h2>What discovery changed</h2>
-<p>Discovery changed the proposal in several ways. I narrowed AI drafting to lower-risk requests, kept people responsible for every customer reply, and reconsidered how much time the workflow could realistically save. I also found problems that could be addressed by improving access to existing information rather than adding AI.</p>
+<h2 data-edit="meridian-5">What discovery changed</h2>
+<p data-edit="meridian-6">Discovery changed the proposal in several ways. I narrowed AI drafting to lower-risk requests, kept people responsible for every customer reply, and reconsidered how much time the workflow could realistically save. I also found problems that could be addressed by improving access to existing information rather than adding AI.</p>
 
 <div class="finding-grid">
-<div class="qcard finding"><h3 class="finding-head">Rep workflow</h3><p>The simulated project manager described a workflow where support representatives often sent quick acknowledgments before returning to tickets. But when I checked with the simulated representatives, that wasn&rsquo;t how most of them worked.</p><p>I&rsquo;d based part of my response-time target on that assumption. I revised the target and lowered my expectations for time savings, especially since every AI-drafted reply would still need human review.</p></div>
-<div class="qcard finding"><h3 class="finding-head">Billing and account information</h3><p>The simulated team was spending time looking up billing information that was already available in its ticketing system, just not visible to everyone. A configuration change could solve that problem without a new AI integration.</p><p>Other gaps weren&rsquo;t as simple. The proposed AI workflow still needed access to customer-specific account information, and some billing data could be a day old. I treated those as unresolved requirements rather than assuming AI could work around them.</p></div>
-<div class="qcard finding"><h3 class="finding-head">High-risk requests</h3><p>I decided that requests involving money, account access, or security should go directly to a person rather than receive an AI-drafted reply. Even with human review, these requests carried risks that didn&rsquo;t justify automated drafting. I also included a separate software check to help enforce that boundary.</p></div>
-<div class="qcard finding"><h3 class="finding-head">Knowledge quality</h3><p>The simulated team&rsquo;s knowledge base included outdated and conflicting information. That meant AI could produce an incorrect answer even if it retrieved and summarized the source material correctly.</p><p>Since a full cleanup wasn&rsquo;t realistic before the proposed pilot, I decided to track failures caused by bad source information separately and correct those articles as problems appeared. I also wanted to test different search approaches rather than assume a more sophisticated retrieval system would automatically be better.</p></div>
+<div class="qcard finding"><h3 class="finding-head" data-edit="meridian-7">Rep workflow</h3><p data-edit="meridian-8">The simulated project manager described a workflow where support representatives often sent quick acknowledgments before returning to tickets. But when I checked with the simulated representatives, that wasn&rsquo;t how most of them worked.</p><p data-edit="meridian-9">I&rsquo;d based part of my response-time target on that assumption. I revised the target and lowered my expectations for time savings, especially since every AI-drafted reply would still need human review.</p></div>
+<div class="qcard finding"><h3 class="finding-head" data-edit="meridian-10">Billing and account information</h3><p data-edit="meridian-11">The simulated team was spending time looking up billing information that was already available in its ticketing system, just not visible to everyone. A configuration change could solve that problem without a new AI integration.</p><p data-edit="meridian-12">Other gaps weren&rsquo;t as simple. The proposed AI workflow still needed access to customer-specific account information, and some billing data could be a day old. I treated those as unresolved requirements rather than assuming AI could work around them.</p></div>
+<div class="qcard finding"><h3 class="finding-head" data-edit="meridian-13">High-risk requests</h3><p data-edit="meridian-14">I decided that requests involving money, account access, or security should go directly to a person rather than receive an AI-drafted reply. Even with human review, these requests carried risks that didn&rsquo;t justify automated drafting. I also included a separate software check to help enforce that boundary.</p></div>
+<div class="qcard finding"><h3 class="finding-head" data-edit="meridian-15">Knowledge quality</h3><p data-edit="meridian-16">The simulated team&rsquo;s knowledge base included outdated and conflicting information. That meant AI could produce an incorrect answer even if it retrieved and summarized the source material correctly.</p><p data-edit="meridian-17">Since a full cleanup wasn&rsquo;t realistic before the proposed pilot, I decided to track failures caused by bad source information separately and correct those articles as problems appeared. I also wanted to test different search approaches rather than assume a more sophisticated retrieval system would automatically be better.</p></div>
 </div>
 
-<h2>Where AI, software, and people fit</h2>
+<h2 data-edit="meridian-18">Where AI, software, and people fit</h2>
 
 <div class="flow-diagram">
 <div class="flow-title">Ticket arrives → human handoff</div>
@@ -197,24 +197,24 @@ body.v88-dark .card,body.v88-dark .band{box-shadow:none}
 <div class="flow-connector"></div>
 <div class="flow-step"><span class="flow-num">7</span><div class="flow-content owner-human"><span class="owner-tag">Human</span><b>Move to human-only handling when needed</b><span>carry the conversation history forward instead of making the customer start over</span></div></div>
 </div>
-<p class="small flow-caption"><em>The diagram shows the proposed division of responsibility between AI, software, and support representatives. The learning prototype covered basic classification, high-risk checks, and retrieval, but not the full escalation workflow.</em></p>
+<p class="small flow-caption" data-edit="meridian-19"><em>The diagram shows the proposed division of responsibility between AI, software, and support representatives. The learning prototype covered basic classification, high-risk checks, and retrieval, but not the full escalation workflow.</em></p>
 
-<h2>The safety check that passed the wrong test</h2>
-<p>The learning prototype used fixed rules to classify requests and assemble draft responses. It did not call an AI model or handle real customers.</p>
-<p>When I revisited the rules-based prototype, I found that its high-risk check missed several requests. One involved an administrator password and should have bypassed drafting entirely.</p>
-<div class="check-contrast" role="list"><div role="listitem"><span>What the test checked</span><strong>The request&rsquo;s category</strong></div><div role="listitem"><span>What it needed to check</span><strong>Whether drafting was blocked</strong></div></div>
-<p>The test passed anyway because it checked how the request was categorized, not whether drafting had actually been blocked. That exposed a gap in the test itself. A real pilot would need to test the actual routing outcome, not just whether the classification looked correct.</p>
+<h2 data-edit="meridian-20">The safety check that passed the wrong test</h2>
+<p data-edit="meridian-21">The learning prototype used fixed rules to classify requests and assemble draft responses. It did not call an AI model or handle real customers.</p>
+<p data-edit="meridian-22">When I revisited the rules-based prototype, I found that its high-risk check missed several requests. One involved an administrator password and should have bypassed drafting entirely.</p>
+<div class="check-contrast" role="list"><div role="listitem" data-edit="meridian-23"><span>What the test checked</span><strong>The request&rsquo;s category</strong></div><div role="listitem" data-edit="meridian-24"><span>What it needed to check</span><strong>Whether drafting was blocked</strong></div></div>
+<p data-edit="meridian-25">The test passed anyway because it checked how the request was categorized, not whether drafting had actually been blocked. That exposed a gap in the test itself. A real pilot would need to test the actual routing outcome, not just whether the classification looked correct.</p>
 
-<h2>What I&rsquo;d measure in a real pilot</h2>
-<p>Before running a real pilot, I&rsquo;d establish baselines for response times, handling time, and customer outcomes. I&rsquo;d also measure how often representatives needed to correct AI drafts, why requests were escalated, and whether sensitive requests were being routed correctly.</p>
-<p>Faster responses wouldn&rsquo;t count as a success if the time savings came at the expense of accuracy, customer experience, or safety.</p>
-<p>I&rsquo;d also want to know whether the benefits justified the cost of building and maintaining the system. Saving time isn&rsquo;t automatically a positive return on investment. The savings need to translate into meaningful business value.</p>
+<h2 data-edit="meridian-26">What I&rsquo;d measure in a real pilot</h2>
+<p data-edit="meridian-27">Before running a real pilot, I&rsquo;d establish baselines for response times, handling time, and customer outcomes. I&rsquo;d also measure how often representatives needed to correct AI drafts, why requests were escalated, and whether sensitive requests were being routed correctly.</p>
+<p data-edit="meridian-28">Faster responses wouldn&rsquo;t count as a success if the time savings came at the expense of accuracy, customer experience, or safety.</p>
+<p data-edit="meridian-29">I&rsquo;d also want to know whether the benefits justified the cost of building and maintaining the system. Saving time isn&rsquo;t automatically a positive return on investment. The savings need to translate into meaningful business value.</p>
 
-<h2>What I learned</h2>
-<p>I started with an idea for using AI to make customer support faster. By the end, I had a narrower proposal and a much clearer understanding of what needed to be solved first.</p>
-<p>The biggest lesson was not to assume AI is the answer before understanding the workflow. Some problems needed better information, some needed clearer rules, and others required human judgment. Real customer research would be the next step.</p>
+<h2 data-edit="meridian-30">What I learned</h2>
+<p data-edit="meridian-31">I started with an idea for using AI to make customer support faster. By the end, I had a narrower proposal and a much clearer understanding of what needed to be solved first.</p>
+<p data-edit="meridian-32">The biggest lesson was not to assume AI is the answer before understanding the workflow. Some problems needed better information, some needed clearer rules, and others required human judgment. Real customer research would be the next step.</p>
 
-<div class="case-meta case-credits"><span><b>My role</b> Scope, discovery questions, boundary and handoff decisions, and which simulated findings were strong enough to change the design</span><span><b>AI collaborator</b> Rendering the workflow diagram from rules I specified, editing help on this page, and the November 2026 prototype recheck (Claude)</span></div>
+<div class="case-meta case-credits" data-edit="meridian-33"><span><b>My role</b> Scope, discovery questions, boundary and handoff decisions, and which simulated findings were strong enough to change the design</span><span><b>AI collaborator</b> Rendering the workflow diagram from rules I specified, editing help on this page, and the November 2026 prototype recheck (Claude)</span></div>
 
 <footer class="case-study-footer"><a href="index.html#portfolio">Back to Applied Work →</a></footer>
 <footer class="portfolio-contact" aria-label="Contact Paige Edrington"><span class="portfolio-contact-name">Paige Edrington</span><a href="mailto:paige.edrington@gmail.com">paige.edrington@gmail.com</a><a href="https://www.linkedin.com/in/paige-edrington-38214722" target="_blank" rel="noopener noreferrer">LinkedIn</a><a href="resume.pdf" target="_blank" rel="noopener">Résumé (PDF)</a></footer>

@@ -41,6 +41,12 @@ For the State GitHub Project workflow, fields, statuses, and board conventions, 
 - Setting a board item to Done auto-closes its issue, and `gh issue close --comment` then posts no comment: post the explanatory comment with `gh issue comment`.
 - The production demo data is writable by anyone, and other sessions may test on the live site. If it drifts from the baseline in `docs/PROJECT_STATUS.md`, reset Northstar (`POST /api/demo/reset` with the header `X-State-Project-Id: northstar`) only with Paige's OK.
 
+## Portfolio editor
+
+- Paige edits portfolio copy herself with a local editor (`tools/portfolio-editor/`, #617). It edits blocks marked `data-edit` on the homepage and the seven case studies, and publishes to `staging`.
+- Keep `data-edit` attributes when changing that copy, and run `node tools/portfolio-editor/mark.js` after adding copy to those pages; `state-portfolio-edit-markers-tests.js` enforces it.
+- Before editing marked copy, check for unpublished drafts with `git -C ~/code/portfolio-content log --oneline origin/staging..content`. If any exist, ask Paige to publish them first rather than editing around them.
+
 ## QA defaults
 
 - A request to QA, test, review, inspect, investigate, or smoke-test is read-only unless Paige separately authorizes fixes.
