@@ -20,6 +20,7 @@ from typing import Any
 from docx import Document as DocxDocument
 from fastapi import BackgroundTasks, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from starlette.concurrency import run_in_threadpool
 from pypdf import PdfReader
 
 from baseline_setup import is_baseline_setup
@@ -263,7 +264,8 @@ def register_baseline_async_intake_routes(app: Any, settings: Any) -> None:
                     "error_message": "That file is too large to upload as Evidence right now.",
                 }},
             )
-        content = _extract_upload_text(raw, extension).strip()
+        # PDF/docx parsing and the database write block, so they run in the worker pool, not the event loop.
+        content = (await run_in_threadpool(_extract_upload_text, raw, extension)).strip()
         if not content:
             raise HTTPException(
                 status_code=422,
@@ -276,7 +278,8 @@ def register_baseline_async_intake_routes(app: Any, settings: Any) -> None:
 
         project_id = _project_id_from_request(request)
         provider = _selected_provider(request.app, settings)
-        evidence_id = _store_pending_evidence(
+        evidence_id = await run_in_threadpool(
+            _store_pending_evidence,
             settings,
             project_id,
             content,

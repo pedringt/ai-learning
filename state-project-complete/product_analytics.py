@@ -18,6 +18,7 @@ from typing import Literal
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
+from starlette.concurrency import run_in_threadpool
 
 from db import connect
 from seed_demo import SEEDED_PROJECT_IDS
@@ -540,52 +541,48 @@ def register_product_analytics(application: FastAPI, settings) -> None:
     # Persist the operational gap that authoritative lifecycle rows cannot answer:
     # Ask usage/failure/latency and generic API failures. Do not duplicate Evidence,
     # Review, Question, or History outcomes that already have authoritative rows.
+    def record(event: ProductEventInput) -> None:
+        connection = connect(settings.connection_url())
+        try:
+            _insert_event(connection, event)
+        finally:
+            connection.close()
+
     @application.middleware("http")
     async def product_analytics_middleware(request: Request, call_next):
+        # The inserts are blocking database writes, so they run in the worker pool, not on the event loop.
         path = request.url.path
         is_ask = path in {"/api/ask", "/api/ask/stream"} and request.method == "POST"
         started = time.perf_counter()
         if is_ask:
-            connection = connect(settings.connection_url())
-            try:
-                _insert_event(connection, ProductEventInput(
-                    name="ask_submitted",
-                    project_id=request.headers.get("X-State-Project-Id"),
-                    environment=getattr(settings, "environment", None),
-                    build=os.getenv("RENDER_GIT_COMMIT", os.getenv("VERCEL_GIT_COMMIT_SHA", "unversioned"))[:120],
-                ))
-            finally:
-                connection.close()
+            await run_in_threadpool(record, ProductEventInput(
+                name="ask_submitted",
+                project_id=request.headers.get("X-State-Project-Id"),
+                environment=getattr(settings, "environment", None),
+                build=os.getenv("RENDER_GIT_COMMIT", os.getenv("VERCEL_GIT_COMMIT_SHA", "unversioned"))[:120],
+            ))
         try:
             response = await call_next(request)
         except Exception:
             elapsed_ms = int((time.perf_counter() - started) * 1000)
-            connection = connect(settings.connection_url())
-            try:
-                _insert_event(connection, ProductEventInput(
-                    name="ask_failed" if is_ask else "api_failure",
-                    project_id=request.headers.get("X-State-Project-Id"),
-                    environment=getattr(settings, "environment", None),
-                    duration_ms=elapsed_ms,
-                    outcome="exception",
-                ))
-            finally:
-                connection.close()
+            await run_in_threadpool(record, ProductEventInput(
+                name="ask_failed" if is_ask else "api_failure",
+                project_id=request.headers.get("X-State-Project-Id"),
+                environment=getattr(settings, "environment", None),
+                duration_ms=elapsed_ms,
+                outcome="exception",
+            ))
             raise
 
         elapsed_ms = int((time.perf_counter() - started) * 1000)
         if is_ask or response.status_code >= 500:
             event_name = "ask_completed" if is_ask and response.status_code < 400 else ("ask_failed" if is_ask else "api_failure")
-            connection = connect(settings.connection_url())
-            try:
-                _insert_event(connection, ProductEventInput(
-                    name=event_name,
-                    project_id=request.headers.get("X-State-Project-Id"),
-                    environment=getattr(settings, "environment", None),
-                    duration_ms=elapsed_ms,
-                    outcome="success" if response.status_code < 400 else "http_error",
-                    status_code=response.status_code,
-                ))
-            finally:
-                connection.close()
+            await run_in_threadpool(record, ProductEventInput(
+                name=event_name,
+                project_id=request.headers.get("X-State-Project-Id"),
+                environment=getattr(settings, "environment", None),
+                duration_ms=elapsed_ms,
+                outcome="success" if response.status_code < 400 else "http_error",
+                status_code=response.status_code,
+            ))
         return response

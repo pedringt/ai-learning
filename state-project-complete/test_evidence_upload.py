@@ -8,6 +8,7 @@ rather than a confusing 500 or a silent no-op.
 """
 from __future__ import annotations
 
+import asyncio
 import sqlite3
 import tempfile
 import unittest
@@ -136,6 +137,48 @@ class EvidenceUploadTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["detail"]["code"], "unsupported_file_type")
+
+
+
+class LoopRecordingProvider(LaunchDateProvider):
+    """Records whether interpretation ran on the event loop's thread."""
+
+    def __init__(self):
+        self.ran_on_event_loop = None
+
+    def interpret(self, *, context, evidence):
+        try:
+            asyncio.get_running_loop()
+            self.ran_on_event_loop = True
+        except RuntimeError:
+            self.ran_on_event_loop = False
+        return super().interpret(context=context, evidence=evidence)
+
+
+class EvidenceUploadEventLoopTests(unittest.TestCase):
+    """Nov 5 audit: upload_evidence is async, and calling the blocking model pipeline from it froze every other
+    request on the instance for the length of the model call. The pipeline must run in the worker pool."""
+
+    def test_upload_interpretation_runs_off_the_event_loop(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            provider = LoopRecordingProvider()
+            app = create_app(
+                Settings(database_path=str(Path(tempdir) / "state.db"), provider="anthropic", cors_origins=["http://localhost:8000"]),
+                provider=provider,
+            )
+            with TestClient(app) as client:
+                with sqlite3.connect(str(Path(tempdir) / "state.db")) as connection:
+                    connection.execute(
+                        "INSERT INTO current_state_items(id, topic, statement, version) VALUES (?, ?, ?, ?)",
+                        ("state_launch", "launch", "Launch is October 1.", 1),
+                    )
+                    connection.commit()
+                response = client.post(
+                    "/api/evidence/upload",
+                    files={"file": ("notes.txt", b"Launch moved to October 15.", "text/plain")},
+                )
+            self.assertEqual(response.status_code, 201, response.text)
+            self.assertIs(provider.ran_on_event_loop, False)
 
 
 if __name__ == "__main__":
