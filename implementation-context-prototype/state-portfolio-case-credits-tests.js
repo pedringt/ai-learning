@@ -3,6 +3,8 @@
 // project-specific; only the label and placement are standardized.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
+// Editor markers (#617) are invisible attributes; compare the markup without them.
+const withoutEditMarkers=s=>s.replace(/ data-edit(?:="[^"]*"|-skip)/g,'');
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
 
@@ -10,7 +12,7 @@ const caseStudies=['implementation-context.html','tastemake.html','project-healt
   'debugging-ai-systems.html','legal-ai-governance.html','meridian.html','state-architecture-cost.html'];
 
 for(const page of caseStudies){
-  const html=fs.readFileSync(path.join(root,page),'utf8');
+  const html=withoutEditMarkers(fs.readFileSync(path.join(root,page),'utf8'));
   const credits=html.match(/<div class="case-meta case-credits">[\s\S]*?<\/div>/g)||[];
   check(`${page}: exactly one credits block`,credits.length===1,String(credits.length));
   const block=credits[0]||'';
@@ -26,7 +28,7 @@ for(const page of caseStudies){
     /<footer class="case-study-footer">[\s\S]*?<a href="index\.html#portfolio">Back to Applied Work →<\/a>[\s\S]*?<\/footer>/.test(html));
 }
 
-const tastemake=fs.readFileSync(path.join(root,'tastemake.html'),'utf8');
+const tastemake=withoutEditMarkers(fs.readFileSync(path.join(root,'tastemake.html'),'utf8'));
 const tasteHero=tastemake.slice(tastemake.indexOf('<header class="meridian-case-hero'),tastemake.indexOf('</header>'));
 check('Tastemake hero keeps only the Status line',/<div class="case-meta"><span><b>Status<\/b>/.test(tasteHero)&&!/My role|AI collaborator/.test(tasteHero));
 // Nov 4 (Paige): the v7.3 case study is five sections, with one comparison figure and a findings list.
@@ -41,7 +43,7 @@ check('Tastemake: the three findings are a list with their own headings',
   (tastemake.match(/<li class="finding"><h3 class="finding-title">/g)||[]).length===3&&tastemake.includes('<ul class="findings-list" role="list">'));
 check('Tastemake: the old correction table and pipeline list are gone',!tastemake.includes('taste-effects')&&!tastemake.includes('How the work is split today'));
 
-const legal=fs.readFileSync(path.join(root,'legal-ai-governance.html'),'utf8');
+const legal=withoutEditMarkers(fs.readFileSync(path.join(root,'legal-ai-governance.html'),'utf8'));
 for(const label of ['How I tested the idea','What held up','What I corrected along the way'])
   check(`Legal AI: "${label}" is an h2 heading`,legal.includes(`<h2 class="kicker">${label}</h2>`)&&!legal.includes(`<div class="kicker">${label}</div>`));
 check('Legal AI: the label headings keep the kicker look',/\.legal-paper \.paper-section>h2\.kicker:not\(#_\):not\(#_\)\{font-size:12px!important/.test(legal));

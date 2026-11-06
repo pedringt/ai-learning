@@ -5,9 +5,11 @@
 // The browser check (keyboard, Back/Forward, phone picker, viewports) is in the #588/#589 report.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
+// Editor markers (#617) are invisible attributes; compare the markup without them.
+const withoutEditMarkers=s=>s.replace(/ data-edit(?:="[^"]*"|-skip)/g,'');
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
-const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const html=withoutEditMarkers(fs.readFileSync(path.join(root,'index.html'),'utf8'));
 const between=(start,end)=>{const i=html.indexOf(start);return i<0?'':html.slice(i,html.indexOf(end,i));};
 
 const hero=between('<div class="rd-hero-copy">','</aside>');
