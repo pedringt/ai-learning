@@ -347,6 +347,10 @@ function cachedSnapshot(){
       const gate=new Promise(resolve=>{release=resolve;});
       const {root,elements,cleanup}=stubRoot(cachedSnapshot());
       global.fetch=stubFetch({quality:async()=>{await gate;return {status:200,body:qualityPayload()};}});
+      // The fixture eval ran Nov 2; past 72 hours the row reads "May be stale". Run the clock from the day after the
+      // eval so this checks the label, not today's date (it started failing on Nov 5).
+      const realNow=Date.now,clockStart=realNow(),evalDayAfter=Date.parse('2026-11-03T12:00:00Z');
+      Date.now=()=>evalDayAfter+(realNow()-clockStart);
       try{
         const done=H.init(root);
         const panel=()=>elements.get('qualityPanel').innerHTML;
@@ -363,7 +367,7 @@ function cachedSnapshot(){
         assert.match(health,/<strong>AI Evals<\/strong>[\s\S]*?signal-meta ">Recorded [^<]*<\/span>/,'the quality row shows when the eval ran, not a fetch time');
         assert.doesNotMatch(health,/Updated just now/);
         assert.doesNotMatch(elements.get('status').innerHTML,/State quality(?! behavior)/,'quality refreshed, so it is not listed');
-      }finally{cleanup();}
+      }finally{Date.now=realNow;cleanup();}
     });
     await check('cached → failed: previous results stay, marked stale, and the status names what did not refresh',async()=>{
       const {root,elements,cleanup}=stubRoot(cachedSnapshot());
