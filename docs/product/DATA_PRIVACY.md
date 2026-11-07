@@ -67,7 +67,7 @@ The dashboard may ingest aggregate eval results such as precision, recall, miss/
 - stored in its own field, `synthetic_answer_excerpt`, and always shown labeled as a synthetic eval excerpt, separate from the software-generated explanation of what failed;
 - kept and pruned with the eval record (365 days, as above).
 
-**Full controlled-eval reports (Paige, Nov 7).** The "State AI quality check" workflow saves its full report, with every synthetic-fixture answer (passing ones too), the build, model and scoring version, as a GitHub Actions artifact kept **30 days**, so passing answers can be read for mistakes the scorer missed. It is never sent to the dashboard or any other service. The #640 diagnostic runner's report (`eval/run_ask_diagnostic.py`) also holds each call's exact prompt (State's instructions plus the synthetic fixture) and the model's raw output before post-processing, under the same artifact and 30-day retention (Paige, Nov 7).
+**Full controlled-eval reports (Paige, Nov 7).** The "State AI quality check" workflow saves its full report, with every synthetic-fixture answer (passing ones too), the build, model and scoring version, as a GitHub Actions artifact kept **30 days**, so passing answers can be read for mistakes the scorer missed. It is never sent to the dashboard or any other service.
 
 Eval result ingestion requires a server-side `STATE_EVAL_INGEST_KEY`. The key must never be shipped to the browser.
 

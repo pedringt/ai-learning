@@ -503,8 +503,6 @@ _INTERNAL_JSON_FIELD_NAMES = frozenset({
     "source_ids", "uncertainty_ids", "suggested_refinements", "suggested_question",
     "governing_current_fact", "qualifies_current_state", "known_unknown",
     "accepted_past_transition", "supporting_or_event_evidence", "interpretation_guardrail",
-    "answered_question", "answered_questions", "answered_question_ids", "answered_by_review_id", "answer_evidence_id",
-    "resolved_at",
     "needs_review", "recent_context", "open_attention",
 })
 
