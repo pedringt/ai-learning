@@ -1,4 +1,5 @@
-"""LLM grader for Ask answer quality (Oct 16; rubric approved by Paige with every suggested default).
+"""LLM grader for Ask answer quality (Oct 16; rubric approved by Paige with every suggested default; the authority_calibration
+wording for attributed source reports approved Nov 7, #641).
 
 Observed only, never a release gate (DEC-008), until Paige's blind calibration passes: within-1
 agreement of at least 90% per dimension, exact agreement of at least 65%, and no answer Paige scored 1
@@ -19,7 +20,7 @@ from typing import Any
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
-GRADER_VERSION = "ask-grader-v7 (2026-11-07: supplied records include Evidence and resolved Questions, #641)"
+GRADER_VERSION = "ask-grader-v8 (2026-11-07: attributed source reports allowed (Paige, #641); records include Evidence and resolved Questions)"
 GRADER_MAX_TOKENS = 1_500
 
 DIMENSIONS = (
@@ -39,7 +40,7 @@ faithfulness (D1). Every claim in the headline, summary, section titles, items a
 - 2: one unsupported specific (a date, number, owner, reason) or a citation pointing to a record that does not support the item.
 - 1: a fabricated decision, cause, approval or adjustment story, or a claim that contradicts a supplied record.
 
-authority_calibration (D2). Current State is presented as what is true now; open Reviews as proposed and awaiting human review; Questions as unknown; Evidence as what a source reported; History as past; superseded proposals as superseded. "Confirmed", "resolved", "approved", "established" appear only for Current State or closed Questions, including in titles and headlines.
+authority_calibration (D2). Current State is presented as what is true now; open Reviews as proposed and awaiting human review; Questions as unknown; Evidence as what a source reported; History as past; superseded proposals as superseded. "Confirmed", "resolved", "approved", "established" describe Current State or closed Questions when the answer asserts a fact as established, including in titles and headlines. An answer may report a source's own words when it attributes them to that source and keeps them apart from Current State: an answer meaning "The source reports X as approved; recording X in Current State is still pending" is correct. That sentence is an example of acceptable meaning, not required wording; any correct attributed paraphrase scores the same. Presenting a source's report as governing Current State is still a 1.
 - 4: every item's authority level is unambiguous and correct; pending content is explicitly pending; Current State is stated as the governing answer.
 - 3: correct levels, but one item's status is implicit.
 - 2: a pending Review or Evidence claim is phrased with authority it lacks in one place while the body is correct, or a superseded proposal is shown as equally current.
@@ -125,7 +126,7 @@ def supplied_records(scenario) -> dict[str, Any]:
 
 _HIDDEN_ANSWER_FIELDS = ("source_ids", "uncertainty_ids")
 # The card badges State's UI shows (implementation-context-prototype/context-ask.js, labelFor).
-CARD_BADGES = {"review": "Needs review", "blocking_question": "Blocking", "question": "Open question",
+CARD_BADGES = {"review": "Needs review", "blocking_question": "Blocking", "question": "Open question", "answered_question": "Answered question",
                "state": "Current State", "history": "History", "evidence": "Project evidence"}
 
 

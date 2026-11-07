@@ -749,6 +749,7 @@
               const observedHtml='<p>'+esc(story.observed.text)+'</p>'+
                 (story.observed.recorded?'<p class="fact-source">Recorded: '+esc(story.observed.recorded)+'</p>':'')+
                 (story.observed.excerpt?'<p><span class="fact-lead">Proposed State (recorded excerpt'+(story.observed.excerpt.truncated?', cut off':'')+'):</span> “'+esc(story.observed.excerpt.text)+'”</p>':'')+
+                (story.syntheticExcerpt?'<p class="synthetic-excerpt"><span class="fact-lead">'+esc(story.syntheticExcerpt.label)+':</span> “'+esc(story.syntheticExcerpt.text)+'”</p>':'')+
                 sourceHtml(story.observed.source);
               // Expected stays one line; alternatives, phrases and the contract note are one click away.
               const contractLines=[...story.expected.details,...(story.contractNote?['Contract note: '+story.contractNote]:[])];

@@ -345,11 +345,19 @@ def _seed_ask_scenario(connection, scenario: AskQualityScenario) -> None:
             "INSERT INTO questions(id, text, status, blocking, blocks) VALUES (?, ?, 'open', ?, ?)",
             (f"ask-question-{idx}", clean, blocking, "Launch readiness" if blocking else None),
         )
+    # The way State closes a Question (review_service.resolve_review): an accepted Review links it, the Question is
+    # marked resolved, and its answer is the Evidence the Review accepted (#640).
     for idx, (text, answer) in enumerate(scenario.closed_questions):
+        question_id, evidence_id, review_id = f"ask-closed-question-{idx}", f"ask-answer-evidence-{idx}", f"ask-answer-review-{idx}"
+        connection.execute("INSERT INTO evidence(id, content) VALUES (?, ?)", (evidence_id, answer))
         connection.execute(
-            "INSERT INTO questions(id, text, status, blocking, resolution, resolved_at) VALUES (?, ?, 'resolved', 0, ?, CURRENT_TIMESTAMP)",
-            (f"ask-closed-question-{idx}", text, answer),
-        )
+            "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status, resolution, resolved_at) "
+            "VALUES (?, 'proposed_update', ?, '', 'resolved', 'question_linked', CURRENT_TIMESTAMP)", (review_id, text))
+        connection.execute("INSERT INTO review_evidence(review_id, evidence_id) VALUES (?, ?)", (review_id, evidence_id))
+        connection.execute(
+            "INSERT INTO questions(id, text, status, blocking, resolution, resolved_at, source_evidence_id) "
+            "VALUES (?, ?, 'resolved', 0, 'Resolved by reviewed evidence', CURRENT_TIMESTAMP, ?)", (question_id, text, evidence_id))
+        connection.execute("INSERT INTO review_questions(review_id, question_id, evidence_id) VALUES (?, ?, ?)", (review_id, question_id, evidence_id))
 
     for idx, (old_statement, new_statement, changed_at) in enumerate(scenario.history):
         state_id = f"ask-history-state-{idx}"

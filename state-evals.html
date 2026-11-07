@@ -43,6 +43,8 @@
     .summary-card .score{font-size:32px;font-weight:850;letter-spacing:-.045em;margin:6px 0 2px}
     .summary-card .score .score-unit{font-size:16px;font-weight:650;letter-spacing:0}
     .summary-card .scoring-version{font-size:12px;opacity:.75;overflow-wrap:anywhere}
+    .synthetic-excerpt{border-left:3px solid #d7d7df;padding-left:10px;font-style:italic;overflow-wrap:anywhere}
+    .synthetic-excerpt strong{font-style:normal}
     .summary-card p{margin:0;color:var(--muted);font-size:12px}
     .panel{padding:20px;margin-top:14px}
     .panel h2{margin:0;font-size:22px;letter-spacing:-.03em}
@@ -299,6 +301,7 @@
               '<div class="failure-meta"><span>'+esc(item.severity||catalog.severity||'unknown')+' severity</span>'+checks+'</div>'+
               (story?'<p><strong>Observed:</strong> '+esc(story.observed.text)+'</p>'+
                 (story.observed.excerpt?'<p><strong>Proposed State (recorded excerpt):</strong> '+esc(story.observed.excerpt.text)+'</p>':'')+
+                (story.syntheticExcerpt?'<p class="synthetic-excerpt"><strong>'+esc(story.syntheticExcerpt.label)+':</strong> “'+esc(story.syntheticExcerpt.text)+'”</p>':'')+
                 '<p><strong>Expected:</strong> '+esc(story.expected.text)+'</p>'+
                 '<p><strong>Consequence:</strong> '+esc(story.consequence.text)+'</p>'
               :(item.expected?'<p><strong>Expected:</strong> '+esc(item.expected)+'</p>':'')+

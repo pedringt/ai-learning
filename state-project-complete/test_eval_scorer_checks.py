@@ -82,7 +82,8 @@ def test_the_question_resolution_scenario_seeds_a_resolved_question():
     try:
         _seed_ask_scenario(connection, scenario)
         resolved = list_questions(connection, "resolved")
-        assert [(q["text"], q["resolution"]) for q in resolved] == list(scenario.closed_questions)
+        # Seeded the way State closes a Question: resolved by an accepted Review, the answer in its Evidence (#640).
+        assert [(q["text"], q["resolution"]) for q in resolved] == [(scenario.closed_questions[0][0], "Resolved by reviewed evidence")]
         assert list_questions(connection, "open") == []
         assert [s["statement"] for s in list_state(connection)] == ["The vendor contract remains under review."]
     finally:
