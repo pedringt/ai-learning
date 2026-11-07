@@ -249,9 +249,11 @@
   },true);
   window.addEventListener('pageshow',syncMobileAskLauncher);
 
-  // One observer replaces the four the old files each ran for these controls; the calls keep
-  // the order those files ran in (feedback-pass-3, feedback-pass-4, attention-alignment,
-  // final-mobile).
+  // These used to run from one MutationObserver over the whole document (class/hidden changes anywhere). They now
+  // run when context-product-polish.js draws an Ask result or builds/opens/closes the drawer (Nov 5 cleanup,
+  // step 6b); input, submit and reset already call what they need. The order keeps the old files' order
+  // (feedback-pass-3, feedback-pass-4, attention-alignment, final-mobile). addGrounding()'s box is hidden in the
+  // drawer by state-app.css (#askStateDrawer .ask-grounding{display:none}); it is kept until that is decided.
   function sync(){
     addGrounding(document);                   // quickwins ran before these layers each frame
     ensureAskStatus();
@@ -270,7 +272,8 @@
     syncAskBlankGuard();                      // attention-alignment sync()
     syncMobileAskLauncher();                  // final-mobile run()
     schedule();                               // feedback-pass-3: status + lifecycle on the next frame
-    new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
+    document.addEventListener('state:ask-result-rendered',schedule);
+    document.addEventListener('state:ask-drawer-changed',schedule);
     window.addEventListener('resize',schedule,{passive:true});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();

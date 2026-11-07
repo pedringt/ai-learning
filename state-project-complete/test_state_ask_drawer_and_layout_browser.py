@@ -15,6 +15,7 @@ model calls.
 import http.server
 import json
 import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -66,7 +67,7 @@ def browser_and_url():
             server.shutdown()
 
 
-def _open(browser_and_url, width, height, ask_answer=None):
+def _open(browser_and_url, width, height, ask_answer=None, ask_delay=0.0):
     browser, url = browser_and_url
     page = browser.new_page(viewport={'width': width, 'height': height})
     page.set_default_timeout(10000)
@@ -75,6 +76,8 @@ def _open(browser_and_url, width, height, ask_answer=None):
     def api(route):
         path = route.request.url[len(API):].split('?')[0]
         if path == '/api/ask/stream' and ask_answer is not None:
+            if ask_delay:
+                time.sleep(ask_delay)  # the answer lands after the drawer's own open/submit updates have settled
             body = 'event: final\ndata: ' + json.dumps({'answer': ask_answer}) + '\n\n'
             return route.fulfill(status=200, content_type='text/event-stream', body=body,
                                  headers={'Access-Control-Allow-Origin': '*'})
@@ -208,5 +211,43 @@ def test_ask_launcher_is_anchored_to_each_drawn_view(browser_and_url):
         for view in ('notes', 'history', 'overview'):
             page.evaluate(f"document.querySelector('.sidebar-nav [data-view=\"{view}\"]').click()")
             page.wait_for_function(f"document.getElementById('askStateLauncher').style.right === {expected}")
+    finally:
+        page.close()
+
+
+CONTROLS_JS = """(() => { const d = document.getElementById('askStateDrawer'), f = d.querySelector('.ask-state-drawer-form');
+  const vis = e => !!e && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden';
+  return {status: d.querySelector('.state-ask-status')?.textContent || '', hasAnswer: d.classList.contains('has-answer'),
+          generating: d.classList.contains('is-generating'), reset: vis(f.querySelector('.state-ask-reset')),
+          submit: vis(f.querySelector('button[type=submit]'))}; })()"""
+
+
+def test_drawer_controls_follow_a_streaming_then_answered_ask(browser_and_url):
+    """Step 6b: context-ask-controls.js keeps the status line, reset button and Ask button in step from the
+    'state:ask-result-rendered' / 'state:ask-drawer-changed' announcements instead of a document-wide observer."""
+    page = _open(browser_and_url, 1280, 800)
+    try:
+        page.wait_for_selector('#askStateDrawer .ask-state-drawer-form .state-ask-reset', state='attached')
+        page.evaluate("document.getElementById('askStateLauncher').click()")
+        page.fill('#askStateDrawerInput', 'What is the launch date?')
+        page.evaluate("document.querySelector('#askStateDrawer .ask-state-drawer-form button[type=submit]').click()")
+        page.wait_for_function(f"{CONTROLS_JS}.status === 'Finding the answer…'")
+        held = page.evaluate(CONTROLS_JS)
+        assert held['generating'] and not held['hasAnswer'] and not held['reset']
+    finally:
+        page.close()
+
+    page = _open(browser_and_url, 1280, 800, ask_answer=SUGGESTING_ANSWER, ask_delay=0.6)
+    try:
+        page.evaluate("document.getElementById('askStateLauncher').click()")
+        page.fill('#askStateDrawerInput', 'What is the vendor retention term?')
+        page.evaluate("document.querySelector('#askStateDrawer .ask-state-drawer-form button[type=submit]').click()")
+        page.wait_for_function(f"{CONTROLS_JS}.status === 'Answer ready'", timeout=4000)
+        answered = page.evaluate(CONTROLS_JS)
+        assert answered == {'status': 'Answer ready', 'hasAnswer': True, 'generating': False, 'reset': True, 'submit': False}
+        page.evaluate("document.querySelector('#askStateDrawer .state-ask-reset').click()")
+        page.wait_for_function(f"{CONTROLS_JS}.submit === true")
+        cleared = page.evaluate(CONTROLS_JS)
+        assert cleared['status'] == '' and not cleared['hasAnswer'] and not cleared['reset']
     finally:
         page.close()

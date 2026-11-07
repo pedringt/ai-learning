@@ -191,7 +191,7 @@
       const launcher=document.createElement('button');launcher.id='askStateLauncher';launcher.className='ask-state-launcher';launcher.type='button';launcher.dataset.reviewBatchAction='open-ask';launcher.textContent='✦ Ask State';document.body.appendChild(launcher);
     }
     if(!document.getElementById('askStateDrawer')){
-      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-body"><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward. Questions asked here may be recorded to help improve State.</p><div class="ask-state-starters">${starterButtonsHtml(starters)}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div></div>`;document.body.appendChild(drawer);
+      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-body"><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward. Questions asked here may be recorded to help improve State.</p><div class="ask-state-starters">${starterButtonsHtml(starters)}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div></div>`;document.body.appendChild(drawer);announceDrawer();
     }
     syncAskInputs();
   }
@@ -210,7 +210,7 @@
     Object.assign(document.body.style,{position:'',top:'',left:'',right:'',width:'',overflow:''});backgroundLocked=false;window.scrollTo(0,backgroundScrollY);
   }
   function openAskDrawer({focus=true}={}){
-    ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');lockBackground();syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
+    ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');lockBackground();announceDrawer();syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
   }
   function closeAskDrawer(){
     // QA follow-up (2026-09-14): closing while an answer was still loading
@@ -226,7 +226,7 @@
     // requestId. running is cleared immediately either way, so a new
     // question can be asked right away instead of waiting out the old one.
     if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();ui.requestId++;ui.running=false;ui.streamRaw='';}
-    ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');unlockBackground();syncLauncherVisibility();
+    ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');unlockBackground();syncLauncherVisibility();announceDrawer();
   }
   // state.md QA follow-up: Ask's drawer state (the last-rendered answer,
   // in-flight query, resolved-context signature) used to survive a project
@@ -317,6 +317,9 @@
   }
   // The only writer of the Ask result. It announces each render so context-ask-question-handoff.js can add its card
   // without a MutationObserver on the result (Nov 5 cleanup, step 6a).
+  // context-ask-controls.js keeps its drawer controls (status line, reset button, launcher on phones) in step with
+  // these announcements instead of a MutationObserver over the whole document (Nov 5 cleanup, step 6b).
+  function announceDrawer(){if(typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('state:ask-drawer-changed'));}
   function renderDrawerResult(html){
     const target=document.getElementById('askStateDrawerResult');if(!target)return;target.innerHTML=html;
     if(typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('state:ask-result-rendered'));
