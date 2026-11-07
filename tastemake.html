@@ -8,7 +8,7 @@
 <meta content="A product case study about building an inspectable, revisable model of taste and making the system's learning visible to the user." name="description"/>
 <link href="site-shell.css" rel="stylesheet"/>
 <link href="site-components.css" rel="stylesheet"/>
-<link href="implementation-context-case.css?v=r3-role-split" rel="stylesheet"/>
+<link href="implementation-context-case.css?v=r3-role-split" rel="stylesheet"/><link href="case-color.css?v=2" rel="stylesheet"/>
 
 <style>
 .case-system-page .meridian-case-hero{padding-top:18px;padding-bottom:30px}
@@ -60,7 +60,7 @@
 <body>
 <div class="topbar"><div class="topinner"><a class="brand-button" href="index.html"><span class="brand">Context <span>Switch</span></span></a><nav aria-label="Primary pages" class="nav"><a href="index.html">Home</a><a aria-current="page" href="index.html#portfolio">Applied Work</a><a href="index.html#learn">Library</a></nav><div class="top-actions"><select aria-label="Choose page" id="v922MobileNav"><option value="index.html">Home</option><option selected value="index.html#portfolio">Applied Work</option><option value="index.html#learn">Library</option></select></div></div></div>
 
-<main class="meridian-page-shell case-system-page" id="main-content">
+<main class="meridian-page-shell case-system-page" data-accent="tastemake" id="main-content">
 <div class="meridian-heading"><nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">Tastemake</li></ol></nav></div>
 
 <header class="meridian-case-hero flagship-hero">
@@ -98,8 +98,8 @@
 <figure class="test-compare" aria-labelledby="test-compare-label">
   <figcaption id="test-compare-label" class="example-label">Two tests, different outcomes</figcaption>
   <div class="test-compare-grid">
-    <div class="test-metric"><h3>Trace alignment</h3><div class="metric-value">98%</div><div class="metric-detail">Up from about 65% in earlier recorded runs. In automated tests across 12 test profiles, 62 of 63 eligible explanations cited the deciding rating.</div></div>
-    <div class="test-metric"><h3>Explanation quality</h3><div class="metric-value">53%</div><div class="metric-detail">Rated specific and true: 8 of 15, down from 9 of 13, in a separate blind review of my 16-title profile.</div></div>
+    <div class="test-metric"><h3>Trace alignment increased</h3><div class="metric-value">98%</div><div class="metric-detail">Up from about 65% in earlier recorded runs. In automated tests across 12 test profiles, 62 of 63 eligible explanations cited the deciding rating.</div></div>
+    <div class="test-metric"><h3>Explanation quality decreased</h3><div class="metric-value">53%</div><div class="metric-detail">Rated specific and true: 8 of 15, down from 9 of 13, in a separate blind review of my 16-title profile.</div></div>
   </div>
   <div class="test-compare-note">In 11 paired comparisons, three explanations became worse and none improved. These were small offline tests with one rater, not outside-user research.</div>
 </figure>
@@ -113,15 +113,15 @@
 <ul class="findings-list" role="list">
   <li class="finding"><h3 class="finding-title" data-edit="tastemake-25">Honest feedback</h3><div class="finding-text" data-edit="tastemake-26">Code review exposed claims that some corrections changed recommendations when they didn’t, plus misleading Live AI labels and success messages. I corrected the claims to match actual behavior.</div></li>
   <li class="finding"><h3 class="finding-title" data-edit="tastemake-27">Simpler onboarding</h3><div class="finding-text" data-edit="tastemake-28">Browse helps people find and rate familiar titles. Detailed questions about why they liked something appear after the initial reaction.</div></li>
-  <li class="finding"><h3 class="finding-title" data-edit="tastemake-29">Candidate quality</h3><div class="finding-text" data-edit="tastemake-30">Scoring relies heavily on genre, retrieval order can affect the shortlist, and available synopses aren’t used by the scorer. A reason added to a Liked or Loved rating gives that rating more weight, but the scorer doesn’t use what the reason says. Richer title descriptions haven’t shipped. Their first held-out ranking test showed promise but failed its predefined success criteria, including a check against overgeneralizing dislikes.</div></li>
+  <li class="finding"><h3 class="finding-title" data-edit="tastemake-29">Candidate quality</h3><div class="finding-text" data-edit="tastemake-30">Scoring leans heavily on genre, retrieval order can push higher-scoring titles off the shortlist, and the scorer doesn’t use synopses. A reason on a Liked or Loved rating gives that rating more weight, but the scorer doesn’t read what the reason says.</div></li>
 </ul>
 </section>
 
 <section class="section current-conclusion">
 <div class="kicker" data-edit="tastemake-31">What’s next</div>
 <h2 data-edit="tastemake-32">Can understanding why someone liked something outperform genre matching?</h2>
-<p data-edit="tastemake-33">A first held-out test compared ways of ranking a fixed set of titles using richer descriptions and personal preferences. Structured matching showed promise but didn’t meet the experiment’s success criteria, and the sample couldn’t establish whether it improved film or TV recommendations. The bigger lesson was that knowing which part of a title someone disliked isn’t the same as understanding why. That’s the next problem to solve.</p>
-<p data-edit="tastemake-34">The larger unanswered question is whether outside users find the recommendations useful and whether correcting a Taste Profile improves their next set. The next challenge is making Tastemake’s understanding of taste shape which titles it considers, not just how it orders and explains them.</p>
+<p data-edit="tastemake-33">A first held-out test compared ways of ranking a fixed set of titles using richer title descriptions, which haven’t shipped, and personal preferences. Structured matching showed promise but didn’t meet the experiment’s success criteria, and the sample couldn’t establish whether it improved film or TV recommendations. The bigger lesson was that knowing which part of a title someone disliked isn’t the same as understanding why. That’s the next problem to solve.</p>
+<p data-edit="tastemake-34">Beyond that, two questions remain open: whether outside users find the recommendations useful, and whether correcting a Taste Profile improves their next set. I also want Tastemake’s understanding of taste to shape which titles it considers, not just how it orders and explains them.</p>
 <div class="case-meta case-credits" data-edit="tastemake-35"><span><b>My role</b> Product concept, experience design, feedback model, evaluation direction and review, and hands-on testing</span><span><b>AI collaborator</b> Code implementation and technical research support (ChatGPT and Claude)</span></div>
 </section>
 

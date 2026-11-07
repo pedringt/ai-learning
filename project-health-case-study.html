@@ -7,7 +7,7 @@
 <title>Project Health Case Study · Context Switch</title>
 <meta name="description" content="How I built Project Health to help me decide what needs attention across releases, AI quality, incidents, and monitoring gaps.">
 <link href="site-shell.css" rel="stylesheet"/>
-<link href="site-components.css" rel="stylesheet"/>
+<link href="site-components.css" rel="stylesheet"/><link href="case-color.css?v=2" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box}
 body.v88-dark:has(> main.case-system-page){--ink:#f3ede8;--muted:#b9afb6;--border:#3b333d;--soft:#241f27;--softp:#2c2430;--card:#1f1b22;--bg:#171419;--purple:#b59cc8;--purple2:#c1a8d1;--blue:#8fa9c8;--cyan:#82aeb3;--green:#8eae98;--gold:#c8ad72}
@@ -84,7 +84,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   </div>
 </div>
 
-<main class="meridian-page-shell case-system-page case-shell" id="main-content">
+<main class="meridian-page-shell case-system-page case-shell" data-accent="project-health" id="main-content">
 <div class="meridian-heading"><nav class="site-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="index.html#portfolio">Applied Work</a></li><li aria-current="page">Project Health</li></ol></nav></div>
 
 <header class="meridian-case-hero flagship-hero">
@@ -145,6 +145,24 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <p data-edit="project-health-34"><span class="lead-in">What QA found.</span> In an October production check, two projects read “Everything looks healthy right now” without the evidence to back it:</p>
 <ul data-edit="project-health-35"><li>A slow first load timed out before State’s quality data arrived.</li><li>Authority Lab, another of my prototypes, had no quality checks connected at all.</li></ul>
 <p data-edit="project-health-36"><span class="lead-in">What changed.</span> A signal that fails to load now marks the project Incomplete, names what couldn’t be checked, and offers a retry. A project with nothing measuring quality says so instead of calling itself healthy. Authority Lab later gained automated tests, and its status now reads “Healthy on what’s measured”, naming the one thing still unmeasured: the full lifecycle walkthrough.</p>
+<figure class="ph-status-compare" aria-labelledby="ph-status-caption">
+  <div class="ph-status-pair">
+    <div class="ph-status ph-status-before">
+      <span class="ph-status-when">Before</span>
+      <span class="ph-status-pill ph-pill-healthy">Healthy</span>
+      <strong class="ph-status-line">Everything looks healthy right now</strong>
+      <span class="ph-status-detail">AI evals: Not measured</span>
+    </div>
+    <span class="ph-status-arrow" aria-hidden="true">→</span>
+    <div class="ph-status ph-status-after">
+      <span class="ph-status-when">After</span>
+      <span class="ph-status-pill ph-pill-incomplete">Incomplete</span>
+      <strong class="ph-status-line">Couldn’t check: AI Evals (request timed out)</strong>
+      <span class="ph-status-retry">Retry</span>
+    </div>
+  </div>
+  <figcaption id="ph-status-caption">State’s status when its quality data didn’t load. Recreated from the October QA check and the fix.</figcaption>
+</figure>
 <p data-edit="project-health-37"><span class="lead-in">What it taught me.</span> A dashboard shouldn’t reassure someone when it lacks the evidence to justify reassurance.</p>
 <table class="ph-changes">
 <caption>Activity feed</caption>
