@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Run the #640 Ask diagnostic (eval/ask_diagnostic_640.py): each variant `--repeats` times, one Ask call per run.
+
+PAID unless --dry-run. Every answer is saved in full to --json (synthetic fixtures only; never sent to the dashboard).
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from eval.env import load_local_env
+
+load_local_env()
+
+from eval.ask_diagnostic_640 import run_variant, variants
+from eval.matrix import CallCounter, call_cost, estimated_call_cost
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repeats", type=int, default=5)
+    parser.add_argument("--max-calls", type=int, required=True)
+    parser.add_argument("--json", metavar="PATH")
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+
+    model = os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5"
+    planned = len(variants()) * args.repeats
+    print(f"Plan: {len(variants())} variants x {args.repeats} repeats = {planned} Ask calls (cap {args.max_calls}); "
+          f"about ${planned * estimated_call_cost('ask', model):.4f}, "
+          f"ceiling ${args.max_calls * estimated_call_cost('ask', model, 'max_output'):.4f} on {model}")
+    for v in variants():
+        print(f"  {v.id} ({v.kind}): {v.tests}. Question: {v.scenario.question}")
+    if args.dry_run:
+        return 0
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        print("SKIPPED: ANTHROPIC_API_KEY is required.")
+        return 0
+
+    from anthropic_provider import AnthropicProvider
+
+    provider = AnthropicProvider()
+    rows = []
+    with CallCounter(args.max_calls) as counter:
+        for v in variants():
+            for repeat in range(args.repeats):
+                rows.append({**run_variant(v, provider), "repeat": repeat})
+                print(f"{v.id} #{repeat}: passed={rows[-1]['passed']} | {rows[-1]['headline']}")
+    model_id = getattr(provider, "model_identifier", model)
+    try:
+        cost = round(sum(call_cost(u.get("model") or model_id, u.get("input_tokens"), u.get("output_tokens")) for u in counter.usage), 4)
+    except KeyError:
+        cost = None
+    print(f"\nModel calls: {counter.calls} of cap {args.max_calls}; estimated cost {cost} (usage x list price)")
+    if args.json:
+        Path(args.json).write_text(json.dumps({
+            "diagnostic": "#640", "synthetic_fixtures_only": True, "model": model_id,
+            "build": os.getenv("GITHUB_SHA", "local")[:40], "started_at": datetime.now(timezone.utc).isoformat(),
+            "spend": {"calls": counter.calls, "call_cap": args.max_calls, "estimated_cost_usd": cost},
+            "runs": rows,
+        }, indent=2, default=str))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
