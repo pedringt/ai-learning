@@ -1,0 +1,199 @@
+/* Case-study color (flagship case studies only).
+   Each flagship page sets data-accent on <main>: State lilac, Tastemake pink,
+   Project Health cyan. Color sits in backgrounds, borders and chips; running
+   text stays ink/muted on white. Loaded last so it can override the calmer
+   shared reading-page styles in site-components.css. */
+
+html body main.case-system-page[data-accent] {
+  --cc-ink: #15111a;
+  --cc-rose: #ffe3ef;
+  --cc-rose-ink: #8f1d53;
+  --cc-lilac: #cfc7ff;
+  --cc-cyan: #8fe9f4;
+  --cc-acid: #f4ff52;
+}
+html body main.case-system-page[data-accent="state"] { --cc-accent: #cfc7ff; --cc-tint: #f5f2ff; --cc-strong: #6b5cff; }
+html body main.case-system-page[data-accent="tastemake"] { --cc-accent: #ffb3d6; --cc-tint: #fff0f6; --cc-strong: #f0408f; }
+html body main.case-system-page[data-accent="project-health"] { --cc-accent: #8fe9f4; --cc-tint: #ecfbfd; --cc-strong: #00bfd6; }
+
+/* ---------- Hero ---------- */
+/* Title bar in the project's accent */
+html body main.case-system-page[data-accent] h1:not(.edge-body h1)::after {
+  background: linear-gradient(90deg, var(--cc-strong), var(--cc-accent));
+}
+
+/* Full-width tinted band behind breadcrumb, title and the prototype card.
+   Drawn by the callout's ::before at z-index -1 so it sits under all hero text. */
+html body main.case-system-page[data-accent] aside.meridian-product-callout.meridian-product-callout {
+  position: relative;
+  margin-top: 22px;
+  margin-bottom: 44px;
+  padding: 18px 22px;
+  border: 1.5px solid var(--cc-ink);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 4px 4px 0 var(--cc-ink);
+}
+html body main.case-system-page[data-accent] aside.meridian-product-callout.meridian-product-callout::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -2000px;
+  bottom: -30px;
+  left: 0;
+  right: 0;
+  background: var(--cc-tint);
+  /* spread paints the full width as ink overflow, so no horizontal scroll */
+  box-shadow: 0 0 0 100vw var(--cc-tint);
+  clip-path: inset(0 -100vw);
+  pointer-events: none;
+}
+/* "Live prototype" label as an accent chip */
+html body main.case-system-page[data-accent] aside.meridian-product-callout > div > span:first-child {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--cc-accent);
+  color: var(--cc-ink);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+/* ---------- Section labels as chips ---------- */
+html body main.case-system-page[data-accent] .section > .kicker {
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 5px 10px;
+  border: 1.5px solid var(--cc-ink);
+  border-radius: 8px;
+  background: var(--cc-accent);
+  box-shadow: 3px 3px 0 var(--cc-ink);
+  color: var(--cc-ink) !important;
+  line-height: 1.3;
+}
+
+/* ---------- Sticky-note callout (one per page) ---------- */
+html body main.case-system-page[data-accent="state"] .seam-learning > h2,
+html body main.case-system-page[data-accent="tastemake"] .seam-learning > p:has(> .lead-in),
+html body main.case-system-page[data-accent="project-health"] .section > p:has(+ table.ph-changes) {
+  max-width: 720px;
+  margin: 8px 0 26px !important;
+  padding: 22px 26px;
+  border: 2px solid var(--cc-ink);
+  border-radius: 6px;
+  background: var(--cc-acid);
+  box-shadow: 5px 5px 0 var(--cc-ink);
+  color: var(--cc-ink);
+  transform: rotate(-0.5deg);
+}
+html body main.case-system-page[data-accent="tastemake"] .seam-learning > p:has(> .lead-in),
+html body main.case-system-page[data-accent="project-health"] .section > p:has(+ table.ph-changes) {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+html body main.case-system-page[data-accent="project-health"] .section > p:has(+ table.ph-changes) {
+  margin-top: 22px !important;
+}
+
+/* ---------- State ---------- */
+/* What AI recorded: the wrong value reads as a failure */
+html body main[data-accent="state"] .uz-card.uz-recorded {
+  border: 1.5px solid var(--cc-ink);
+  background: var(--cc-rose);
+  box-shadow: 3px 3px 0 var(--cc-ink);
+}
+html body main[data-accent="state"] .uz-recorded :is(.uz-label, .uz-value) { color: var(--cc-rose-ink); }
+html body main[data-accent="state"] .uz-recorded .uz-meaning { color: #3b3445; }
+
+/* Flow diagram colored by who owns each step */
+html body main[data-accent="state"] .authority-map .am-steps li {
+  border: 1.5px solid var(--cc-ink);
+  color: var(--cc-ink);
+}
+html body main[data-accent="state"] .authority-map .am-steps li:nth-child(1) { background: #fff; }
+html body main[data-accent="state"] .authority-map .am-steps li:nth-child(2) { background: var(--cc-lilac); }
+html body main[data-accent="state"] .authority-map .am-steps li:nth-child(3) { background: var(--cc-cyan); }
+html body main[data-accent="state"] .authority-map .am-steps li:nth-child(4) { background: var(--cc-acid); box-shadow: 3px 3px 0 var(--cc-ink); }
+html body main[data-accent="state"] .authority-map .am-steps li:nth-child(n+2) :is(.am-owner, .am-text) { color: var(--cc-ink); }
+html body main[data-accent="state"] .authority-map .am-steps li:nth-child(1) .am-owner { color: #5f5968; }
+html body main[data-accent="state"] .authority-map .am-steps li + li::before { color: var(--cc-ink); font-weight: 800; }
+html body main[data-accent="state"] .authority-map .am-outcomes li:first-child {
+  border: 1.5px solid var(--cc-ink);
+  border-top-width: 5px;
+}
+html body main[data-accent="state"] .authority-map .am-ask { background: var(--cc-lilac); }
+
+/* QA table: what Ask said, tinted as the failure */
+html body main[data-accent="state"] .ask-mismatch tbody td:last-child {
+  padding-left: 12px;
+  background: var(--cc-rose);
+  color: var(--cc-rose-ink);
+}
+
+/* ---------- Tastemake ---------- */
+/* Enforced today (solid) vs. not yet controlled (dashed) */
+html body main[data-accent="tastemake"] .correction-split .split-yes {
+  border: 1.5px solid var(--cc-ink);
+  background: var(--cc-tint);
+  box-shadow: 3px 3px 0 var(--cc-ink);
+}
+html body main[data-accent="tastemake"] .correction-split .split-not {
+  border: 1.5px dashed var(--cc-ink);
+  background: #fff;
+}
+html body main[data-accent="tastemake"] .correction-split .split-text { color: #3b3445; }
+/* Two tests: the quality result reads as the drop */
+html body main[data-accent="tastemake"] .test-compare {
+  border: 1.5px solid var(--cc-ink);
+  box-shadow: 4px 4px 0 var(--cc-ink);
+}
+html body main[data-accent="tastemake"] .test-compare .example-label {
+  display: inline-block;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--cc-accent);
+  color: var(--cc-ink);
+}
+html body main[data-accent="tastemake"] .test-metric + .test-metric .metric-value { color: #a3134f; }
+
+/* ---------- Project Health ---------- */
+/* the shared grid-card rule uses !important, so these must too */
+html body main[data-accent="project-health"] .grid2 > .card {
+  padding: 18px 20px !important;
+  border: 1.5px solid var(--cc-ink) !important;
+  border-radius: 14px;
+  background: var(--cc-tint) !important;
+  box-shadow: 3px 3px 0 var(--cc-ink) !important;
+}
+html body main[data-accent="project-health"] .ph-example {
+  border: 1.5px solid var(--cc-ink);
+  box-shadow: 4px 4px 0 var(--cc-ink);
+}
+html body main[data-accent="project-health"] .ph-example .example-label {
+  display: inline-block;
+  width: fit-content;
+  margin-bottom: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--cc-accent);
+  color: var(--cc-ink);
+}
+html body main[data-accent="project-health"] .ph-changes td { padding: 10px 14px; }
+html body main[data-accent="project-health"] .ph-changes td[data-label="Before"] { background: var(--cc-rose); }
+html body main[data-accent="project-health"] .ph-changes td[data-label="After"] { background: var(--cc-tint); }
+html body main[data-accent="project-health"] .ph-changes thead th { color: var(--cc-ink); }
+
+@media (max-width: 760px) {
+  html body main.case-system-page[data-accent] aside.meridian-product-callout.meridian-product-callout { padding: 16px; }
+  html body main.case-system-page[data-accent="state"] .seam-learning > h2,
+  html body main.case-system-page[data-accent="tastemake"] .seam-learning > p:has(> .lead-in),
+  html body main.case-system-page[data-accent="project-health"] .section > p:has(+ table.ph-changes) {
+    padding: 18px 18px;
+    transform: none;
+  }
+  html body main[data-accent="project-health"] .ph-changes td { padding: 10px 12px; margin-bottom: 6px; border-radius: 10px; }
+}
+html body main[data-accent="project-health"] .grid2 > .card > h3:first-child { margin-top: 0; }
