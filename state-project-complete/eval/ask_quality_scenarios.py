@@ -24,10 +24,15 @@ class AskQualityScenario:
     history: tuple[tuple[str, str, str], ...] = field(default_factory=tuple)
     # Evidence text, seeded as Evidence records and linked to the first pending Review (#567).
     evidence: tuple[str, ...] = field(default_factory=tuple)
+    # (question text, recorded answer): Questions already resolved, seeded with status 'resolved' (#640).
+    closed_questions: tuple[tuple[str, str], ...] = field(default_factory=tuple)
     # Each entry is a required fact: either one phrase, or a tuple of acceptable
     # phrasings of the same fact (any one satisfies it).
     required_facts: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
     forbidden_claims: tuple[str, ...] = field(default_factory=tuple)
+    # #639: any number the answer asserts that appears in none of the supplied records (or the question) is an
+    # invented specific, e.g. "use 75% as the agreed target" where no percentage is established.
+    forbid_unsupported_numbers: bool = False
     should_express_uncertainty: bool = False
     should_reference_open_item: bool = False
     should_distinguish_proposal_from_truth: bool = False
@@ -70,6 +75,7 @@ SCENARIOS = (
         open_questions=("What autonomous-resolution percentage is safe and achievable?",),
         required_facts=(("not established", "not yet established", "not been established"),),
         forbidden_claims=("0%", "50%"),
+        forbid_unsupported_numbers=True,
         should_express_uncertainty=True,
         should_reference_open_item=True,
         severity="high",
@@ -94,6 +100,7 @@ SCENARIOS = (
         open_questions=("How much automation is safe after the pilot?",),
         required_facts=("human-reviewed",),
         forbidden_claims=("we decided to fully automate",),
+        forbid_unsupported_numbers=True,
         should_express_uncertainty=True,
         should_reference_open_item=True,
         severity="high",
@@ -129,10 +136,17 @@ SCENARIOS = (
         category="question_resolution",
         question="Was the vendor-retention question answered?",
         current_state=(("vendor", "The vendor contract remains under review."),),
-        history=(),
-        required_facts=("question",),
+        # #640 (Nov 7): the first version seeded no Question and required only the word "question", so it could not
+        # test what its rationale says. The Question is answered; the contract fact it relates to has not changed.
+        closed_questions=((
+            "Does the vendor retain customer content after the contract ends?",
+            "Legal confirmed the vendor deletes customer content within 30 days of contract end.",
+        ),),
+        required_facts=(("answered", "resolved"), "30 days", "under review"),
+        forbidden_claims=("contract review is complete", "contract is approved", "contract has been approved",
+                          "contract was approved", "contract is no longer under review"),
         severity="medium",
-        rationale="Ask should be able to distinguish a resolved Question from a Current State mutation.",
+        rationale="Ask should report that a Question was answered, with its answer, without presenting that answer as a change to Current State.",
     ),
     AskQualityScenario(
         id="ask_superseded_pending_review",

@@ -5,7 +5,7 @@ const RUN_FIELDS=[
   'suite','run_kind','build','provider','model_identifier','total','errors',
   'high_severity_failures','precision','recall','false_positives','false_negatives',
   'interpretation_accuracy','ask_grounding','uncertainty_accuracy','open_item_accuracy',
-  'authority_accuracy','overall_pass_rate','created_at'
+  'authority_accuracy','overall_pass_rate','created_at','scoring_version'
 ];
 
 function safeFailureDetail(value){
@@ -17,6 +17,10 @@ function safeFailureDetail(value){
   }
   result.failed_checks=Array.isArray(value.failed_checks)
     ?value.failed_checks.filter(item=>typeof item==='string').slice(0,8).map(item=>item.slice(0,80))
+    :[];
+  // #639/#643: which required or forbidden item failed, named from the scenario's own phrase lists.
+  result.failed_items=Array.isArray(value.failed_items)
+    ?value.failed_items.filter(item=>typeof item==='string').slice(0,8).map(item=>item.slice(0,160))
     :[];
   return result.scenario_id?result:null;
 }

@@ -22,6 +22,8 @@ class QualityEvalFailure(BaseModel):
     expected: str | None = Field(default=None, max_length=240)
     observed: str | None = Field(default=None, max_length=240)
     failed_checks: list[str] = Field(default_factory=list, max_length=8)
+    # #639/#643: which required or forbidden item failed, named from the scenario's own phrase lists.
+    failed_items: list[str] = Field(default_factory=list, max_length=8)
 
 
 class QualityEvalRunInput(BaseModel):
@@ -30,6 +32,8 @@ class QualityEvalRunInput(BaseModel):
     suite: Literal["review_interpretation", "ask_quality"]
     run_kind: Literal["controlled_eval", "synthetic_eval"] = "controlled_eval"
     build: str | None = Field(default=None, max_length=120)
+    # #639: eval/scoring_version.py. Runs recorded before Nov 7 have none.
+    scoring_version: str | None = Field(default=None, max_length=80)
     provider: str | None = Field(default=None, max_length=80)
     model_identifier: str | None = Field(default=None, max_length=160)
     total: int = Field(ge=0)
@@ -110,8 +114,9 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
                 INSERT INTO product_eval_runs(
                     id,suite,run_kind,build,provider,model_identifier,total,errors,high_severity_failures,
                     precision,recall,false_positives,false_negatives,interpretation_accuracy,ask_grounding,
-                    uncertainty_accuracy,open_item_accuracy,authority_accuracy,overall_pass_rate,failure_details_json
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    uncertainty_accuracy,open_item_accuracy,authority_accuracy,overall_pass_rate,failure_details_json,
+                    scoring_version
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     run_id,payload.suite,payload.run_kind,payload.build,payload.provider,payload.model_identifier,
@@ -120,6 +125,7 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
                     payload.ask_grounding,payload.uncertainty_accuracy,payload.open_item_accuracy,
                     payload.authority_accuracy,payload.overall_pass_rate,
                     json.dumps([item.model_dump() for item in payload.failure_details], separators=(",", ":")),
+                    payload.scoring_version,
                 ),
             )
             connection.commit()

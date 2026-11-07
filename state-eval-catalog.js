@@ -23,8 +23,25 @@
    "review_needed": true,
    "expected_action": "update_state",
    "allowed_actions": [],
-   "required_state_update_phrases": [],
-   "forbidden_state_update_phrases": [],
+   "required_state_update_phrases": [
+    [
+     "paused",
+     "suspended",
+     "halted",
+     "on hold",
+     "not approved",
+     "no longer approved"
+    ]
+   ],
+   "forbidden_state_update_phrases": [
+    "fully operational",
+    "remains approved",
+    "remain approved",
+    "is approved for automation",
+    "are approved for automation",
+    "never paused",
+    "has resumed"
+   ],
    "forbidden_review_phrases": [],
    "required_rationale_phrases": [],
    "should_change_state": true,
@@ -103,8 +120,19 @@
    "review_needed": true,
    "expected_action": "answer_question_and_update_state",
    "allowed_actions": [],
-   "required_state_update_phrases": [],
-   "forbidden_state_update_phrases": [],
+   "required_state_update_phrases": [
+    [
+     "approved",
+     "included",
+     "allowed",
+     "permitted"
+    ]
+   ],
+   "forbidden_state_update_phrases": [
+    "remains excluded",
+    "remain excluded",
+    "still excluded"
+   ],
    "forbidden_review_phrases": [],
    "required_rationale_phrases": [],
    "should_change_state": true,
@@ -599,12 +627,14 @@
     ]
    ],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "paused"
    ],
    "forbidden_claims": [
     "currently approved"
    ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
@@ -628,12 +658,14 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "human-reviewed"
    ],
    "forbidden_claims": [
     "leadership approved removing human review"
    ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -657,6 +689,7 @@
    ],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     [
      "not established",
@@ -668,6 +701,7 @@
     "0%",
     "50%"
    ],
+   "forbid_unsupported_numbers": true,
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
    "should_distinguish_proposal_from_truth": false,
@@ -695,6 +729,7 @@
     ]
    ],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "approved",
     "starting next sprint"
@@ -702,6 +737,7 @@
    "forbidden_claims": [
     "Slack is still excluded"
    ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
@@ -725,12 +761,14 @@
    ],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "human-reviewed"
    ],
    "forbidden_claims": [
     "we decided to fully automate"
    ],
+   "forbid_unsupported_numbers": true,
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
    "should_distinguish_proposal_from_truth": false,
@@ -754,10 +792,12 @@
    ],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "security"
    ],
    "forbidden_claims": [],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
    "should_distinguish_proposal_from_truth": false,
@@ -781,12 +821,14 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "not used"
    ],
    "forbidden_claims": [
     "definitely uses customer content"
    ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": true,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -808,15 +850,33 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
-   "required_facts": [
-    "question"
+   "closed_questions": [
+    [
+     "Does the vendor retain customer content after the contract ends?",
+     "Legal confirmed the vendor deletes customer content within 30 days of contract end."
+    ]
    ],
-   "forbidden_claims": [],
+   "required_facts": [
+    [
+     "answered",
+     "resolved"
+    ],
+    "30 days",
+    "under review"
+   ],
+   "forbidden_claims": [
+    "contract review is complete",
+    "contract is approved",
+    "contract has been approved",
+    "contract was approved",
+    "contract is no longer under review"
+   ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
    "severity": "medium",
-   "rationale": "Ask should be able to distinguish a resolved Question from a Current State mutation.",
+   "rationale": "Ask should report that a Question was answered, with its answer, without presenting that answer as a change to Current State.",
    "observe_only": false
   },
   {
@@ -836,6 +896,7 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "10 users",
     "25 users"
@@ -845,6 +906,7 @@
     "50-user proposal is current",
     "pilot size is 25 users"
    ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -866,6 +928,7 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "paused"
    ],
@@ -875,6 +938,7 @@
     "budget issue",
     "leadership concern"
    ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": true,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
@@ -898,6 +962,7 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "$40,000",
     [
@@ -917,6 +982,7 @@
     "not yet approved",
     "has not been approved"
    ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -948,6 +1014,7 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "$40,000",
     [
@@ -966,6 +1033,7 @@
     "cannot begin",
     "cannot proceed"
    ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -991,6 +1059,7 @@
    "evidence": [
     "Q3 planning session: the pilot budget is approved at $40,000 for discovery and first implementation."
    ],
+   "closed_questions": [],
    "required_facts": [
     "$40,000",
     [
@@ -1016,6 +1085,7 @@
     "proposed for approval",
     "has not been approved"
    ],
+   "forbid_unsupported_numbers": false,
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
