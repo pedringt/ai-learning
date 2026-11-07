@@ -40,7 +40,7 @@ const tasteSections=[...tastemake.matchAll(/<section class="section ([\w-]+)">([
 check('Tastemake: six sections in the approved order',JSON.stringify(tasteSections.map(x=>x.name))===JSON.stringify(TASTE_SECTIONS),JSON.stringify(tasteSections.map(x=>x.name)));
 check('Tastemake: each section has exactly one heading',tasteSections.length===TASTE_SECTIONS.length&&tasteSections.every(x=>x.h2s===1),JSON.stringify(tasteSections));
 check('Tastemake: the second example keeps its research-prototype label',
-  /<section class="section feedback-example">[\s\S]*<figure class="progression"[\s\S]*Research prototype only\.[\s\S]*not implemented in Tastemake\.[\s\S]*<\/figure>/.test(tastemake));
+  /<section class="section feedback-example">[\s\S]*<figure class="progression"[\s\S]*Research prototype only, not part of Tastemake\.[\s\S]*hand-written suggestions[\s\S]*<\/figure>/.test(tastemake));
 check('Tastemake: the two tests are one labelled figure, 98% beside 53%',
   /<figure class="test-compare" aria-labelledby="test-compare-label">[\s\S]*>98%<[\s\S]*>53%<[\s\S]*<\/figure>/.test(tastemake));
 check('Tastemake: the three findings are a list with their own headings',
