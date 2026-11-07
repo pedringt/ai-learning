@@ -149,7 +149,7 @@ jobs:
 
       - name: Install Deep QA dependencies
         working-directory: qa/deployed
-        run: npm install
+        run: npm ci
 
       - name: Install Chromium
         working-directory: qa/deployed

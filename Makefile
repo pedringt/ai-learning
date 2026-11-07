@@ -4,7 +4,7 @@
 PYTHON ?= $(if $(wildcard state-project-complete/.venv/bin/python),$(CURDIR)/state-project-complete/.venv/bin/python,python3)
 
 qa-bootstrap:
-	cd state-project-complete && $(PYTHON) -m pip install -r requirements.txt && $(PYTHON) -m pip install pytest pytest-subtests playwright
+	cd state-project-complete && $(PYTHON) -m pip install -r requirements.txt && $(PYTHON) -m pip install -r requirements-dev.txt
 	$(PYTHON) -m playwright install chromium
 
 qa-fast: qa-python qa-js
