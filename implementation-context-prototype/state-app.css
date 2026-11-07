@@ -205,7 +205,7 @@
 
 /* ==== from context-settings.js: state-settings-view-styles ==== */
       .settings-page{max-width:920px;margin:0 auto;padding:8px 0 48px}
-      .settings-page .page-head{margin-bottom:22px}
+      
       .settings-section{border:1px solid var(--line,#d8d8df);border-radius:16px;padding:20px;margin:0 0 18px;background:var(--surface,#fff)}
       .settings-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
       .settings-section h3{margin:0 0 5px;font-size:18px}.settings-section p{margin:0;color:var(--muted,#666);line-height:1.5}
@@ -240,15 +240,14 @@
 
 /* ==== from context-attention-alignment.js: state-attention-alignment ==== */
     /* Record surfaces: headers stay on the page background; records live on one white surface. */
-    html body .open-items-page .open-items-section,
-    html body .open-items-page .open-items-section-head{background:transparent!important;box-shadow:none!important}
+    
     html body .open-items-page .open-items-section-body,
-    html body .open-items-page .open-question-list{width:100%!important;max-width:none!important;background:var(--surface,#fff)!important;box-shadow:none!important;box-sizing:border-box!important}
+    html body .open-items-page .open-question-list{width:100%!important;max-width:none!important;box-shadow:none!important;box-sizing:border-box!important}
     html body .open-items-page .open-question-list{padding-left:0!important;padding-right:0!important}
 
     /* Questions keep a modest inset. Reviews align to the same text column and get a neutral marker. */
     html body .open-items-page details.open-question-item,
-    html body .open-items-page .open-question-row{background:transparent!important;box-shadow:none!important;box-sizing:border-box!important;padding-left:12px!important;padding-right:16px!important}
+    html body .open-items-page .open-question-row{box-shadow:none!important;box-sizing:border-box!important;padding-left:12px!important;padding-right:16px!important}
     html body .open-items-page .review-card,
     html body .open-items-page .compact-review{box-sizing:border-box!important;position:relative!important;}
     html body .open-items-page .review-card::before,
@@ -331,7 +330,7 @@
       html body .open-items-page .review-card::before,
       html body .open-items-page .compact-review::before{left:14px!important;top:21px!important}
       html body .notes-page .note-index-status{flex-wrap:wrap!important;justify-self:start!important;align-self:start!important;min-width:0!important;max-width:100%!important;margin-left:0!important}
-      html body .notes-page .note-index-status .note-status{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;width:auto!important;max-width:100%!important;height:auto!important;min-height:26px!important;padding:5px 9px!important;border-radius:999px!important;line-height:1.25!important;white-space:nowrap!important}
+      html body .notes-page .note-index-status .note-status{align-items:center!important;justify-content:flex-start!important;width:auto!important;max-width:100%!important;height:auto!important;line-height:1.25!important;white-space:nowrap!important}
       html body .settings-page .settings-rule-form>.btn{width:auto!important;min-width:0!important;height:38px!important;min-height:38px!important;padding:0 12px!important;border-radius:8px!important;font-size:12px!important;line-height:1.2!important;align-self:end!important}
       html body .workspace-below-grid{align-items:start!important;grid-auto-rows:min-content!important}
       html body .workspace-recent,
@@ -628,7 +627,7 @@
       body:not(.v88-dark) .app-sidebar{background:#fbfcff!important;border-color:#e4eaf3!important}
       body:not(.v88-dark) .app-sidebar .project-switcher{background:#fff;border-color:#dfe6f0;box-shadow:0 1px 2px rgba(31,49,82,.03)}
 
-      .sidebar-nav .nav-item{align-items:center;margin:2px 0;border-bottom:0!important;transition:background .14s ease,color .14s ease}
+      .sidebar-nav .nav-item{border-bottom:0!important;transition:background .14s ease,color .14s ease}
       .nav-icon{width:18px;height:18px;display:inline-grid;place-items:center;flex:0 0 18px;color:#52688f}
       .nav-icon svg,.mock-icon svg{width:100%;height:100%;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
       body:not(.v88-dark) .sidebar-nav .nav-item.active{background:var(--mock-blue-soft)!important;color:#0d57c6!important}
@@ -689,8 +688,8 @@
       .recent-update-row span{font-size:10.5px!important;color:#6a768d!important}
       .workspace-recent-head .text-button{color:var(--mock-blue)!important;font-size:11.5px!important}
 
-      .workspace-status-card{position:relative}
-      .workspace-status-card>.eyebrow{display:block;position:relative;padding-left:48px;min-height:36px;font-size:0!important;letter-spacing:0!important;text-transform:none!important;color:#0f1830!important}
+      
+      .workspace-status-card>.eyebrow{display:block;position:relative;padding-left:48px;font-size:0!important;letter-spacing:0!important;text-transform:none!important;color:#0f1830!important}
       .workspace-status-card>.eyebrow::after{content:'Current State';font-size:16px;font-weight:820;letter-spacing:-.01em}
       .workspace-status-card>.eyebrow .section-icon{position:absolute}
       .workspace-status-body{margin-top:3px!important}
@@ -745,22 +744,22 @@
       body.v88-dark .workspace-recent,body.v88-dark .workspace-status-card{background:#17171d!important;border-color:#34313d!important}
 
 /* ==== from context-product-polish.js: state-product-polish-styles ==== */
-      .ask-state-drawer-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-width:0;align-items:center}
-      .ask-state-drawer-form input{min-width:0;width:100%;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;border-radius:9px;padding:11px 12px;color:var(--ink);outline:none}
+      .ask-state-drawer-form{grid-template-columns:minmax(0,1fr) auto;gap:8px;min-width:0;align-items:center}
+      .ask-state-drawer-form input{min-width:0;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;color:var(--ink);outline:none}
       .ask-state-drawer-form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
-      .ask-state-starters{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-width:0;padding-right:2px}
-      .ask-state-starters button{max-width:100%;white-space:normal;text-align:left;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:7px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}
-      .ask-state-starters button:hover{background:var(--surface2)}
+      .ask-state-starters{flex-wrap:wrap;min-width:0;padding-right:2px}
+      .ask-state-starters button{max-width:100%;white-space:normal;font:inherit;cursor:pointer;color:var(--ink)}
+      
       .ask-state-launcher{position:fixed;right:24px;bottom:24px;z-index:1200;border:1px solid var(--line);border-radius:12px;background:var(--ink);color:var(--surface);padding:11px 15px;font:inherit;font-weight:800;box-shadow:0 10px 28px rgba(0,0,0,.16);cursor:pointer;opacity:.62;transition:opacity .16s ease,transform .16s ease}
       .ask-state-launcher:hover,.ask-state-launcher:focus-visible{opacity:1}
       .ask-state-launcher.is-hidden{opacity:0;pointer-events:none;transform:translateY(8px)}
       .ask-state-drawer{position:fixed;right:0;top:92px;height:calc(100dvh - 92px);width:min(470px,calc(100vw - 24px));z-index:1250;background:var(--surface);border-left:1px solid var(--line);box-shadow:-16px 0 40px rgba(0,0,0,.14);display:flex;flex-direction:column}
       .ask-state-drawer[hidden]{display:none}
-      .ask-state-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 18px 14px;border-bottom:1px solid var(--line)}
-      .ask-state-drawer-head h2{margin:0 0 4px;font-size:20px}.ask-state-drawer-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.4}
+      .ask-state-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line)}
+      .ask-state-drawer-head h2{margin:0 0 4px;}.ask-state-drawer-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.4}
       .ask-state-drawer-close{border:0;background:transparent;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;padding:2px 4px}
       .ask-state-drawer-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
-      .ask-state-drawer-controls{padding:14px 18px;border-bottom:1px solid var(--line)}
+      .ask-state-drawer-controls{border-bottom:1px solid var(--line)}
       .ask-state-drawer-help{margin:7px 0 0;color:var(--muted);font-size:11px;line-height:1.4}
       .ask-state-drawer-result{padding:18px}
       .ask-state-drawer-result:empty::before{content:'Ask about decisions, open questions, project changes, evidence, or meeting context.';display:block;color:var(--muted);font-size:13px;line-height:1.55}
@@ -795,7 +794,7 @@
            collision footprint without changing what it does. */
         .ask-state-launcher{right:14px;bottom:14px;width:48px;height:48px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0}
         .ask-state-launcher::before{content:'✦';font-size:19px;line-height:1}
-        .ask-state-drawer{top:0;height:100dvh;width:100vw;border-left:0}.ask-state-drawer-form{grid-template-columns:1fr}.project-head-copy-context{margin-left:0}
+        .ask-state-drawer{top:0;height:100dvh;border-left:0}.ask-state-drawer-form{grid-template-columns:1fr}.project-head-copy-context{margin-left:0}
       }
 
 /* ==== from context-design-pass.js: state-design-pass ==== */
