@@ -58,6 +58,9 @@ async function timedJson(url,options={}){
   finally{clearTimeout(timer);}
 }
 function githubApi(repo,path){return 'https://api.github.com/repos/'+repo+path;}
+// GitHub's unauthenticated limit is 60 requests an hour per IP, shared by every function on Vercel's egress; once hit,
+// an investigation failed with "Could not verify the current project branch." Use the token when it is set (#627).
+function githubHeaders(){return {Accept:'application/vnd.github+json',...(process.env.GITHUB_TOKEN?{Authorization:'Bearer '+process.env.GITHUB_TOKEN}:{})};}
 function failedCheckRuns(payload,evalCheckNames=[]){
   return MODEL_PROJECTS.currentCheckRuns(payload,evalCheckNames)
     .filter(item=>FAILED_CHECKS.has(String(item.conclusion||'').toLowerCase()))
@@ -134,7 +137,7 @@ async function fetchJobLog(project,url,{fetchImpl=fetch,token=process.env.GITHUB
 }
 async function fetchBranch(project,environment){
   const branch=project.branches[environment];
-  const result=await timedJson(githubApi(project.repo,'/branches/'+encodeURIComponent(branch)),{headers:{Accept:'application/vnd.github+json'}});
+  const result=await timedJson(githubApi(project.repo,'/branches/'+encodeURIComponent(branch)),{headers:githubHeaders()});
   const sha=result.payload?.commit?.sha;
   if(!result.ok||!/^([0-9a-f]{40})$/i.test(String(sha||'')))return null;
   return {branch,sha};
@@ -144,7 +147,7 @@ async function fetchBranch(project,environment){
 async function investigatedCommit(project,branch,requestedSha){
   const sha=String(requestedSha||'');
   if(!/^[0-9a-f]{40}$/i.test(sha)||sha===branch.sha)return branch.sha;
-  const result=await timedJson(githubApi(project.repo,'/compare/'+sha+'...'+branch.sha),{headers:{Accept:'application/vnd.github+json'},timeoutMs:7000});
+  const result=await timedJson(githubApi(project.repo,'/compare/'+sha+'...'+branch.sha),{headers:githubHeaders(),timeoutMs:7000});
   return result.ok&&['ahead','identical'].includes(result.payload?.status)?sha:branch.sha;
 }
 async function fetchVercelEvidence(project,sha){
@@ -174,7 +177,7 @@ async function fetchVercelEvidence(project,sha){
 }
 async function fetchGithubEvidence(project,sha,signalType){
   if(signalType==='github-check'){
-    const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/check-runs?per_page=50'),{headers:{Accept:'application/vnd.github+json'}});
+    const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/check-runs?per_page=50'),{headers:githubHeaders()});
     const failures=failedCheckRuns(result.payload,evalCheckNamesFor(project));
     if(!result.ok||!failures.length)return null;
     // Logs for the first two failed jobs only, to stay inside the evidence cap.
@@ -185,13 +188,13 @@ async function fetchGithubEvidence(project,sha,signalType){
     }
     return {summary:JSON.stringify({failedChecks:failures}),sources:failures.map(item=>({label:'GitHub check: '+item.name,url:item.url,observedAt:null})).filter(item=>item.url),hasDiagnostic:failures.some(item=>item.title||item.summary||(item.jobLog&&!item.jobLog.startsWith('Not available')))};
   }
-  const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/status'),{headers:{Accept:'application/vnd.github+json'},timeoutMs:7000});
+  const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/status'),{headers:githubHeaders(),timeoutMs:7000});
   const failure=statusFailure(result.payload);
   if(!result.ok||!failure)return null;
   return {summary:JSON.stringify({failedDeploymentStatus:{context:sanitizeText(failure.context,120),description:sanitizeText(failure.description,300),state:failure.state,target:safeSourceUrl(failure.target_url)}}),sources:[{label:'GitHub deployment status',url:safeSourceUrl(failure.target_url)||('https://github.com/'+project.repo+'/commit/'+sha),observedAt:failure.updated_at||failure.created_at||null}],hasDiagnostic:!!failure.description};
 }
 async function fetchCommitFollowup(project,sha){
-  const result=await timedJson(githubApi(project.repo,'/commits/'+sha),{headers:{Accept:'application/vnd.github+json'},timeoutMs:7000});
+  const result=await timedJson(githubApi(project.repo,'/commits/'+sha),{headers:githubHeaders(),timeoutMs:7000});
   if(!result.ok)return {summary:'Related commit details were unavailable.',sources:[{label:'Related GitHub commit unavailable',url:null,observedAt:null}]};
   const message=sanitizeText(result.payload?.commit?.message,500);
   const url=safeSourceUrl(result.payload?.html_url)||('https://github.com/'+project.repo+'/commit/'+sha);
@@ -273,5 +276,5 @@ module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   return response(res,200,{project:project.slug,environment,commit:sha,report,model:MODEL,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
-module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE};
+module.exports._test={PROJECTS,githubHeaders,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE};
 

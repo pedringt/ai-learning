@@ -33,7 +33,10 @@ async function timedFetch(url,options={},timeoutMs=5000){
 }
 
 async function githubJson(path){
-  const response=await timedFetch('https://api.github.com'+path,{headers:{Accept:'application/vnd.github+json','User-Agent':'context-switch-project-health'}});
+  // Authenticated when GITHUB_TOKEN is set, like project-health-github.js: the anonymous limit is 60 an hour per IP (#627).
+  const headers={Accept:'application/vnd.github+json','User-Agent':'context-switch-project-health'};
+  if(process.env.GITHUB_TOKEN)headers.Authorization='Bearer '+process.env.GITHUB_TOKEN;
+  const response=await timedFetch('https://api.github.com'+path,{headers});
   const payload=await response.json().catch(()=>({}));
   if(!response.ok) throw new Error(payload?.message||('GitHub request failed: '+response.status));
   return payload;
