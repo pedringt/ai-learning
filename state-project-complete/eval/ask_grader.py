@@ -19,7 +19,7 @@ from typing import Any
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
-GRADER_VERSION = "ask-grader-v6 (2026-10-20: concision judges padding; mild redundancy is a 4)"
+GRADER_VERSION = "ask-grader-v7 (2026-11-07: supplied records include Evidence and resolved Questions, #641)"
 GRADER_MAX_TOKENS = 1_500
 
 DIMENSIONS = (
@@ -116,6 +116,10 @@ def supplied_records(scenario) -> dict[str, Any]:
         # _seed_ask_scenario); without them the grader scored "non-blocking" and "launch readiness" as invented.
         "open_questions": [_question_record(text) for text in scenario.open_questions],
         "history": [list(entry) for entry in scenario.history],
+        # #641 (Nov 7): the grader saw neither, so it could not check an answer that reports what a source said or
+        # what a resolved Question's answer was. Adversarial scenarios have neither field.
+        "evidence": list(getattr(scenario, "evidence", ())),
+        "resolved_questions": [{"text": text, "answer": answer} for text, answer in getattr(scenario, "closed_questions", ())],
     }
 
 

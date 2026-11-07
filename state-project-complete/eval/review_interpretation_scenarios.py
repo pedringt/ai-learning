@@ -74,6 +74,11 @@ SCENARIOS = (
         evidence="Security paused password-reset automation after an incident; it is not approved right now.",
         current_state=(("automation", "Password-reset tickets are approved for automation."),),
         expected_action="update_state",
+        # #639 (Nov 7): the action alone passed a proposal saying automation is "approved and fully operational".
+        # The proposed statement must carry the reversal's direction.
+        required_state_update_phrases=(("paused", "suspended", "halted", "on hold", "not approved", "no longer approved"),),
+        forbidden_state_update_phrases=("fully operational", "remains approved", "remain approved", "is approved for automation",
+                                        "are approved for automation", "never paused", "has resumed"),
         should_change_state=True,
         severity="high",
         rationale="A concrete authority-backed reversal should propose changing maintained truth.",
@@ -101,6 +106,9 @@ SCENARIOS = (
         current_state=(("sources", "Slack is excluded until governance is resolved."),),
         open_questions=("Will governance approve Slack as an evidence source?",),
         expected_action="answer_question_and_update_state",
+        # #639 (Nov 7): the same gap as review_direct_reversal; the proposed statement must say Slack is now in.
+        required_state_update_phrases=(("approved", "included", "allowed", "permitted"),),
+        forbidden_state_update_phrases=("remains excluded", "remain excluded", "still excluded"),
         should_change_state=True,
         should_answer_question=True,
         severity="high",

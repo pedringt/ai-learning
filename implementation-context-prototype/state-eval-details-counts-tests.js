@@ -54,23 +54,40 @@ const payload=(review,ask,recent)=>({controlled_evals:{latest_review_interpretat
   await check('a single high-impact failure is singular; zero and several are plural',async()=>{
     const {els}=await renderPage(payload(run('review_interpretation',16,1),run('ask_quality',13,0),
       [run('review_interpretation',16,1),run('ask_quality',13,2),run('review_interpretation',1,0)]));
-    assert.match(els.reviewSummary.innerHTML,/16 scenarios · 1 high-impact failure ·/);
-    assert.match(els.askSummary.innerHTML,/13 scenarios · 0 high-impact failures ·/);
-    assert.match(els.runHistory.innerHTML,/16 scenarios · 1 high-impact failure</);
-    assert.match(els.runHistory.innerHTML,/13 scenarios · 2 high-impact failures</);
-    assert.match(els.runHistory.innerHTML,/1 scenario · 0 high-impact failures</);
-    assert.doesNotMatch(els.runHistory.innerHTML+els.reviewSummary.innerHTML,/\b1 high-impact failures|\b1 scenarios/);
+    // #643 (Nov 7): the count leads ("15/16 controlled scenarios passed"); the percentage follows as a scenario pass rate.
+    assert.match(els.reviewSummary.innerHTML,/15\/16 <span class="score-unit">controlled scenarios passed<\/span>/);
+    assert.match(els.reviewSummary.innerHTML,/93\.8% scenario pass rate, not production accuracy · 1 high-impact failure ·/);
+    assert.match(els.askSummary.innerHTML,/13\/13 <span class="score-unit">controlled scenarios passed[\s\S]* · 0 high-impact failures ·/);
+    assert.match(els.runHistory.innerHTML,/15\/16 controlled scenarios passed[\s\S]*· 1 high-impact failure ·/);
+    assert.match(els.runHistory.innerHTML,/13\/13 controlled scenarios passed[\s\S]*· 2 high-impact failures ·/);
+    assert.match(els.runHistory.innerHTML,/1\/1 controlled scenarios passed[\s\S]*· 0 high-impact failures ·/);
+    assert.doesNotMatch(els.runHistory.innerHTML+els.reviewSummary.innerHTML,/\b1 high-impact failures/);
   });
 
   await check('each saved run keeps the scenario count it actually ran',async()=>{
     const {els}=await renderPage(payload(run('review_interpretation',13,0),null,[run('review_interpretation',13,0),run('review_interpretation',16,1)]));
-    assert.match(els.reviewSummary.innerHTML,/13 scenarios/);
-    assert.match(els.runHistory.innerHTML,/13 scenarios[\s\S]*16 scenarios/);
+    assert.match(els.reviewSummary.innerHTML,/\/13 <span/);
+    assert.match(els.runHistory.innerHTML,/\/13 controlled scenarios passed[\s\S]*\/16 controlled scenarios passed/);
   });
 
   await check('a run with no recorded total still renders',async()=>{
     const {els}=await renderPage(payload(run('review_interpretation',null,0),null,[]));
-    assert.match(els.reviewSummary.innerHTML,/— scenarios · 0 high-impact failures/);
+    assert.match(els.reviewSummary.innerHTML,/Scenario count not recorded; 93\.8% is a scenario pass rate, not production accuracy · 0 high-impact failures/);
+  });
+
+  await check('#639: each run shows its scoring version, and older runs read legacy / version unknown',async()=>{
+    const {els}=await renderPage(payload(run('review_interpretation',16,0,{scoring_version:'review-16-abc'}),null,
+      [run('review_interpretation',16,0,{scoring_version:'review-16-abc'}),run('review_interpretation',16,0)]));
+    assert.match(els.reviewSummary.innerHTML,/Scoring version: review-16-abc/);
+    assert.match(els.runHistory.innerHTML,/scoring review-16-abc[\s\S]*scoring legacy \/ version unknown/);
+  });
+
+  await check('#643: a failure shows what the run got wrong and its consequence, not only which check fired',async()=>{
+    const failure={scenario_id:'ask_unknown_stays_unknown',category:'uncertainty',severity:'high',failed_checks:['grounding'],failed_items:['number not in any record']};
+    const {els}=await renderPage(payload(null,run('ask_quality',13,1,{overall_pass_rate:12/13,failure_details:[failure]}),[]));
+    assert.match(els.failureList.innerHTML,/<strong>Observed:<\/strong> The answer gave a number that appears in none of the supplied records\./);
+    assert.match(els.failureList.innerHTML,/<strong>Consequence:<\/strong> A reader could take an invented number as an agreed figure\./);
+    assert.doesNotMatch(els.failureList.innerHTML,/Failed checks: /);
   });
 
   console.log(`\n${pass} passed, ${fail} failed`);
