@@ -302,6 +302,7 @@ class AskQualityResult:
     missing_facts: tuple[str, ...] = ()
     asserted_claims: tuple[str, ...] = ()
     unsupported_numbers: tuple[str, ...] = ()
+    headline_opening: str = ""
 
     @property
     def number_ok(self) -> bool:
@@ -311,11 +312,12 @@ class AskQualityResult:
     def failed_items(self) -> list[str]:
         return ([f"missing required fact: {fact}" for fact in self.missing_facts]
                 + [f"asserted forbidden claim: {claim}" for claim in self.asserted_claims]
-                + [f"number not in any record: {number}" for number in self.unsupported_numbers])
+                + [f"number not in any record: {number}" for number in self.unsupported_numbers]
+                + ([f"headline opens with forbidden: {self.headline_opening}"] if self.headline_opening else []))
 
     @property
     def grounding_ok(self) -> bool:
-        return self.required_facts_ok and self.forbidden_claims_ok and self.number_ok
+        return self.required_facts_ok and self.forbidden_claims_ok and self.number_ok and not self.headline_opening
 
     @property
     def passed(self) -> bool:
@@ -522,6 +524,19 @@ def answer_excerpt(answer: Any, needles: list[str] | tuple[str, ...] = (), limit
     return lead if len(lead) <= limit else lead[:limit - 1].rstrip() + "…"
 
 
+def headline_opening(answer: Any, openings: tuple[str, ...]) -> str:
+    """The forbidden opening the headline starts with, if any (#640): "No: ..." answers a yes question with a denial
+    even when the body is right. Longest match first, so "not yet confirmed" is reported rather than "not yet"."""
+    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
+    headline = _normalize(str(inner.get("headline") or "")) if isinstance(inner, dict) else ""
+    words = re.sub(r"[^\w\s]", " ", headline).split()
+    for opening in sorted(openings, key=len, reverse=True):
+        target = _normalize(opening).split()
+        if target and words[:len(target)] == target:
+            return opening
+    return ""
+
+
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
     text = _normalize(_flatten_strings(answer))
     missing = tuple(
@@ -547,6 +562,7 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
         missing_facts=missing,
         asserted_claims=asserted,
         unsupported_numbers=numbers,
+        headline_opening=headline_opening(answer, scenario.forbidden_headline_openings),
     )
 
 
