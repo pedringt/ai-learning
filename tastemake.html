@@ -33,6 +33,15 @@
 .case-system-page .case-page-content .test-metric .metric-detail{margin:8px 0 0;font-size:15px;line-height:1.55;color:var(--muted)}
 .case-system-page .case-page-content .test-compare-note{margin:16px 0 0;padding-top:12px;border-top:1px dashed var(--border);font-size:15px;line-height:1.55;color:var(--muted)}
 @media(max-width:640px){.case-system-page .case-page-content .correction-split{grid-template-columns:1fr}}
+.case-system-page .case-page-content .progression{margin:22px 0 0;padding:18px 20px;border:1px solid var(--border);border-radius:16px;background:var(--card)}
+.case-system-page .case-page-content .progression .example-label{display:block;color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
+.case-system-page .case-page-content .progression-steps{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.case-system-page .case-page-content .progression-step{min-width:0;display:grid;gap:4px;align-content:start}
+.case-system-page .case-page-content .progression-step .step-num{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--purple);font-variant-numeric:tabular-nums}
+.case-system-page .case-page-content .progression-step h3{margin:0;font-size:15px;font-weight:700;color:var(--ink)}
+.case-system-page .case-page-content .progression-step p{margin:0;font-size:15px;line-height:1.5;color:var(--muted)}
+.case-system-page .case-page-content .progression-note{margin:16px 0 0;padding-top:12px;border-top:1px dashed var(--border);font-size:14px;line-height:1.5;color:var(--muted)}
+@media(max-width:760px){.case-system-page .case-page-content .progression-steps{grid-template-columns:1fr;gap:14px}.case-system-page .case-page-content .progression-step{grid-template-columns:2.2em minmax(0,1fr);column-gap:8px}.case-system-page .case-page-content .progression-step .step-num{grid-row:span 2;padding-top:2px}}
 @media(max-width:420px){.case-system-page .case-page-content .test-compare{padding:14px}.case-system-page .case-page-content .test-metric{padding-right:12px}.case-system-page .case-page-content .test-metric+.test-metric{padding-left:12px}.case-system-page .case-page-content .test-metric .metric-value{font-size:34px}}
 .case-system-page .case-page-content .findings-list{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--border)}
 .case-system-page .case-page-content .finding{display:grid;grid-template-columns:190px minmax(0,1fr);column-gap:24px;margin:0;padding:16px 0;border-bottom:1px solid var(--border)}
@@ -117,10 +126,25 @@
 </ul>
 </section>
 
+<section class="section feedback-example">
+<div class="kicker" data-edit="tastemake-36">A second example</div>
+<h2 data-edit="tastemake-37">Better information wasn’t enough</h2>
+<p data-edit="tastemake-38">A held-out test of richer title descriptions showed promise but didn’t meet its predefined success criteria. Then a narrower problem stood out: my Taste Profile grouped sketch and docu-reality comedy, like <cite>Nathan for You</cite>, with sitcoms under “character-driven comedy.” Readable genres and short synopses changed the model’s wording, but in my blind review every comedy pairing still didn’t fit. My “Partly” answer kept the pattern without saying which part was wrong. So I prototyped a way to mark specific words or titles and approve a suggested correction. Testing it surfaced issues a checklist would miss, like my question: “Why does it only mention the sitcoms as what this comes from?”</p>
+<figure class="progression" aria-labelledby="progression-label">
+  <figcaption id="progression-label" class="example-label">How the investigation progressed</figcaption>
+  <ol class="progression-steps">
+    <li class="progression-step"><span class="step-num">01</span><h3>Noticed</h3><p>Different kinds of comedy were grouped under one misleading taste pattern.</p></li>
+    <li class="progression-step"><span class="step-num">02</span><h3>Tested</h3><p>More descriptive metadata changed the wording but didn’t fix the pattern.</p></li>
+    <li class="progression-step"><span class="step-num">03</span><h3>Understood</h3><p>My “Partly” feedback couldn’t identify which part was wrong.</p></li>
+    <li class="progression-step"><span class="step-num">04</span><h3>Explored</h3><p>A prototype let me identify specific disagreements and approve suggested corrections.</p></li>
+  </ol>
+  <p class="progression-note">Research prototype only. Seven self-tested trials using hand-written suggestions; not implemented in Tastemake.</p>
+</figure>
+</section>
+
 <section class="section current-conclusion">
 <div class="kicker" data-edit="tastemake-31">What’s next</div>
 <h2 data-edit="tastemake-32">Can understanding why someone liked something outperform genre matching?</h2>
-<p data-edit="tastemake-33">A first held-out test compared ways of ranking a fixed set of titles using richer title descriptions, which haven’t shipped, and personal preferences. Structured matching showed promise but didn’t meet the experiment’s success criteria, and the sample couldn’t establish whether it improved film or TV recommendations. The bigger lesson was that knowing which part of a title someone disliked isn’t the same as understanding why. That’s the next problem to solve.</p>
 <p data-edit="tastemake-34">Beyond that, two questions remain open: whether outside users find the recommendations useful, and whether correcting a Taste Profile improves their next set. I also want Tastemake’s understanding of taste to shape which titles it considers, not just how it orders and explains them.</p>
 <div class="case-meta case-credits" data-edit="tastemake-35"><span><b>My role</b> Product concept, experience design, feedback model, evaluation direction and review, and hands-on testing</span><span><b>AI collaborator</b> Code implementation and technical research support (ChatGPT and Claude)</span></div>
 </section>
