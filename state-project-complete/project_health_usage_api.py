@@ -8,6 +8,7 @@ metrics exclude that operation prefix, so the two never mix.
 """
 from __future__ import annotations
 
+import hmac
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -82,7 +83,8 @@ def register_project_health_usage(application: FastAPI, settings) -> None:
         expected = os.getenv("PROJECT_HEALTH_USAGE_KEY", "").strip()
         if not expected:
             raise HTTPException(status_code=503, detail="Project Health usage ingestion is not configured")
-        if x_project_health_usage_key != expected:
+        # Constant-time, like the decisions API: a plain != leaks how much of the key matched (#626).
+        if not hmac.compare_digest(str(x_project_health_usage_key or "").encode(), expected.encode()):
             raise HTTPException(status_code=403, detail="Invalid Project Health usage key")
         connection = connect(settings.connection_url())
         try:
