@@ -311,6 +311,8 @@ assert.ok(M.attentionItems(staleEvals).some(item=>item.incomplete));
     if(/\/branches\//.test(path))return {name:'main',commit:{sha:'1111111aaaaaaa',commit:{message:'Tip',committer:{date:'2026-10-09T00:00:00Z'}}}};
     if(/\/commits\?sha=/.test(path))return [{sha:'2222222bbbbbbb',commit:{message:'Scoped release (#1)',committer:{date:'2026-10-08T00:00:00Z'}}}];
     if(/\/status$/.test(path))return {statuses:[{context:'Vercel – state',state:'success'}]};
+    // Nov 7: on main only a Production deployment makes a commit the release (a direct push here).
+    if(/\/deployments\?sha=/.test(path))return [{environment:'Production – state'}];
     if(/\/check-runs/.test(path))return {check_runs:[]};
     if(/\/pulls\?state=open/.test(path))return [{number:7,title:'Open thing',html_url:'https://github.com/pedringt/ai-learning/pull/7',body:'secret body',created_at:'2026-10-01T00:00:00Z',updated_at:'2026-10-02T00:00:00Z'}];
     if(/\/pulls\/7\/files/.test(path))return [{filename:'state-project-complete/app.py'}];

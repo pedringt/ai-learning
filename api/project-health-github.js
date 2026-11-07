@@ -42,11 +42,23 @@ const DEPLOY_STATUS_LOOKBACK=4;
 function hasDeployStatus(status){
   return Array.isArray(status?.statuses)&&status.statuses.some(item=>/vercel/i.test(String(item?.context||'')));
 }
-async function newestDeployedCommit(gh,repo,commits){
+// Nov 7 (production smoke test): a commit pushed to staging keeps its Preview deploy status after it is
+// promoted, so on the production branch only a Production deployment counts. Otherwise Project Health showed a
+// staging-only commit, and its staging Deep QA result, as the production release.
+function hasProductionDeployment(deployments){
+  return Array.isArray(deployments)&&deployments.some(item=>/^production\b/i.test(String(item?.environment||'')));
+}
+async function isProductionDeployed(gh,repo,sha){
+  const deployments=await gh('/repos/'+repo+'/deployments?sha='+encodeURIComponent(sha)+'&per_page=20').catch(()=>null);
+  return hasProductionDeployment(deployments);
+}
+async function newestDeployedCommit(gh,repo,commits,{production=false}={}){
   for(const commit of commits.slice(0,DEPLOY_STATUS_LOOKBACK)){
     if(!commit?.sha)continue;
     const status=await gh('/repos/'+repo+'/commits/'+encodeURIComponent(commit.sha)+'/status').catch(()=>null);
-    if(hasDeployStatus(status))return {commit,status};
+    if(!hasDeployStatus(status))continue;
+    if(production&&!(await isProductionDeployed(gh,repo,commit.sha)))continue;
+    return {commit,status};
   }
   return null;
 }
@@ -68,7 +80,8 @@ async function loadDelivery(gh,project,branchName){
       // Oct 12: Vercel deploys only the last commit of a push, so an earlier commit in the same push has
       // no deploy status and read as "Unknown". Use the newest release commit that Vercel reported on,
       // and keep its status so it is not fetched twice.
-      const deployed=await newestDeployedCommit(gh,repo,releases);
+      const production=branchName===project.branch;
+      const deployed=await newestDeployedCommit(gh,repo,releases,{production});
       if(deployed){selectedCommit=deployed.commit;preloadedStatus=deployed.status;}
       else{
         selectedCommit=releases[0]||selectedCommit;
@@ -77,7 +90,12 @@ async function loadDelivery(gh,project,branchName){
         const tipSha=branch?.commit?.sha;
         if(tipSha&&tipSha!==selectedCommit?.sha){
           const tipStatus=await gh('/repos/'+repo+'/commits/'+encodeURIComponent(tipSha)+'/status').catch(()=>null);
-          if(hasDeployStatus(tipStatus)){preloadedStatus=tipStatus;statusSha=tipSha;}
+          if(hasDeployStatus(tipStatus)){
+            preloadedStatus=tipStatus;statusSha=tipSha;
+            // In production the release is the deploy itself: name the merge commit that shipped, not a commit
+            // whose only deploys were staging previews.
+            if(production)selectedCommit=branch.commit;
+          }
         }
       }
     }catch(_){}
@@ -174,4 +192,4 @@ module.exports=async function handler(req,res){
   res.status(200).json({...payload,authenticated:!!process.env.GITHUB_TOKEN});
 };
 
-module.exports._test={PROJECTS,makeGithubFetch,githubSummary,loadDelivery,loadEvalBehavior,loadOpenPullRequests,safePullRequest,GITHUB_TIMEOUT_MS,hasDeployStatus,newestDeployedCommit,DEPLOY_STATUS_LOOKBACK};
+module.exports._test={PROJECTS,makeGithubFetch,githubSummary,loadDelivery,loadEvalBehavior,loadOpenPullRequests,safePullRequest,GITHUB_TIMEOUT_MS,hasDeployStatus,hasProductionDeployment,newestDeployedCommit,DEPLOY_STATUS_LOOKBACK};
