@@ -18,7 +18,7 @@ from eval.env import load_local_env
 
 load_local_env()
 
-from eval.ask_diagnostic_640 import run_variant, variants
+from eval.ask_diagnostic_640 import run_variant, step1_cases, variants
 from eval.matrix import CallCounter, call_cost, estimated_call_cost
 
 
@@ -28,14 +28,16 @@ def main() -> int:
     parser.add_argument("--max-calls", type=int, required=True)
     parser.add_argument("--json", metavar="PATH")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--set", choices=("640", "step1"), default="640", help="640: the Nov 7 cause diagnostic; step1: the headline rule check")
     args = parser.parse_args()
+    cases = step1_cases() if args.set == "step1" else variants()
 
     model = os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5"
-    planned = len(variants()) * args.repeats
-    print(f"Plan: {len(variants())} variants x {args.repeats} repeats = {planned} Ask calls (cap {args.max_calls}); "
+    planned = len(cases) * args.repeats
+    print(f"Plan: {len(cases)} variants x {args.repeats} repeats = {planned} Ask calls (cap {args.max_calls}); "
           f"about ${planned * estimated_call_cost('ask', model):.4f}, "
           f"ceiling ${args.max_calls * estimated_call_cost('ask', model, 'max_output'):.4f} on {model}")
-    for v in variants():
+    for v in cases:
         print(f"  {v.id} ({v.kind}): {v.tests}. Question: {v.scenario.question}")
     if args.dry_run:
         return 0
@@ -48,7 +50,7 @@ def main() -> int:
     provider = AnthropicProvider()
     rows = []
     with CallCounter(args.max_calls) as counter:
-        for v in variants():
+        for v in cases:
             for repeat in range(args.repeats):
                 rows.append({**run_variant(v, provider), "repeat": repeat})
                 print(f"{v.id} #{repeat}: passed={rows[-1]['passed']} | {rows[-1]['headline']}")
@@ -60,7 +62,7 @@ def main() -> int:
     print(f"\nModel calls: {counter.calls} of cap {args.max_calls}; estimated cost {cost} (usage x list price)")
     if args.json:
         Path(args.json).write_text(json.dumps({
-            "diagnostic": "#640", "synthetic_fixtures_only": True, "model": model_id,
+            "diagnostic": "#640 " + args.set, "synthetic_fixtures_only": True, "model": model_id,
             "build": os.getenv("GITHUB_SHA", "local")[:40], "started_at": datetime.now(timezone.utc).isoformat(),
             "spend": {"calls": counter.calls, "call_cap": args.max_calls, "estimated_cost_usd": cost},
             "runs": rows,

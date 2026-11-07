@@ -39,3 +39,32 @@ def test_the_duplicate_evidence_filter_removes_only_the_answer_evidence_and_rest
         assert trimmed["answered_questions"][0]["answer"].endswith("within 30 days of contract end.")
     finally:
         _close(connection)
+
+
+def _case(case_id):
+    from eval.ask_diagnostic_640 import step1_cases
+    return next(v for v in step1_cases() if v.id == case_id).scenario
+
+
+def test_step1_new_cases_score_the_status_asked_about_not_a_fixed_word():
+    from eval.quality_harness import score_ask_answer
+    body = "The retention Question was answered: content is deleted within 30 days of contract end."
+    resolved = _case("resolved_question")
+    assert resolved == BASE  # the suite scenario, unchanged
+    negative = _case("negative_polarity")
+    assert score_ask_answer(negative, {"headline": "No, Legal answered the retention question.", "summary": body}).passed
+    assert not score_ask_answer(negative, {"headline": "Yes, it is still unanswered.", "summary": body}).passed
+    assert not score_ask_answer(negative, {"headline": "Not yet: Legal's answer is recorded.", "summary": body}).passed
+    twin = _case("open_question_twin")
+    assert twin.closed_questions == () and twin.open_questions == (BASE.closed_questions[0][0],)
+    assert score_ask_answer(twin, {"headline": "Not yet: the retention Question is still open.",
+                                   "summary": "No answer is recorded; the Question is still open and the vendor contract remains under review."}).passed
+    assert not score_ask_answer(twin, {"headline": "Yes, it was answered: 30 days.",
+                                       "summary": "It is still open; content is deleted within 30 days."}).passed
+
+
+def test_step1_keeps_the_adjacent_scenarios_unchanged():
+    from eval.ask_diagnostic_640 import step1_cases
+    suite = {s.id: s for s in SCENARIOS}
+    for v in step1_cases()[3:]:
+        assert v.scenario == suite[v.id]

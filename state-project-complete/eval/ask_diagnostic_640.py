@@ -99,3 +99,35 @@ def run_variant(variant: Variant, provider: Any) -> dict[str, Any]:
         "summary": inner.get("summary") if isinstance(inner, dict) else None,
         "answer": answer,
     }
+
+
+# Nov 7 (Paige): Step 1 of the headline proposal replaces the status-question rule, with no new examples. These cases
+# check whether a headline answers the status the question asks about, in its own polarity, and agrees with the body.
+# The three approval scenarios and #640 itself are the suite's own, unchanged. The two new cases set their own
+# expectations; neither requires a Current State mention (Paige: include it only when it helps).
+NEGATIVE_QUESTION = "Is the vendor-retention question still unanswered?"
+
+
+def step1_cases() -> tuple[Variant, ...]:
+    base = _base()
+    by_id = {s.id: s for s in SCENARIOS}
+    open_twin = dataclasses.replace(
+        base, id="diag_open_question_twin", closed_questions=(), open_questions=(base.closed_questions[0][0],),
+        required_facts=(("not yet", "not been answered", "unanswered", "still open", "remains open", "is open"),),
+        forbid_unsupported_numbers=True,
+        headline_required_facts=(("not yet", "no", "open", "unanswered"),),
+        forbidden_headline_openings=("yes", "answered", "resolved"),
+    )
+    negative = dataclasses.replace(
+        base, id="diag_negative_polarity", question=NEGATIVE_QUESTION,
+        required_facts=(("answered", "resolved"), "30 days"),
+        headline_required_facts=(("no",), ("answered", "resolved", "closed")),
+        forbidden_headline_openings=("yes", "not yet", "still unanswered"),
+    )
+    return (
+        Variant("resolved_question", "suite scenario", "a resolved Question: the headline says it was answered", base),
+        Variant("open_question_twin", "new case", "the same Question still open: the headline must not say it was answered", open_twin),
+        Variant("negative_polarity", "new case", "'still unanswered?' about a resolved Question: the headline says no", negative),
+        *(Variant(sid, "suite scenario", "adjacent approval case", by_id[sid])
+          for sid in ("ask_pending_review_not_truth", "ask_source_words_not_demoted", "ask_evidence_backed_approval_qualified")),
+    )
