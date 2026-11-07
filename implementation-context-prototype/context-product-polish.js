@@ -315,7 +315,12 @@
     if(actions){actions.innerHTML='<button class="btn secondary" type="button" data-review-batch-action="copy-ask-answer">Copy</button>';}
     return holder.innerHTML;
   }
-  function renderDrawerResult(html){const target=document.getElementById('askStateDrawerResult');if(target)target.innerHTML=html;}
+  // The only writer of the Ask result. It announces each render so context-ask-question-handoff.js can add its card
+  // without a MutationObserver on the result (Nov 5 cleanup, step 6a).
+  function renderDrawerResult(html){
+    const target=document.getElementById('askStateDrawerResult');if(!target)return;target.innerHTML=html;
+    if(typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('state:ask-result-rendered'));
+  }
   function renderFinalAsk(){
     if(!ui.payload){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>');return;}
     let html=sanitizeAskHtml(ASK?.render?.(ui.payload) || '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2></div>');
@@ -453,8 +458,11 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&ui.drawerOpen&&document.getElementById('overlay')?.hidden)closeAskDrawer();});
   window.addEventListener('scroll',syncLauncherVisibility,{passive:true});window.addEventListener('resize',syncLauncherVisibility,{passive:true});
 
+  // Build the launcher and drawer once; nothing removes them. The launcher is anchored to the drawn view's right edge,
+  // so reposition it per drawn view (and on scroll/resize above). This replaced a MutationObserver over the whole
+  // document, including text changes (Nov 5 cleanup, step 6a).
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhanceAll();});};
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+  document.addEventListener('state:view-rendered',()=>requestAnimationFrame(syncLauncherVisibility));
   setInterval(()=>{if(ui.drawerOpen&&ui.payload)checkAnswerFreshness();},7000);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();

@@ -66,7 +66,7 @@ def browser_and_url():
             server.shutdown()
 
 
-def _open(browser_and_url, width, height):
+def _open(browser_and_url, width, height, ask_answer=None):
     browser, url = browser_and_url
     page = browser.new_page(viewport={'width': width, 'height': height})
     page.set_default_timeout(10000)
@@ -74,6 +74,10 @@ def _open(browser_and_url, width, height):
 
     def api(route):
         path = route.request.url[len(API):].split('?')[0]
+        if path == '/api/ask/stream' and ask_answer is not None:
+            body = 'event: final\ndata: ' + json.dumps({'answer': ask_answer}) + '\n\n'
+            return route.fulfill(status=200, content_type='text/event-stream', body=body,
+                                 headers={'Access-Control-Allow-Origin': '*'})
         if path.startswith('/api/ask'):
             return  # hold the Ask request open: an answer that is still streaming
         route.fulfill(status=503, content_type='application/json', body=json.dumps({'detail': 'stub'}),
@@ -163,5 +167,46 @@ def test_desktop_close_cancels_a_streaming_ask(browser_and_url):
         assert page.evaluate("window.__askSignals.some(s => !s.aborted)")
         page.evaluate("document.querySelector('#askStateDrawer [data-review-batch-action=\"close-ask\"]').click()")
         assert page.evaluate("window.__askSignals.every(s => s.aborted)")
+    finally:
+        page.close()
+
+
+SUGGESTING_ANSWER = {
+    'job': 'answer', 'headline': 'The vendor retention term is not settled',
+    'summary': 'State has no accepted retention term for the vendor yet.',
+    'sections': [], 'suggested_question': 'What retention term will the vendor agree to?',
+}
+
+
+def test_question_handoff_card_follows_each_answer_render(browser_and_url):
+    """Step 6a: context-ask-question-handoff.js adds its card when renderDrawerResult() announces an Ask result,
+    instead of observing the result element. The card appears once per answer and goes when the answer is cleared."""
+    page = _open(browser_and_url, 1280, 800, ask_answer=SUGGESTING_ANSWER)
+    try:
+        page.evaluate("document.getElementById('askStateLauncher').click()")
+        page.fill('#askStateDrawerInput', 'What is the vendor retention term?')
+        page.evaluate("document.querySelector('#askStateDrawer .ask-state-drawer-form button[type=submit]').click()")
+        page.wait_for_selector('#askStateDrawerResult .ask-live-answer [data-ask-question-handoff-card="suggest"]')
+        page.wait_for_timeout(300)
+        assert page.evaluate("document.querySelectorAll('#askStateDrawerResult [data-ask-question-handoff-card]').length") == 1
+        assert 'What retention term will the vendor agree to?' in page.inner_text('#askStateDrawerResult [data-ask-question-handoff-card]')
+        # Asking again redraws the answer; the card is redrawn with it, still exactly once.
+        page.evaluate("document.querySelector('#askStateDrawer .ask-state-drawer-form button[type=submit]').click()")
+        page.wait_for_timeout(500)
+        assert page.evaluate("document.querySelectorAll('#askStateDrawerResult [data-ask-question-handoff-card]').length") == 1
+    finally:
+        page.close()
+
+
+def test_ask_launcher_is_anchored_to_each_drawn_view(browser_and_url):
+    """Step 6a: the launcher's right offset follows the drawn view's right edge; it used to be recomputed by a
+    document-wide MutationObserver, now on each 'state:view-rendered'."""
+    page = _open(browser_and_url, 1600, 900)
+    try:
+        expected = """(() => { const a = document.querySelector('.view-root')?.firstElementChild; if (!a) return null;
+            return Math.max(22, Math.round(innerWidth - a.getBoundingClientRect().right - 22)) + 'px'; })()"""
+        for view in ('notes', 'history', 'overview'):
+            page.evaluate(f"document.querySelector('.sidebar-nav [data-view=\"{view}\"]').click()")
+            page.wait_for_function(f"document.getElementById('askStateLauncher').style.right === {expected}")
     finally:
         page.close()
