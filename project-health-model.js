@@ -914,11 +914,20 @@
       else if(checks.includes('review_needed')&&reviewCreated==null&&recorded.action!=='error')observedParts.push('The review-needed check failed.');
       if(checks.includes('processing')&&recorded.action!=='error')observedParts.push('Processing did not finish normally.');
       const allowed=scenario?(scenario.allowed_actions?.length?scenario.allowed_actions:[scenario.expected_action]):[];
-      if(recorded.action&&allowed.includes(recorded.action)&&checks.includes('interpretation'))observedParts.push('That outcome is one this scenario accepts, so the miss was in the wording: a required or forbidden phrase, or the rationale.');
+      const wordingItems=findings.other.filter(item=>/^(proposed state (lacks|contains forbidden)|review prose contains forbidden|rationale lacks) /.test(item));
+      if(recorded.action&&allowed.includes(recorded.action)&&checks.includes('interpretation')&&!wordingItems.length)observedParts.push('That outcome is one this scenario accepts, so the miss was in the wording: a required or forbidden phrase, or the rationale.');
       if(recorded.proposal)observedExcerpt={text:recorded.proposal,truncated:recorded.truncated};
       if(!recorded.action)gaps.push('No observed outcome was recorded for this failure.');
-      if(findings.other.length)observedParts.push('The scorer recorded: '+findings.other.join('; ')+'.');
-      else if(checks.includes('interpretation'))gaps.push('The scorer’s exact reason is not recorded, only which checks failed.');
+      // #639: the scorer's recorded reason, in words. Alternatives are any-one-of; forbidden phrases are named exactly.
+      const anyOf=text=>text.split(', ').map(part=>part.split(' / ').map(quote).join(' or ')).join(', and ');
+      for(const item of findings.other){
+        if(/^proposed state lacks /.test(item))observedParts.push('The proposed change does not say '+anyOf(item.replace(/^proposed state lacks /,''))+'.');
+        else if(/^proposed state contains forbidden /.test(item))observedParts.push('The proposed change says '+item.replace(/^proposed state contains forbidden /,'').split(', ').map(quote).join(' and ')+', which this scenario forbids.');
+        else if(/^review prose contains forbidden /.test(item))observedParts.push('The Review’s wording says '+item.replace(/^review prose contains forbidden /,'').split(', ').map(quote).join(' and ')+', which this scenario forbids.');
+        else if(/^rationale lacks /.test(item))observedParts.push('The rationale does not say '+anyOf(item.replace(/^rationale lacks /,''))+'.');
+        else observedParts.push('The scorer recorded: '+item+'.');
+      }
+      if(!findings.other.length&&checks.includes('interpretation'))gaps.push('The scorer’s exact reason is not recorded, only which checks failed.');
       if(!recorded.proposal&&recorded.action&&STATE_CHANGE_OUTCOMES.has(recorded.action))gaps.push('The proposed State text was not recorded for this run.');
     }else if(suite==='ask'){
       const named=checks.filter(check=>ASK_CHECKS[check]);

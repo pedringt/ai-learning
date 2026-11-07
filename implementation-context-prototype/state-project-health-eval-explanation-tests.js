@@ -195,7 +195,8 @@ function cachedSnapshot(){
   await check('#639: a review failure with recorded items says what the scorer found instead of a gap',()=>{
     const story=M.failureStory({scenario_id:'review_direct_reversal',severity:'high',expected:'update_state',observed:'update_state | proposed State: Password-reset automation is approved and fully operational.',
       failed_checks:['interpretation'],failed_items:['proposed state lacks paused / suspended / halted / on hold / not approved / no longer approved']},review());
-    assert.match(story.observed.text,/The scorer recorded: proposed state lacks paused/);
+    assert.match(story.observed.text,/The proposed change does not say “paused” or “suspended” or “halted” or “on hold” or “not approved” or “no longer approved”\./);
+    assert.doesNotMatch(story.observed.text,/miss was in the wording/,'the specific reason replaces the generic one');
     assert.ok(!story.gaps.some(gap=>/exact reason is not recorded/.test(gap)));
   });
   await check('#639: runs compare only under the same scoring version; older runs are legacy / version unknown',()=>{
