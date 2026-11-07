@@ -256,7 +256,8 @@ def register_baseline_async_intake_routes(app: Any, settings: Any) -> None:
                     "error_message": "State can currently read .txt, .md, .pdf, and .docx files. Other formats aren't supported yet.",
                 }},
             )
-        raw = await file.read()
+        # Read at most one byte past the limit, so an oversized upload is rejected without loading it all (#619).
+        raw = await file.read(_UPLOAD_MAX_BYTES + 1)
         if len(raw) > _UPLOAD_MAX_BYTES:
             raise HTTPException(
                 status_code=422,

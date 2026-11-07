@@ -279,6 +279,25 @@ resolve_review = ExtensionPoint("api_core.resolve_review", _review_service_resol
 _provider_from_env = ExtensionPoint("api_core._provider_from_env", _core_provider_from_env)
 
 
+
+# Slack OAuth start/callback state tokens live in memory for the 10-minute round trip. Each start used to add one that
+# only a completed callback removed, so repeated starts grew memory until restart (#619). Expired tokens are dropped on
+# each start, and at most _OAUTH_STATE_LIMIT are kept (the oldest go first).
+_OAUTH_STATE_TTL_SECONDS = 600
+_OAUTH_STATE_LIMIT = 500
+
+
+def _remember_oauth_state(states: dict, state: str, now: float) -> None:
+    for key, expiry in list(states.items()):
+        if expiry <= now:
+            states.pop(key, None)
+    while len(states) >= _OAUTH_STATE_LIMIT:
+        oldest = min(states.items(), key=lambda item: item[1], default=None)
+        if oldest is None:
+            break
+        states.pop(oldest[0], None)
+    states[state] = now + _OAUTH_STATE_TTL_SECONDS
+
 def create_app(settings: Settings | None = None, provider: InterpretationProvider | None = None, ask_provider=None) -> FastAPI:
     settings = settings or Settings.from_env()
 
@@ -726,7 +745,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                     "error_message": "State can currently read .txt, .md, .pdf, and .docx files. Other formats aren't supported yet.",
                 }},
             )
-        raw = await file.read()
+        # Read at most one byte past the limit, so an oversized upload is rejected without loading it all (#619).
+        raw = await file.read(_UPLOAD_MAX_BYTES + 1)
         if len(raw) > _UPLOAD_MAX_BYTES:
             raise HTTPException(
                 status_code=422,
@@ -1205,7 +1225,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         if not (settings.slack_client_id and settings.public_base_url):
             raise HTTPException(status_code=503, detail="Slack OAuth is not configured")
         state = secrets.token_urlsafe(24)
-        app.state.slack_oauth_states[state] = time.time() + 600  # 10 minutes to complete the round trip
+        _remember_oauth_state(app.state.slack_oauth_states, state, time.time())
         redirect_uri = f"{settings.public_base_url}/api/integrations/slack/oauth/callback"
         return RedirectResponse(build_authorize_url(client_id=settings.slack_client_id, redirect_uri=redirect_uri, state=state))
 
