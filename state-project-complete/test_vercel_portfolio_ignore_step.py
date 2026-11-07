@@ -20,6 +20,11 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 COMMAND = json.loads((ROOT / "vercel.json").read_text())["ignoreCommand"]
 
+
+def test_command_fits_vercels_256_character_limit():
+    """Vercel fails the deployment when ignoreCommand is longer than 256 characters (the first version was 379)."""
+    assert len(COMMAND) <= 256
+
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
 
 
@@ -51,7 +56,7 @@ def repo(tmp_path):
     r = tmp_path / "repo"
     r.mkdir()
     _git(r, "init", "-q")
-    for path in ("index.html", "docs/readme.md", "state-project-complete/api.py", "content/edge.md", "CLAUDE.md"):
+    for path in ("index.html", "docs/readme.md", "state-project-complete/api.py", "content/edge.md", "CLAUDE.md", "QA.md"):
         _commit(r, path, "v1")
     return r
 
@@ -67,7 +72,7 @@ def test_an_unknown_previous_commit_builds_instead_of_failing(repo):
 
 
 @pytest.mark.parametrize("path", ["docs/readme.md", "state-project-complete/api.py", "CLAUDE.md", "qa/deployed/x.spec.js",
-                                  "scripts/x.sh", "tools/x.py", ".github/workflows/x.yml", "render.yaml", "Makefile"])
+                                  "scripts/x.sh", "tools/x.py", ".github/workflows/x.yml", "QA.md"])
 def test_changes_only_to_files_the_site_does_not_serve_skip(repo, path):
     previous = _git(repo, "rev-parse", "HEAD")
     _commit(repo, path, "v2")
@@ -75,7 +80,9 @@ def test_changes_only_to_files_the_site_does_not_serve_skip(repo, path):
 
 
 @pytest.mark.parametrize("path", ["index.html", "content/edge.md", "api/new.js", "assets/x.png", "cheat-sheets/x.html",
-                                  "implementation-context-prototype/index.html", "vercel.json", ".vercelignore", "new.css"])
+                                  "implementation-context-prototype/index.html", "vercel.json", ".vercelignore", "new.css",
+                                  # Not served, but left out of the exclusions to fit the 256-character limit; they rarely change.
+                                  "Makefile", "render.yaml", "package.json"])
 def test_changes_to_served_files_or_deploy_config_build(repo, path):
     previous = _git(repo, "rev-parse", "HEAD")
     _commit(repo, path, "v2")
