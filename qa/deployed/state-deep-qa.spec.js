@@ -266,13 +266,18 @@ test.describe('Review + Question resolution (deterministic demo data)', () => {
     diag.assertClean(expect);
   });
 
-  test('Review cards use the short "Does not establish" line (QA-11)', async ({ page }) => {
+  // QA-11 (Oct 9) replaced repeated boilerplate with one fixed line per decision type. #566 (Oct 27) removed that
+  // line too: it was fixed text, not something the Evidence said, and under "Does not establish" it read as if it was.
+  test('Review cards show no fixed "Does not establish" line (QA-11, #566)', async ({ page }) => {
     const diag = attachDiagnostics(page);
     await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
     const card = await expandRiskCard(page, 'demo-review-retention');
-    await expect(card).toContainText('Neither choice changes Current State.');
+    await expect(card).toContainText('Current State will stay unchanged.');
+    await expect(card).not.toContainText('Does not establish');
+    await expect(card).not.toContainText('Neither choice changes Current State.');
+    await expect(card).not.toContainText('Only accepting this changes Current State.');
     await expect(page.locator('.open-items-page')).not.toContainText('does not automatically resolve the uncertainty');
     diag.assertClean(expect);
   });
