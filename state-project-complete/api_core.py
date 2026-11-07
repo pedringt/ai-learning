@@ -24,8 +24,6 @@ from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse, StreamingResponse
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from pypdf import PdfReader
-from docx import Document as DocxDocument
 
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import initialize_db
@@ -36,6 +34,8 @@ from extension_points import ExtensionPoint
 from interpretation_pipeline_integrated import InterpretationProvider, new_id
 from interpretation_pipeline_integrated import process_evidence as _pipeline_process_evidence
 from openai_provider import OpenAIProvider
+from upload_text import UPLOAD_EXTENSIONS as _UPLOAD_EXTENSIONS, UPLOAD_MAX_BYTES as _UPLOAD_MAX_BYTES
+from upload_text import extract_upload_text as _extract_upload_text
 from seed_demo import (
     SEEDED_PROJECT_IDS, bootstrap_demo_data, bootstrap_juniper_demo_data, delete_project_data, reset_demo_data,
 )
@@ -686,54 +686,6 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     # csv/xlsx/pptx/images/audio/video/zip yet -- each needs its own
     # extraction approach and failure modes; adding them unexamined would
     # risk silently-bad Evidence rather than a clear "not supported" error.
-    _UPLOAD_EXTENSIONS = {".txt", ".md", ".pdf", ".docx"}
-    _UPLOAD_MAX_BYTES = 15_000_000
-
-    def _unreadable(message: str, code: str = "unreadable_file") -> HTTPException:
-        return HTTPException(status_code=422, detail={"code": code, "error_details": {"error_message": message}})
-
-    def _extract_upload_text(raw: bytes, extension: str) -> str:
-        if extension in (".txt", ".md"):
-            try:
-                return raw.decode("utf-8")
-            except UnicodeDecodeError:
-                raise _unreadable("That file doesn't look like plain text State can read.")
-        if extension == ".pdf":
-            try:
-                reader = PdfReader(io.BytesIO(raw))
-                if reader.is_encrypted:
-                    raise _unreadable("That PDF is password-protected. Remove the password and try again.")
-                pages_text = [page.extract_text() or "" for page in reader.pages]
-            except HTTPException:
-                raise
-            except Exception as exc:
-                raise _unreadable("That PDF could not be read. It may be corrupted.") from exc
-            text = "\n\n".join(pages_text).strip()
-            if not text:
-                # Scanned/image-only PDFs have no text layer at all -- OCR is
-                # explicitly out of scope for this first version (issue
-                # #140 follow-up), so this needs its own message rather than
-                # the generic empty-file one.
-                raise _unreadable(
-                    "State couldn't find readable text in that PDF. Scanned or image-only PDFs aren't "
-                    "supported yet -- try a text-based PDF instead.",
-                    code="no_extractable_text",
-                )
-            return text
-        if extension == ".docx":
-            try:
-                document = DocxDocument(io.BytesIO(raw))
-            except Exception as exc:
-                raise _unreadable("That .docx file could not be read. It may be corrupted.") from exc
-            parts = [p.text for p in document.paragraphs if p.text.strip()]
-            for table in document.tables:
-                for row in table.rows:
-                    row_text = " | ".join(cell.text.strip() for cell in row.cells if cell.text.strip())
-                    if row_text:
-                        parts.append(row_text)
-            return "\n\n".join(parts)
-        raise _unreadable("Unsupported file type.", code="unsupported_file_type")
-
     @app.post("/api/evidence/upload", status_code=201)
     async def upload_evidence(request: Request, file: UploadFile = File(...)) -> dict:
         filename = (file.filename or "").strip()
