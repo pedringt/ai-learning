@@ -19,7 +19,9 @@ check('one confirm action uses the bulk baseline endpoint',source.includes("'/ap
 check('confirmation follows backend readiness',source.includes("summary.can_confirm?'':'disabled'"));
 check('older backend previews fail closed without breaking State',source.includes('if(response.status===404)return null'));
 check('a fact flagged for an unstated year or amount shows its statement and why (#240)',source.includes("(item.statements||[]).join(' ')")&&source.includes('baseline-draft-attention-reason')&&source.includes('esc(item.reason)'));
-check('banner refreshes after app rerenders Evidence or Review state',source.includes("observe(root,{childList:true,subtree:true})"));
+// Since the Nov 5 cleanup the app announces each drawn view instead of this file watching #viewRoot
+// (behavior is covered in state-view-rendered-event-tests.js).
+check('banner refreshes after app rerenders Evidence or Review state',/addEventListener\('state:view-rendered',\(\)=>\{\s*scheduleRefresh\(250\)/.test(source));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail>0)process.exit(1);

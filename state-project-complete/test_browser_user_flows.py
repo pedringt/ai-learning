@@ -102,7 +102,9 @@ def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms:
     pw = sync_playwright().start()
     browser = _launch_chromium(pw)
     page = browser.new_page(viewport={"width": 1398, "height": 986})
-    css = (FRONT / "state-shell.css").read_text() + "\n" + (FRONT / "context-tool.css").read_text()
+    # state-app.css positions the Ask drawer; without it the drawer sits in page flow, which the drawer's background
+    # scroll lock (context-product-polish.js since Nov 5) then hides.
+    css = (FRONT / "state-shell.css").read_text() + "\n" + (FRONT / "context-tool.css").read_text() + "\n" + (FRONT / "state-app.css").read_text()
     page.set_content(f"<!doctype html><html><head><style>{css}</style></head><body>{_body_markup()}</body></html>")
     page.add_script_tag(content=(FRONT / "context-data.js").read_text())
     page.add_script_tag(content=_mock_api_script(hydration_ms, ask_ms, resolved_review_ms))

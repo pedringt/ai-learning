@@ -120,6 +120,7 @@
         if(!H.contentFree(data)) throw new Error('Analytics payload failed the content-minimization check.');
         render(data);populateScopes(data,projectId);status.hidden=true;dashboard.classList.remove('loading');
         const url=new URL(location.href);projectId?url.searchParams.set('project',projectId):url.searchParams.delete('project');history.replaceState(null,'',url);
+        H.refreshQuality();
       }catch(error){
         dashboard.classList.remove('loading');status.hidden=false;status.className='notice status error';status.innerHTML=`Product Analytics could not load: ${esc(error.message||'Unknown error')} <button class="button" id="retryButton" style="margin-left:10px">Retry</button>`;
         document.getElementById('retryButton')?.addEventListener('click',()=>load(projectId));

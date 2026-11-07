@@ -113,11 +113,14 @@
     banner.hidden=false;document.body.classList.add('state-baseline-active');syncWorkspaceEmptyStates();
   }
 
-  async function refresh(){clearTimeout(refreshTimer);try{renderOwnedBanner(await fetchDraft())}catch(error){console.warn('Baseline dogfood status unavailable',error)}}
+  // A page opened while starting material is still analyzing polls until it settles, the same as an analysis started
+  // in this tab. Before the Nov 5 cleanup this happened only by accident, whenever some other DOM change re-ran refresh().
+  async function refresh(){clearTimeout(refreshTimer);try{const summary=await fetchDraft();renderOwnedBanner(summary);if(!polling&&summary?.status==='baseline_setup'&&(summary.counts?.processing_evidence||0)>0)pollUntilSettled()}catch(error){console.warn('Baseline dogfood status unavailable',error)}}
   function scheduleRefresh(delay=0){clearTimeout(refreshTimer);refreshTimer=setTimeout(refresh,delay)}
+  let polling=false;
   function pollUntilSettled(){
-    clearTimeout(pollingTimer);const id=projectId();let attempts=0;
-    const tick=async()=>{if(!id||projectId()!==id)return;attempts++;try{const summary=await fetchDraft();renderOwnedBanner(summary);if(summary?.status==='baseline_setup'&&(summary.counts?.processing_evidence||0)>0&&attempts<200){pollingTimer=setTimeout(tick,1500);return}}catch(error){if(attempts<200){pollingTimer=setTimeout(tick,1500);return}}window.STATE_ASK_TEST_API?.hydrateBackend?.();document.dispatchEvent(new Event('state-project-record-changed'))};
+    clearTimeout(pollingTimer);const id=projectId();let attempts=0;polling=true;
+    const tick=async()=>{polling=false;if(!id||projectId()!==id)return;polling=true;attempts++;try{const summary=await fetchDraft();renderOwnedBanner(summary);if(summary?.status==='baseline_setup'&&(summary.counts?.processing_evidence||0)>0&&attempts<200){pollingTimer=setTimeout(tick,1500);return}}catch(error){if(attempts<200){pollingTimer=setTimeout(tick,1500);return}}polling=false;window.STATE_ASK_TEST_API?.hydrateBackend?.();document.dispatchEvent(new Event('state-project-record-changed'))};
     pollingTimer=setTimeout(tick,250);
   }
 
@@ -473,17 +476,13 @@
       const save=event.target.closest?.('[data-baseline-save-manual]');
       if(save&&!save.disabled){event.preventDefault();saveManualFacts(save);}
     });
-    const switcher=document.getElementById('projectSwitcher');
-    if(switcher)new MutationObserver(()=>scheduleRefresh(50)).observe(switcher,{attributes:true,attributeFilter:['data-project-id','data-name']});
+    document.addEventListener('state:project-identity-changed',()=>scheduleRefresh(50));
     // Any view change re-checks Baseline status (debounced, one fetch) and the Workspace empty states.
-    const root=document.getElementById('viewRoot');
-    if(root){
-      let syncQueued=false;
-      new MutationObserver(()=>{
-        scheduleRefresh(250);
-        if(syncQueued)return;syncQueued=true;requestAnimationFrame(()=>{syncQueued=false;syncWorkspaceEmptyStates();});
-      }).observe(root,{childList:true,subtree:true});
-    }
+    let syncQueued=false;
+    document.addEventListener('state:view-rendered',()=>{
+      scheduleRefresh(250);
+      if(syncQueued)return;syncQueued=true;requestAnimationFrame(()=>{syncQueued=false;syncWorkspaceEmptyStates();});
+    });
     scheduleRefresh(0);syncWorkspaceEmptyStates();
   }
 

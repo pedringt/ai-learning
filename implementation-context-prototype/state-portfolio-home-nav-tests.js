@@ -30,6 +30,9 @@ check('See the work is the first, primary action and opens Applied Work',
 check('Explore my experience is secondary and targets Experience',
   actions[1]&&actions[1].href==='#experience'&&actions[1].text.startsWith('Explore my experience')&&actions[1].cls.includes('rd-button-secondary'),JSON.stringify(actions));
 check('the Experience target still exists',html.includes('<section class="home-experience" id="experience"'));
+// Nov 6 (Paige): in-page links glide to their section, jump instead under reduced motion, and leave Library hashes alone.
+check('in-page links scroll smoothly unless reduced motion is requested',
+  /scrollIntoView\(\{behavior:reduce\?'auto':'smooth',block:'start'\}\)/.test(html)&&/prefers-reduced-motion: reduce/.test(html)&&/!learningIds\.has\(target\)/.test(html));
 
 // State keeps three entry points on the homepage, each with its own job.
 const stateLinks=(html.match(/<a [^>]*data-state-app-link[^>]*>/g)||[]).length;

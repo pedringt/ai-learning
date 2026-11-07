@@ -90,14 +90,5 @@
       document.write('<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove("state-prepaint");clearTimeout(window.__stateRevealTimer);});});<\/script>');
     })();
   </script>
-  <script>
-    (function(){
-      function syncNoteLifecycle(){
-        document.querySelectorAll("[data-action='send-note-review']").forEach(function(btn){if(btn.textContent.trim()==='Send as Evidence') btn.textContent='Submit for review';});
-        document.querySelectorAll('.notes-page .note-index-row').forEach(function(row){var submitted=row.querySelector('.note-status--pending,.note-status--reviewed,.note-status--no-review-needed,.note-status--unknown');var edit=row.querySelector("[data-action='edit-note']");if(submitted&&edit) edit.remove();});
-      }
-      var observer=new MutationObserver(syncNoteLifecycle);observer.observe(document.body,{childList:true,subtree:true});syncNoteLifecycle();
-    })();
-  </script>
 </body>
 </html>

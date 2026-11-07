@@ -29,13 +29,13 @@ It deliberately makes **no real model calls** and does not touch staging or prod
 
 Use for consequential changes or release verification. It always runs `qa-fast` first.
 
-After that it checks the branch diff against `origin/staging`:
+After that it checks the branch diff against `origin/main` when run on `staging` (so a promotion sees everything it would ship), and against `origin/staging` on any other branch. Set `QA_BASE_REF` to override:
 
 - if no model-sensitive State files changed, it skips the paid live-model eval;
 - if model-sensitive files changed, it runs `state-project-complete/eval/run_eval.py` against the real Anthropic provider;
 - if a real-model eval is required but `ANTHROPIC_API_KEY` is unavailable, release QA stops clearly instead of silently reporting success;
 - set `QA_FORCE_REAL_MODEL=1` to force the live eval even when the diff would normally skip it.
-- before a `staging` -> `main` promotion, compare against `main` instead: `QA_BASE_REF=origin/main make qa-release`, or in GitHub run the **State QA Release** workflow on `staging` with `base_ref` = `origin/main` (it also has a `force_real_model` box). Run on `staging` against the default `origin/staging`, it would find no difference and skip the paid eval.
+- before a `staging` -> `main` promotion, run it on `staging` (locally or the **State QA Release** workflow, which also has a `force_real_model` box); it compares against `origin/main` by itself. Before Nov 5 the default was always `origin/staging`, which on `staging` found no difference and skipped the paid eval.
 
 This command still does **not** deploy or modify staging.
 

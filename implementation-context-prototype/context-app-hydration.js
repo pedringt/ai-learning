@@ -5,7 +5,7 @@
 // the project list, open-Review refresh, and the thin context-backend-sync.js wrappers that
 // mirror API payloads into `state`.
 window.STATE_APP_HYDRATION=Object.freeze({install(ctx){
-  const {API,BACKEND_SYNC,currentProjectStage,renderWorkspaceAttentionOnly,renderWorkspaceBelowGridOnly,root,state,workspaceAttentionHtml,closeDialog,updateNav,render}=ctx;
+  const {API,BACKEND_SYNC,announceView,currentProjectStage,renderWorkspaceAttentionOnly,renderWorkspaceBelowGridOnly,root,state,workspaceAttentionHtml,closeDialog,updateNav,render}=ctx;
   /* ----------------------------------------------------------------------
      Hydration
 
@@ -254,6 +254,7 @@ window.STATE_APP_HYDRATION=Object.freeze({install(ctx){
             const holder=document.createElement('div');
             holder.innerHTML=workspaceAttentionHtml();
             if(holder.firstElementChild) askPanel.insertAdjacentElement('afterend',holder.firstElementChild);
+            announceView(state.view);
           }
         }
         // Same reasoning as the fast attention path above: the full

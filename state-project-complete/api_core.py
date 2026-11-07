@@ -22,6 +22,7 @@ from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse, StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pypdf import PdfReader
 from docx import Document as DocxDocument
@@ -241,7 +242,11 @@ class Settings(BaseModel):
             slack_client_secret=os.getenv("SLACK_CLIENT_SECRET"),
             public_base_url=(os.getenv("STATE_PUBLIC_BASE_URL", "").strip().rstrip("/") or None),
             frontend_base_url=(os.getenv("STATE_FRONTEND_BASE_URL", "").strip().rstrip("/") or None),
-            environment=os.getenv("STATE_ENVIRONMENT", "staging").strip().lower(),
+            # Render sets RENDER_GIT_BRANCH; without it, an unset STATE_ENVIRONMENT labelled production rows "staging".
+            environment=(
+                os.getenv("STATE_ENVIRONMENT")
+                or ("production" if os.getenv("RENDER_GIT_BRANCH") == "main" else "staging")
+            ).strip().lower(),
         )
 
 
@@ -427,9 +432,11 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @app.middleware("http")
     async def daily_spend_cap_middleware(request: Request, call_next):
         if request.method == "POST" and _MODEL_CALL_ROUTES.match(request.url.path):
-            try:
+            def check_budget() -> None:
                 with get_connection() as connection:
                     check_daily_budget(connection)
+            try:
+                await run_in_threadpool(check_budget)
             except DailySpendCapReached as exc:
                 return JSONResponse(status_code=429, content={"detail": str(exc), "code": "daily_spend_cap"})
         return await call_next(request)
@@ -727,7 +734,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                     "error_message": "That file is too large to upload as Evidence right now.",
                 }},
             )
-        content = _extract_upload_text(raw, extension).strip()
+        # Parsing a PDF/docx and the interpretation model call are both blocking. Run them in the worker pool
+        # like a plain `def` endpoint, or every other request on the instance waits for the upload (Nov 5 audit).
+        content = (await run_in_threadpool(_extract_upload_text, raw, extension)).strip()
         if not content:
             raise HTTPException(
                 status_code=422,
@@ -737,7 +746,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             )
         if len(content) > 100_000:
             content = content[:100_000]
-        return _submit_evidence(request, content, "uploaded_note", source_name=filename or None)
+        return await run_in_threadpool(_submit_evidence, request, content, "uploaded_note", source_name=filename or None)
 
     def _reanalyze(request: Request, evidence_id: str, *, user_requested_maintenance: bool = False, failure_message: str) -> dict:
         selected_provider = request.app.state.provider
@@ -1078,15 +1087,19 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             # Acknowledge quickly; Phase 1 only processes channel activity events.
             return {"ok": True}
 
-        with get_connection() as connection:
-            try:
-                result = handle_slack_event(
-                    connection, payload,
-                    quiet_window_seconds=settings.slack_quiet_window_seconds or DEFAULT_QUIET_WINDOW_SECONDS
-                )
-            except ValueError as exc:
-                raise HTTPException(status_code=400, detail=str(exc)) from exc
-            connection.commit()
+        def record_event() -> dict:
+            with get_connection() as connection:
+                try:
+                    result = handle_slack_event(
+                        connection, payload,
+                        quiet_window_seconds=settings.slack_quiet_window_seconds or DEFAULT_QUIET_WINDOW_SECONDS
+                    )
+                except ValueError as exc:
+                    raise HTTPException(status_code=400, detail=str(exc)) from exc
+                connection.commit()
+                return result
+
+        result = await run_in_threadpool(record_event)
         # Structured, no message bodies: team/channel/event identifiers and
         # disposition only, per the Phase 1 observability contract.
         inner_event = payload.get("event") or {}

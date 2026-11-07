@@ -67,6 +67,9 @@ def test_ask_answer_has_one_control_and_reset_restores_discovery_ui():
           input.value='Who is the billing contact?';
           result.innerHTML='<div class="ask-live-answer"><h2>Billing contact</h2><p>Example answer</p></div>';
           drawer.classList.add('has-answer');
+          // The app's only writer of the result, renderDrawerResult(), announces each write (Nov 5 cleanup, step 6b);
+          // this stand-in write does the same instead of relying on a page-wide MutationObserver.
+          document.dispatchEvent(new CustomEvent('state:ask-result-rendered'));
         }""")
         page.wait_for_timeout(50)
 

@@ -231,6 +231,11 @@ def evaluate_due_checkpoints(
     return evaluated
 
 
+def _evaluate_due_checkpoints_once(get_connection, classifier, provider) -> None:
+    with get_connection() as connection:
+        evaluate_due_checkpoints(connection, classifier, provider)
+
+
 async def run_relevance_poll_loop(get_connection, classifier, provider, interval_seconds: int, logger=None) -> None:
     """Background loop: periodically evaluate due checkpoints.
 
@@ -242,8 +247,10 @@ async def run_relevance_poll_loop(get_connection, classifier, provider, interval
     log = logger or globals()["logger"]
     while True:
         try:
-            with get_connection() as connection:
-                evaluate_due_checkpoints(connection, classifier, provider)
+            # The classifier and interpretation calls block for seconds; keep them off the event loop.
+            await asyncio.to_thread(_evaluate_due_checkpoints_once, get_connection, classifier, provider)
+        except asyncio.CancelledError:
+            raise
         except Exception:
             log.exception("Slack relevance poll loop iteration failed")
         await asyncio.sleep(interval_seconds)
