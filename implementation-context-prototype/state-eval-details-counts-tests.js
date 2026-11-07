@@ -88,6 +88,8 @@ const payload=(review,ask,recent)=>({controlled_evals:{latest_review_interpretat
     assert.match(els.failureList.innerHTML,/<strong>Observed:<\/strong> The answer gave a number that appears in none of the supplied records\./);
     assert.match(els.failureList.innerHTML,/<strong>Consequence:<\/strong> A reader could take an invented number as an agreed figure\./);
     assert.doesNotMatch(els.failureList.innerHTML,/Failed checks: /);
+    const withExcerpt=await renderPage(payload(null,run('ask_quality',13,1,{overall_pass_rate:12/13,failure_details:[{...failure,synthetic_answer_excerpt:'Use 75% as the agreed target.'}]}),[]));
+    assert.match(withExcerpt.els.failureList.innerHTML,/<p class="synthetic-excerpt"><strong>Synthetic eval excerpt \(model answer to a test fixture\):<\/strong> “Use 75% as the agreed target\.”<\/p>/);
   });
 
   console.log(`\n${pass} passed, ${fail} failed`);

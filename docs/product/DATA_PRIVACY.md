@@ -60,6 +60,13 @@ Reusable eval fixtures should remain synthetic/curated unless a separately appro
 
 The dashboard may ingest aggregate eval results such as precision, recall, miss/error counts, build, provider, and model identifier. It must not ingest scenario Evidence, prompts, model responses, or trace bodies merely to make a dashboard richer.
 
+**Exception: synthetic eval excerpts (Paige, Nov 7, #643).** A failed scenario in a controlled eval run may carry one short excerpt of the model's answer, because these answers come only from deliberately constructed synthetic test fixtures and the excerpt is what makes a failure assessable. Its limits:
+
+- at most 200 characters, cut at that length;
+- only for failed scenarios, and only in `controlled_eval` runs; never production, demo or visitor project content;
+- stored in its own field, `synthetic_answer_excerpt`, and always shown labeled as a synthetic eval excerpt, separate from the software-generated explanation of what failed;
+- kept and pruned with the eval record (365 days, as above).
+
 Eval result ingestion requires a server-side `STATE_EVAL_INGEST_KEY`. The key must never be shipped to the browser.
 
 ### Authority Lab evidence export (#517)

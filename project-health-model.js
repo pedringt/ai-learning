@@ -932,7 +932,7 @@
       if(specific.length)observedParts.push(...specific);
       if(rest.length)observedParts.push('The answer '+rest.map(check=>ASK_CHECKS[check].failed).join('; it ')+'.');
       else if(!specific.length&&detail?.observed)observedParts.push(String(detail.observed));
-      gaps.push('The answer text is not recorded, so its wording cannot be shown here.');
+      if(!String(detail?.synthetic_answer_excerpt||'').trim())gaps.push('The answer text is not recorded, so its wording cannot be shown here.');
     }else if(detail?.observed){
       observedParts.push(String(detail.observed));
     }
@@ -1055,6 +1055,8 @@
       heading,
       evidence,
       observed:{text:reviewedApplies?reviewed.summary:observedParts.join(' '),recorded:reviewedApplies?observedParts.join(' '):null,excerpt:observedExcerpt,source:FROM_RECORD},
+      // #643: model output from a synthetic test fixture, kept apart from the explanation above (DATA_PRIVACY.md).
+      syntheticExcerpt:String(detail?.synthetic_answer_excerpt||'').trim()?{label:SYNTHETIC_EXCERPT_LABEL,text:String(detail.synthetic_answer_excerpt).trim()}:null,
       expected:{text:expectedLine,details:expectedDetails,source:scenario?FROM_CATALOG:FROM_RECORD},
       consequence:{text:consequence,direction},
       contractNote,
@@ -1773,6 +1775,7 @@
   // #639 (Nov 7): a run records its scoring version (a fingerprint of the scenarios and the scoring code). Runs recorded
   // before then have none and read as "legacy / version unknown"; no version is assigned to them after the fact.
   const LEGACY_SCORING_LABEL='legacy / version unknown';
+  const SYNTHETIC_EXCERPT_LABEL='Synthetic eval excerpt (model answer to a test fixture)';
   function scoringVersionLabel(run){const v=String(run?.scoring_version||'').trim();return v||LEGACY_SCORING_LABEL;}
   function runComparability(current,previous,contractChangedAt){
     const va=String(current?.scoring_version||'').trim(),vb=String(previous?.scoring_version||'').trim();
@@ -2060,7 +2063,7 @@
       story.evidence.text?story.evidence.lead+': '+story.evidence.text+story.evidence.setup.map(item=>'\n- '+item.label+': '+item.text).join(''):'Not available: the scenario setup is not in this page\u2019s catalog.',
       '',
       'Observed behavior',
-      story.observed.text+(story.observed.recorded?'\nRecorded: '+story.observed.recorded:'')+(story.observed.excerpt?'\nProposed State (recorded excerpt'+(story.observed.excerpt.truncated?', cut off':'')+'): '+story.observed.excerpt.text:''),
+      story.observed.text+(story.observed.recorded?'\nRecorded: '+story.observed.recorded:'')+(story.observed.excerpt?'\nProposed State (recorded excerpt'+(story.observed.excerpt.truncated?', cut off':'')+'): '+story.observed.excerpt.text:'')+(story.syntheticExcerpt?'\n'+story.syntheticExcerpt.label+': '+story.syntheticExcerpt.text:''),
       '',
       'Expected behavior',
       story.expected.text+story.expected.details.map(line=>'\n- '+line).join('')+(story.contractNote?'\nContract note: '+story.contractNote:''),
@@ -2198,5 +2201,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,scoringVersionLabel,LEGACY_SCORING_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

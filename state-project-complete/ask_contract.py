@@ -28,11 +28,13 @@ class AskSelection(BaseModel):
     question_ids: list[str] = Field(default_factory=list, max_length=10)
     history_ids: list[str] = Field(default_factory=list, max_length=12)
     evidence_ids: list[str] = Field(default_factory=list, max_length=12)
+    # #640 (Nov 7): Questions already answered, so Ask can say what was answered without treating it as Current State.
+    answered_question_ids: list[str] = Field(default_factory=list, max_length=6)
 
 class AskAnswerItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=700)
-    record_type: Literal["state", "review", "blocking_question", "question", "history", "evidence", "none"] = "none"
+    record_type: Literal["state", "review", "blocking_question", "question", "answered_question", "history", "evidence", "none"] = "none"
     record_id: str | None = None
     detail: str | None = Field(default=None, max_length=1_000)
 
@@ -85,7 +87,7 @@ class AskSynthesis(BaseModel):
 SELECTOR_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["job", "state_ids", "review_ids", "blocking_question_ids", "question_ids", "history_ids", "evidence_ids"],
+    "required": ["job", "state_ids", "review_ids", "blocking_question_ids", "question_ids", "history_ids", "evidence_ids", "answered_question_ids"],
     "properties": {
         "job": {"type": "string", "enum": [
             "current_fact", "meeting_prep", "catch_up", "project_update",
@@ -98,6 +100,7 @@ SELECTOR_JSON_SCHEMA = {
         "question_ids": {"type": "array", "items": {"type": "string"}},
         "history_ids": {"type": "array", "items": {"type": "string"}},
         "evidence_ids": {"type": "array", "items": {"type": "string"}},
+        "answered_question_ids": {"type": "array", "items": {"type": "string"}},
     },
 }
 
@@ -126,7 +129,7 @@ ANSWER_JSON_SCHEMA = {
                             "required": ["text", "record_type", "record_id", "detail"],
                             "properties": {
                                 "text": {"type": "string"},
-                                "record_type": {"type": "string", "enum": ["state", "review", "blocking_question", "question", "history", "evidence", "none"]},
+                                "record_type": {"type": "string", "enum": ["state", "review", "blocking_question", "question", "answered_question", "history", "evidence", "none"]},
                                 "record_id": {"type": ["string", "null"]},
                                 "detail": {"type": ["string", "null"]},
                             },

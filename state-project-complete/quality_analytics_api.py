@@ -24,6 +24,8 @@ class QualityEvalFailure(BaseModel):
     failed_checks: list[str] = Field(default_factory=list, max_length=8)
     # #639/#643: which required or forbidden item failed, named from the scenario's own phrase lists.
     failed_items: list[str] = Field(default_factory=list, max_length=8)
+    # #643: DATA_PRIVACY.md's synthetic eval excerpt exception: a failed controlled scenario's model answer, 200 chars max.
+    synthetic_answer_excerpt: str | None = Field(default=None, max_length=200)
 
 
 class QualityEvalRunInput(BaseModel):
@@ -106,6 +108,8 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
             raise HTTPException(status_code=503, detail="Eval result ingestion is not configured")
         if x_state_eval_key != expected:
             raise HTTPException(status_code=403, detail="Invalid eval ingestion key")
+        if payload.run_kind != "controlled_eval" and any(item.synthetic_answer_excerpt for item in payload.failure_details):
+            raise HTTPException(status_code=422, detail="Answer excerpts are accepted only from controlled eval runs")
         connection = connect(settings.connection_url())
         try:
             run_id = f"quality_eval_{uuid.uuid4().hex[:16]}"

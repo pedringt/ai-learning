@@ -184,6 +184,14 @@ function cachedSnapshot(){
     assert.ok(missing.evidence.setup.some(line=>line.label==='Resolved Question'&&/30 days/.test(line.text)),'the resolved Question is part of the setup');
     assert.deepStrictEqual(M.failureStory({scenario_id:'ask_unknown_stays_unknown',failed_checks:['uncertainty']},ask()).technical.failedItems,[]);
   });
+  await check('#643: a synthetic eval excerpt is shown labeled and apart from the explanation',()=>{
+    const story=M.failureStory({scenario_id:'ask_unknown_stays_unknown',severity:'high',failed_checks:['grounding'],
+      failed_items:['number not in any record'],synthetic_answer_excerpt:'For planning purposes, use 75% as the agreed target.'},ask());
+    assert.deepStrictEqual(story.syntheticExcerpt,{label:'Synthetic eval excerpt (model answer to a test fixture)',text:'For planning purposes, use 75% as the agreed target.'});
+    assert.doesNotMatch(story.observed.text,/75%/,'the software-generated explanation never quotes the model');
+    assert.ok(!story.gaps.some(gap=>/answer text is not recorded/.test(gap)));
+    assert.strictEqual(M.failureStory({scenario_id:'ask_unknown_stays_unknown',failed_checks:['grounding']},ask()).syntheticExcerpt,null);
+  });
   await check('#639: a review failure with recorded items says what the scorer found instead of a gap',()=>{
     const story=M.failureStory({scenario_id:'review_direct_reversal',severity:'high',expected:'update_state',observed:'update_state | proposed State: Password-reset automation is approved and fully operational.',
       failed_checks:['interpretation'],failed_items:['proposed state lacks paused / suspended / halted / on hold / not approved / no longer approved']},review());

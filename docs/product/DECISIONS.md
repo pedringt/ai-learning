@@ -338,3 +338,24 @@ The failure is specific: an unaccepted dependency claim in a Review's note, with
 Adopting the prompt rule. Whether a Review's note may claim dependencies the Evidence doesn't establish, for live interpretations, is not decided; #567 covers labeling such claims structurally.
 
 **Update (Oct 27, later):** the root cause of #569 was not the model. `ask_provider._filter_candidate_payload` treated the whole two-part question as a budget lookup and removed every Current State record without "budget" in it, so the model never saw "Implementation planning can proceed". The filter now runs only when every part of the question is a lookup (ask ×20: 19/19 scored). The scenario gates again; `observe_only` stays available for future known hard cases.
+
+### DEC-018 — Ask retrieves answered Questions; synthetic eval excerpts may be stored; the grader allows attributed source reports
+
+**Status:** Decided  
+**Date:** 2026-11-07  
+**Related:** #640, #641, #643, #639 (outside eval review, Nov 7); `ask_service.py`, `docs/product/DATA_PRIVACY.md`, `eval/ask_grader.py`
+
+**Decision**  
+Paige adopted these three recommendations from an outside eval review on Nov 7:
+- **Ask retrieves relevant resolved Questions (#640).** Scoped to the project and to the request (they must share a term with it), each with its recorded answer (the Evidence the resolving Review accepted), resolved date and the resolving Review. Ask keeps "this Question was answered" apart from "this was authorized as Current State". #640 stays open until the scenario passes end to end on a real run.
+- **A narrow DATA_PRIVACY exception for synthetic eval excerpts (#643).** A failed controlled-eval scenario may carry one model-answer excerpt of at most 200 characters, labeled as a synthetic eval excerpt and shown apart from the software-generated explanation, with the eval record's retention. Never production, demo or visitor content.
+- **The grader's authority rubric allows attributed source reports (#641).** "Confirmed", "resolved", "approved", "established" describe Current State or closed Questions when the answer asserts a fact as established. Reporting a source's words is correct when attributed and kept apart from Current State; correct paraphrases score the same. Presenting the source's report as governing Current State is still a 1.
+
+**Why**  
+People should be able to ask what was answered without the answer having to become Current State. A failure is hard to assess without seeing what the answer said, and these answers come only from constructed fixtures. The old rubric penalized the attributed wording that `ask_source_words_not_demoted` and `ask_evidence_backed_approval_qualified` require.
+
+**Rejected / deferred**  
+Excerpts from any run other than a controlled eval. #642 (what should block an Ask release) is a separate open product question.
+
+**Revisit when**  
+Answered Questions crowd out governing records in real answers, or the grader's recalibration shows the new wording scores differently from human grades.
