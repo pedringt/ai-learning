@@ -18,6 +18,10 @@ on:
           - all
           - review
           - ask
+      max_calls:
+        description: Hard cap on model calls (30 keeps an Ask-only run under $0.05 on Haiku 5.5)
+        required: false
+        default: '80'
       record_environment:
         description: Where to record aggregate results
         required: true
@@ -60,7 +64,9 @@ jobs:
           python state-project-complete/eval/run_quality_evals.py \
             --suite "${{ inputs.suite || 'all' }}" \
             --record-url "$RECORD_URL" \
-            --authority-lab-envelope authority-lab-evidence.json
+            --authority-lab-envelope authority-lab-evidence.json \
+            --json quality-report.json \
+            --max-calls "${{ inputs.max_calls || '80' }}"
       # #517: the review suite's aggregate results as Authority Lab evidence
       # (counts, versions and this run's link; no scenario or model text).
       # Kept 90 days so it can be delivered by hand (#518). Saved even when a
@@ -72,6 +78,17 @@ jobs:
           name: authority-lab-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: authority-lab-evidence.json
           retention-days: 90
+          if-no-files-found: ignore
+
+      # Nov 7 (Paige): the full report, with every synthetic-fixture answer (passing ones too), the build, model and
+      # scoring version, so a passing answer can be read. Artifact only: never sent to the dashboard (DATA_PRIVACY.md).
+      - name: Save the full quality report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: quality-report.json
+          retention-days: 30
           if-no-files-found: ignore
 
   walkthrough:
