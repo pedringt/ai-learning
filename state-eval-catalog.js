@@ -635,6 +635,7 @@
     "currently approved"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
@@ -667,6 +668,7 @@
     "leadership approved removing human review"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
@@ -704,6 +706,7 @@
     "50%"
    ],
    "forbid_unsupported_numbers": true,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
@@ -741,6 +744,7 @@
     "Slack is still excluded"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
@@ -773,6 +777,7 @@
     "we decided to fully automate"
    ],
    "forbid_unsupported_numbers": true,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
@@ -803,6 +808,7 @@
    ],
    "forbidden_claims": [],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
@@ -835,6 +841,7 @@
     "definitely uses customer content"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": false,
@@ -879,6 +886,14 @@
     "contract is no longer under review"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [
+    [
+     "yes",
+     "answered",
+     "resolved",
+     "closed"
+    ]
+   ],
    "forbidden_headline_openings": [
     "no",
     "not yet",
@@ -922,6 +937,7 @@
     "pilot size is 25 users"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
@@ -955,6 +971,7 @@
     "leadership concern"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": false,
@@ -1000,6 +1017,7 @@
     "has not been approved"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
@@ -1052,6 +1070,7 @@
     "cannot proceed"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
@@ -1105,6 +1124,7 @@
     "has not been approved"
    ],
    "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
    "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,

@@ -63,6 +63,11 @@ ASK_MUST_FAIL = (
             {"headline": "Not yet confirmed: the vendor-retention question is closed, with a recorded answer",
              "summary": "It was answered: content is deleted within 30 days of contract end. The vendor contract remains under review."},
             "hedged opening contradicts the closed Question"),
+    AskCase("ask_question_answer_no_state_mutation",
+            {"headline": "The vendor contract remains under review.",
+             "summary": "The retention Question was answered: content is deleted within 30 days of contract end. The vendor "
+                        "contract remains under review."},
+            "headline never reports the resolution the body gives"),
     AskCase("ask_current_over_stale",
             {"headline": "Yes, password-reset automation is currently approved.",
              "summary": "History shows it was approved; it was paused after an incident on 2026-09-10."},

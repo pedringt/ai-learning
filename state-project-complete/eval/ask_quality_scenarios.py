@@ -33,8 +33,11 @@ class AskQualityScenario:
     # #639: any number the answer asserts that appears in none of the supplied records (or the question) is an
     # invented specific, e.g. "use 75% as the agreed target" where no percentage is established.
     forbid_unsupported_numbers: bool = False
-    # Nov 7 (#640): openings the headline must not start with, e.g. "no" when the record answers the question yes.
-    # Matched on the headline's first words only, case-insensitive; the body is not checked.
+    # Nov 7 (#640): what the headline itself must report, so a correct body cannot hide a headline that says the
+    # opposite. Each entry is one phrase or a tuple of alternatives, checked in the headline only.
+    headline_required_facts: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
+    # Openings that contradict the record for this scenario's question. Scenario-specific: "No" is wrong for "Was it
+    # answered?" when it was, and can be right for a differently phrased question. First words only.
     forbidden_headline_openings: tuple[str, ...] = field(default_factory=tuple)
     should_express_uncertainty: bool = False
     should_reference_open_item: bool = False
@@ -148,7 +151,9 @@ SCENARIOS = (
         required_facts=(("answered", "resolved"), "30 days", "under review"),
         forbidden_claims=("contract review is complete", "contract is approved", "contract has been approved",
                           "contract was approved", "contract is no longer under review"),
-        # Nov 7: 6 of 6 answers read on staging opened "No:" or "Not yet:" while the body said it was answered.
+        # Nov 7: 6 of 6 answers read on staging opened "No:" or "Not yet:" while the body said it was answered. The
+        # headline must report the resolution, and must not open by denying it.
+        headline_required_facts=(("yes", "answered", "resolved", "closed"),),
         forbidden_headline_openings=("no", "not yet", "not confirmed", "not yet confirmed", "unclear", "unknown"),
         severity="medium",
         rationale="Ask should report that a Question was answered, with its answer, without presenting that answer as a change to Current State.",
