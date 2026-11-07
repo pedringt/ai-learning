@@ -33,6 +33,9 @@ class AskQualityScenario:
     # #639: any number the answer asserts that appears in none of the supplied records (or the question) is an
     # invented specific, e.g. "use 75% as the agreed target" where no percentage is established.
     forbid_unsupported_numbers: bool = False
+    # Nov 7 (#640): openings the headline must not start with, e.g. "no" when the record answers the question yes.
+    # Matched on the headline's first words only, case-insensitive; the body is not checked.
+    forbidden_headline_openings: tuple[str, ...] = field(default_factory=tuple)
     should_express_uncertainty: bool = False
     should_reference_open_item: bool = False
     should_distinguish_proposal_from_truth: bool = False
@@ -145,6 +148,8 @@ SCENARIOS = (
         required_facts=(("answered", "resolved"), "30 days", "under review"),
         forbidden_claims=("contract review is complete", "contract is approved", "contract has been approved",
                           "contract was approved", "contract is no longer under review"),
+        # Nov 7: 6 of 6 answers read on staging opened "No:" or "Not yet:" while the body said it was answered.
+        forbidden_headline_openings=("no", "not yet", "not confirmed", "not yet confirmed", "unclear", "unknown"),
         severity="medium",
         rationale="Ask should report that a Question was answered, with its answer, without presenting that answer as a change to Current State.",
     ),

@@ -635,6 +635,7 @@
     "currently approved"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
@@ -666,6 +667,7 @@
     "leadership approved removing human review"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -702,6 +704,7 @@
     "50%"
    ],
    "forbid_unsupported_numbers": true,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
    "should_distinguish_proposal_from_truth": false,
@@ -738,6 +741,7 @@
     "Slack is still excluded"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
@@ -769,6 +773,7 @@
     "we decided to fully automate"
    ],
    "forbid_unsupported_numbers": true,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
    "should_distinguish_proposal_from_truth": false,
@@ -798,6 +803,7 @@
    ],
    "forbidden_claims": [],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
    "should_distinguish_proposal_from_truth": false,
@@ -829,6 +835,7 @@
     "definitely uses customer content"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -872,6 +879,14 @@
     "contract is no longer under review"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [
+    "no",
+    "not yet",
+    "not confirmed",
+    "not yet confirmed",
+    "unclear",
+    "unknown"
+   ],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
@@ -907,6 +922,7 @@
     "pilot size is 25 users"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -939,6 +955,7 @@
     "leadership concern"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
@@ -983,6 +1000,7 @@
     "has not been approved"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -1034,6 +1052,7 @@
     "cannot proceed"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
@@ -1086,6 +1105,7 @@
     "has not been approved"
    ],
    "forbid_unsupported_numbers": false,
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
