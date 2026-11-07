@@ -10,11 +10,13 @@ const project=T.PROJECTS.state||Object.values(T.PROJECTS).find(p=>p.id==='state'
 const commit=(sha,minutesAgo,message)=>({sha,commit:{message,committer:{date:new Date(Date.now()-minutesAgo*60000).toISOString()}}});
 const vercel=state=>({state,statuses:[{context:'Vercel – state',state,description:'Deployment has completed'}]});
 
-function fakeGh(statusBySha){
+// Deployments default to Production for every sha with a status, as on a direct push to main.
+function fakeGh(statusBySha,deploymentsBySha=null){
   const asked=[];
   const gh=async p=>{
     asked.push(p);
-    if(/\/branches\//.test(p)) return {name:'main',commit:{sha:'tip'}};
+    if(/\/branches\//.test(p)) return {name:p.endsWith('/staging')?'staging':'main',commit:{sha:'tip',commit:{message:'Merge pull request #637 from pedringt/staging'}}};
+    const d=p.match(/\/deployments\?sha=([^&]+)/); if(d) return deploymentsBySha?(deploymentsBySha[d[1]]||[]):(statusBySha[d[1]]?[{environment:'Production – state'}]:[]);
     if(/\/commits\?sha=/.test(p)) return [commit('newest',1,'Make area identity project-scoped'),commit('deployed',2,'Docs for #136'),commit('older',30,'Earlier change')];
     const m=p.match(/\/commits\/([^/]+)\/status$/); if(m) return statusBySha[m[1]]||{state:'pending',statuses:[]};
     if(/check-runs/.test(p)) return {check_runs:[]};
@@ -49,6 +51,20 @@ function fakeGh(statusBySha){
   const viaTip=await T.loadDelivery(f.gh,project,'main');
   check('with no deployed release commit, the branch tip deploy is used',f.asked.some(p=>p.includes('/commits/tip/status'))&&JSON.stringify(viaTip).toLowerCase().indexOf('no vercel status found')===-1,JSON.stringify(viaTip).slice(0,200));
   check('and check-runs come from that same deployed commit',f.asked.some(p=>p.includes('/commits/tip/check-runs')));
+
+  // Nov 7 (production smoke test): 9070e33 was pushed to staging, so its only deploys were Previews and its checks
+  // included the staging Deep QA run. After the PR merge, production read it as the live release.
+  check('a Production deployment counts as one',T.hasProductionDeployment([{environment:'Preview – state'},{environment:'Production – state'}]));
+  check('a Preview deployment alone does not',!T.hasProductionDeployment([{environment:'Preview – state'},{environment:'Preview – ai-learning'}]));
+  const previewOnly={deployed:[{environment:'Preview – state'}],tip:[{environment:'Production – state'}]};
+  f=fakeGh({deployed:vercel('success'),tip:vercel('success')},previewOnly);
+  const prod=await T.loadDelivery(f.gh,project,'main');
+  check('on main, a commit with only a staging Preview deploy is not the release',!f.asked.some(p=>p.includes('/commits/deployed/check-runs')),f.asked.join(' '));
+  check('on main, the merge commit that deployed to Production is judged instead',f.asked.some(p=>p.includes('/commits/tip/check-runs'))&&f.asked.some(p=>p.includes('/commits/tip/status')));
+  check('and the release shown is that merge commit',JSON.stringify(prod).includes('Merge pull request #637'),JSON.stringify(prod).slice(0,300));
+  f=fakeGh({deployed:vercel('success')},previewOnly);
+  await T.loadDelivery(f.gh,project,'staging');
+  check('on staging, a Preview deploy still counts',f.asked.some(p=>p.includes('/commits/deployed/check-runs'))&&!f.asked.some(p=>/deployments\?sha=/.test(p)),f.asked.join(' '));
 
   console.log(`\n${pass} passed, ${fail} failed`);
   if(fail)process.exit(1);
