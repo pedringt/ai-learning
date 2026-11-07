@@ -1,5 +1,5 @@
 // Ask drawer controls (#450). Consolidated, in their original order, from the patch layers
-// that used to own them: context-quickwins.js (addGrounding), context-feedback-pass.js (mobileAsk, askControlStates),
+// that used to own them: context-feedback-pass.js (mobileAsk, askControlStates),
 // context-feedback-pass-3.js (status line, lifecycle), context-feedback-pass-4.js (reset
 // button, control visibility), context-attention-alignment.js (blank-question guard, mobile
 // close shield) and context-final-mobile.js (mobile launcher). Capture-phase handlers here
@@ -8,29 +8,6 @@
 // feedback-pass-4); the feedback-pass-3 lifecycle one animation frame later.
 // The Ask flow itself (runAsk, routing, read-only guard) lives in context-product-polish.js.
 (() => {
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-
-  // ---- from context-quickwins.js ----
-  function addGrounding(scope = document) {
-    scope.querySelectorAll('.ask-live-answer').forEach(answer => {
-      if (answer.querySelector('.ask-grounding')) return;
-      const rows = [...answer.querySelectorAll('.ask-answer-item')].map(row => {
-        const badge = row.querySelector('.ask-record-badge')?.textContent?.trim() || '';
-        const text = row.querySelector('.ask-item-text')?.textContent?.trim() || '';
-        return badge && text ? {badge,text} : null;
-      }).filter(Boolean);
-      const unique=[]; const seen=new Set();
-      rows.forEach(row=>{const key=`${row.badge}:${row.text}`;if(!seen.has(key)){seen.add(key);unique.push(row);}});
-      if(!unique.length)return;
-      const details=document.createElement('details');
-      details.className='evidence ask-grounding';
-      details.innerHTML=`<summary>Grounded in State's project record</summary><p>${unique.length} project ${unique.length===1?'item is':'items are'} shown in this answer.</p>${unique.map(row=>`<article><strong>${esc(row.badge)}</strong><p>${esc(row.text)}</p></article>`).join('')}`;
-      const actions=answer.querySelector('.ask-state-actions');
-      const safety=answer.querySelector('.ask-open-items-safety');
-      if(actions)answer.insertBefore(details,actions);else if(safety)answer.insertBefore(details,safety);else answer.appendChild(details);
-    });
-  }
 
   // ---- from context-feedback-pass.js ----
   function mobileAsk(){
@@ -38,7 +15,7 @@
     document.addEventListener('pointerup',e=>{
       if(!matchMedia('(max-width:760px)').matches)return;
       const close=e.target.closest?.('#askStateDrawer .ask-state-drawer-close');
-      if(close){e.preventDefault();e.stopImmediatePropagation();const d=document.getElementById('askStateDrawer'),l=document.getElementById('askStateLauncher');if(d)d.hidden=true;if(l)l.classList.remove('is-hidden');return}
+      if(close){e.preventDefault();e.stopImmediatePropagation();if(window.STATE_ASK_UI?.closeAskDrawer){window.STATE_ASK_UI.closeAskDrawer();return}const d=document.getElementById('askStateDrawer'),l=document.getElementById('askStateLauncher');if(d)d.hidden=true;if(l)l.classList.remove('is-hidden');return}
       const starter=e.target.closest?.('#askStateDrawer [data-review-batch-prompt]');
       // Re-fire a real click on the same element rather than reimplementing
       // "fill the input and submit" here: that reimplementation used
@@ -249,11 +226,11 @@
   },true);
   window.addEventListener('pageshow',syncMobileAskLauncher);
 
-  // One observer replaces the four the old files each ran for these controls; the calls keep
-  // the order those files ran in (feedback-pass-3, feedback-pass-4, attention-alignment,
-  // final-mobile).
+  // These used to run from one MutationObserver over the whole document (class/hidden changes anywhere). They now
+  // run when context-product-polish.js draws an Ask result or builds/opens/closes the drawer (Nov 5 cleanup,
+  // step 6b); input, submit and reset already call what they need. The order keeps the old files' order
+  // (feedback-pass-3, feedback-pass-4, attention-alignment, final-mobile).
   function sync(){
-    addGrounding(document);                   // quickwins ran before these layers each frame
     ensureAskStatus();
     installAskLifecycle();
     ensureResetButton();
@@ -270,7 +247,8 @@
     syncAskBlankGuard();                      // attention-alignment sync()
     syncMobileAskLauncher();                  // final-mobile run()
     schedule();                               // feedback-pass-3: status + lifecycle on the next frame
-    new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden']});
+    document.addEventListener('state:ask-result-rendered',schedule);
+    document.addEventListener('state:ask-drawer-changed',schedule);
     window.addEventListener('resize',schedule,{passive:true});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();

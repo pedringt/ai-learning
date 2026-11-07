@@ -480,6 +480,13 @@ def create_due_checkpoints(connection: Connection, now: datetime | None = None) 
     return created
 
 
+def _create_due_checkpoints_once(get_connection) -> list:
+    with get_connection() as connection:
+        created = create_due_checkpoints(connection)
+        connection.commit()
+    return created
+
+
 async def run_checkpoint_poll_loop(get_connection, interval_seconds: int, logger=None) -> None:
     """Background loop: periodically materialize due checkpoints.
 
@@ -492,9 +499,7 @@ async def run_checkpoint_poll_loop(get_connection, interval_seconds: int, logger
     while True:
         await asyncio.sleep(interval_seconds)
         try:
-            with get_connection() as connection:
-                created = create_due_checkpoints(connection)
-                connection.commit()
+            created = await asyncio.to_thread(_create_due_checkpoints_once, get_connection)
             if created and logger:
                 logger.info("slack_checkpoints_created count=%d", len(created))
         except asyncio.CancelledError:

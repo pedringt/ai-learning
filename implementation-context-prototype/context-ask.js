@@ -112,27 +112,6 @@
     // stacking it on its own line underneath.
     return `<li class="ask-answer-item"><div>${badge}<span class="ask-item-text">${esc(i.text)}</span>${detail}</div>${link}</li>`;
   }
-  // One combined "Related open items" aside: items this answer actually
-  // cited (still open) plus a single aggregate count for everything else
-  // outstanding. Previously these were two separate asides -- both
-  // literally headed "Related open items" until a later patch relabeled
-  // the second one -- which read as a redundant duplicate block.
-  function relatedOpenItemsAside(a,liveStatus,payload){
-    const seen=new Set(),r=[],q=[];
-    for(const s of a.sections||[])for(const i of s.items||[]){
-      if(!i.record_id||seen.has(`${i.record_type}:${i.record_id}`)||isItemResolved(i,liveStatus))continue;
-      seen.add(`${i.record_type}:${i.record_id}`);
-      if(i.record_type==='review')r.push(i);
-      if(i.record_type==='blocking_question'||i.record_type==='question')q.push(i);
-    }
-    const bits=[];
-    if(r.length)bits.push(`${r.length} ${r.length===1?'Review':'Reviews'} cited above`);
-    if(q.length)bits.push(`${q.length} ${q.length===1?'Question':'Questions'} cited above`);
-    const remaining=liveOpenItemsRemaining(a,liveStatus)||payload.open_items_remaining||{count:0,reviews:0};
-    if(remaining.count>0)bits.push(`${remaining.count} other open ${remaining.count===1?'item':'items'}`);
-    if(!bits.length)return'';
-    return `<aside class="ask-state-actions"><span class="meta-label">Related open items</span><div><span>${esc(bits.join(' · '))}</span> <button class="text-button" data-view="open-items">View open items →</button></div></aside>`;
-  }
   function meetingNotesScaffold(){return `<section class="ask-meeting-notes"><h3>Meeting notes</h3><div class="meeting-note-block"><strong>Decisions</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Answers / new information</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Actions</strong><span>☐ Add actions here</span></div><div class="meeting-note-block"><strong>Follow-ups</strong><span>Add notes here</span></div></section>`;}
   // #544 (Oct 20, Paige): every answer says it covers only what State has on record.
   const SCOPE_NOTE="Based on what's recorded in State. There may be things it doesn't know about.";
@@ -206,26 +185,6 @@
     return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Drafting</div>${body}</div>`;
   }
 
-  // The server (or the deterministic fast-starter path) computes remaining
-  // open-item counts once, at answer-build time. If liveStatus exposes the
-  // live open id sets, recompute from those instead so a same-session
-  // resolve is reflected here too, rather than only in the item list above.
-  function liveOpenItemsRemaining(a,liveStatus){
-    if(typeof liveStatus?.openReviewIds!=='function'||typeof liveStatus?.openQuestionIds!=='function') return null;
-    const openReviewIds=liveStatus.openReviewIds();
-    const openQuestionIds=liveStatus.openQuestionIds();
-    const shownReviewIds=new Set(),shownQuestionIds=new Set();
-    for(const s of a.sections||[])for(const i of s.items||[]){
-      if(i.record_type==='review') shownReviewIds.add(i.record_id);
-      else if(i.record_type==='blocking_question'||i.record_type==='question') shownQuestionIds.add(i.record_id);
-    }
-    const shownOpenReviews=openReviewIds.filter(id=>shownReviewIds.has(id)).length;
-    const shownOpenQuestions=openQuestionIds.filter(id=>shownQuestionIds.has(id)).length;
-    return {
-      count:Math.max(0,(openReviewIds.length+openQuestionIds.length)-shownOpenReviews-shownOpenQuestions),
-      reviews:Math.max(0,openReviewIds.length-shownOpenReviews),
-    };
-  }
   function render(payload,liveStatus){
     const a=payload?.answer;
     if(!a)return '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>';
@@ -255,7 +214,7 @@
     // drawer's own actually-wired refresh control instead.
     const staleNotice=resolvedCount>0?`<div class="ask-stale-notice"><span>${resolvedCount===1?'An item shown here has':`${resolvedCount} items shown here have`} since been resolved. This summary wasn't regenerated.</span><button class="text-button" type="button" data-review-batch-action="refresh-ask">Refresh this answer →</button></div>`:'';
     // #543: the model's suggested Question rides on the answer element for the Ask-to-Question handoff card.
-    return `<div class="ask-live-answer"${a.suggested_question?` data-suggested-question="${esc(a.suggested_question)}"`:''}><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${staleNotice}${sections}${notes}<p class="ask-scope-note">${esc(SCOPE_NOTE)}</p>${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}${relatedOpenItemsAside(a,liveStatus,payload)}</div>`;
+    return `<div class="ask-live-answer"${a.suggested_question?` data-suggested-question="${esc(a.suggested_question)}"`:''}><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${staleNotice}${sections}${notes}<p class="ask-scope-note">${esc(SCOPE_NOTE)}</p>${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}</div>`;
   }
   const INITIAL_WAIT_MESSAGES=['Finding the project context that matters for this question…','Checking Current State against open Reviews and Questions…','Keeping unresolved information unresolved…','Shaping the grounded answer around the useful parts…'];const LONG_WAIT_MESSAGES=['Still working. Checking the answer against the project record…','Still working — making sure Reviews qualify rather than silently replace Current State…'];const REFINEMENT_WAIT_MESSAGES=['Refining the existing answer without changing the underlying project truth…','Keeping the same grounding while changing the format and emphasis…','Still working — checking the refinement against the project record…'];const waitTimers=new WeakMap();
   function rotateStatus(node,target,messages,longMessages=null){if(!node||!target||waitTimers.has(node))return;const started=Date.now();let index=0;const timer=window.setInterval(()=>{if(!node.isConnected){window.clearInterval(timer);waitTimers.delete(node);return;}const pool=longMessages&&Date.now()-started>=10000?longMessages:messages;target.textContent=pool[index%pool.length];index+=1;},3000);waitTimers.set(node,timer);}

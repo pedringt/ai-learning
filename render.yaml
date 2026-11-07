@@ -5,6 +5,16 @@
 # A second, stale config previously lived at state-project-complete/render.yaml and
 # disagreed with this one about the Python version and the database configuration.
 # It has been removed. Do not reintroduce a service-local render.yaml.
+#
+# What this file does NOT declare (Nov 5 audit). These exist only in the Render dashboard, so they are recorded
+# here rather than added as config: a `disk:` block or a second service whose name or size did not match the
+# dashboard could make Render create or change a disk or service. Copy the real values from the dashboard first.
+# - Persistent disk on state-api, mounted at /var/data. Production data is SQLite at /var/data/state.db.
+#   Render snapshots it once every 24 hours; take a manual backup before schema changes (see CLAUDE.md).
+# - state-api-staging: free plan, branch staging, deploys only on state-project-complete/** changes, no disk
+#   (it re-seeds on every deploy). Its env vars, including CORS_ORIGINS, differ from production's.
+# - Dashboard-only env vars on production: DATABASE_URL (it points the app at the SQLite file on the disk; check the
+#   dashboard for the exact value) and STATE_ENVIRONMENT, which, if unset, defaults to "production" on main (api_core.py).
 
 services:
   - type: web

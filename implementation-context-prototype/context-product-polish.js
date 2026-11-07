@@ -188,18 +188,29 @@
 
   function ensureAskShell(){
     if(!document.getElementById('askStateLauncher')){
-      const launcher=document.createElement('button');launcher.id='askStateLauncher';launcher.className='ask-state-launcher';launcher.type='button';launcher.dataset.reviewBatchAction='open-ask';launcher.textContent='Ask State';document.body.appendChild(launcher);
+      const launcher=document.createElement('button');launcher.id='askStateLauncher';launcher.className='ask-state-launcher';launcher.type='button';launcher.dataset.reviewBatchAction='open-ask';launcher.textContent='✦ Ask State';document.body.appendChild(launcher);
     }
     if(!document.getElementById('askStateDrawer')){
-      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-body"><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward. Questions asked here may be recorded to help improve State.</p><div class="ask-state-starters">${starterButtonsHtml(starters)}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div></div>`;document.body.appendChild(drawer);
+      const drawer=document.createElement('aside');drawer.id='askStateDrawer';drawer.className='ask-state-drawer';drawer.hidden=true;drawer.setAttribute('aria-label','Ask State');drawer.innerHTML=`<div class="ask-state-drawer-head"><div><h2>Ask State</h2><p>Read-only. Asking never changes the project record.</p></div><button class="ask-state-drawer-close" type="button" aria-label="Close Ask State" data-review-batch-action="close-ask">×</button></div><div class="ask-state-drawer-body"><div class="ask-state-drawer-controls"><form class="ask-state-drawer-form" data-review-batch-form="ask"><input id="askStateDrawerInput" autocomplete="off" aria-label="Ask State" placeholder="What do you want to know?"><button class="btn primary" type="submit">Ask</button></form><p class="ask-state-drawer-help">Edit the question and run it again to refine the answer. State does not carry a hidden conversation forward. Questions asked here may be recorded to help improve State.</p><div class="ask-state-starters">${starterButtonsHtml(starters)}</div></div><div class="ask-state-drawer-result" id="askStateDrawerResult" aria-live="polite"></div></div>`;document.body.appendChild(drawer);announceDrawer();
     }
     syncAskInputs();
   }
   function syncAskInputs(){
     const drawer=document.getElementById('askStateDrawerInput');if(drawer && drawer.value!==ui.query && document.activeElement!==drawer)drawer.value=ui.query;
   }
+  // The page behind the open drawer must not scroll (iOS scrolls it through the drawer otherwise). Moved here from a
+  // page-wide MutationObserver in state-shell.js that checked the drawer on every DOM change (Nov 5 cleanup, step 4).
+  let backgroundScrollY=0,backgroundLocked=false;
+  function lockBackground(){
+    if(backgroundLocked)return;backgroundScrollY=window.scrollY||window.pageYOffset||0;
+    Object.assign(document.body.style,{position:'fixed',top:`-${backgroundScrollY}px`,left:'0',right:'0',width:'100%',overflow:'hidden'});backgroundLocked=true;
+  }
+  function unlockBackground(){
+    if(!backgroundLocked)return;
+    Object.assign(document.body.style,{position:'',top:'',left:'',right:'',width:'',overflow:''});backgroundLocked=false;window.scrollTo(0,backgroundScrollY);
+  }
   function openAskDrawer({focus=true}={}){
-    ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
+    ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');lockBackground();announceDrawer();syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
   }
   function closeAskDrawer(){
     // QA follow-up (2026-09-14): closing while an answer was still loading
@@ -215,7 +226,7 @@
     // requestId. running is cleared immediately either way, so a new
     // question can be asked right away instead of waiting out the old one.
     if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();ui.requestId++;ui.running=false;ui.streamRaw='';}
-    ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');syncLauncherVisibility();
+    ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');unlockBackground();syncLauncherVisibility();announceDrawer();
   }
   // state.md QA follow-up: Ask's drawer state (the last-rendered answer,
   // in-flight query, resolved-context signature) used to survive a project
@@ -238,7 +249,7 @@
     const holder=document.querySelector('.ask-state-starters');
     if(holder)holder.innerHTML=starterButtonsHtml(starters);
   }
-  window.STATE_ASK_UI={resetForProjectSwitch};
+  window.STATE_ASK_UI={resetForProjectSwitch,closeAskDrawer};
   function syncLauncherVisibility(){
     const launcher=document.getElementById('askStateLauncher');if(!launcher)return;
     const hide=ui.drawerOpen;
@@ -304,7 +315,15 @@
     if(actions){actions.innerHTML='<button class="btn secondary" type="button" data-review-batch-action="copy-ask-answer">Copy</button>';}
     return holder.innerHTML;
   }
-  function renderDrawerResult(html){const target=document.getElementById('askStateDrawerResult');if(target)target.innerHTML=html;}
+  // The only writer of the Ask result. It announces each render so context-ask-question-handoff.js can add its card
+  // without a MutationObserver on the result (Nov 5 cleanup, step 6a).
+  // context-ask-controls.js keeps its drawer controls (status line, reset button, launcher on phones) in step with
+  // these announcements instead of a MutationObserver over the whole document (Nov 5 cleanup, step 6b).
+  function announceDrawer(){if(typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('state:ask-drawer-changed'));}
+  function renderDrawerResult(html){
+    const target=document.getElementById('askStateDrawerResult');if(!target)return;target.innerHTML=html;
+    if(typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('state:ask-result-rendered'));
+  }
   function renderFinalAsk(){
     if(!ui.payload){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>State did not receive a grounded answer.</p></div>');return;}
     let html=sanitizeAskHtml(ASK?.render?.(ui.payload) || '<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2></div>');
@@ -442,8 +461,11 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&ui.drawerOpen&&document.getElementById('overlay')?.hidden)closeAskDrawer();});
   window.addEventListener('scroll',syncLauncherVisibility,{passive:true});window.addEventListener('resize',syncLauncherVisibility,{passive:true});
 
+  // Build the launcher and drawer once; nothing removes them. The launcher is anchored to the drawn view's right edge,
+  // so reposition it per drawn view (and on scroll/resize above). This replaced a MutationObserver over the whole
+  // document, including text changes (Nov 5 cleanup, step 6a).
   let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhanceAll();});};
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+  document.addEventListener('state:view-rendered',()=>requestAnimationFrame(syncLauncherVisibility));
   setInterval(()=>{if(ui.drawerOpen&&ui.payload)checkAnswerFreshness();},7000);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();

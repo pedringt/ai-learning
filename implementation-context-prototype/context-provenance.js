@@ -103,7 +103,6 @@
   }
 
   root.addEventListener('click',rememberHistoryTarget,true);
-  const observer=new MutationObserver(()=>requestAnimationFrame(decorateFocusedHistory));
-  observer.observe(root,{childList:true,subtree:true});
+  document.addEventListener?.('state:view-rendered',event=>{if(event.detail?.view==='history')requestAnimationFrame(decorateFocusedHistory);});
   window.STATE_PROVENANCE=Object.freeze({buildTrace,traceMarkup,hasAcceptedProvenance,affectedStateIds,supportingResolvedReview,normalizeBootstrap,loadProvenance});
 })();

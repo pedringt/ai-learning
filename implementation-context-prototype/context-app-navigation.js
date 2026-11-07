@@ -4,7 +4,7 @@
 // Routing and navigation chrome: render() (the view router), navigateTo(), the nav/subnav
 // and project-switcher sync (updateNav), and Current State's jump-link scrolling.
 window.STATE_APP_NAVIGATION=Object.freeze({install(ctx){
-  const {ASK,PROJECT_VIEW,esc,openQuestions,renderHistory,renderNotes,renderOpenItems,renderOverview,renderProjectOverview,root,state,uiPendingReviews}=ctx;
+  const {ASK,PROJECT_VIEW,announceView,esc,openQuestions,renderHistory,renderNotes,renderOpenItems,renderOverview,renderProjectOverview,root,state,uiPendingReviews}=ctx;
   // #113: the Current State subnav's area links are generated from the
   // project's own current facts (PROJECT_VIEW.visibleAreas, the same list
   // that decides the page body's sections) rather than three area buttons
@@ -47,6 +47,7 @@ window.STATE_APP_NAVIGATION=Object.freeze({install(ctx){
     const idConfirmed=state.projectConfirmed===true;
     if(label&&label.dataset&&(label.dataset.name!==name||(idConfirmed&&label.dataset.projectId!==activeIdForLabel))){
       label.dataset.name=name;
+      if(typeof CustomEvent==='function'&&document.dispatchEvent)queueMicrotask(()=>document.dispatchEvent(new CustomEvent('state:project-identity-changed')));
       // projectId lets other modules (Copy Context, Ask starters) read
       // which project is actually live from the DOM without importing
       // context-app.js's own module-scoped state -- see QA follow-up notes
@@ -128,9 +129,10 @@ window.STATE_APP_NAVIGATION=Object.freeze({install(ctx){
     });
   }
 
-  // 'settings' intentionally maps to a no-op: context-settings.js owns
-  // #viewRoot's content for that view entirely through its own
-  // load()/MutationObserver pair, decoupled from this render(). Without an
+  // 'settings' intentionally draws nothing here: context-settings.js owns
+  // #viewRoot's content for that view entirely through its own load(),
+  // which it starts when this render() announces the settings view with the
+  // same 'state:view-rendered' event every other view sends. Without an
   // explicit no-op here, the `|| renderOverview` fallback below silently
   // overwrites Settings' content with Workspace's on *any* call to this
   // render() while state.view==='settings' -- including the one
@@ -141,7 +143,7 @@ window.STATE_APP_NAVIGATION=Object.freeze({install(ctx){
   // right after a fresh page load, e.g. the Slack OAuth redirect lands
   // there) and its resolution can clobber Settings back to Workspace
   // content while the sidebar still shows Settings highlighted.
-  function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview,settings:()=>{}}; (views[state.view]||renderOverview)(); ASK?.activateWaitStates?.(root); }
+  function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview,settings:()=>announceView('settings')}; (views[state.view]||renderOverview)(); ASK?.activateWaitStates?.(root); }
 
   const VIEW_ANALYTICS_EVENTS={overview:'workspace_viewed','project-overview':'current_state_viewed','open-items':'open_items_viewed',questions:'open_items_viewed',review:'open_items_viewed',notes:'notes_viewed',history:'history_viewed',settings:'settings_viewed'};
   function navigateTo(view,{preserveHistoryTopic=false,preserveHistoryEvidence=false}={}){

@@ -97,8 +97,12 @@
       reveal();
     });
   };
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class']});
+  // Each drawn view (the mobile help footer lives inside it; the subnav shows only on Current State) and each resize.
+  // This replaced a MutationObserver over the whole document (Nov 5 cleanup, step 4).
+  document.addEventListener('state:view-rendered',schedule);
   window.addEventListener('resize',schedule,{passive:true});
+  const sidebar=document.querySelector('.app-sidebar');
+  if(sidebar&&typeof ResizeObserver==='function')new ResizeObserver(syncHelpCard).observe(sidebar);
   window.addEventListener('resize',syncHelpCard,{passive:true});
   window.addEventListener('scroll',syncHelpCard,{passive:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();

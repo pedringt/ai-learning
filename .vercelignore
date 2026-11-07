@@ -1,6 +1,26 @@
-# Internal review artifacts stay in the repository but are never deployed (Paige, Nov 4).
-# The #595 State capture trial was a review-only page; it must not be publicly reachable.
-docs/review/595-state-capture-trial
+# The portfolio deploys from the repository root, so anything not ignored here is public.
+# Allowlist (Nov 5 audit): before this, /CLAUDE.md, /docs/, /render.yaml and the backend source were all served
+# from www.contextswitch.tech. Ignore everything at the root, then re-include only what the site serves.
+# A new kind of site file at the root (a new extension or folder) has to be added below, or it will 404.
+/*
+!/*.html
+!/*.css
+!/*.js
+!/*.svg
+!/*.png
+!/*.pdf
+!/robots.txt
+!/sitemap.xml
+!/vercel.json
+!/api
+!/assets
+!/cheat-sheets
+!/content
+# Non-production portfolio deploys link to the State app at /implementation-context-prototype/ (site-environment.js).
+!/implementation-context-prototype
 
-# The local portfolio editor (#617) runs only on Paige's Mac.
+# docs/ and tools/ are already excluded by /* above. These stay listed so the reasons are not lost:
+# the #595 State capture trial was a review-only page that must not be publicly reachable (Paige, Nov 4),
+# and the local portfolio editor (#617) runs only on Paige's Mac.
+docs/review/595-state-capture-trial
 tools/portfolio-editor

@@ -982,7 +982,17 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
   root.querySelectorAll('[data-view-link]').forEach(el=>{const activate=()=>go(el.dataset.viewLink); el.addEventListener('click',activate); el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate();}});});
   root.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
   const hash=a.getAttribute('href'); const target=hash?.replace(/^#/,'');
-  if(valid.has(target)){e.preventDefault();go(target);}
+  if(valid.has(target)){e.preventDefault();go(target);return;}
+  // Nov 6 (Paige): in-page links such as "Explore my experience" glide to their section instead of jumping,
+  // except for visitors who ask for reduced motion. Focus follows to the section heading.
+  const section=target&&!learningIds.has(target)&&document.getElementById(target);
+  if(!section||!section.closest('[data-page].active'))return;
+  e.preventDefault();
+  const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  section.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+  if(location.hash!==hash)history.pushState(history.state,'',hash);
+  const heading=section.querySelector('h2,h3');
+  if(heading){if(!heading.hasAttribute('tabindex'))heading.setAttribute('tabindex','-1');heading.focus({preventScroll:true});}
 }));
 window.addEventListener('popstate',()=>render(pageFromHash(),false,true));
   render(pageFromHash(),false);

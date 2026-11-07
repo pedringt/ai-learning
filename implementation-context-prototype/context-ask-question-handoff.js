@@ -84,7 +84,7 @@
 
   const testApi = Object.freeze({norm, contentTokens, isUnanswerableAnswer, equivalentQuestion, handoffFor, handoffMarkup});
   if (typeof window !== 'undefined') window.STATE_ASK_QUESTION_HANDOFF_TEST_API = testApi;
-  if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return;
+  if (typeof document === 'undefined') return;
 
   let lastQuery = '';
   let renderQueued = false;
@@ -174,18 +174,8 @@
     openQuestionComposer(query);
   }, true);
 
-  function installObserver() {
-    const result = document.getElementById('askStateDrawerResult');
-    if (!result || result.dataset.questionHandoffObserved === 'true') return false;
-    result.dataset.questionHandoffObserved = 'true';
-    new MutationObserver(scheduleRender).observe(result, {childList: true, subtree: true, characterData: true});
-    scheduleRender();
-    return true;
-  }
-
-  const bodyObserver = new MutationObserver(() => {
-    if (installObserver()) bodyObserver.disconnect();
-  });
-  if (!installObserver()) bodyObserver.observe(document.body, {childList: true, subtree: true});
+  // context-product-polish.js's renderDrawerResult() announces every write of the Ask result. This replaced two
+  // MutationObservers: one on the result and one on <body> waiting for the result to exist (Nov 5 cleanup, step 6a).
+  document.addEventListener('state:ask-result-rendered', scheduleRender);
 
 })();

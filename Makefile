@@ -27,7 +27,10 @@ qa-real-model:
 
 qa-release: qa-fast
 	@set -eu; \
-	base_ref="$${QA_BASE_REF:-origin/staging}"; \
+	branch="$${GITHUB_REF_NAME:-$$(git rev-parse --abbrev-ref HEAD)}"; \
+	if [ "$$branch" = "staging" ]; then default_base=origin/main; else default_base=origin/staging; fi; \
+	base_ref="$${QA_BASE_REF:-$$default_base}"; \
+	echo "Comparing against $$base_ref to decide whether the paid eval is needed."; \
 	force="$${QA_FORCE_REAL_MODEL:-0}"; \
 	if git rev-parse --verify "$$base_ref" >/dev/null 2>&1; then \
 		changed=$$(git diff --name-only "$$base_ref"...HEAD); \
@@ -35,7 +38,7 @@ qa-release: qa-fast
 		echo "Warning: $$base_ref is unavailable; treating release QA as model-sensitive."; \
 		changed="state-project-complete/provider-sensitive-unknown"; \
 	fi; \
-	model_sensitive=$$(printf '%s\n' "$$changed" | grep -E '^(state-project-complete/(anthropic_provider|ask_provider|ask_service|consequentiality_guidance|provider|pipeline|eval)/?|state-project-complete/.*(provider|prompt|interpret|ask).*\.py|implementation-context-prototype/.*ask.*\.js)' || true); \
+	model_sensitive=$$(printf '%s\n' "$$changed" | grep -E '^(state-project-complete/(anthropic_provider|ask_provider|ask_service|consequentiality_guidance|provider|pipeline|eval)/?|state-project-complete/.*(provider|prompt|interpret|ask|model|baseline_(composition|resilience|setup)|omission|relevance).*\.py|implementation-context-prototype/.*ask.*\.js|render\.yaml$$)' || true); \
 	if [ "$$force" = "1" ] || [ -n "$$model_sensitive" ]; then \
 		echo "Model-sensitive change detected. Running targeted real-model eval."; \
 		$(MAKE) qa-real-model; \
