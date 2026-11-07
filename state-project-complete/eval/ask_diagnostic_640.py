@@ -85,14 +85,67 @@ def without_duplicate_evidence(enabled: bool) -> Iterator[None]:
         ask_service._trim_candidates_for_query = original
 
 
+@contextlib.contextmanager
+def capture_model_calls() -> Iterator[list[dict[str, Any]]]:
+    """Record each Messages.create call made inside the block: the prompt exactly as sent, the raw response text
+    before any parsing or post-processing, the stop reason and token usage (Paige, Nov 7: so a headline can be
+    compared raw against final). Wraps whatever Messages.create currently is, so it composes with the call counter."""
+    from anthropic.resources.messages import Messages
+
+    calls: list[dict[str, Any]] = []
+    original = Messages.create
+
+    def create(self, *args, **kwargs):
+        record: dict[str, Any] = {"model": kwargs.get("model"), "prompt": None, "raw_text": None, "stop_reason": None,
+                                  "input_tokens": None, "output_tokens": None, "error": None}
+        messages = kwargs.get("messages") or []
+        if messages and isinstance(messages[0], dict):
+            record["prompt"] = messages[0].get("content")
+        calls.append(record)
+        try:
+            message = original(self, *args, **kwargs)
+        except Exception as exc:
+            record["error"] = f"{type(exc).__name__}: {exc}"[:300]
+            raise
+        record["raw_text"] = "".join(getattr(block, "text", "") or "" for block in (getattr(message, "content", None) or []))
+        record["stop_reason"] = getattr(message, "stop_reason", None)
+        usage = getattr(message, "usage", None)
+        record["input_tokens"] = getattr(usage, "input_tokens", None)
+        record["output_tokens"] = getattr(usage, "output_tokens", None)
+        return message
+
+    Messages.create = create
+    try:
+        yield calls
+    finally:
+        Messages.create = original
+
+
+def raw_headline(raw_text: str | None) -> str | None:
+    """The headline as the model wrote it, from the raw one-call JSON ({"answer": {...}, "selection": {...}})."""
+    import json
+
+    try:
+        data = json.loads(raw_text or "")
+    except (TypeError, ValueError):
+        return None
+    answer = data.get("answer") if isinstance(data, dict) else None
+    return answer.get("headline") if isinstance(answer, dict) else None
+
+
 def run_variant(variant: Variant, provider: Any) -> dict[str, Any]:
     from eval.quality_harness import run_ask_quality_scenario
 
-    with without_duplicate_evidence(variant.drop_duplicate_evidence):
+    with without_duplicate_evidence(variant.drop_duplicate_evidence), capture_model_calls() as calls:
         result = run_ask_quality_scenario(variant.scenario, provider)
     answer = result.answer or {}
     inner = answer.get("answer") if isinstance(answer.get("answer"), dict) else answer
+    final_headline = inner.get("headline") if isinstance(inner, dict) else None
+    raw = raw_headline(calls[-1]["raw_text"]) if calls else None
     return {
+        "model_calls": calls,
+        "raw_headline": raw,
+        "raw_matches_final_headline": (raw == final_headline) if raw is not None else None,
         "variant": variant.id, "kind": variant.kind, "question": variant.scenario.question,
         "passed": result.passed, "failed_items": result.failed_items, "error": result.error,
         "headline": inner.get("headline") if isinstance(inner, dict) else None,

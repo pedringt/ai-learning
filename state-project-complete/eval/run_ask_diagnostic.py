@@ -53,7 +53,7 @@ def main() -> int:
         for v in cases:
             for repeat in range(args.repeats):
                 rows.append({**run_variant(v, provider), "repeat": repeat})
-                print(f"{v.id} #{repeat}: passed={rows[-1]['passed']} | {rows[-1]['headline']}")
+                print(f"{v.id} #{repeat}: passed={rows[-1]['passed']} raw==final={rows[-1]['raw_matches_final_headline']} | {rows[-1]['headline']}")
     model_id = getattr(provider, "model_identifier", model)
     try:
         cost = round(sum(call_cost(u.get("model") or model_id, u.get("input_tokens"), u.get("output_tokens")) for u in counter.usage), 4)

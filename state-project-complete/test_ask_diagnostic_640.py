@@ -68,3 +68,35 @@ def test_step1_keeps_the_adjacent_scenarios_unchanged():
     suite = {s.id: s for s in SCENARIOS}
     for v in step1_cases()[3:]:
         assert v.scenario == suite[v.id]
+
+
+def test_the_diagnostic_saves_the_prompt_and_raw_output_and_compares_headlines(monkeypatch):
+    """End to end through run_ask with a stubbed Anthropic client: no network, no model call."""
+    import json
+    from types import SimpleNamespace
+
+    import anthropic
+    from anthropic.resources.messages import Messages
+    from eval.ask_diagnostic_640 import run_variant, step1_cases
+
+    raw = {"selection": {"job": "current_fact", "state_ids": ["ask-state-0"], "review_ids": [], "blocking_question_ids": [],
+                         "question_ids": [], "history_ids": [], "evidence_ids": [], "answered_question_ids": ["ask-closed-question-0"]},
+           "answer": {"job": "current_fact", "headline": "No, the vendor-retention question is answered.",
+                      "summary": "It was answered: deleted within 30 days of contract end. The contract remains under review.",
+                      "sections": [], "source_ids": [], "uncertainty_ids": [], "suggested_refinements": [], "suggested_question": None}}
+    sent = []
+
+    def fake_create(self, *args, **kwargs):
+        sent.append(kwargs)
+        return SimpleNamespace(content=[SimpleNamespace(text=json.dumps(raw))], stop_reason="end_turn",
+                               usage=SimpleNamespace(input_tokens=100, output_tokens=50))
+
+    monkeypatch.setattr(Messages, "create", fake_create)
+    provider = SimpleNamespace(client=anthropic.Anthropic(api_key="test-not-real"), name="anthropic", model_identifier="claude-haiku-5-5")
+    row = run_variant(step1_cases()[0], provider)
+    [call] = row["model_calls"]
+    assert call["prompt"] == sent[0]["messages"][0]["content"] and "Authority-tagged candidate records" in call["prompt"]
+    assert json.loads(call["raw_text"]) == raw and call["stop_reason"] == "end_turn" and call["output_tokens"] == 50
+    assert row["raw_headline"] == "No, the vendor-retention question is answered."
+    assert row["raw_matches_final_headline"] is True and row["headline"] == row["raw_headline"]
+    assert Messages.create is fake_create  # the capture patch is removed afterwards
