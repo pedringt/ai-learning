@@ -3,7 +3,7 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) {
     root.STATE_PRODUCT_HEALTH = api;
-    if (root.document) api.initQualityEnhancement(root);
+    if (root.document) api.refreshQuality = api.initQualityEnhancement(root) || (() => {});
   }
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   'use strict';
@@ -186,14 +186,11 @@
       }
     }
 
-    const originalReplaceState = root.history.replaceState.bind(root.history);
-    root.history.replaceState = function (...args) {
-      const result = originalReplaceState(...args);
-      Promise.resolve().then(refresh);
-      return result;
-    };
+    // The page's load() calls this after each render (it rewrites the panel this section lives in). It used to run
+    // from a wrapped history.replaceState, which load() happened to call right after rendering (Nov 5 cleanup, step 5).
     if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', () => setTimeout(refresh, 0), {once:true});
     else setTimeout(refresh, 0);
+    return refresh;
   }
 
   return { shouldRetry, withStartupRetry, pct, hoursLabel, latencyLabel, scopeProject, mergeProjectRegistry, apiBase, contentFree, qualitySummary, buildLabel, runTimeLabel, metricRange, recentRunLabel, recentRunParts, consequentialityEvalMarkup, initQualityEnhancement };
