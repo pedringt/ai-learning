@@ -57,13 +57,6 @@
 }
 
 /* ==== from state-shell.js: portfolio-signal-and-mobile-fixes ==== */
-      .professional-context{
-        margin:0 0 14px!important;
-        color:var(--muted)!important;
-        font-size:13px!important;
-        font-weight:750!important;
-        letter-spacing:.02em!important;
-      }
       .settings-channel-heading{
         margin-top:18px!important;
         padding-top:16px!important;
@@ -165,8 +158,6 @@
       .state-reviewer-guide-start{display:inline-flex;align-items:center;min-height:0;padding:4px 0;border:0;border-radius:0;background:transparent;box-shadow:none;color:#1769e8;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
       .state-reviewer-guide-dismiss{min-width:38px;min-height:38px;border:0;background:transparent;color:#6b778a;font:inherit;font-size:20px;line-height:1;cursor:pointer;border-radius:8px}
       .state-reviewer-guide-dismiss:hover,.state-reviewer-guide-dismiss:focus-visible{background:#edf3f9;color:#26344c}
-      .ask-current-state-link{white-space:nowrap}
-      .project-maintained-fact.is-ask-target{outline:2px solid rgba(23,105,232,.28);outline-offset:5px;border-radius:6px}
       body.v88-dark .state-reviewer-guide{background:#171b22;border-color:#303946;color:#eef2f7}
       body.v88-dark .state-reviewer-guide-copy strong{color:#f2f5f8}
       body.v88-dark .state-reviewer-guide-copy p{color:#b5bfcc}
