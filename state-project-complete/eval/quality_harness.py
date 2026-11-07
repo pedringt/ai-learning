@@ -303,6 +303,7 @@ class AskQualityResult:
     asserted_claims: tuple[str, ...] = ()
     unsupported_numbers: tuple[str, ...] = ()
     headline_opening: str = ""
+    headline_missing: tuple[str, ...] = ()
 
     @property
     def number_ok(self) -> bool:
@@ -313,11 +314,13 @@ class AskQualityResult:
         return ([f"missing required fact: {fact}" for fact in self.missing_facts]
                 + [f"asserted forbidden claim: {claim}" for claim in self.asserted_claims]
                 + [f"number not in any record: {number}" for number in self.unsupported_numbers]
-                + ([f"headline opens with forbidden: {self.headline_opening}"] if self.headline_opening else []))
+                + ([f"headline opens with forbidden: {self.headline_opening}"] if self.headline_opening else [])
+                + [f"headline lacks: {fact}" for fact in self.headline_missing])
 
     @property
     def grounding_ok(self) -> bool:
-        return self.required_facts_ok and self.forbidden_claims_ok and self.number_ok and not self.headline_opening
+        return (self.required_facts_ok and self.forbidden_claims_ok and self.number_ok
+                and not self.headline_opening and not self.headline_missing)
 
     @property
     def passed(self) -> bool:
@@ -537,6 +540,17 @@ def headline_opening(answer: Any, openings: tuple[str, ...]) -> str:
     return ""
 
 
+def _headline_missing(answer: Any, facts) -> tuple[str, ...]:
+    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
+    headline = _normalize(str(inner.get("headline") or "")) if isinstance(inner, dict) else ""
+    words = set(re.sub(r"[^\w\s]", " ", headline).split())
+    def present(phrase: str) -> bool:
+        norm = _normalize(phrase)
+        return norm in words if " " not in norm else norm in headline
+    return tuple(fact if isinstance(fact, str) else " / ".join(fact) for fact in facts
+                 if not any(present(p) for p in ((fact,) if isinstance(fact, str) else fact)))
+
+
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
     text = _normalize(_flatten_strings(answer))
     missing = tuple(
@@ -563,6 +577,7 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
         asserted_claims=asserted,
         unsupported_numbers=numbers,
         headline_opening=headline_opening(answer, scenario.forbidden_headline_openings),
+        headline_missing=_headline_missing(answer, scenario.headline_required_facts),
     )
 
 
