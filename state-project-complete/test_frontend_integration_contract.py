@@ -456,8 +456,10 @@ def test_r9_ask_vertical_slice_has_dedicated_module_and_backend_endpoint():
     # UI. The drawer's own runAsk() (context-product-polish.js) calls the
     # backend directly; it has no canHandle-style gate to assert on.
     assert "Meeting brief" in ask_js
-    assert "Related open items" in ask_js
-    assert "View open items →" in ask_js
+    # The "Related open items" footer was hidden as redundant on Sept 10 (Ask already links each cited record inline)
+    # and deleted on Nov 6 (Paige), with the hidden "Grounded in State's project record" box.
+    assert "Related open items" not in ask_js
+    assert "ask-state-actions" not in ask_js
     assert "Review →" in ask_js
     assert "Blocks: " in ask_js
     assert "data-action=\"new-ask\"" in ask_js

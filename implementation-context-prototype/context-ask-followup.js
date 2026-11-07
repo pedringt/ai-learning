@@ -72,10 +72,7 @@
   }
 
   function render(payload, liveStatus) {
-    const cleaned = dedupeAnswerPayload(payload);
-    const html = prior.render(cleaned, liveStatus);
-    if (typeof html !== 'string') return html;
-    return html.replace(/<aside class="ask-state-actions">[\s\S]*?<\/aside>/g, '');
+    return prior.render(dedupeAnswerPayload(payload), liveStatus);
   }
 
   window.STATE_ASK = Object.freeze({

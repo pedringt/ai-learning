@@ -578,7 +578,7 @@ body.v88-dark .unboxed-ask:has(.ask-session-row) .answer-stage,body.v88-dark .co
 .ask-meeting-notes{margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
 .ask-meeting-notes h3{font-size:17px;margin:0 0 14px}.meeting-note-block{display:grid;grid-template-columns:190px 1fr;gap:16px;padding:10px 0;border-bottom:1px solid color-mix(in srgb,var(--line) 58%,transparent)}
 .meeting-note-block strong{font-size:12.5px}.meeting-note-block span{color:var(--muted);min-height:20px}
-.ask-state-actions{margin-top:28px;padding:14px 0 0;border-top:1px dashed var(--line)}.ask-state-actions>div{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:8px}.ask-state-actions .text-button{font-size:12px}
+
 .ask-open-items-safety{background:transparent!important;border:0!important;border-top:1px dashed var(--line)!important;border-radius:0!important;padding:14px 0 0!important;margin-top:14px!important}
 .ask-stale-notice{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin:16px 0 0;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);font-size:12.5px;color:var(--muted)}
 .ask-stale-notice .text-button{font-size:12.5px;white-space:nowrap}
@@ -973,7 +973,6 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
     .ask-live-answer .ask-answer-item::before,.ask-live-answer .ask-answer-item::after{border:0!important;box-shadow:none!important;}
     .ask-quick-starts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
     .ask-quick-starts button{white-space:normal;text-align:left;}
-    .ask-grounding{margin-top:18px;}
     .open-items-count-summary{display:inline-block;margin-bottom:4px;font-weight:600;}
     .workspace-attention:not(.is-clear) .eyebrow,.workspace-attention:not(.is-clear) h3{color:var(--ink)!important;}
     .ask-title-row>div>p.ask-state-description{display:block!important;}

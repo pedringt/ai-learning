@@ -251,3 +251,32 @@ def test_drawer_controls_follow_a_streaming_then_answered_ask(browser_and_url):
         assert cleared['status'] == '' and not cleared['hasAnswer'] and not cleared['reset']
     finally:
         page.close()
+
+
+DUPLICATE_RECORD_ANSWER = {
+    'job': 'answer', 'headline': 'Vendor retention is still open', 'summary': 'The 30-day term has not been accepted.',
+    'sections': [
+        {'kind': 'open', 'title': 'Still open', 'items': [
+            {'record_type': 'review', 'record_id': 'r-1', 'text': 'Proposed: vendor keeps data for 30 days.'},
+            {'record_type': 'question', 'record_id': 'q-1', 'text': 'Has Security approved the retention term?'}]},
+        {'kind': 'context', 'title': 'Also relevant', 'items': [
+            {'record_type': 'review', 'record_id': 'r-1', 'text': 'Proposed: vendor keeps data for 30 days.'}]}],
+}
+
+
+def test_answer_has_no_hidden_extras_and_cites_each_record_once(browser_and_url):
+    """Nov 6 (Paige): the hidden "Grounded in State's project record" box and "Related open items" footer were deleted.
+    The followup wrapper's de-duplication stays: a record cited in two sections is shown once."""
+    page = _open(browser_and_url, 1280, 800, ask_answer=DUPLICATE_RECORD_ANSWER)
+    try:
+        page.evaluate("document.getElementById('askStateLauncher').click()")
+        page.fill('#askStateDrawerInput', 'What is the vendor retention term?')
+        page.evaluate("document.querySelector('#askStateDrawer .ask-state-drawer-form button[type=submit]').click()")
+        page.wait_for_selector('#askStateDrawerResult .ask-live-answer')
+        page.wait_for_timeout(300)
+        assert page.evaluate("document.querySelectorAll('#askStateDrawer .ask-grounding, #askStateDrawer .ask-state-actions').length") == 0
+        texts = page.evaluate("[...document.querySelectorAll('#askStateDrawerResult .ask-item-text')].map(e => e.textContent)")
+        assert texts.count('Proposed: vendor keeps data for 30 days.') == 1
+        assert 'Has Security approved the retention term?' in texts
+    finally:
+        page.close()
