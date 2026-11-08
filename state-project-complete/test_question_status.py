@@ -226,3 +226,63 @@ def test_the_captured_raw_output_fails_the_headline_check_and_keeps_its_body():
     assert check.fallback == "headline"
     assert shown["headline"] == "Recorded answer available: Does the vendor retain customer content after the contract ends?"
     assert shown["summary"] == raw["summary"]
+
+
+# ------------------------------------------------------------------ reviewer counterexamples (Paige, Nov 7)
+
+@pytest.mark.parametrize("family", [
+    ("delete", "deleted", "deletes", "deleting", "deletion"),
+    ("approve", "approved", "approves", "approving", "approval", "approvals"),
+    ("qualify", "qualifies", "qualified", "qualifying"),
+    ("privilege", "privileged", "privileges"),
+    ("retain", "retains", "retained", "retaining", "retention"),
+])
+def test_each_word_family_normalizes_to_one_form(family):
+    assert len({normalize(w) for w in family}) == 1, {w: normalize(w) for w in family}
+
+
+@pytest.mark.parametrize("request_text", [
+    "Was the vendor question answered correctly?",
+    "Was the vendor retention question answered properly?",
+    "Was the vendor retention question fully answered?",
+    "How well was the vendor retention question answered?",
+])
+def test_questions_about_answer_quality_are_not_status_requests(request_text):
+    assert not request_scope(request_text).in_scope
+
+
+def test_explicit_open_status_wins_over_answer_text():
+    draft = {"id": "d", "text": "Does the vendor retain customer content after the contract ends?", "status": "open",
+             "answer": "Draft: the vendor may delete content within 30 days."}
+    built = record_built_answer(draft)
+    assert built["headline"] == "Open question: " + draft["text"]
+    assert built["sections"][0]["items"][0]["record_type"] == "question"
+    assert "Draft" not in str(built)  # an open Question's answer text is never shown as its answer
+    scope = request_scope("Was the vendor-retention question answered?")
+    assert not check_answer(scope, draft, _answer("Legal answered the retention question.", "It was answered.", "d")).raw_headline_correct
+
+
+# Known gaps, kept on purpose (Paige, Nov 7: do not expand the body heuristics yet). Word overlap does not establish
+# that the body reproduces the recorded answer, and the contradiction check only reads sentences that say "question".
+# A direct record-built response for unambiguous status requests (#640 proposal) would not have these gaps. strict:
+# if a later change starts catching them, the test fails so the record is updated.
+@pytest.mark.xfail(strict=True, reason="known gap: a changed number in the body passes the 60% word-overlap check")
+def test_known_gap_a_changed_number_in_the_body_is_caught():
+    body = "The Question is closed. Legal confirmed the vendor deletes customer content within 90 days of contract end."
+    assert not check_answer(ANSWERED, VENDOR, _answer("Legal answered the retention question.", body)).body_ok
+
+
+@pytest.mark.xfail(strict=True, reason="known gap: a contradiction stated with a pronoun ('it') is not read")
+def test_known_gap_a_pronoun_contradiction_in_the_body_is_caught():
+    body = "It remains unanswered. Legal confirmed the vendor deletes customer content within 30 days of contract end."
+    assert not check_answer(ANSWERED, VENDOR, _answer("Legal answered the retention question.", body)).body_ok
+
+
+def test_the_held_out_set_is_well_formed_but_is_not_scored_here():
+    """The held-out set is only loaded and checked for shape: scoring it here would turn it into development data."""
+    data = json.loads((Path(__file__).parent / "eval" / "fixtures" / "640_heldout_v1.json").read_text())
+    ids = {q["id"] for q in data["questions"]}
+    assert len(ids) == len(data["questions"]) and all(q["status"] in {"open", "resolved"} for q in data["questions"])
+    assert all(r["match"] in ids | {"clarify", "none"} for r in data["requests"] if r["in_scope"])
+    assert all(a["question"] in ids and a["answer"]["cited"] in ids for a in data["answers"])
+    assert {"correct"} < {a["label"].split(":")[0] for a in data["answers"]} | {"correct"}

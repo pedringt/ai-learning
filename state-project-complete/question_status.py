@@ -45,14 +45,21 @@ STATUS_WORDS = {
 
 
 def normalize(word: str) -> str:
+    """One form per word family: inflections stripped, listed derivations mapped, and a final silent "e" dropped so
+    the base and inflected forms meet (delete/deleted/deleting -> "delet"; approve/approved -> "approv"). Reviewer
+    counterexamples (Nov 7) found delete != deleted and approve != approved before the last step."""
     w = word.lower()
     if w in _DERIVATIONS:
-        return _DERIVATIONS[w]
-    for suffix, keep in (("ies", "y"), ("ing", ""), ("ed", ""), ("es", ""), ("s", "")):
-        if len(w) > len(suffix) + 3 and w.endswith(suffix) and not w.endswith("ss"):
-            w = w[: -len(suffix)] + keep
-            break
-    return _DERIVATIONS.get(w, w)
+        w = _DERIVATIONS[w]
+    else:
+        for suffix, keep in (("ies", "y"), ("ied", "y"), ("ing", ""), ("ed", ""), ("es", ""), ("s", "")):
+            if len(w) > len(suffix) + 3 and w.endswith(suffix) and not w.endswith("ss"):
+                w = w[: -len(suffix)] + keep
+                break
+        w = _DERIVATIONS.get(w, w)
+    if len(w) > 4 and w.endswith("e") and not w.endswith("ee"):
+        w = w[:-1]
+    return w
 
 
 def identity_terms(text: str) -> set[str]:
@@ -69,8 +76,10 @@ _ASKED_ANSWERED = re.compile(r"\b(?:answered|resolved|closed)\b", re.I)
 _ASKED_OPEN = re.compile(r"\b(?:unanswered|unresolved|still\s+open|open|pending)\b", re.I)
 # About the content or validity of an answer, not about whether one exists: different reasoning, normal Ask path.
 _CONTENT_REQUEST = re.compile(
-    r"\b(?:still\s+(?:accurate|true|valid|correct|right)|accurate|correct|valid|wrong|what\s+(?:did|does|was|is)\b"
-    r".*\b(?:say|said|answer)|what\s+(?:was|is)\s+the\s+answer|why)\b", re.I)
+    r"\b(?:still\s+(?:accurate|true|valid|correct|right)|accurate|accurately|correct|correctly|incorrect|incorrectly|"
+    r"valid|wrong|wrongly|properly|improperly|right|well|fully|completely|adequately|sufficiently|thoroughly|"
+    r"reliabl[ey]|trustworth\w*|good|better|best|bad|quality|"
+    r"what\s+(?:did|does|was|is)\b.*\b(?:say|said|answer)|what\s+(?:was|is)\s+the\s+answer|why|how\s+well)\b", re.I)
 
 
 @dataclass(frozen=True)
@@ -139,6 +148,12 @@ def match_question(request: str, questions: Sequence[Mapping[str, Any]]) -> Matc
 
 
 # ---------------------------------------------------------------------------------------------- answer checks
+
+def is_resolved(question: Mapping[str, Any]) -> bool:
+    """The record's explicit status decides. Answer text alone never makes a Question resolved: an open Question can
+    carry draft or retained text (reviewer counterexample, Nov 7). A record without a status is not resolved."""
+    return str(question.get("status") or "").strip().lower() == "resolved"
+
 
 _OPENERS = (("not yet", "no"), ("no", "no"), ("yes", "yes"))
 _SAYS_RESOLVED = ("answered", "resolved", "closed", "recorded answer")
@@ -212,7 +227,7 @@ class Check:
 
 
 def check_answer(scope: Scope, question: Mapping[str, Any], answer: Mapping[str, Any]) -> Check:
-    resolved = str(question.get("status") or "").lower() == "resolved" or bool(question.get("answer"))
+    resolved = is_resolved(question)
     inner = answer.get("answer") if isinstance(answer.get("answer"), Mapping) else answer
     headline = str(inner.get("headline") or "")
     body = " ".join([str(inner.get("summary") or "")] + [
@@ -249,7 +264,7 @@ def check_answer(scope: Scope, question: Mapping[str, Any], answer: Mapping[str,
     body_ok = not _states_opposite(body, opposite, about_question=True)
     if not body_ok:
         problems.append("body states the opposite status")
-    if resolved and question.get("answer"):
+    if resolved and question.get("answer"):  # an open Question's answer text is never required or shown
         answer_terms = identity_terms(str(question["answer"]))
         if answer_terms and len(answer_terms & identity_terms(body)) < 0.6 * len(answer_terms):
             body_ok = False
@@ -261,13 +276,13 @@ def check_answer(scope: Scope, question: Mapping[str, Any], answer: Mapping[str,
 # ---------------------------------------------------------------------------------------------- record-built answers
 
 def neutral_headline(question: Mapping[str, Any]) -> str:
-    resolved = str(question.get("status") or "").lower() == "resolved" or bool(question.get("answer"))
+    resolved = is_resolved(question)
     return ("Recorded answer available: " if resolved else "Open question: ") + str(question.get("text", "")).strip()
 
 
 def record_built_answer(question: Mapping[str, Any]) -> dict[str, Any]:
     """The whole answer from the record: no model text survives."""
-    resolved = str(question.get("status") or "").lower() == "resolved" or bool(question.get("answer"))
+    resolved = is_resolved(question)
     item = ({"text": question["text"], "record_type": "answered_question", "record_id": question["id"],
              "detail": "Answered: " + str(question["answer"]) if question.get("answer") else "Answered."}
             if resolved else
@@ -280,7 +295,7 @@ def record_built_answer(question: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def clarification_answer(candidates: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    items = [{"text": q["text"], "record_type": "answered_question" if q.get("answer") or q.get("status") == "resolved" else "question",
+    items = [{"text": q["text"], "record_type": "answered_question" if is_resolved(q) else "question",
               "record_id": q["id"], "detail": None} for q in candidates]
     return {"job": "current_fact", "headline": "Which Question do you mean?",
             "summary": "More than one recorded Question could match. Ask again naming the one you mean.",
