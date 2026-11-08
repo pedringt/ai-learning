@@ -21,7 +21,8 @@ qa-js:
 
 # Tests that need a real model key (#624). qa-python unsets the keys, so they run only here: about 50 Haiku calls,
 # well under $0.20. OPENAI_API_KEY is unset because State runs on Anthropic, so the OpenAI comparisons stay skipped.
-# test_real_model_test_list.py fails if a new key-gated test file is missing from this list.
+# test_real_model_test_list.py fails if a new key-gated test file is missing from this list. A test that fails is
+# rerun once and blocks only if it fails again (DEC-019).
 REAL_MODEL_TESTS = test_ask_pending_review_authority.py test_bootstrap_mixed_spec_eval.py test_consequentiality_eval_dataset.py test_evidence_intake_consequentiality.py test_live_providers.py
 
 qa-real-model:
@@ -29,7 +30,11 @@ qa-real-model:
 		echo "ANTHROPIC_API_KEY is required for real-model QA."; exit 2; \
 	fi
 	cd state-project-complete && $(PYTHON) -m eval.run_eval
-	cd state-project-complete && env -u OPENAI_API_KEY $(PYTHON) -m pytest -q $(REAL_MODEL_TESTS)
+	@# DEC-019 (Nov 8): each of these is a single live sample, so a failed test is rerun once in the same run and
+	@# fails the gate only if it fails again. A consistent regression fails twice; a one-off model miss does not.
+	cd state-project-complete && env -u OPENAI_API_KEY $(PYTHON) -m pytest -q $(REAL_MODEL_TESTS) || { \
+		echo "Rerunning the failed model-key tests once (DEC-019)."; \
+		env -u OPENAI_API_KEY $(PYTHON) -m pytest -q --last-failed --last-failed-no-failures none $(REAL_MODEL_TESTS); }
 
 qa-release: qa-fast
 	@set -eu; \
