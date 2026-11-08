@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Find State `!important` flags that change nothing, and optionally remove them (CSS pass 3).
+"""Find State `!important` flags (CSS pass 3) or `html body` / `body` selector prefixes (pass 4) that change
+nothing, and optionally remove them.
 
 The State counterpart of tools/important_audit.py. State is an app, not a set of static pages, so it reuses
 scripts/state_ui_compare: a local backend with the demo seed and no model, a deterministic fake Ask, and capture.js's
@@ -22,6 +23,9 @@ pointer media keep their flag without being tested.
     python3 tools/state_important_audit.py            # report; writes the removable list to $IMPORTANT_AUDIT_OUT
     python3 tools/state_important_audit.py --apply    # also rewrite the stylesheets
     python3 tools/state_important_audit.py --resume   # continue from the last finished round's saved progress
+    python3 tools/state_important_audit.py --prefixes # the same for selector prefixes: a candidate is a whole rule
+                                                      # whose selectors start with `html body ` or `body `; stripping
+                                                      # them matches the same elements with lower specificity
 
 Then prove it with scripts/state_ui_compare/compare.py and the browser tests. No model calls.
 """
@@ -29,6 +33,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import tempfile
 import time
@@ -37,7 +42,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(REPO, "scripts", "state_ui_compare"))
 sys.path.insert(0, os.path.join(REPO, "tools"))
 import compare  # noqa: E402
-from important_audit import DYN_ATTR, INTERACTIVE, SKIP_MEDIA, declarations, variant, widths_from_breakpoints  # noqa: E402
+from important_audit import DYN_ATTR, INTERACTIVE, SKIP_MEDIA, blank, declarations, variant, widths_from_breakpoints  # noqa: E402
 
 APP = os.path.join(REPO, "implementation-context-prototype")
 FILES = ["state-shell.css", "context-tool.css", "state-app.css"]
@@ -89,7 +94,7 @@ HOOK_JS = r"""({sheets, cands}) => {
       let hit = false;
       for (let el = c.el, depth = 0; el && el !== document.documentElement && !hit; el = el.parentElement, depth++) {
         for (const d of cands) {
-          if (!related(c.p, d.prop) || !mediaOk(d)) continue;
+          if (!d.props.some(pr => related(c.p, pr)) || !mediaOk(d)) continue;
           if (depth === 0 && c.ps && !d.selector.includes(c.ps.slice(1))) continue;
           if (matches(el, d)) { audit.needed.add(d.id); hit = true; }
         }
@@ -100,14 +105,67 @@ HOOK_JS = r"""({sheets, cands}) => {
 }"""
 
 
+PREFIX = re.compile(r"^(html\s+)?body\s+(?=[.#\[:*a-z])", re.I)
+
+
+def prefixed_rules(text: str) -> list:
+    """Style rules with at least one selector that starts with `html body ` or `body `, with the spans to delete."""
+    scan = blank(text)
+    found = []
+
+    def parse(start, end, media):
+        j = start
+        while j < end:
+            brace = scan.find("{", j, end)
+            if brace < 0:
+                break
+            depth, k = 1, brace + 1
+            while k < end and depth:
+                depth += 1 if scan[k] == "{" else -1 if scan[k] == "}" else 0
+                k += 1
+            prelude = scan[j:brace]
+            if prelude.strip().startswith("@"):
+                if re.match(r"\s*@(media|supports|container|layer)\b", prelude):
+                    p = prelude.strip()
+                    parse(brace + 1, k - 1, media + [re.sub(r"^@\w+\s*", "", p)] if p.startswith("@media") else media)
+            else:
+                spans, kept, at, depth2 = [], [], j, 0
+                for i in range(j, brace + 1):
+                    ch = scan[i] if i < brace else ","
+                    depth2 += ch in "([" and 1 or ch in ")]" and -1 or 0
+                    if ch == "," and depth2 == 0:
+                        lead = at + len(scan[at:i]) - len(scan[at:i].lstrip())
+                        m = PREFIX.match(scan[lead:i])
+                        if m:
+                            spans.append((lead, lead + m.end()))
+                        kept.append(text[lead + (m.end() if m else 0):i].strip())
+                        at = i + 1
+                if spans:
+                    props = sorted({d.split(":", 1)[0].strip().lower() for d in scan[brace + 1:k - 1].split(";") if ":" in d})
+                    found.append({"selector": ",".join(kept), "props": props, "media": media, "spans": spans})
+            j = k
+
+    parse(0, len(scan), [])
+    return found
+
+
+def strip_prefixes(text: str, rules: list, drop: set) -> str:
+    for start, end in sorted((sp for r in rules if r["id"] in drop for sp in r["spans"]), reverse=True):
+        text = text[:start] + text[end:]
+    return text
+
+
 def main() -> int:
     from playwright.sync_api import sync_playwright
 
     src = {f: open(os.path.join(APP, f)).read() for f in FILES}
     decls = []
+    prefixes = "--prefixes" in sys.argv
+    make_variant = strip_prefixes if prefixes else variant
     for name, text in src.items():
-        for i, d in enumerate(declarations(text)):
+        for i, d in enumerate(prefixed_rules(text) if prefixes else declarations(text)):
             d.update(id=f"{name}|{i}", sheet=name)
+            d.setdefault("props", [d.get("prop")])
             d["candidate"] = not (INTERACTIVE.search(d["selector"]) or DYN_ATTR.search(d["selector"])
                                   or any(SKIP_MEDIA.search(m) for m in d["media"]))
             decls.append(d)
@@ -115,16 +173,17 @@ def main() -> int:
     for d in decls:
         by_sheet.setdefault(d["sheet"], []).append(d)
     candidates = {d["id"] for d in decls if d["candidate"]}
-    meta = {d["id"]: {"id": d["id"], "selector": d["selector"], "prop": d["prop"], "media": d["media"]} for d in decls}
+    meta = {d["id"]: {"id": d["id"], "selector": d["selector"], "props": d["props"], "media": d["media"]} for d in decls}
     widths = widths_from_breakpoints("".join(src.values()))
     for arg in sys.argv:
         if arg.startswith("--widths="):
             widths = [int(x) for x in arg.split("=", 1)[1].split(",")]
-    print(f"!important declarations: {len(decls)}; candidates: {len(candidates)}; widths: {widths}", flush=True)
+    print(f"{'prefixed rules' if prefixes else '!important declarations'}: {len(decls)}; candidates: {len(candidates)}; widths: {widths}", flush=True)
     seen: set[str] = set()
     round_no = 0
     out_dir = os.environ.get("IMPORTANT_AUDIT_OUT", tempfile.gettempdir())
-    progress = os.path.join(out_dir, "state_important_progress.json")
+    kind = "prefix" if prefixes else "important"
+    progress = os.path.join(out_dir, f"state_{kind}_progress.json")
     if "--resume" in sys.argv:
         saved = json.load(open(progress))
         candidates, seen, round_no = set(saved["candidates"]), set(saved["seen"]), saved["round"]
@@ -134,7 +193,7 @@ def main() -> int:
         while True:
             round_no += 1
             needed, changed, t0, sample = set(), 0, time.time(), []
-            sheets = {f: variant(text, by_sheet.get(f, []), candidates) for f, text in src.items()}
+            sheets = {f: make_variant(text, by_sheet.get(f, []), candidates) for f, text in src.items()}
             cands = [meta[i] for i in sorted(candidates)]
             for w in widths:
                 url = compare.serve_frontend(APP, compare.start_backend())
@@ -157,7 +216,7 @@ def main() -> int:
             json.dump({"round": round_no, "candidates": sorted(candidates), "seen": sorted(seen)}, open(progress, "w"))
             if os.environ.get("IMPORTANT_AUDIT_DEBUG"):
                 print("   sample:", sample, flush=True)
-            print(f"round {round_no}: {changed} changed values, {len(needed)} keep !important, "
+            print(f"round {round_no}: {changed} changed values, {len(needed)} kept, "
                   f"{len(candidates)} candidates left ({int(time.time() - t0)}s)", flush=True)
             if not needed:
                 if changed:
@@ -172,12 +231,12 @@ def main() -> int:
     for d in removable:
         per[d["sheet"]] = per.get(d["sheet"], 0) + 1
     print(json.dumps({"removable": len(removable), "of": len(decls), "kept_unobserved": len(unobserved), "per_sheet": per}, indent=1))
-    json.dump([{k: d[k] for k in ("id", "sheet", "selector", "prop", "media")} for d in removable],
-              open(os.path.join(out_dir, "state_important_removable.json"), "w"), indent=1)
+    json.dump([{k: d[k] for k in ("id", "sheet", "selector", "props", "media")} for d in removable],
+              open(os.path.join(out_dir, f"state_{kind}_removable.json"), "w"), indent=1)
     if "--apply" in sys.argv:
         drop = {d["id"] for d in removable}
         for f, text in src.items():
-            new = variant(text, by_sheet.get(f, []), drop)
+            new = make_variant(text, by_sheet.get(f, []), drop)
             if new != text:
                 open(os.path.join(APP, f), "w").write(new)
         print("applied")
