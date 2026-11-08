@@ -259,7 +259,7 @@ An unsafe-direction check for Ask (its scenarios have no `unsafe_if` tag yet); k
 **Revisit when**  
 A real Ask regression passes under this reading, or a single scenario keeps missing every other run (the consecutive check would never catch it).
 
-**Update (Nov 7, Paige):** #642 (what should block an Ask release) is explicitly **deferred** for the Nov 7 eval release; this reading stays as it is. Known failure documented with that release: `ask_question_answer_no_state_mutation` fails in production because Ask there cannot see resolved Questions (#640, held on `staging`). The deferral does not make the #640 headline contradiction acceptable to ship.
+**Update (Nov 7, Paige):** #642 (what should block an Ask release) is explicitly **deferred** for the Nov 7 eval release; this reading stays as it is. Known failure documented with that release: `ask_question_answer_no_state_mutation` fails in production because Ask there cannot see resolved Questions (#640, held on `staging`). The deferral does not make the #640 headline contradiction acceptable to ship. **Narrow exception (Paige, Nov 7):** that one scenario carries `known_unsupported` (`eval/ask_quality_scenarios.py`): it keeps running and is reported as failing (it counts in the headline score, and the pages mark it "known unsupported in this release, not counted by the release gate"), but the Ask gate leaves it out, like an observe-only scenario. Every other gate rule is unchanged. Remove the marker when #640 ships; a run where it passes says so in the log.
 
 
 ### DEC-014 — State's paid model spend has a $50 daily cap; Ask stays open to visitors
