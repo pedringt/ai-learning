@@ -24,8 +24,6 @@ from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse, StreamingResponse
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from pypdf import PdfReader
-from docx import Document as DocxDocument
 
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import initialize_db
@@ -36,6 +34,8 @@ from extension_points import ExtensionPoint
 from interpretation_pipeline_integrated import InterpretationProvider, new_id
 from interpretation_pipeline_integrated import process_evidence as _pipeline_process_evidence
 from openai_provider import OpenAIProvider
+from upload_text import UPLOAD_EXTENSIONS as _UPLOAD_EXTENSIONS, UPLOAD_MAX_BYTES as _UPLOAD_MAX_BYTES
+from upload_text import extract_upload_text as _extract_upload_text
 from seed_demo import (
     SEEDED_PROJECT_IDS, bootstrap_demo_data, bootstrap_juniper_demo_data, delete_project_data, reset_demo_data,
 )
@@ -281,6 +281,25 @@ resolve_review = ExtensionPoint("api_core.resolve_review", _review_service_resol
 _provider_from_env = ExtensionPoint("api_core._provider_from_env", _core_provider_from_env)
 
 
+
+# Slack OAuth start/callback state tokens live in memory for the 10-minute round trip. Each start used to add one that
+# only a completed callback removed, so repeated starts grew memory until restart (#619). Expired tokens are dropped on
+# each start, and at most _OAUTH_STATE_LIMIT are kept (the oldest go first).
+_OAUTH_STATE_TTL_SECONDS = 600
+_OAUTH_STATE_LIMIT = 500
+
+
+def _remember_oauth_state(states: dict, state: str, now: float) -> None:
+    for key, expiry in list(states.items()):
+        if expiry <= now:
+            states.pop(key, None)
+    while len(states) >= _OAUTH_STATE_LIMIT:
+        oldest = min(states.items(), key=lambda item: item[1], default=None)
+        if oldest is None:
+            break
+        states.pop(oldest[0], None)
+    states[state] = now + _OAUTH_STATE_TTL_SECONDS
+
 def create_app(settings: Settings | None = None, provider: InterpretationProvider | None = None, ask_provider=None) -> FastAPI:
     settings = settings or Settings.from_env()
 
@@ -310,7 +329,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 row = connection.execute("SELECT project_id FROM active_project WHERE id=1").fetchone()
                 if row:
                     connection.project_id = row["project_id"]
-            except Exception:
+            except Exception:  # broad on purpose: speculative lookup; table is absent on first boot (sqlite3 or psycopg2 error)
+                logger.info("Could not read active_project (expected before migrations); using the default project",
+                            exc_info=True)
                 # Production incident (2026-09-14): on Postgres, a failed
                 # SELECT against a not-yet-existing table poisons the whole
                 # transaction until an explicit ROLLBACK -- unlike SQLite,
@@ -328,7 +349,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             if requested and requested != connection.project_id:
                 try:
                     exists = connection.execute("SELECT id FROM projects WHERE id=?", (requested,)).fetchone()
-                except Exception:
+                except Exception:  # broad on purpose: unverifiable header falls back to the shared active project
+                    logger.warning("Could not verify requested project %r; using the active project", requested,
+                                   exc_info=True)
                     exists = None
                     if connection.is_postgres:
                         connection.rollback()
@@ -669,54 +692,6 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     # csv/xlsx/pptx/images/audio/video/zip yet -- each needs its own
     # extraction approach and failure modes; adding them unexamined would
     # risk silently-bad Evidence rather than a clear "not supported" error.
-    _UPLOAD_EXTENSIONS = {".txt", ".md", ".pdf", ".docx"}
-    _UPLOAD_MAX_BYTES = 15_000_000
-
-    def _unreadable(message: str, code: str = "unreadable_file") -> HTTPException:
-        return HTTPException(status_code=422, detail={"code": code, "error_details": {"error_message": message}})
-
-    def _extract_upload_text(raw: bytes, extension: str) -> str:
-        if extension in (".txt", ".md"):
-            try:
-                return raw.decode("utf-8")
-            except UnicodeDecodeError:
-                raise _unreadable("That file doesn't look like plain text State can read.")
-        if extension == ".pdf":
-            try:
-                reader = PdfReader(io.BytesIO(raw))
-                if reader.is_encrypted:
-                    raise _unreadable("That PDF is password-protected. Remove the password and try again.")
-                pages_text = [page.extract_text() or "" for page in reader.pages]
-            except HTTPException:
-                raise
-            except Exception as exc:
-                raise _unreadable("That PDF could not be read. It may be corrupted.") from exc
-            text = "\n\n".join(pages_text).strip()
-            if not text:
-                # Scanned/image-only PDFs have no text layer at all -- OCR is
-                # explicitly out of scope for this first version (issue
-                # #140 follow-up), so this needs its own message rather than
-                # the generic empty-file one.
-                raise _unreadable(
-                    "State couldn't find readable text in that PDF. Scanned or image-only PDFs aren't "
-                    "supported yet -- try a text-based PDF instead.",
-                    code="no_extractable_text",
-                )
-            return text
-        if extension == ".docx":
-            try:
-                document = DocxDocument(io.BytesIO(raw))
-            except Exception as exc:
-                raise _unreadable("That .docx file could not be read. It may be corrupted.") from exc
-            parts = [p.text for p in document.paragraphs if p.text.strip()]
-            for table in document.tables:
-                for row in table.rows:
-                    row_text = " | ".join(cell.text.strip() for cell in row.cells if cell.text.strip())
-                    if row_text:
-                        parts.append(row_text)
-            return "\n\n".join(parts)
-        raise _unreadable("Unsupported file type.", code="unsupported_file_type")
-
     @app.post("/api/evidence/upload", status_code=201)
     async def upload_evidence(request: Request, file: UploadFile = File(...)) -> dict:
         filename = (file.filename or "").strip()
@@ -728,7 +703,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                     "error_message": "State can currently read .txt, .md, .pdf, and .docx files. Other formats aren't supported yet.",
                 }},
             )
-        raw = await file.read()
+        # Read at most one byte past the limit, so an oversized upload is rejected without loading it all (#619).
+        raw = await file.read(_UPLOAD_MAX_BYTES + 1)
         if len(raw) > _UPLOAD_MAX_BYTES:
             raise HTTPException(
                 status_code=422,
@@ -860,7 +836,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 ))
             finally:
                 connection.close()
-        except Exception:
+        except Exception:  # broad on purpose: best-effort analytics write on its own connection; the 409 must still return
             logger.warning("Could not record a refused review conflict", exc_info=True)
 
     @app.post("/api/reviews/{review_id}/resolve")
@@ -1016,7 +992,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             except (ValueError, TypeError, json.JSONDecodeError) as exc:
                 logger.warning("Streaming Ask contract failure after retry: %s", exc)
                 yield "event: error\ndata: {\"message\": \"Ask could not produce a valid grounded answer\"}\n\n"
-            except Exception as exc:
+            except Exception as exc:  # broad on purpose: stream-level safety net; any provider failure becomes an error event
                 logger.exception("Streaming Ask provider failure")
                 message = AI_BUDGET_MESSAGE if is_ai_budget_exhausted(exc) else "Ask is temporarily unavailable. Please try again."
                 yield f"event: error\ndata: {json.dumps({'message': message})}\n\n"
@@ -1067,7 +1043,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         except (ValueError, TypeError) as exc:
             logger.warning("Ask contract failure after retry: %s", exc)
             raise HTTPException(status_code=422, detail="Ask could not produce a valid grounded answer") from exc
-        except Exception as exc:
+        except Exception as exc:  # broad on purpose: request-level safety net; any provider failure becomes a 503
             logger.exception("Ask provider failure")
             if is_ai_budget_exhausted(exc):
                 raise HTTPException(status_code=503, detail=AI_BUDGET_MESSAGE) from exc
@@ -1228,7 +1204,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         if not (settings.slack_client_id and settings.public_base_url):
             raise HTTPException(status_code=503, detail="Slack OAuth is not configured")
         state = secrets.token_urlsafe(24)
-        app.state.slack_oauth_states[state] = time.time() + 600  # 10 minutes to complete the round trip
+        _remember_oauth_state(app.state.slack_oauth_states, state, time.time())
         redirect_uri = f"{settings.public_base_url}/api/integrations/slack/oauth/callback"
         return RedirectResponse(build_authorize_url(client_id=settings.slack_client_id, redirect_uri=redirect_uri, state=state))
 

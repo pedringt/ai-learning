@@ -740,7 +740,7 @@ def _bootstrap_project(connection, *, project_id: str, project_name: str, areas,
                 connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id) VALUES ('demo-review-retention','q-retention')")
         if manage_transaction:
             connection.execute("COMMIT")
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         if manage_transaction:
             connection.execute("ROLLBACK")
         raise
@@ -832,7 +832,7 @@ def reset_demo_data(connection, project_id: str = "northstar") -> dict[str, int]
         counts = seeder(connection, manage_transaction=False)
         connection.execute("COMMIT")
         return counts
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
 
@@ -860,7 +860,7 @@ def delete_project_data(connection, project_id: str, *, fallback_project_id: str
         )
         connection.execute("DELETE FROM projects WHERE id=?", (project_id,))
         connection.execute("COMMIT")
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
 

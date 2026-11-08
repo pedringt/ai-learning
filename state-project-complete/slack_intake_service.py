@@ -11,11 +11,14 @@ full product rationale.
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from db import Connection
 from interpretation_pipeline_integrated import new_id
+
+_module_logger = logging.getLogger("state.slack.intake")
 
 DEFAULT_QUIET_WINDOW_SECONDS = 15 * 60
 
@@ -213,7 +216,7 @@ def _record_slack_event(
             "VALUES (?,?,?,?,?,?,?,?, 'pending')",
             (row_id, event_id, team_id, channel_id, event_type, event_ts, thread_root_ts, json.dumps(payload)),
         )
-    except Exception:
+    except Exception:  # broad on purpose: re-raised unless a concurrent duplicate row now exists (sqlite3 or psycopg2 error)
         # A concurrent delivery of the same Slack retry raced us on the
         # UNIQUE(event_id) constraint. Treat it as the duplicate it is. On Postgres the failed INSERT
         # aborted the transaction, so the re-check needs a rollback first.
@@ -504,6 +507,5 @@ async def run_checkpoint_poll_loop(get_connection, interval_seconds: int, logger
                 logger.info("slack_checkpoints_created count=%d", len(created))
         except asyncio.CancelledError:
             raise
-        except Exception:
-            if logger:
-                logger.exception("slack_checkpoint_poll_iteration_failed")
+        except Exception:  # broad on purpose: one bad iteration must not kill the background loop
+            (logger or _module_logger).exception("slack_checkpoint_poll_iteration_failed")

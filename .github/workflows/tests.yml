@@ -100,7 +100,7 @@ jobs:
         working-directory: state-project-complete
         run: |
           pip install -r requirements.txt
-          pip install pytest pytest-subtests playwright
+          pip install -r requirements-dev.txt
 
       # The browser suite resolves Chromium through Playwright by default, so the
       # runner needs Playwright's managed download. STATE_CHROMIUM_PATH can point

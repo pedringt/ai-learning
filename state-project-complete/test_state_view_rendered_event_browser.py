@@ -138,3 +138,14 @@ def test_opening_the_page_on_settings_loads_it_once(app):
     assert requests[start:].count('/api/integrations/slack/health') == 1
 
 
+
+
+@pytest.mark.parametrize('view,name', [('notes', 'Notes'), ('history', 'History'), ('open-items', 'Open Items'),
+                                       ('project-overview', 'Current State'), ('overview', 'Workspace')])
+def test_navigation_announces_only_the_view_name(app, view, name):
+    """#629: #viewRoot was the live region, so screen readers re-read the whole page on every redraw."""
+    page, _ = app
+    _go(page, view)
+    assert page.evaluate("document.getElementById('viewRoot').hasAttribute('aria-live')") is False
+    assert page.evaluate("document.getElementById('viewAnnouncer').textContent") == name
+    assert page.evaluate("document.getElementById('viewAnnouncer').getAttribute('aria-live')") == 'polite'

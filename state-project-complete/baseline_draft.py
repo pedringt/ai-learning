@@ -390,7 +390,7 @@ def confirm_starting_state(connection: Any, payload: ConfirmStartingStateInput) 
     except HTTPException:
         connection.rollback()
         raise
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.rollback()
         raise
 

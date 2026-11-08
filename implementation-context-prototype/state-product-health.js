@@ -57,9 +57,11 @@
     const configured = root?.STATE_API_BASE || root?.document?.documentElement?.dataset?.apiBase;
     if (configured) return String(configured).replace(/\/$/, '');
     const hostname = String(root?.location?.hostname || '');
-    return /(^|[-.])staging([-.]|$)|-git-/i.test(hostname)
-      ? 'https://state-api-staging.onrender.com'
-      : 'https://state-api-6waw.onrender.com';
+    // Only the production hostnames use the production API when api/state-config.js has not set one; every other host
+    // (file://, localhost, an unrecognised preview) uses staging, whose data is reseeded on each deploy (#621).
+    return /^(state\.|www\.)?contextswitch\.tech$/i.test(hostname)
+      ? 'https://state-api-6waw.onrender.com'
+      : 'https://state-api-staging.onrender.com';
   }
 
   function contentFree(payload) {

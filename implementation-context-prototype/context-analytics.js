@@ -45,15 +45,16 @@
     var hostname = String(window.location && window.location.hostname || '');
     if (window.location && window.location.protocol === 'file:') return 'local';
     if (/localhost|127\.0\.0\.1/i.test(hostname)) return 'local';
-    if (/(^|[-.])staging([-.]|$)|-git-/i.test(hostname)) return 'staging';
-    return 'production';
+    // Same rule as context-api.js: only the production hostnames are production (#621).
+    if (/^(state\.|www\.)?contextswitch\.tech$/i.test(hostname)) return 'production';
+    return 'staging';
   }
   function inferredApiBase() {
     var configured = window.STATE_API_BASE || (document.documentElement && document.documentElement.dataset && document.documentElement.dataset.apiBase);
     if (configured) return String(configured).replace(/\/$/, '');
-    return environmentLabel() === 'staging'
-      ? 'https://state-api-staging.onrender.com'
-      : 'https://state-api-6waw.onrender.com';
+    return environmentLabel() === 'production'
+      ? 'https://state-api-6waw.onrender.com'
+      : 'https://state-api-staging.onrender.com';
   }
   function projectId() {
     try {

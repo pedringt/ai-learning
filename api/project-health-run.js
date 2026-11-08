@@ -1,3 +1,5 @@
+const {claimAction,releaseAction,claimKeyPart}=require('./_project-health-claims.js');
+
 const RUNS={
   state:{
     repo:'pedringt/ai-learning',
@@ -216,6 +218,16 @@ module.exports=async function handler(req,res){
     return;
   }
 
+  // DEC-012 guards (Nov 8): GitHub lists a dispatched run only after a delay, so the checks above can pass for
+  // several parallel requests. A claim in the State backend lets only one of them dispatch per cooldown.
+  const claimKey=['run',projectId,ref].map(claimKeyPart).join(':');
+  const held=await claimAction(claimKey,RUN_COOLDOWN_MS/1000);
+  if(!held.allowed){
+    res.setHeader('Retry-After',String(held.retryAfterSeconds));
+    res.status(429).json({detail:'Quality checks were started recently. Try again in about '+Math.ceil(held.retryAfterSeconds/60)+' minute'+(Math.ceil(held.retryAfterSeconds/60)===1?'':'s')+'.',retry_after_seconds:held.retryAfterSeconds});
+    return;
+  }
+
   const dispatchBody={ref};
   if(projectId==='state') dispatchBody.inputs={suite,record_environment:recordEnvironment};
   const response=await fetch(
@@ -228,6 +240,7 @@ module.exports=async function handler(req,res){
   );
 
   if(!response.ok){
+    await releaseAction(claimKey,held.token);
     const payload=await response.json().catch(()=>({}));
     res.status(response.status).json({detail:payload?.message||'GitHub workflow dispatch failed'});
     return;

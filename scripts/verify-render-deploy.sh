@@ -28,7 +28,10 @@
 set -euo pipefail
 
 URL="${1:?Usage: $0 <health-url> [expected-sha] [timeout-seconds]}"
+# A short id like `d0d616f` is expanded to the full commit when this checkout has it; otherwise it is matched as a
+# prefix below. Before Nov 7 a short id never matched /health's 12 characters, so correct deploys read NOT VERIFIED.
 EXPECTED_FULL="${2:-$(git rev-parse HEAD)}"
+EXPECTED_FULL="$(git rev-parse --verify --quiet "${EXPECTED_FULL}^{commit}" 2>/dev/null || printf '%s' "$EXPECTED_FULL")"
 TIMEOUT="${3:-300}"
 INTERVAL=10
 
@@ -52,7 +55,8 @@ except Exception:
     last_seen="$seen"
   fi
 
-  if [ -n "$seen" ] && [ "$seen" = "$EXPECTED" ]; then
+  # Same commit if one id is a prefix of the other (at least 7 characters, as git abbreviates).
+  if [ "${#seen}" -ge 7 ] && { [[ "$EXPECTED" == "$seen"* ]] || [[ "$seen" == "$EXPECTED"* ]]; }; then
     echo "VERIFIED: $URL is serving $EXPECTED"
     exit 0
   fi

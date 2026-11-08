@@ -103,7 +103,9 @@
   // `paths` at that state instead of fingerprints (used by compare.py --explain).
   async function run(stopAt = null, paths = []) {
     const out = {};
-    const record = name => {
+    // tools/state_important_audit.py sets window.STATE_CAPTURE_HOOK to inspect each state before it is recorded.
+    const record = async name => {
+      if (window.STATE_CAPTURE_HOOK) await window.STATE_CAPTURE_HOOK(name);
       if (stopAt !== name) { if (!stopAt) out[name] = snap(); return false; }
       freezeAnimations();
       const byPath = {};
@@ -116,27 +118,27 @@
     };
     // What a visitor sees first: Workspace right after load, before any navigation.
     await settle();
-    if (record('workspace-cold')) return out.__detail;
+    if (await record('workspace-cold')) return out.__detail;
     // Warm-up pass: on a cold load the patch layers race (#450), and the UI only
     // settles to one stable version after each view has rendered once.
     for (const v of VIEWS) await go(v);
-    for (const v of VIEWS) { await go(v); if (record(v)) return out.__detail; }
+    for (const v of VIEWS) { await go(v); if (await record(v)) return out.__detail; }
     await go('workspace');
     document.getElementById('askStateLauncher')?.click();
     await settle();
-    if (record('ask-drawer')) return out.__detail;
+    if (await record('ask-drawer')) return out.__detail;
     // Ask lifecycle, with the deterministic fake Ask provider compare.py installs.
     await ask('What is the current pilot scope?');
-    if (record('ask-answered')) return out.__detail;
+    if (await record('ask-answered')) return out.__detail;
     const input = document.getElementById('askStateDrawerInput');
     if (input) { input.focus(); input.value = 'What is the current pilot scope? More'; input.dispatchEvent(new Event('input', { bubbles: true })); }
     await settle();
-    if (record('ask-editing')) return out.__detail;
+    if (await record('ask-editing')) return out.__detail;
     document.querySelector('#askStateDrawer .state-ask-reset')?.click();
     await settle();
-    if (record('ask-cleared')) return out.__detail;
+    if (await record('ask-cleared')) return out.__detail;
     await ask('COMPARE_FAIL pilot scope');
-    if (record('ask-error')) return out.__detail;
+    if (await record('ask-error')) return out.__detail;
     // Mid-answer: submit a slow question and snapshot before the answer lands.
     const slowInput = document.getElementById('askStateDrawerInput');
     if (slowInput) {
@@ -148,7 +150,7 @@
       // sometimes landed after the answer under load).
       await waitFor(() => document.querySelector('#askStateDrawerResult .ask-live-loading'), 8000);
       await sleep(300);
-      if (record('ask-generating')) return out.__detail;
+      if (await record('ask-generating')) return out.__detail;
       for (let i = 0; i < 80; i++) {
         await sleep(150);
         const r = document.getElementById('askStateDrawerResult');
@@ -171,31 +173,31 @@
     click('#dialogBody button.primary');
     await waitFor(() => /Set up Current State/.test(bannerText()));
     await settle();
-    if (record('baseline-blank')) return out.__detail;
+    if (await record('baseline-blank')) return out.__detail;
     click('[data-baseline-add-starting]'); await settle();
-    if (record('baseline-starting-dialog')) return out.__detail;
+    if (await record('baseline-starting-dialog')) return out.__detail;
     click('#dialogBody [data-action="close-dialog"]'); await settle();
     click('[data-baseline-start-manual]'); await settle();
-    if (record('baseline-manual-dialog')) return out.__detail;
+    if (await record('baseline-manual-dialog')) return out.__detail;
     fill('[data-baseline-manual-topic]', 'Pilot scope');
     fill('[data-baseline-manual-statement]', 'The pilot covers Tier 1 troubleshooting only.');
     click('[data-baseline-save-manual]');
     await waitFor(() => document.querySelector('.baseline-draft-dialog .baseline-draft-fact[data-proposal-id]'));
     await settle();
-    if (record('baseline-draft-dialog')) return out.__detail;
+    if (await record('baseline-draft-dialog')) return out.__detail;
     click('[data-baseline-add-fact]'); await settle();
-    if (record('baseline-new-fact-form')) return out.__detail;
+    if (await record('baseline-new-fact-form')) return out.__detail;
     click('[data-baseline-cancel-new-fact]');
     click('#dialogBody [data-action="close-dialog"]');
     await waitFor(() => /ready to review/i.test(bannerText()));
     await settle();
-    if (record('baseline-ready')) return out.__detail;
+    if (await record('baseline-ready')) return out.__detail;
     click('[data-baseline-add-starting]'); await settle();
     fill('#baselineStartingText', 'Starting notes for the pilot.');
     click('[data-baseline-save-starting-text]');
     await waitFor(() => /needs attention|could not|failed/i.test(bannerText() + (document.getElementById('dialogBody')?.textContent || '')), 12000);
     await sleep(2500); await settle();
-    if (record('baseline-after-failed-analysis')) return out.__detail;
+    if (await record('baseline-after-failed-analysis')) return out.__detail;
     return out;
   }
 

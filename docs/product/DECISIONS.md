@@ -241,6 +241,8 @@ Locking both to staging and protected previews; an admin key for investigations;
 **Revisit when**  
 Spend from these endpoints shows up unexpectedly, or the dashboard gets traffic beyond portfolio reviewers.
 
+**Update (Nov 8, Paige): small guards, still open to anyone.** The Nov 5 audit found that an investigation made a model call on every request while a failure was current, and that the eval run's 10-minute cooldown could be beaten by parallel requests (GitHub lists a dispatched run only after a delay). Neither counts toward DEC-014's $50 cap. Paige chose to keep both actions open and add cooldowns that hold across parallel requests: one investigation of the same failure (project, environment, commit, signal) per 5 minutes, and one eval run per branch per 10 minutes. Each is an atomic claim in the State backend (`project_health_claims`, migration 023), because Vercel functions share no memory. If the claim store cannot be reached, the action is allowed (fail open), so an outage of the State API never removes the actions. A failed dispatch or model call gives its claim back. Still rejected: an admin key or login.
+
 ### DEC-013 — The Ask quality suite is read like the review suite (trial)
 
 **Status:** Revisit if condition changes  
@@ -361,3 +363,21 @@ Excerpts from any run other than a controlled eval. #642 (what should block an A
 
 **Revisit when**  
 Answered Questions crowd out governing records in real answers, or the grader's recalibration shows the new wording scores differently from human grades.
+
+### DEC-019 — Model-key tests in `qa-release`: a failure is rerun once and blocks only if it fails again
+
+**Status:** Decided  
+**Date:** 2026-11-08  
+**Related:** #624, #649, DEC-013; `Makefile` (`qa-real-model`, `REAL_MODEL_TESTS`)
+
+**Decision**  
+Paige agreed (Nov 8) that the pytest files needing a real model key, which `qa-release` runs on model-sensitive changes since #624, gate like this: a run's failed tests are rerun once in the same job (`pytest --last-failed`), and the gate fails only if a test fails again.
+
+**Why**  
+Each of these about 72 tests is one live sample. In their first seven forced runs (Nov 8, unchanged commit) `qa-release` failed in 3 of 7 from one-off model misses in different tests, which would make a hard gate mostly noise. The authority repro test, by contrast, failed 2 of 2 before its own hedge check was fixed: a consistent failure fails both attempts and still blocks. A rerun needs no history between runs, which `qa-release` does not keep, and costs only the failed tests' calls.
+
+**Rejected / deferred**  
+Report-only (a real regression on the fragile pending-vs-confirmed boundary would pass silently); tolerating any single miss (would have passed the consistent authority failure); "fails twice in a row across runs" (needs stored history).
+
+**Revisit when**  
+A known regression passes on rerun, or the same test needs its rerun in most runs (then it needs a fix or a rate measurement, as #649 asks for the Baseline case).
