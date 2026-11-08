@@ -831,16 +831,21 @@
   // #639/#643: the recorded failed items name what was wrong from the scenario's own phrase lists. An invented number is
   // recorded only as the fact that one was invented: the model's answer is not stored (DATA_PRIVACY.md).
   function failedItemFindings(detail){
-    const found={missing:[],asserted:[],invented:false,other:[]};
+    // Each missing fact keeps all its accepted alternatives ("answered" or "resolved").
+    const found={missing:[],asserted:[],invented:false,headlineLacks:[],headlineOpening:'',other:[]};
     for(const raw of (Array.isArray(detail?.failed_items)?detail.failed_items:[])){
       const item=String(raw||'').trim();
-      if(/^missing required fact: /.test(item))found.missing.push(item.replace(/^missing required fact: /,'').split(' / ')[0]);
+      if(/^missing required fact: /.test(item))found.missing.push(item.replace(/^missing required fact: /,'').split(' / '));
+      else if(/^headline lacks: /.test(item))found.headlineLacks.push(item.replace(/^headline lacks: /,'').split(' / '));
+      else if(/^headline opens with forbidden: /.test(item))found.headlineOpening=item.replace(/^headline opens with forbidden: /,'');
       else if(/^asserted forbidden claim: /.test(item))found.asserted.push(item.replace(/^asserted forbidden claim: /,''));
       else if(/^number not in any record/.test(item))found.invented=true;
       else if(item)found.other.push(item);
     }
     return found;
   }
+  // "“answered” or “resolved”; “30 days”": alternatives joined with "or", separate facts with ";".
+  const wordingList=groups=>groups.map(g=>g.length>1?g.slice(0,-1).map(quote).join(', ')+' or '+quote(g[g.length-1]):quote(g[0])).join('; ');
   function phraseList(items,limit=3){
     const list=(Array.isArray(items)?items:[]).map(item=>Array.isArray(item)?item.map(quote).join(' or '):quote(item));
     return list.slice(0,limit).join(', ')+(list.length>limit?' and '+(list.length-limit)+' more':'');
@@ -936,7 +941,11 @@
       const specific=[];
       if(findings.asserted.length)specific.push('The answer said '+findings.asserted.map(quote).join(' and ')+', which this scenario forbids.');
       if(findings.invented)specific.push('The answer gave a number that appears in none of the supplied records.');
-      if(findings.missing.length)specific.push('The answer left out '+findings.missing.map(quote).join(' and ')+'.');
+      if(findings.missing.length)specific.push('Expected wording not found in the answer: '+wordingList(findings.missing)+'.');
+      if(findings.headlineLacks.length)specific.push('Expected wording not found in the headline: '+wordingList(findings.headlineLacks)+'.');
+      if(findings.headlineOpening)specific.push('The headline opens with '+quote(findings.headlineOpening)+', an opening this scenario does not accept for its question.');
+      // #640 review (Paige, Nov 7): these checks look for wording, so say what they show and no more.
+      if(findings.missing.length||findings.headlineLacks.length)specific.push('This check looks for wording: missing wording does not by itself show the answer is wrong.');
       const rest=failed.filter(check=>!['grounding','required_facts','forbidden_claims'].includes(check)||!specific.length);
       if(specific.length)observedParts.push(...specific);
       if(rest.length)observedParts.push('The answer '+rest.map(check=>ASK_CHECKS[check].failed).join('; it ')+'.');
@@ -1024,12 +1033,13 @@
            scenario.unsafe_if==='overstatement'?' The record does not show whether its wording overstated the Evidence.':'');
       }
     }else if(suite==='ask'){
-      direction=askPrimary||findings.asserted.length||findings.invented||findings.missing.length?'answer':'unknown';
+      direction=askPrimary||findings.asserted.length||findings.invented||findings.missing.length||findings.headlineLacks.length||findings.headlineOpening?'answer':'unknown';
       // The specific misleading implication when the record names it (#643); otherwise the check's general risk.
       const implications=[];
       if(findings.asserted.length)implications.push('A reader could believe '+findings.asserted.map(quote).join(' and ')+', which the record does not support.');
       if(findings.invented)implications.push('A reader could take an invented number as an agreed figure.');
-      if(findings.missing.length)implications.push('A reader would not learn '+findings.missing.map(quote).join(' or ')+', which the record establishes.');
+      if(findings.missing.length)implications.push('If the answer does not convey '+wordingList(findings.missing)+', a reader would not learn what the record establishes.');
+      if(findings.headlineLacks.length||findings.headlineOpening)implications.push('A reader who reads only the headline may take away a different status from the one the record shows.');
       consequence=implications.length?implications.join(' ')+' Ask is read-only, so project records are unchanged.'
         :askPrimary?ASK_CHECKS[askPrimary].risk+' Ask is read-only, so project records are unchanged.':'The recorded result does not say which answer check failed.';
     }else{

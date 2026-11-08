@@ -162,7 +162,7 @@ SCENARIOS = (
         severity="medium",
         rationale="Ask should report that a Question was answered, with its answer, without presenting that answer as a change to Current State.",
         known_unsupported=("#640: production Ask does not retrieve resolved Questions yet (held on staging because its "
-                           "headline contradicts its body). Reported, not counted by the release gate; remove when #640 ships."),
+                           "headline contradicts its body). Remove this exception when #640 ships."),
     ),
     AskQualityScenario(
         id="ask_superseded_pending_review",

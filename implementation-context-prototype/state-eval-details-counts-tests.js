@@ -98,6 +98,8 @@ const payload=(review,ask,recent)=>({controlled_evals:{latest_review_interpretat
     assert.match(els.askSummary.innerHTML,/12\/13 <span class="score-unit">controlled scenarios passed/,'the headline score discloses the failure');
     assert.match(els.askSummary.innerHTML,/<p class="gate-eligibility">Release gate: 12 of 12 eligible scenarios passed; 1 not counted \(known unsupported, #640, 1 failing\)\.<\/p>/);
     assert.match(els.failureList.innerHTML,/<p class="known-unsupported"><strong>Known unsupported in this release, not counted by the release gate:<\/strong> #640: production Ask does not retrieve resolved Questions yet/);
+    assert.strictEqual((els.failureList.innerHTML.match(/not counted by the release gate/g)||[]).length,1,'the phrase appears once');
+    assert.match(els.failureList.innerHTML,/Expected wording not found in the answer: “answered” or “resolved”\./);
     const other={scenario_id:'ask_blocker_not_omitted',category:'important_omission',severity:'high',failed_checks:['uncertainty']};
     const both=await renderPage(payload(null,run('ask_quality',13,1,{overall_pass_rate:11/13,failure_details:[held,other]}),[]));
     assert.match(both.els.askSummary.innerHTML,/11\/13 <span[\s\S]*Release gate: 11 of 12 eligible scenarios passed/);

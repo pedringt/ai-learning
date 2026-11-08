@@ -21,7 +21,8 @@ def _gate(failed, previous=None):
 def test_only_the_held_scenario_carries_the_exception_and_says_when_it_comes_off():
     marked = [s for s in ASK if s.known_unsupported]
     assert [s.id for s in marked] == [HELD]
-    assert "#640" in marked[0].known_unsupported and "remove when #640 ships" in marked[0].known_unsupported
+    assert "#640" in marked[0].known_unsupported and "Remove this exception when #640 ships" in marked[0].known_unsupported
+    assert "not counted" not in marked[0].known_unsupported  # the page's label says that once
 
 
 def test_the_held_scenario_failing_every_run_does_not_block():
