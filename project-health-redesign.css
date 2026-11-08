@@ -339,3 +339,22 @@ html body .eval-suite-actions > p { margin-bottom: 12px; }
   /* on phones the status line ("Run →" / "Available in 7 min") goes under the description so the copy keeps its width */
   html body .button.suite-action { grid-template-columns: 1fr; gap: 8px; }
 }
+
+/* #614 (Paige, Nov 4): phone layout fixes. Wording, colors and desktop are unchanged.
+   1. "What needs attention": the icon stacks above the text, the area tag drops below the issue text and the
+      padding around it is a little tighter, so the issue text gets about 250px instead of about 100px.
+   2. Project tabs may shrink and wrap their labels (Tastemake's four tabs overflowed by 12px at 375px).
+   3. Live site, GitHub and Open analytics get an invisible hit area at least 28px tall; it is out of flow, so
+      nothing moves. */
+@media (max-width: 480px) {
+  html body .mock-dashboard { padding: 12px; }
+  html body .mock-dashboard .mock-attention-banner { grid-template-columns: minmax(0, 1fr); padding: 16px 14px; }
+  html body .mock-dashboard .mock-attention-banner .mock-issue-row { padding: 10px 12px; }
+  html body .mock-dashboard .mock-attention-banner .mock-issue-row { grid-template-columns: auto minmax(0, 1fr); }
+  html body .mock-dashboard .mock-attention-banner .mock-issue-meta { grid-column: 2; }
+  html body .project-tabs .project-tab { flex: 0 1 auto; min-width: 0; white-space: normal; }
+  html body #detailLiveLink, html body #detailRepoLink, html body .mock-analytics-link { position: relative; }
+  html body #detailLiveLink::after, html body #detailRepoLink::after, html body .mock-analytics-link::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, 28px); transform: translateY(-50%);
+  }
+}

@@ -1426,8 +1426,17 @@
     if(investigationBackdrop)investigationBackdrop.addEventListener('click',closeInvestigationDrawer);
     doc.addEventListener('keydown',event=>{if(event.key==='Escape'&&investigationDrawerOpen)closeInvestigationDrawer();});
 
+    // #614: closing returns focus to whatever opened the drawer (Investigate, Investigate failure, Open
+    // investigation), or to Investigate if a re-render replaced it. Safari does not focus a clicked button, so the
+    // last clicked control stands in. Full modal behaviour is out of scope (Paige, Nov 4).
+    let investigationOpener=null,lastClickedControl=null;
+    doc.addEventListener('click',event=>{lastClickedControl=event.target?.closest?.('button,a,[tabindex]')||null;},true);
     function openInvestigationDrawer(){
       if(!investigationDrawer)return;
+      if(!investigationDrawerOpen){
+        const active=doc.activeElement,inDrawer=el=>!!investigationDrawer.contains?.(el);
+        investigationOpener=active&&active!==doc.body&&!inDrawer(active)?active:lastClickedControl&&!inDrawer(lastClickedControl)?lastClickedControl:null;
+      }
       investigationDrawerOpen=true;
       investigationDrawer.hidden=false;
       investigationDrawer.setAttribute('aria-hidden','false');
@@ -1437,6 +1446,7 @@
       doc.body?.classList?.add('drawer-open');
     }
     function closeInvestigationDrawer(){
+      const wasOpen=investigationDrawerOpen;
       investigationDrawerOpen=false;
       if(investigationDrawer){
         investigationDrawer.hidden=true;
@@ -1444,6 +1454,10 @@
       }
       if(investigationBackdrop) investigationBackdrop.hidden=true;
       doc.body?.classList?.remove('drawer-open');
+      if(wasOpen){
+        const back=investigationOpener?.isConnected&&investigationOpener.getClientRects?.().length?investigationOpener:doc.getElementById('projectCheckButton');
+        investigationOpener=null;back?.focus?.({preventScroll:true});
+      }
     }
     function revealInvestigation(){openInvestigationDrawer();}
 
