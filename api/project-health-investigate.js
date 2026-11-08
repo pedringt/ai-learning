@@ -1,5 +1,6 @@
 'use strict';
 const MODEL_PROJECTS=require('../project-health-model.js');
+const {claimAction,releaseAction,claimKeyPart,stateApiBase}=require('./_project-health-claims.js');
 
 const TEAM_ID='team_UxrzvAczWhPiXlO3nvWPAu5b';
 const MODEL='claude-haiku-5-5';
@@ -7,6 +8,9 @@ const MAX_BODY_BYTES=2000;
 const MAX_EVIDENCE_CHARS=8000;
 // 900 since Oct 16 (DEC-011): at 450 about 1 report in 4, and most with job logs, stopped before Owner/Confidence.
 const MAX_OUTPUT_TOKENS=900;
+// DEC-012 guards (Nov 8, Paige): one investigation of the same failure (project, environment, commit, signal)
+// every 5 minutes, held across parallel requests by a claim in the State backend.
+const INVESTIGATION_COOLDOWN_SECONDS=5*60;
 // Opus 5.5 cannot turn thinking off; its low-effort thinking needs room on top of the report.
 const OPUS_THINKING_HEADROOM=8000;
 const PROJECTS={
@@ -224,8 +228,7 @@ function reportText(payload){
 // Usage is recorded in the State backend (project_health_usage_api.py): metadata only, never evidence or the
 // report. Production records to the production API, every other deployment to staging. A missing key or a
 // failed write never affects the investigation.
-const STATE_API={production:'https://state-api-6waw.onrender.com',other:'https://state-api-staging.onrender.com'};
-function usageEndpoint(env=process.env.VERCEL_ENV){return (env==='production'?STATE_API.production:STATE_API.other)+'/api/admin/project-health-usage';}
+function usageEndpoint(env=process.env.VERCEL_ENV){return stateApiBase(env)+'/api/admin/project-health-usage';}
 async function recordUsage(project,body,payload,durationMs,{fetchImpl=fetch,key=process.env.PROJECT_HEALTH_USAGE_KEY}={}){
   if(!key||!payload?.usage)return false;
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),2000);
@@ -269,12 +272,20 @@ module.exports=async function handler(req,res){
   if(!selected.hasDiagnostic||(signalType==='vercel'&&!deploymentEvidence?.hasDiagnostic))commitEvidence=await fetchCommitFollowup(project,sha);
   const followUps=[deploymentEvidence?.summary,commitEvidence?.summary].filter(Boolean).join('\n');
   const evidence={project:project.slug,environment,branch:branch.branch,commit:sha,signalType,primary:selected.summary,followUp:followUps||'No follow-up source was available.'};
+  const claimKey=['investigate',project.slug,environment,sha,signalType].map(claimKeyPart).join(':');
+  const held=await claimAction(claimKey,INVESTIGATION_COOLDOWN_SECONDS);
+  if(!held.allowed){
+    const minutes=Math.ceil(held.retryAfterSeconds/60);
+    res.setHeader('Retry-After',String(held.retryAfterSeconds));
+    return response(res,429,{code:'investigation_cooldown',retry_after_seconds:held.retryAfterSeconds,detail:'This failure was investigated in the last few minutes. Try again in about '+minutes+' minute'+(minutes===1?'':'s')+'.'});
+  }
   const report=await summarizeWithModel(evidence);
+  if(report?.budgetPaused||!report)await releaseAction(claimKey,held.token);
   if(report?.budgetPaused)return response(res,503,{code:'ai_budget_paused',detail:AI_BUDGET_MESSAGE});
   if(!report)return response(res,502,{detail:'The investigation model could not return a report. No project changes were made.'});
   const sources=[...selected.sources,...(deploymentEvidence?.sources||[]),...(commitEvidence?.sources||[])];
   res.setHeader('Cache-Control','no-store');
   return response(res,200,{project:project.slug,environment,commit:sha,report,model:MODEL,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
-module.exports._test={PROJECTS,githubHeaders,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE};
+module.exports._test={PROJECTS,githubHeaders,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE,INVESTIGATION_COOLDOWN_SECONDS};
 

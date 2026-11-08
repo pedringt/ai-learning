@@ -241,6 +241,8 @@ Locking both to staging and protected previews; an admin key for investigations;
 **Revisit when**  
 Spend from these endpoints shows up unexpectedly, or the dashboard gets traffic beyond portfolio reviewers.
 
+**Update (Nov 8, Paige): small guards, still open to anyone.** The Nov 5 audit found that an investigation made a model call on every request while a failure was current, and that the eval run's 10-minute cooldown could be beaten by parallel requests (GitHub lists a dispatched run only after a delay). Neither counts toward DEC-014's $50 cap. Paige chose to keep both actions open and add cooldowns that hold across parallel requests: one investigation of the same failure (project, environment, commit, signal) per 5 minutes, and one eval run per branch per 10 minutes. Each is an atomic claim in the State backend (`project_health_claims`, migration 023), because Vercel functions share no memory. If the claim store cannot be reached, the action is allowed (fail open), so an outage of the State API never removes the actions. A failed dispatch or model call gives its claim back. Still rejected: an admin key or login.
+
 ### DEC-013 — The Ask quality suite is read like the review suite (trial)
 
 **Status:** Revisit if condition changes  
