@@ -30,7 +30,7 @@ from consequentiality_guidance import (
     CONSEQUENTIALITY_AND_GROUPING_GUIDANCE,
     USER_PROMOTION_GUIDANCE,
 )
-from db import project_id_of
+from db import DB_ERRORS, project_id_of
 from extension_points import ExtensionPoint
 
 _RELEVANCE_SCHEMA = {
@@ -226,7 +226,7 @@ class AnthropicProvider:
             if getattr(connection, "is_postgres", False):
                 try:
                     connection.rollback()
-                except Exception:  # broad on purpose: a failed rollback after failed telemetry is logged, not raised
+                except DB_ERRORS:
                     logger.warning("Rollback after telemetry failure also failed", exc_info=True)
 
         # Structured outputs can still be non-schema text on refusal or be
@@ -358,7 +358,7 @@ class AnthropicProvider:
                 "SELECT id, text, blocking, blocks FROM questions WHERE status='open' AND project_id=? ORDER BY created_at, id",
                 (project_id_of(connection),),
             ).fetchall()
-        except Exception as exc:  # broad on purpose: re-raised unless it is the pre-013 missing-column error (sqlite3 or psycopg2)
+        except DB_ERRORS as exc:
             if not _missing_project_id_column(exc):
                 raise
             if getattr(connection, "is_postgres", False):
@@ -386,7 +386,7 @@ class AnthropicProvider:
                 "SELECT statement, COALESCE(rationale, 'Interpretation') FROM project_rules WHERE status='active' AND project_id=? ORDER BY created_at, id",
                 (project_id_of(connection),),
             ).fetchall()
-        except Exception:  # broad on purpose: rules are optional prompt context; degrade to none, logged
+        except DB_ERRORS:
             logger.warning("Could not read project rules; interpreting without them", exc_info=True)
             if getattr(connection, "is_postgres", False):
                 connection.rollback()

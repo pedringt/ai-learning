@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 from database_migration_backed import initialize_db
-from db import connect
+from db import DB_ERRORS, connect
 from question_review_service import persist_question_proposal
 
 # state.md #113: Northstar's own areas -- generalization means Northstar
@@ -860,7 +860,7 @@ def delete_project_data(connection, project_id: str, *, fallback_project_id: str
         )
         connection.execute("DELETE FROM projects WHERE id=?", (project_id,))
         connection.execute("COMMIT")
-    except Exception:  # broad on purpose: rollback then re-raise
+    except DB_ERRORS:
         connection.execute("ROLLBACK")
         raise
 
