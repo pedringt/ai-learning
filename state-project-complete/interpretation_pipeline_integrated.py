@@ -434,7 +434,7 @@ def _persist_success(
         connection.execute("UPDATE evidence SET processing_status=? WHERE id=?", ("processed", evidence_id))
         connection.execute("COMMIT")
 
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
 
@@ -491,7 +491,7 @@ def _persist_failure(
         logger.debug("Updated evidence processing status")
         connection.execute("COMMIT")
         logger.debug("Committed interpretation failure transaction")
-    except Exception as e:
+    except Exception:  # broad on purpose: rollback then re-raise
         logger.exception("Database error while persisting interpretation failure")
         connection.execute("ROLLBACK")
         raise
@@ -611,7 +611,7 @@ def process_evidence(
             error_code=exc.code,
             error_message=str(exc),
         )
-    except Exception as exc:
+    except Exception as exc:  # broad on purpose: any provider/validation failure is persisted as provider_error
         # A database error in the block above leaves a Postgres transaction aborted; clear it so
         # _persist_failure can record the failure (CLAUDE.md, Sept 14 incident). SQLite: unchanged.
         if getattr(connection, "is_postgres", False):

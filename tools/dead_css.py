@@ -15,6 +15,14 @@ structure on every page at every width).
 
     python3 tools/dead_css.py                 # report
     python3 tools/dead_css.py --apply FILE... # rewrite the given .css / .html files
+
+State app (implementation-context-prototype/) with --state: the sources are its index.html and every non-test script,
+and the default targets are its three stylesheets plus index.html's inline styles. State builds some class names at
+runtime ('note-status--' + status), so in this mode a source word ending in '-' or '_' keeps every token that starts
+with it alive. Prove the result with scripts/state_ui_compare/compare.py.
+
+    python3 tools/dead_css.py --state                     # report
+    python3 tools/dead_css.py --state --apply FILE...     # paths relative to implementation-context-prototype/
 """
 from __future__ import annotations
 
@@ -28,6 +36,28 @@ EXCLUDE_PAGES = {"project-health.html", "state-evals.html"}
 SCRIPTS = ["site-shell.js", "site-environment.js"]
 SHARED_CSS = ["site-shell.css", "site-components.css", "site-redesign.css",
               "implementation-context-case.css"]
+STATE_DIR = os.path.join(REPO, "implementation-context-prototype")
+STATE_CSS = ["state-app.css", "context-tool.css", "state-shell.css", "index.html"]
+
+
+class Words(set):
+    """Source words; in State mode a word ending in '-' or '_' also vouches for every token it prefixes."""
+    prefixes: tuple = ()
+
+    def __contains__(self, token):
+        return set.__contains__(self, token) or token.startswith(self.prefixes)
+
+
+def state_source_words() -> Words:
+    corpus = [re.sub(r"<style[^>]*>.*?</style>", "", open(os.path.join(STATE_DIR, "index.html")).read(), flags=re.S)]
+    for script in sorted(glob.glob(os.path.join(STATE_DIR, "*.js"))):
+        name = os.path.basename(script)
+        if name.endswith("-tests.js") or name == "state-layer-css.js":  # tests and the test-only CSS reader
+            continue
+        corpus.append(open(script).read())
+    words = Words(re.findall(r"[A-Za-z_][\w-]*", "\n".join(corpus)))
+    words.prefixes = tuple(w for w in words if w.endswith(("-", "_")) and len(w) > 2)
+    return words
 
 
 def source_words() -> set[str]:
@@ -157,11 +187,13 @@ def process_html(text: str, words: set[str]):
 
 
 def main() -> int:
-    words = source_words()
+    state = "--state" in sys.argv
+    words = state_source_words() if state else source_words()
     apply = "--apply" in sys.argv
-    targets = [a for a in sys.argv[1:] if a != "--apply"] or SHARED_CSS + ["index.html"]
+    base = STATE_DIR if state else REPO
+    targets = [a for a in sys.argv[1:] if a not in ("--apply", "--state")] or (STATE_CSS if state else SHARED_CSS + ["index.html"])
     for name in targets:
-        path = os.path.join(REPO, name)
+        path = os.path.join(base, name)
         text = open(path).read()
         new, stats = (process_html if name.endswith(".html") else process_css)(text, words)
         print(f"{name:34} rules:{stats['rules']:5}  dead selectors:{stats['dead_selectors']:5}  "

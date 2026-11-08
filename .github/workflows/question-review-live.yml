@@ -47,7 +47,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.14'
       - name: Install quality-check dependencies
         run: pip install -r state-project-complete/requirements.txt
       - name: Run controlled AI quality checks
@@ -105,7 +105,7 @@ jobs:
       - name: Install browser tools
         working-directory: qa/deployed
         run: |
-          npm install
+          npm ci
           npx playwright install --with-deps chromium
       - name: Walk through deployed staging with the live model
         working-directory: qa/deployed

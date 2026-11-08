@@ -572,7 +572,7 @@ def with_baseline_metadata(inner):
             return result
         try:
             _persist_interpretation_metadata(connection, evidence_id, metadata)
-        except Exception:
+        except Exception:  # broad on purpose: optional metadata; interpretation already succeeded, logged
             connection.rollback()
             logger.exception("Could not persist Baseline Setup metadata for evidence %s", evidence_id)
         return result
@@ -620,7 +620,7 @@ def with_baseline_organization(inner):
         if decision == "accept" and hints:
             try:
                 _organize_accepted_baseline_proposals(connection, hints)
-            except Exception:
+            except Exception:  # broad on purpose: optional organization; the accept already committed, logged
                 connection.rollback()
                 logger.exception("Could not organize accepted Baseline Setup Review %s", review_id)
         return outcome

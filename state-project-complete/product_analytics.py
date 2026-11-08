@@ -7,6 +7,7 @@ behavioral and controlled-eval gaps that those records cannot answer.
 """
 from __future__ import annotations
 
+import hmac
 import math
 import os
 import time
@@ -513,7 +514,8 @@ def register_product_analytics(application: FastAPI, settings) -> None:
         expected = os.getenv("STATE_EVAL_INGEST_KEY", "").strip()
         if not expected:
             raise HTTPException(status_code=503, detail="Eval result ingestion is not configured")
-        if x_state_eval_key != expected:
+        # Constant-time, like the decisions API: a plain != leaks how much of the key matched (#626).
+        if not hmac.compare_digest(str(x_state_eval_key or "").encode(), expected.encode()):
             raise HTTPException(status_code=403, detail="Invalid eval ingestion key")
         connection = connect(settings.connection_url())
         try:
@@ -563,7 +565,7 @@ def register_product_analytics(application: FastAPI, settings) -> None:
             ))
         try:
             response = await call_next(request)
-        except Exception:
+        except Exception:  # broad on purpose: records the failure event then re-raises
             elapsed_ms = int((time.perf_counter() - started) * 1000)
             await run_in_threadpool(record, ProductEventInput(
                 name="ask_failed" if is_ask else "api_failure",

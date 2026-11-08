@@ -226,7 +226,7 @@ def create_question(connection: Connection, question_id: str, text: str, *, orig
         item, _ = create_or_find_question(connection, question_id, text, origin=origin, blocking=blocking, blocks=blocks)
         connection.execute("COMMIT")
         return item
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
 
@@ -452,7 +452,7 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             # from the explicit review_questions relationship created by validated resolves_question_ids.
             # This prevents unrelated Evidence submitted from the Question UI from incorrectly closing Questions.
         connection.execute("COMMIT")
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
 

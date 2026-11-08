@@ -1,5 +1,6 @@
 'use strict';
 const MODEL_PROJECTS=require('../project-health-model.js');
+const {claimAction,releaseAction,claimKeyPart,stateApiBase}=require('./_project-health-claims.js');
 
 const TEAM_ID='team_UxrzvAczWhPiXlO3nvWPAu5b';
 const MODEL='claude-haiku-5-5';
@@ -7,6 +8,9 @@ const MAX_BODY_BYTES=2000;
 const MAX_EVIDENCE_CHARS=8000;
 // 900 since Oct 16 (DEC-011): at 450 about 1 report in 4, and most with job logs, stopped before Owner/Confidence.
 const MAX_OUTPUT_TOKENS=900;
+// DEC-012 guards (Nov 8, Paige): one investigation of the same failure (project, environment, commit, signal)
+// every 5 minutes, held across parallel requests by a claim in the State backend.
+const INVESTIGATION_COOLDOWN_SECONDS=5*60;
 // Opus 5.5 cannot turn thinking off; its low-effort thinking needs room on top of the report.
 const OPUS_THINKING_HEADROOM=8000;
 const PROJECTS={
@@ -58,6 +62,9 @@ async function timedJson(url,options={}){
   finally{clearTimeout(timer);}
 }
 function githubApi(repo,path){return 'https://api.github.com/repos/'+repo+path;}
+// GitHub's unauthenticated limit is 60 requests an hour per IP, shared by every function on Vercel's egress; once hit,
+// an investigation failed with "Could not verify the current project branch." Use the token when it is set (#627).
+function githubHeaders(){return {Accept:'application/vnd.github+json',...(process.env.GITHUB_TOKEN?{Authorization:'Bearer '+process.env.GITHUB_TOKEN}:{})};}
 function failedCheckRuns(payload,evalCheckNames=[]){
   return MODEL_PROJECTS.currentCheckRuns(payload,evalCheckNames)
     .filter(item=>FAILED_CHECKS.has(String(item.conclusion||'').toLowerCase()))
@@ -134,7 +141,7 @@ async function fetchJobLog(project,url,{fetchImpl=fetch,token=process.env.GITHUB
 }
 async function fetchBranch(project,environment){
   const branch=project.branches[environment];
-  const result=await timedJson(githubApi(project.repo,'/branches/'+encodeURIComponent(branch)),{headers:{Accept:'application/vnd.github+json'}});
+  const result=await timedJson(githubApi(project.repo,'/branches/'+encodeURIComponent(branch)),{headers:githubHeaders()});
   const sha=result.payload?.commit?.sha;
   if(!result.ok||!/^([0-9a-f]{40})$/i.test(String(sha||'')))return null;
   return {branch,sha};
@@ -144,7 +151,7 @@ async function fetchBranch(project,environment){
 async function investigatedCommit(project,branch,requestedSha){
   const sha=String(requestedSha||'');
   if(!/^[0-9a-f]{40}$/i.test(sha)||sha===branch.sha)return branch.sha;
-  const result=await timedJson(githubApi(project.repo,'/compare/'+sha+'...'+branch.sha),{headers:{Accept:'application/vnd.github+json'},timeoutMs:7000});
+  const result=await timedJson(githubApi(project.repo,'/compare/'+sha+'...'+branch.sha),{headers:githubHeaders(),timeoutMs:7000});
   return result.ok&&['ahead','identical'].includes(result.payload?.status)?sha:branch.sha;
 }
 async function fetchVercelEvidence(project,sha){
@@ -174,7 +181,7 @@ async function fetchVercelEvidence(project,sha){
 }
 async function fetchGithubEvidence(project,sha,signalType){
   if(signalType==='github-check'){
-    const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/check-runs?per_page=50'),{headers:{Accept:'application/vnd.github+json'}});
+    const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/check-runs?per_page=50'),{headers:githubHeaders()});
     const failures=failedCheckRuns(result.payload,evalCheckNamesFor(project));
     if(!result.ok||!failures.length)return null;
     // Logs for the first two failed jobs only, to stay inside the evidence cap.
@@ -185,13 +192,13 @@ async function fetchGithubEvidence(project,sha,signalType){
     }
     return {summary:JSON.stringify({failedChecks:failures}),sources:failures.map(item=>({label:'GitHub check: '+item.name,url:item.url,observedAt:null})).filter(item=>item.url),hasDiagnostic:failures.some(item=>item.title||item.summary||(item.jobLog&&!item.jobLog.startsWith('Not available')))};
   }
-  const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/status'),{headers:{Accept:'application/vnd.github+json'},timeoutMs:7000});
+  const result=await timedJson(githubApi(project.repo,'/commits/'+sha+'/status'),{headers:githubHeaders(),timeoutMs:7000});
   const failure=statusFailure(result.payload);
   if(!result.ok||!failure)return null;
   return {summary:JSON.stringify({failedDeploymentStatus:{context:sanitizeText(failure.context,120),description:sanitizeText(failure.description,300),state:failure.state,target:safeSourceUrl(failure.target_url)}}),sources:[{label:'GitHub deployment status',url:safeSourceUrl(failure.target_url)||('https://github.com/'+project.repo+'/commit/'+sha),observedAt:failure.updated_at||failure.created_at||null}],hasDiagnostic:!!failure.description};
 }
 async function fetchCommitFollowup(project,sha){
-  const result=await timedJson(githubApi(project.repo,'/commits/'+sha),{headers:{Accept:'application/vnd.github+json'},timeoutMs:7000});
+  const result=await timedJson(githubApi(project.repo,'/commits/'+sha),{headers:githubHeaders(),timeoutMs:7000});
   if(!result.ok)return {summary:'Related commit details were unavailable.',sources:[{label:'Related GitHub commit unavailable',url:null,observedAt:null}]};
   const message=sanitizeText(result.payload?.commit?.message,500);
   const url=safeSourceUrl(result.payload?.html_url)||('https://github.com/'+project.repo+'/commit/'+sha);
@@ -221,8 +228,7 @@ function reportText(payload){
 // Usage is recorded in the State backend (project_health_usage_api.py): metadata only, never evidence or the
 // report. Production records to the production API, every other deployment to staging. A missing key or a
 // failed write never affects the investigation.
-const STATE_API={production:'https://state-api-6waw.onrender.com',other:'https://state-api-staging.onrender.com'};
-function usageEndpoint(env=process.env.VERCEL_ENV){return (env==='production'?STATE_API.production:STATE_API.other)+'/api/admin/project-health-usage';}
+function usageEndpoint(env=process.env.VERCEL_ENV){return stateApiBase(env)+'/api/admin/project-health-usage';}
 async function recordUsage(project,body,payload,durationMs,{fetchImpl=fetch,key=process.env.PROJECT_HEALTH_USAGE_KEY}={}){
   if(!key||!payload?.usage)return false;
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),2000);
@@ -266,12 +272,20 @@ module.exports=async function handler(req,res){
   if(!selected.hasDiagnostic||(signalType==='vercel'&&!deploymentEvidence?.hasDiagnostic))commitEvidence=await fetchCommitFollowup(project,sha);
   const followUps=[deploymentEvidence?.summary,commitEvidence?.summary].filter(Boolean).join('\n');
   const evidence={project:project.slug,environment,branch:branch.branch,commit:sha,signalType,primary:selected.summary,followUp:followUps||'No follow-up source was available.'};
+  const claimKey=['investigate',project.slug,environment,sha,signalType].map(claimKeyPart).join(':');
+  const held=await claimAction(claimKey,INVESTIGATION_COOLDOWN_SECONDS);
+  if(!held.allowed){
+    const minutes=Math.ceil(held.retryAfterSeconds/60);
+    res.setHeader('Retry-After',String(held.retryAfterSeconds));
+    return response(res,429,{code:'investigation_cooldown',retry_after_seconds:held.retryAfterSeconds,detail:'This failure was investigated in the last few minutes. Try again in about '+minutes+' minute'+(minutes===1?'':'s')+'.'});
+  }
   const report=await summarizeWithModel(evidence);
+  if(report?.budgetPaused||!report)await releaseAction(claimKey,held.token);
   if(report?.budgetPaused)return response(res,503,{code:'ai_budget_paused',detail:AI_BUDGET_MESSAGE});
   if(!report)return response(res,502,{detail:'The investigation model could not return a report. No project changes were made.'});
   const sources=[...selected.sources,...(deploymentEvidence?.sources||[]),...(commitEvidence?.sources||[])];
   res.setHeader('Cache-Control','no-store');
   return response(res,200,{project:project.slug,environment,commit:sha,report,model:MODEL,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
-module.exports._test={PROJECTS,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE};
+module.exports._test={PROJECTS,githubHeaders,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE,INVESTIGATION_COOLDOWN_SECONDS};
 

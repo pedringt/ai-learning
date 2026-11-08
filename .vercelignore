@@ -18,6 +18,10 @@
 !/content
 # Non-production portfolio deploys link to the State app at /implementation-context-prototype/ (site-environment.js).
 !/implementation-context-prototype
+# ...but not its tests, test helper or notes (#622; implementation-context-prototype/.vercelignore does the same for the State project).
+/implementation-context-prototype/*-tests.js
+/implementation-context-prototype/state-layer-css.js
+/implementation-context-prototype/*.md
 
 # docs/ and tools/ are already excluded by /* above. These stay listed so the reasons are not lost:
 # the #595 State capture trial was a review-only page that must not be publicly reachable (Paige, Nov 4),

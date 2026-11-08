@@ -41,7 +41,11 @@ const H = require('./state-product-health.js');
   await check('analytics API base prefers shared runtime configuration',()=>{
     assert.equal(H.apiBase({STATE_API_BASE:'https://configured.example/'}),'https://configured.example');
     assert.equal(H.apiBase({location:{hostname:'preview-git-staging.example'}}),'https://state-api-staging.onrender.com');
-    assert.equal(H.apiBase({location:{hostname:'example.com'}}),'https://state-api-6waw.onrender.com');
+    // #621: only the production hostnames default to production; anything else (an unknown host, file://) gets staging.
+    assert.equal(H.apiBase({location:{hostname:'example.com'}}),'https://state-api-staging.onrender.com');
+    assert.equal(H.apiBase({location:{hostname:''}}),'https://state-api-staging.onrender.com');
+    assert.equal(H.apiBase({location:{hostname:'state.contextswitch.tech'}}),'https://state-api-6waw.onrender.com');
+    assert.equal(H.apiBase({location:{hostname:'www.contextswitch.tech'}}),'https://state-api-6waw.onrender.com');
   });
 
   await check('dashboard payload content minimizer rejects project-content fields',()=>{

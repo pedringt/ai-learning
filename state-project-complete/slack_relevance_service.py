@@ -185,7 +185,7 @@ def _give_up_on_checkpoint(connection: Connection, checkpoint_id: str, now_iso: 
         )
         connection.commit()
         _FAILED_ATTEMPTS.pop(checkpoint_id, None)
-    except Exception:
+    except Exception:  # broad on purpose: background bookkeeping; logged, retried on a later poll
         logger.exception("Could not record giving up on Slack checkpoint %s", checkpoint_id)
         connection.rollback()
 
@@ -217,7 +217,7 @@ def evaluate_due_checkpoints(
     for checkpoint in checkpoints:
         try:
             _evaluate_one(connection, checkpoint, classifier, provider, now_iso)
-        except Exception:
+        except Exception:  # broad on purpose: one checkpoint's failure must not block the rest of the queue
             logger.exception("Slack relevance evaluation failed for checkpoint %s", checkpoint["id"])
             _FAILED_ATTEMPTS[checkpoint["id"]] = _FAILED_ATTEMPTS.get(checkpoint["id"], 0) + 1
             # Discard this checkpoint's half-finished writes before the next one: otherwise Postgres
@@ -251,6 +251,6 @@ async def run_relevance_poll_loop(get_connection, classifier, provider, interval
             await asyncio.to_thread(_evaluate_due_checkpoints_once, get_connection, classifier, provider)
         except asyncio.CancelledError:
             raise
-        except Exception:
+        except Exception:  # broad on purpose: one bad iteration must not kill the background loop
             log.exception("Slack relevance poll loop iteration failed")
         await asyncio.sleep(interval_seconds)

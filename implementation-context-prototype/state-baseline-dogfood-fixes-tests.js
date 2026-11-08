@@ -4,7 +4,7 @@ const index=fs.readFileSync(path.join(dir,'index.html'),'utf8');
 // The three Baseline layers were consolidated into context-baseline.js (#450).
 const fixes=fs.readFileSync(path.join(dir,'context-baseline.js'),'utf8');
 // The dogfood-fixes rules moved from the script into state-app.css (#450).
-const fixesCss=require('./state-layer-css')('context-baseline-dogfood-fixes.js');
+const fixesCss=require('./state-layer-css')('baseline-dogfood-fixes');
 const prompt=fs.readFileSync(path.join(dir,'../state-project-complete/baseline_prompt_hardening.py'),'utf8');
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('ok',name)}else{fail++;console.error('FAIL',name,detail)}}

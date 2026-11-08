@@ -96,6 +96,13 @@ const payload=(review,ask,recent)=>({controlled_evals:{latest_review_interpretat
     const held={scenario_id:'ask_question_answer_no_state_mutation',category:'question_resolution',severity:'medium',failed_checks:['grounding'],failed_items:['missing required fact: answered / resolved']};
     const {els}=await renderPage(payload(null,run('ask_quality',13,0,{overall_pass_rate:12/13,failure_details:[held]}),[]));
     assert.match(els.askSummary.innerHTML,/12\/13 <span class="score-unit">controlled scenarios passed/,'the headline score discloses the failure');
+    // main carries the #640 marker while retrieval is held; staging, which has the retrieval, does not (the catalog says which).
+    const marked=!!(catalog.ask||[]).find(item=>item.id==='ask_question_answer_no_state_mutation')?.known_unsupported;
+    if(!marked){
+      assert.doesNotMatch(els.askSummary.innerHTML,/gate-eligibility/,'no exception here, so no separate gate line');
+      assert.doesNotMatch(els.failureList.innerHTML,/known-unsupported/);
+      return;
+    }
     assert.match(els.askSummary.innerHTML,/<p class="gate-eligibility">Release gate: 12 of 12 eligible scenarios passed; 1 not counted \(known unsupported, #640, 1 failing\)\.<\/p>/);
     assert.match(els.failureList.innerHTML,/<p class="known-unsupported"><strong>Known unsupported in this release, not counted by the release gate:<\/strong> #640: production Ask does not retrieve resolved Questions yet/);
     assert.strictEqual((els.failureList.innerHTML.match(/not counted by the release gate/g)||[]).length,1,'the phrase appears once');

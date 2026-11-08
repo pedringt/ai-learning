@@ -21,7 +21,10 @@ Verified with `tools/style_parity.py`: the full computed style (every property, 
 3. `<style id="v932-manager-readiness">`, `<style id="v9515-learning-type">`
 4. `<link href="site-components.css">`
 5. two unnamed blocks, `<style id="issue176-final-polish">`
-6. (in the body) four more blocks, one of them 10 KB
+6. four more blocks, one of them 10 KB (in the body until Nov 8)
+7. `<link href="site-redesign.css">`
+
+Nov 8 (#628): items 6 and 7 moved from the body to the end of the head, in the same order, so the cascade is unchanged. `site-redesign.css` used to be linked at the end of the body, so the page hid itself (`rd-pending`, up to 2.5 s) until it loaded; in the head it blocks rendering like any stylesheet, and the hide-and-timeout gate is gone. `project-health.html` got the same change. `portfolio_compare.py`: every page identical apart from the moved `<link>`.
 
 Rules of equal specificity are decided by this order, so putting everything in one external file would silently change which rule wins somewhere. A safe externalization would need one file per position, linked at the same place, which adds requests and risk for a purely organizational gain. The site works and looks right; this stays accepted debt beyond the neutral cleanup.
 

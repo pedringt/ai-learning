@@ -146,6 +146,13 @@ window.STATE_APP_NAVIGATION=Object.freeze({install(ctx){
   function render(){ updateNav(); const views={overview:renderOverview,notes:renderNotes,'open-items':renderOpenItems,questions:renderOpenItems,review:renderOpenItems,history:renderHistory,'project-overview':renderProjectOverview,settings:()=>announceView('settings')}; (views[state.view]||renderOverview)(); ASK?.activateWaitStates?.(root); }
 
   const VIEW_ANALYTICS_EVENTS={overview:'workspace_viewed','project-overview':'current_state_viewed','open-items':'open_items_viewed',questions:'open_items_viewed',review:'open_items_viewed',notes:'notes_viewed',history:'history_viewed',settings:'settings_viewed'};
+  // #629: #viewRoot used to be the live region, so a screen reader re-read the whole page on every redraw. Only the
+  // name of the view a person moves to is announced now.
+  const VIEW_NAMES={overview:'Workspace','open-items':'Open Items',questions:'Open Items',review:'Open Items','project-overview':'Current State',notes:'Notes',history:'History',settings:'Settings'};
+  function announceNavigation(view){
+    const announcer=document.getElementById('viewAnnouncer');
+    if(announcer&&VIEW_NAMES[view])announcer.textContent=VIEW_NAMES[view];
+  }
   function navigateTo(view,{preserveHistoryTopic=false,preserveHistoryEvidence=false}={}){
     state.view=view;
     window.StateAnalytics?.track(VIEW_ANALYTICS_EVENTS[view]||'view_changed',{view});
@@ -157,6 +164,7 @@ window.STATE_APP_NAVIGATION=Object.freeze({install(ctx){
     // user can inspect Project, Open Items, Notes, or History and return to the
     // same working Ask. Explicit New ask / reset actions own session cleanup.
     render();
+    announceNavigation(view);
     // Scroll synchronously, in the same tick as render() -- not a frame
     // later via requestAnimationFrame, as this used to do. Leaving a
     // scrolled-down Current State page (with its subnav open) shrinks the

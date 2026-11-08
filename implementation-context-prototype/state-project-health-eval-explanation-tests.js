@@ -202,8 +202,12 @@ function cachedSnapshot(){
     assert.match(story.observed.text,/missing wording does not by itself show the answer is wrong/);
     assert.doesNotMatch(story.observed.text,/left out/,'no claim that the meaning was missing');
     assert.match(story.consequence.text,/A reader who reads only the headline may take away a different status/);
-    assert.match(story.knownUnsupported,/^#640: .*Remove this exception when #640 ships\.$/);
-    assert.doesNotMatch(story.knownUnsupported,/not counted/);
+    // main carries the #640 marker while retrieval is held; staging, which has the retrieval, does not.
+    const marked=(catalog.ask||[]).find(item=>item.id==='ask_question_answer_no_state_mutation')?.known_unsupported;
+    if(marked){
+      assert.match(story.knownUnsupported,/^#640: .*Remove this exception when #640 ships\.$/);
+      assert.doesNotMatch(story.knownUnsupported,/not counted/);
+    }else assert.strictEqual(story.knownUnsupported,null);
   });
   await check('#639: a review failure with recorded items says what the scorer found instead of a gap',()=>{
     const story=M.failureStory({scenario_id:'review_direct_reversal',severity:'high',expected:'update_state',observed:'update_state | proposed State: Password-reset automation is approved and fully operational.',

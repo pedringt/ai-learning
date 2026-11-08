@@ -8,12 +8,14 @@ metrics exclude that operation prefix, so the two never mix.
 """
 from __future__ import annotations
 
+import hmac
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from db import connect
@@ -32,6 +34,71 @@ class ProjectHealthUsageInput(BaseModel):
     duration_ms: int = Field(ge=0, le=600_000)
     input_tokens: int = Field(ge=0, le=1_000_000)
     output_tokens: int = Field(ge=0, le=1_000_000)
+
+
+class ProjectHealthReleaseInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    claim_key: str = Field(pattern=r"^[a-z0-9][a-z0-9:._-]{0,199}$")
+    token: str = Field(pattern=r"^[0-9a-f]{32}$")
+
+
+class ProjectHealthClaimInput(BaseModel):
+    """A cooldown claim for one Project Health paid action (DEC-012 guards, Nov 8). Keys carry no content."""
+    model_config = ConfigDict(extra="forbid")
+
+    claim_key: str = Field(pattern=r"^[a-z0-9][a-z0-9:._-]{0,199}$")
+    ttl_seconds: int = Field(ge=1, le=86_400)
+
+
+def _timestamp(moment: datetime) -> str:
+    return moment.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def claim(connection, claim_key: str, ttl_seconds: int, now: datetime | None = None) -> tuple[str | None, int]:
+    """Take claim_key for ttl_seconds unless an unexpired claim holds it. Returns (token, seconds_left); the token
+    is None when another claim holds the key.
+
+    One upsert decides it, so two parallel requests cannot both win: the row is inserted, or replaced only when
+    the held claim has expired. Reading the token back says whose write stuck.
+    """
+    now = now or datetime.now(timezone.utc)
+    token = uuid.uuid4().hex
+    expires = _timestamp(now + timedelta(seconds=ttl_seconds))
+    connection.execute("DELETE FROM project_health_claims WHERE expires_at < ?", (_timestamp(now - timedelta(days=1)),))
+    connection.execute(
+        "INSERT INTO project_health_claims(claim_key,token,expires_at) VALUES (?,?,?) "
+        "ON CONFLICT(claim_key) DO UPDATE SET token=excluded.token, expires_at=excluded.expires_at "
+        "WHERE project_health_claims.expires_at <= ?",
+        (claim_key, token, expires, _timestamp(now)),
+    )
+    row = dict(connection.execute(
+        "SELECT token, expires_at FROM project_health_claims WHERE claim_key = ?", (claim_key,)
+    ).fetchone())
+    connection.commit()
+    if row["token"] == token:
+        return token, ttl_seconds
+    held_until = datetime.strptime(str(row["expires_at"]), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    return None, max(1, int((held_until - now).total_seconds()))
+
+
+def release(connection, claim_key: str, token: str) -> bool:
+    """Give a claim back early (the action it guarded failed), only with the token that took it."""
+    held = connection.execute(
+        "SELECT 1 FROM project_health_claims WHERE claim_key = ? AND token = ?", (claim_key, token)
+    ).fetchone()
+    connection.execute("DELETE FROM project_health_claims WHERE claim_key = ? AND token = ?", (claim_key, token))
+    connection.commit()
+    return held is not None
+
+
+def _require_usage_key(supplied: str | None) -> None:
+    expected = os.getenv("PROJECT_HEALTH_USAGE_KEY", "").strip()
+    if not expected:
+        raise HTTPException(status_code=503, detail="Project Health usage ingestion is not configured")
+    # Constant-time, like the decisions API: a plain != leaks how much of the key matched (#626).
+    if not hmac.compare_digest(str(supplied or "").encode(), expected.encode()):
+        raise HTTPException(status_code=403, detail="Invalid Project Health usage key")
 
 
 def usage_summary(rows: list[dict], days: int) -> dict:
@@ -79,11 +146,7 @@ def register_project_health_usage(application: FastAPI, settings) -> None:
 
     @application.post("/api/admin/project-health-usage", status_code=201)
     def post_project_health_usage(payload: ProjectHealthUsageInput, x_project_health_usage_key: str | None = Header(default=None)) -> dict:
-        expected = os.getenv("PROJECT_HEALTH_USAGE_KEY", "").strip()
-        if not expected:
-            raise HTTPException(status_code=503, detail="Project Health usage ingestion is not configured")
-        if x_project_health_usage_key != expected:
-            raise HTTPException(status_code=403, detail="Invalid Project Health usage key")
+        _require_usage_key(x_project_health_usage_key)
         connection = connect(settings.connection_url())
         try:
             row_id = f"phusage_{uuid.uuid4().hex[:16]}"
@@ -95,5 +158,27 @@ def register_project_health_usage(application: FastAPI, settings) -> None:
             )
             connection.commit()
             return {"status": "recorded", "id": row_id}
+        finally:
+            connection.close()
+
+    @application.post("/api/admin/project-health-claims")
+    def post_project_health_claim(payload: ProjectHealthClaimInput, x_project_health_usage_key: str | None = Header(default=None)):
+        _require_usage_key(x_project_health_usage_key)
+        connection = connect(settings.connection_url())
+        try:
+            token, seconds = claim(connection, payload.claim_key, payload.ttl_seconds)
+        finally:
+            connection.close()
+        if token:
+            return {"claimed": True, "ttl_seconds": seconds, "token": token}
+        return JSONResponse(status_code=409, content={"claimed": False, "retry_after_seconds": seconds},
+                            headers={"Retry-After": str(seconds)})
+
+    @application.post("/api/admin/project-health-claims/release")
+    def post_project_health_claim_release(payload: ProjectHealthReleaseInput, x_project_health_usage_key: str | None = Header(default=None)) -> dict:
+        _require_usage_key(x_project_health_usage_key)
+        connection = connect(settings.connection_url())
+        try:
+            return {"released": release(connection, payload.claim_key, payload.token)}
         finally:
             connection.close()
