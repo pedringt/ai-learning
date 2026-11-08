@@ -393,6 +393,11 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
         assert intake.review_ids, "Evidence intake itself should still create the linked Review (already covered elsewhere); nothing to check Ask against otherwise."
 
         hedges = ("not ", "n't ", "pending", "awaiting", "yet", "open", "before", "hasn't", "has not")
+        # Also safe (Paige, Nov 8): attributing the word to a source, which is the phrasing Ask's grounding rules
+        # ask for ("Evidence reports Legal said X", "Legal is reported to have said X"), and a plain negation
+        # ("No confirmed retention terms are in Current State"). The first live runs (Nov 8, after #624 put this
+        # test in qa-release) failed only on those two shapes.
+        safe_patterns = (r"\bno\b", r"\breport(s|ed)\b", r"\baccording to\b", r"\b(says|said)\b")
 
         def _unhedged_claims(text, word):
             hits = []
@@ -409,7 +414,7 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
                     start = idx + len(word)
                     continue
                 window = lowered[max(0, idx - 40):idx + len(word) + 20]
-                if not any(h in window for h in hedges):
+                if not any(h in window for h in hedges) and not any(re.search(p, window) for p in safe_patterns):
                     hits.append(text[max(0, idx - 40):idx + len(word) + 20])
                 start = idx + len(word)
             return hits
