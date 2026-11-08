@@ -322,6 +322,20 @@
     return data;
   }
 
+  // #611 (Paige, Nov 4): "Open investigation" opens the drawer with what already exists for the selected project.
+  // Before any investigation has run, that is the rules-based assessment the Overview shows. No request, no model call.
+  function assessmentDrawerHtml(data){
+    const p=data.project,current=overallAttention(data),failed=[];
+    const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
+    if(liveFailure)failed.push(liveFailure.title);
+    (p.quality==='state'?qualityFailureClassSummary(data.quality).details||[]:[]).slice(0,3)
+      .forEach(item=>failed.push(item.title||item.scenario_id||'Quality scenario needs review'));
+    return '<div class="investigation-result agent-result"><div class="agent-kicker">Assessment from current signals</div>'+
+      '<strong>'+esc(current.title)+'</strong><p>'+esc(current.detail||'')+'</p>'+
+      '<h4>What failed</h4>'+(failed.length?'<ul>'+failed.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+
+      '<h4>Recommended next look</h4><p>'+esc(operationalNextDecision(data))+'</p>'+
+      '<p class="footnote">Built by rules from the signals on this page. No AI model was called.</p></div>';
+  }
   function renderDetail(data,doc){
     const p=data.project,d=data.delivery,s=data.staging,q=data.quality,externalQ=data.externalQuality,platform=data.platform,run=data.runInfo,activity=data.activity;
     const pending=pendingSet(data);
@@ -410,7 +424,7 @@
     const historyHtml=historyRows.length
       ?'<div class="history-section"><h4>Previous investigations</h4>'+historyRows.slice(0,5).map(item=>'<div class="activity-item"><strong>'+esc(item.trigger||'Investigation')+'</strong><span>'+esc(fmtDate(item.observedAt))+' · '+esc(item.summary||'Investigation completed')+(item.resolvedAt?' · Resolved '+esc(relativeAge(item.resolvedAt)):'')+'</span></div>').join('')+'</div>'
       :'';
-    if(investigationPanel) investigationPanel.innerHTML=investigationResultHtml(data.investigation)+historyHtml;
+    if(investigationPanel) investigationPanel.innerHTML=(investigationResultHtml(data.investigation)||assessmentDrawerHtml(data))+historyHtml;
     if(investigationDrawerTitle) investigationDrawerTitle.textContent=p.name+' investigation';
     if(investigationDrawerStatus){
       investigationDrawerStatus.textContent=data.investigation?.loading?'Running…':data.investigation?'Latest result available':historyRows.length?'Previous results available':'';
@@ -1353,6 +1367,8 @@
       else dialog.setAttribute('open','');
     }
     if(projectDetail)projectDetail.addEventListener('click',event=>{
+      // #611: opens what already exists (see assessmentDrawerHtml); it never starts an investigation.
+      if(event.target.closest?.('[data-open-investigation]')){openInvestigationDrawer();return;}
       const removeNoteButton=event.target.closest?.('[data-remove-product-note]');
       if(removeNoteButton){
         const data=activeData();if(!data||!decisionKey)return;
