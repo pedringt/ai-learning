@@ -27,7 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import initialize_db
-from db import connect, project_id_of
+from db import DB_ERRORS, connect, project_id_of
 from product_analytics import ProductEventInput, _insert_event, review_conflict_kind
 from spend_guard import AI_BUDGET_MESSAGE, DailySpendCapReached, check_daily_budget, is_ai_budget_exhausted
 from extension_points import ExtensionPoint
@@ -329,7 +329,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 row = connection.execute("SELECT project_id FROM active_project WHERE id=1").fetchone()
                 if row:
                     connection.project_id = row["project_id"]
-            except Exception:  # broad on purpose: speculative lookup; table is absent on first boot (sqlite3 or psycopg2 error)
+            except DB_ERRORS:
                 logger.info("Could not read active_project (expected before migrations); using the default project",
                             exc_info=True)
                 # Production incident (2026-09-14): on Postgres, a failed
@@ -349,7 +349,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             if requested and requested != connection.project_id:
                 try:
                     exists = connection.execute("SELECT id FROM projects WHERE id=?", (requested,)).fetchone()
-                except Exception:  # broad on purpose: unverifiable header falls back to the shared active project
+                except DB_ERRORS:
                     logger.warning("Could not verify requested project %r; using the active project", requested,
                                    exc_info=True)
                     exists = None
