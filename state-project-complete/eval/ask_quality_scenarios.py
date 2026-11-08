@@ -47,6 +47,10 @@ class AskQualityScenario:
     # Measured and reported, but never fails the Ask gate (eval/release_gate.py). For a known hard case
     # tracked in an issue; remove the flag when the issue is fixed (Paige, Oct 27, DEC-017).
     observe_only: bool = False
+    # Nov 7 (Paige, #640/#642): a capability this release configuration does not have. Still run and reported (as a
+    # failure, never as passed), but left out of the Ask gate's checks. The text says why and when it comes off;
+    # remove it when the capability ships.
+    known_unsupported: str = ""
 
 
 SCENARIOS = (

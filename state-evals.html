@@ -43,6 +43,8 @@
     .summary-card .score{font-size:32px;font-weight:850;letter-spacing:-.045em;margin:6px 0 2px}
     .summary-card .score .score-unit{font-size:16px;font-weight:650;letter-spacing:0}
     .summary-card .scoring-version{font-size:12px;opacity:.75;overflow-wrap:anywhere}
+    .summary-card .gate-eligibility{font-size:13px;margin-top:4px}
+    .known-unsupported{background:#fff6e5;border-radius:8px;padding:8px 10px;overflow-wrap:anywhere}
     .synthetic-excerpt{border-left:3px solid #d7d7df;padding-left:10px;font-style:italic;overflow-wrap:anywhere}
     .synthetic-excerpt strong{font-style:normal}
     .summary-card p{margin:0;color:var(--muted);font-size:12px}
@@ -273,7 +275,7 @@
       if(!run){element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">No run yet</div><p>No recorded aggregate result is available.</p>';return;}
       const counts=model?.scenarioCounts?.(run,metric);
       const score=counts?esc(counts.passed+'/'+counts.scored)+' <span class="score-unit">controlled scenarios passed</span>':esc(pct(metric));
-      element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">'+score+'</div><p>'+(counts?esc(pct(metric))+' scenario pass rate':'Scenario count not recorded; '+esc(pct(metric))+' is a scenario pass rate')+', not production accuracy · '+esc(countLabel(run.high_severity_failures??0,'high-impact failure','high-impact failures'))+' · '+esc(fmt(run.created_at))+'</p><p class="scoring-version">Scoring version: '+esc(versionLabel(run))+'</p>';
+      element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">'+score+'</div><p>'+(counts?esc(pct(metric))+' scenario pass rate':'Scenario count not recorded; '+esc(pct(metric))+' is a scenario pass rate')+', not production accuracy · '+esc(countLabel(run.high_severity_failures??0,'high-impact failure','high-impact failures'))+' · '+esc(fmt(run.created_at))+'</p>'+(model?.gateEligibility?.(run)?'<p class="gate-eligibility">'+esc(model.gateEligibility(run).text)+'</p>':'')+'<p class="scoring-version">Scoring version: '+esc(versionLabel(run))+'</p>';
     }
     fetch('/api/project-health-state-quality?env=production',{headers:{Accept:'application/json'}})
       .then(response=>response.ok?response.json():Promise.reject(new Error('Quality data unavailable')))
@@ -299,6 +301,7 @@
             const story=model?model.failureStory(item,item.suite==='review'?review:ask):null;
             return '<article class="failure-item"><h3>'+esc(catalog.title||(model?model.scenarioTitle(item.scenario_id,item.category):item.scenario_id)||'Failed scenario')+'</h3><div class="eyebrow">'+esc(item.scenario_id||'')+'</div>'+
               '<div class="failure-meta"><span>'+esc(item.severity||catalog.severity||'unknown')+' severity</span>'+checks+'</div>'+
+              (story?.knownUnsupported?'<p class="known-unsupported"><strong>Known unsupported in this release, not counted by the release gate:</strong> '+esc(story.knownUnsupported)+'</p>':'')+
               (story?'<p><strong>Observed:</strong> '+esc(story.observed.text)+'</p>'+
                 (story.observed.excerpt?'<p><strong>Proposed State (recorded excerpt):</strong> '+esc(story.observed.excerpt.text)+'</p>':'')+
                 (story.syntheticExcerpt?'<p class="synthetic-excerpt"><strong>'+esc(story.syntheticExcerpt.label)+':</strong> “'+esc(story.syntheticExcerpt.text)+'”</p>':'')+

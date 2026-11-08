@@ -831,16 +831,21 @@
   // #639/#643: the recorded failed items name what was wrong from the scenario's own phrase lists. An invented number is
   // recorded only as the fact that one was invented: the model's answer is not stored (DATA_PRIVACY.md).
   function failedItemFindings(detail){
-    const found={missing:[],asserted:[],invented:false,other:[]};
+    // Each missing fact keeps all its accepted alternatives ("answered" or "resolved").
+    const found={missing:[],asserted:[],invented:false,headlineLacks:[],headlineOpening:'',other:[]};
     for(const raw of (Array.isArray(detail?.failed_items)?detail.failed_items:[])){
       const item=String(raw||'').trim();
-      if(/^missing required fact: /.test(item))found.missing.push(item.replace(/^missing required fact: /,'').split(' / ')[0]);
+      if(/^missing required fact: /.test(item))found.missing.push(item.replace(/^missing required fact: /,'').split(' / '));
+      else if(/^headline lacks: /.test(item))found.headlineLacks.push(item.replace(/^headline lacks: /,'').split(' / '));
+      else if(/^headline opens with forbidden: /.test(item))found.headlineOpening=item.replace(/^headline opens with forbidden: /,'');
       else if(/^asserted forbidden claim: /.test(item))found.asserted.push(item.replace(/^asserted forbidden claim: /,''));
       else if(/^number not in any record/.test(item))found.invented=true;
       else if(item)found.other.push(item);
     }
     return found;
   }
+  // "“answered” or “resolved”; “30 days”": alternatives joined with "or", separate facts with ";".
+  const wordingList=groups=>groups.map(g=>g.length>1?g.slice(0,-1).map(quote).join(', ')+' or '+quote(g[g.length-1]):quote(g[0])).join('; ');
   function phraseList(items,limit=3){
     const list=(Array.isArray(items)?items:[]).map(item=>Array.isArray(item)?item.map(quote).join(' or '):quote(item));
     return list.slice(0,limit).join(', ')+(list.length>limit?' and '+(list.length-limit)+' more':'');
@@ -936,7 +941,11 @@
       const specific=[];
       if(findings.asserted.length)specific.push('The answer said '+findings.asserted.map(quote).join(' and ')+', which this scenario forbids.');
       if(findings.invented)specific.push('The answer gave a number that appears in none of the supplied records.');
-      if(findings.missing.length)specific.push('The answer left out '+findings.missing.map(quote).join(' and ')+'.');
+      if(findings.missing.length)specific.push('Expected wording not found in the answer: '+wordingList(findings.missing)+'.');
+      if(findings.headlineLacks.length)specific.push('Expected wording not found in the headline: '+wordingList(findings.headlineLacks)+'.');
+      if(findings.headlineOpening)specific.push('The headline opens with '+quote(findings.headlineOpening)+', an opening this scenario does not accept for its question.');
+      // #640 review (Paige, Nov 7): these checks look for wording, so say what they show and no more.
+      if(findings.missing.length||findings.headlineLacks.length)specific.push('This check looks for wording: missing wording does not by itself show the answer is wrong.');
       const rest=failed.filter(check=>!['grounding','required_facts','forbidden_claims'].includes(check)||!specific.length);
       if(specific.length)observedParts.push(...specific);
       if(rest.length)observedParts.push('The answer '+rest.map(check=>ASK_CHECKS[check].failed).join('; it ')+'.');
@@ -1024,12 +1033,13 @@
            scenario.unsafe_if==='overstatement'?' The record does not show whether its wording overstated the Evidence.':'');
       }
     }else if(suite==='ask'){
-      direction=askPrimary||findings.asserted.length||findings.invented||findings.missing.length?'answer':'unknown';
+      direction=askPrimary||findings.asserted.length||findings.invented||findings.missing.length||findings.headlineLacks.length||findings.headlineOpening?'answer':'unknown';
       // The specific misleading implication when the record names it (#643); otherwise the check's general risk.
       const implications=[];
       if(findings.asserted.length)implications.push('A reader could believe '+findings.asserted.map(quote).join(' and ')+', which the record does not support.');
       if(findings.invented)implications.push('A reader could take an invented number as an agreed figure.');
-      if(findings.missing.length)implications.push('A reader would not learn '+findings.missing.map(quote).join(' or ')+', which the record establishes.');
+      if(findings.missing.length)implications.push('If the answer does not convey '+wordingList(findings.missing)+', a reader would not learn what the record establishes.');
+      if(findings.headlineLacks.length||findings.headlineOpening)implications.push('A reader who reads only the headline may take away a different status from the one the record shows.');
       consequence=implications.length?implications.join(' ')+' Ask is read-only, so project records are unchanged.'
         :askPrimary?ASK_CHECKS[askPrimary].risk+' Ask is read-only, so project records are unchanged.':'The recorded result does not say which answer check failed.';
     }else{
@@ -1065,6 +1075,8 @@
       evidence,
       observed:{text:reviewedApplies?reviewed.summary:observedParts.join(' '),recorded:reviewedApplies?observedParts.join(' '):null,excerpt:observedExcerpt,source:FROM_RECORD},
       // #643: model output from a synthetic test fixture, kept apart from the explanation above (DATA_PRIVACY.md).
+      // Nov 7 (#640): a capability this release does not have: shown as failing, and as not counted by the gate.
+      knownUnsupported:scenario?.known_unsupported||null,
       syntheticExcerpt:String(detail?.synthetic_answer_excerpt||'').trim()?{label:SYNTHETIC_EXCERPT_LABEL,text:String(detail.synthetic_answer_excerpt).trim()}:null,
       expected:{text:expectedLine,details:expectedDetails,source:scenario?FROM_CATALOG:FROM_RECORD},
       consequence:{text:consequence,direction},
@@ -1784,6 +1796,24 @@
   // #639 (Nov 7): a run records its scoring version (a fingerprint of the scenarios and the scoring code). Runs recorded
   // before then have none and read as "legacy / version unknown"; no version is assigned to them after the fact.
   const LEGACY_SCORING_LABEL='legacy / version unknown';
+  // Nov 7 (#640/#642): scenarios the Ask gate leaves out (known-unsupported capability, or observe-only). Totals still
+  // count them; only gate eligibility does not. Read from the catalog, and only when it has as many scenarios as the
+  // run scored, so a different scenario set is never described.
+  function gateEligibility(run){
+    const suite=run?.suite==='ask_quality'?'ask':run?.suite==='review_interpretation'?'review':null;
+    const catalog=evalCatalog(),list=suite&&Array.isArray(catalog?.[suite])?catalog[suite]:[];
+    const total=Number(run?.total||0);
+    if(!suite||!total||list.length!==total)return null;
+    const excluded=list.filter(item=>item?.known_unsupported||item?.observe_only).map(item=>({id:item.id,known:item.known_unsupported||'',observeOnly:!!item.observe_only}));
+    if(!excluded.length)return null;
+    const failedIds=new Set((Array.isArray(run?.failure_details)?run.failure_details:[]).map(d=>String(d?.scenario_id||'')));
+    const excludedFailed=excluded.filter(item=>failedIds.has(item.id)).length;
+    const eligible=total-excluded.length,eligibleFailed=failedIds.size-excludedFailed;
+    return {eligible,eligibleFailed,eligiblePassed:Math.max(0,eligible-eligibleFailed),excluded,excludedFailed,
+      text:'Release gate: '+Math.max(0,eligible-eligibleFailed)+' of '+eligible+' eligible scenarios passed; '+excluded.length+' not counted ('+
+        excluded.map(item=>item.known?'known unsupported, '+(item.known.match(/#\d+/)||['held'])[0]:'observe-only').join('; ')+
+        (excludedFailed?', '+excludedFailed+' failing':'')+').'};
+  }
   const SYNTHETIC_EXCERPT_LABEL='Synthetic eval excerpt (model answer to a test fixture)';
   function scoringVersionLabel(run){const v=String(run?.scoring_version||'').trim();return v||LEGACY_SCORING_LABEL;}
   function runComparability(current,previous,contractChangedAt){
@@ -2210,5 +2240,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,gateEligibility,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

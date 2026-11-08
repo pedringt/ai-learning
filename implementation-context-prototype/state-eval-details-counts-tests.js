@@ -92,6 +92,27 @@ const payload=(review,ask,recent)=>({controlled_evals:{latest_review_interpretat
     assert.match(withExcerpt.els.failureList.innerHTML,/<p class="synthetic-excerpt"><strong>Synthetic eval excerpt \(model answer to a test fixture\):<\/strong> “Use 75% as the agreed target\.”<\/p>/);
   });
 
+  await check('#640/#642: the total still counts the held scenario; gate eligibility is shown separately',async()=>{
+    const held={scenario_id:'ask_question_answer_no_state_mutation',category:'question_resolution',severity:'medium',failed_checks:['grounding'],failed_items:['missing required fact: answered / resolved']};
+    const {els}=await renderPage(payload(null,run('ask_quality',13,0,{overall_pass_rate:12/13,failure_details:[held]}),[]));
+    assert.match(els.askSummary.innerHTML,/12\/13 <span class="score-unit">controlled scenarios passed/,'the headline score discloses the failure');
+    // main carries the #640 marker while retrieval is held; staging, which has the retrieval, does not (the catalog says which).
+    const marked=!!(catalog.ask||[]).find(item=>item.id==='ask_question_answer_no_state_mutation')?.known_unsupported;
+    if(!marked){
+      assert.doesNotMatch(els.askSummary.innerHTML,/gate-eligibility/,'no exception here, so no separate gate line');
+      assert.doesNotMatch(els.failureList.innerHTML,/known-unsupported/);
+      return;
+    }
+    assert.match(els.askSummary.innerHTML,/<p class="gate-eligibility">Release gate: 12 of 12 eligible scenarios passed; 1 not counted \(known unsupported, #640, 1 failing\)\.<\/p>/);
+    assert.match(els.failureList.innerHTML,/<p class="known-unsupported"><strong>Known unsupported in this release, not counted by the release gate:<\/strong> #640: production Ask does not retrieve resolved Questions yet/);
+    assert.strictEqual((els.failureList.innerHTML.match(/not counted by the release gate/g)||[]).length,1,'the phrase appears once');
+    assert.match(els.failureList.innerHTML,/Expected wording not found in the answer: “answered” or “resolved”\./);
+    const other={scenario_id:'ask_blocker_not_omitted',category:'important_omission',severity:'high',failed_checks:['uncertainty']};
+    const both=await renderPage(payload(null,run('ask_quality',13,1,{overall_pass_rate:11/13,failure_details:[held,other]}),[]));
+    assert.match(both.els.askSummary.innerHTML,/11\/13 <span[\s\S]*Release gate: 11 of 12 eligible scenarios passed/);
+    assert.strictEqual((both.els.failureList.innerHTML.match(/class="known-unsupported"/g)||[]).length,1,'only the held scenario carries the note');
+  });
+
   console.log(`\n${pass} passed, ${fail} failed`);
   if(fail)process.exit(1);
 })();

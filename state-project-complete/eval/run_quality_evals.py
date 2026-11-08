@@ -35,7 +35,7 @@ from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 from eval.authority_lab_export import build_envelope
 from eval.scoring_version import scoring_version
 from eval.quality_report import analytics_payload as _analytics_payload, failure_details as _failure_details
-from eval.release_gate import ASK_SUITE, REVIEW_SUITE, fetch_analytics, gate, previous_failed_ids
+from eval.release_gate import ASK_SUITE, REVIEW_SUITE, fetch_analytics, gate, not_counted, previous_failed_ids
 
 
 def _record(url: str, key: str, payload: dict) -> None:
@@ -241,6 +241,8 @@ def main() -> int:
 
     # RELEASE.md's reading rules decide the exit code, not "any miss" (Oct 19).
     reasons = gate(reports, {REVIEW_SUITE: REVIEW_SCENARIOS, ASK_SUITE: ASK_SCENARIOS}, previous)
+    for line in not_counted(reports, {REVIEW_SUITE: REVIEW_SCENARIOS, ASK_SUITE: ASK_SCENARIOS}):
+        print("  " + line)
     print("\nRelease reading (RELEASE.md):")
     for suite, why in reasons.items():
         note = "" if previous.get(suite) is not None else " (previous run unknown, consecutive check skipped)"
