@@ -596,7 +596,7 @@
 
       @media(max-width:760px){
         html body .open-items-page .open-question-list,html body .open-items-page .review-card,html body .open-items-page .compact-review{max-width:100%!important}
-        html body #askStateDrawer .ask-state-drawer-form input{height:41px;min-height:41px;max-height:41px;padding-right:47px;font-size:14px}
+        html body #askStateDrawer .ask-state-drawer-form input{height:41px;min-height:41px;max-height:41px;padding-right:47px;font-size:16px}
         html body #askStateDrawer .ask-state-drawer-form button[type='submit']{position:absolute!important;right:5px!important;top:50%!important;bottom:auto!important;transform:translateY(-50%)!important;width:31px!important;height:31px!important;min-width:31px!important;padding:0!important}
         html body #askStateDrawer .state-ask-reset{right:5px!important;width:31px!important;height:31px!important;line-height:31px!important}
         .dialog{padding:17px}
@@ -1311,6 +1311,15 @@ html:not(#_#_#_) #askStateDrawer[data-ask-controls="asking"] .ask-state-drawer-f
 html:not(#_#_#_) #askStateDrawer[data-ask-controls="answered"] .ask-state-drawer-form .state-ask-reset{display:block!important;visibility:visible!important}
 html:not(#_#_#_) #askStateDrawer[data-ask-controls="asking"] .ask-state-drawer-form button[type="submit"]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
 html:not(#_#_#_) #askStateDrawer[data-ask-controls="answered"] .ask-state-drawer-form button[type="submit"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+
+/* #612 (Nov 8): phone tap targets at least 24px tall (WCAG 2.2 SC 2.5.8) without moving anything. An invisible
+   ::after (out of flow, so no layout effect) extends the tap area; clicks on it reach the control. These controls are
+   all statically positioned on phones, so relative positioning only anchors the ::after; inset:auto keeps the desktop
+   offsets of the Current State "Browse" link from shifting it. html:not(#_#_#_) outranks their existing rules. */
+@media(max-width:760px){
+  html:not(#_#_#_) .text-button,html:not(#_#_#_) .product-case-study,html:not(#_#_#_) details.reasoning>summary{position:relative!important;inset:auto!important}
+  html:not(#_#_#_) .text-button::after,html:not(#_#_#_) .product-case-study::after,html:not(#_#_#_) details.reasoning>summary::after{content:"";position:absolute;left:0;right:0;top:50%;height:max(100%,28px);transform:translateY(-50%)}
+}
 
 /* #482: inline validation message in dialogs (new project name). */
 .dialog-field-error{margin:6px 0 0;color:#b42318;font-size:13px;font-weight:600}
