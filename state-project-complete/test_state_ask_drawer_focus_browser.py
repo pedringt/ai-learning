@@ -43,6 +43,7 @@ def test_phone_drawer_is_a_modal_dialog(width):
     browser = _launch(pw)
     try:
         page = _page(browser, width)
+        page.wait_for_timeout(1500)  # let the first renders finish so the page height is stable before scrolling
         page.evaluate("window.scrollTo(0, 120)")
         scroll_before = page.evaluate("window.scrollY")
         page.locator("#askStateLauncher").click()

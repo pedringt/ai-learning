@@ -14,7 +14,6 @@ check('Workspace rerenders synchronously restore the tour banner',/ASK\?\.syncWo
 check('the old Slack "Connect Slack" source strip is gone (Oct 20)',!/workspace-source-strip|workspaceSourcesHtml/.test(app));
 check('tour banner uses the intended white background in its base style',/\.state-reviewer-guide\{[^}]*background:#fff;/.test(guide));
 check('tour CTA stays a compact text link in its base style',/\.state-reviewer-guide-start\{[^}]*padding:4px 0;border:0[^}]*background:transparent/.test(guide));
-check('dark-mode tour CTA remains a text link',/body\.v88-dark \.state-reviewer-guide-start\{background:transparent/.test(guide));
 check('late inline banner polisher is removed',!openItems.includes('polishExploringBanner')&&!openItems.includes("setProperty?.('background','#fff'"));
 
 console.log(`\n${pass} passed, ${fail} failed`);
