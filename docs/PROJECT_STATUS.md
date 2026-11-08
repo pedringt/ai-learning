@@ -11,8 +11,10 @@ _Last updated: November 8, 2026, Pacific time. One dated current-state section, 
   - the Nov 5 audit follow-up batches: #619-#621, #625-#627, #629;
   - the State CSS cleanup (#648): dead rules, overridden declarations, about 790 `!important` flags and 132 `html body` prefixes removed, each proven with `scripts/state_ui_compare/compare.py`;
   - the eval session's #640 work that changes Ask behaviour (held on staging; DEC-013's Nov 7 update);
-  - the Nov 8 batch: DEC-012 guards (Project Health cooldown claims, migration 023), #624, #630, #622, #628, #623.
-  - **Deep QA:** 17/17 on `b3f20aa` (Nov 8), before the Nov 8 batch.
+  - the Nov 8 batch: DEC-012 guards (Project Health cooldown claims, migration 023), #624, #630, #622 (frontend half), #628, #623;
+  - DEC-019: the model-key tests #624 added to `qa-release` rerun a failure once and block only if it fails again (#649 tracks a Baseline case they found);
+  - the portfolio's Ignored Build Step now asks GitHub's compare API (`api/_vercel-ignore-build.js`); the git version never skipped because `.vercelignore` removes `.git` first.
+  - **Checks on staging (Nov 8):** Deep QA 17/17 on `3e567de`; `qa-release` against `main` passed on `e2b0e26` (eval 100/100, model-key tests 72 passed). Later pushes added the other session's #640 Answered Questions view; re-run Deep QA before promoting.
   - Before promoting: migration 023 is a schema change, so take a production backup first (`CLAUDE.md`).
 - **Production:** portfolio `https://www.contextswitch.tech/`, State `https://state.contextswitch.tech/`, API `https://state-api-6waw.onrender.com`. **Data** is SQLite on the `state-api` persistent disk (`/var/data/state.db`), not Postgres; backups per `CLAUDE.md`.
 - **Model:** `claude-haiku-5-5` (code default). Rollback and model history: `docs/history/PROJECT_STATUS_THROUGH_2026-10-27.md` (Oct 10 and Oct 20 sections).
