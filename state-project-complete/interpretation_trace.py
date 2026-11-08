@@ -157,9 +157,9 @@ class TracingProvider:
         try:
             self.prompt = builder(context, evidence, connection)
             self.prompt_capture_kind = "same-input provider prompt builder"
-        except Exception as exc:  # tracing must never break interpretation
+        except Exception as exc:  # broad on purpose: tracing must never break interpretation
             self.prompt_capture_kind = f"prompt capture unavailable: {type(exc).__name__}"
-            logger.warning("Trace prompt capture failed: %s", exc)
+            logger.warning("Trace prompt capture failed: %s", exc, exc_info=True)
 
     def interpret(self, *, context: Any, evidence: Mapping[str, Any], connection: Any = None) -> Mapping[str, Any]:
         self.context = _context_snapshot(context)
@@ -177,7 +177,7 @@ class TracingProvider:
             output = self._provider.interpret(**kwargs)
             self.raw_output = deepcopy(dict(output))
             return output
-        except Exception as exc:
+        except Exception as exc:  # broad on purpose: records the error then re-raises
             self.provider_error = f"{type(exc).__name__}: {exc}"
             raise
         finally:
@@ -200,6 +200,12 @@ def _state_versions(connection: Any) -> Mapping[str, int]:
         (project_id_of(connection),),
     ).fetchall()
     return {row["id"]: int(row["version"]) for row in rows}
+
+
+def _rollback_if_postgres(connection: Any) -> None:
+    """A failed SELECT leaves a Postgres transaction aborted until rolled back (CLAUDE.md, Sept 14)."""
+    if getattr(connection, "is_postgres", False):
+        connection.rollback()
 
 
 def _review_actions(connection: Any, review_ids: tuple[str, ...] | list[str]) -> list[Mapping[str, Any]]:
@@ -225,8 +231,9 @@ def _review_actions(connection: Any, review_ids: tuple[str, ...] | list[str]) ->
                     (review_id,),
                 ).fetchall()
             ]
-        except Exception:
-            pass
+        except Exception:  # broad on purpose: optional table on older schemas (sqlite3 or psycopg2 error)
+            logger.warning("Trace could not read review_questions for %s", review_id, exc_info=True)
+            _rollback_if_postgres(connection)
         proposed_questions: list[Mapping[str, Any]] = []
         try:
             proposed_questions = [
@@ -236,8 +243,9 @@ def _review_actions(connection: Any, review_ids: tuple[str, ...] | list[str]) ->
                     (review_id,),
                 ).fetchall()
             ]
-        except Exception:
-            pass
+        except Exception:  # broad on purpose: optional table on older schemas (sqlite3 or psycopg2 error)
+            logger.warning("Trace could not read proposed_questions for %s", review_id, exc_info=True)
+            _rollback_if_postgres(connection)
         actions.append(
             {
                 "review": dict(review),

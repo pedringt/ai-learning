@@ -565,7 +565,7 @@ def register_product_analytics(application: FastAPI, settings) -> None:
             ))
         try:
             response = await call_next(request)
-        except Exception:
+        except Exception:  # broad on purpose: records the failure event then re-raises
             elapsed_ms = int((time.perf_counter() - started) * 1000)
             await run_in_threadpool(record, ProductEventInput(
                 name="ask_failed" if is_ask else "api_failure",

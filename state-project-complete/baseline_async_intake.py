@@ -111,14 +111,14 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
 
         try:
             api_core.process_evidence(connection, evidence_id=evidence_id, provider=provider)
-        except Exception:
+        except Exception:  # broad on purpose: background-task safety net; logged below, Evidence marked failed
             # Most provider/contract failures are already persisted by
             # process_evidence. This fallback handles unexpected failures so the
             # UI does not display an Evidence item as "Analyzing" forever.
             try:
                 connection.rollback()
-            except Exception:
-                pass
+            except Exception:  # broad on purpose: a failed rollback must not stop marking the Evidence failed
+                logger.warning("Rollback after Baseline analysis failure failed for %s", evidence_id, exc_info=True)
 
             # Deletion can race the provider call itself. Re-check after the
             # failure; if the project/Evidence disappeared, there is nothing
@@ -132,7 +132,7 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
                     "SELECT id FROM evidence WHERE id=? AND project_id=?",
                     (evidence_id, project_id),
                 ).fetchone()
-            except Exception:
+            except Exception:  # broad on purpose: any re-check failure falls through to marking the Evidence failed
                 # #548 (Paige, Oct 20): a failed re-check is not a deletion. Fall through and mark the
                 # Evidence failed (retryable) so the UI never shows "Analyzing" forever.
                 logger.warning("Could not re-check Baseline Evidence %s after a failure", evidence_id, exc_info=True)
@@ -155,7 +155,7 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
                     (evidence_id, project_id),
                 )
                 connection.commit()
-            except Exception:
+            except Exception:  # broad on purpose: last write of a background task; logged, nothing left to do
                 logger.exception("Could not mark failed Baseline Evidence %s", evidence_id)
     finally:
         connection.close()

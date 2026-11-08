@@ -105,7 +105,7 @@ def check_daily_budget(connection: Any, now: datetime | None = None) -> None:
         return
     try:
         spent = today_spend_usd(connection, now)
-    except Exception:
+    except Exception:  # broad on purpose: the spend guard fails open (loudly) rather than taking Ask down
         # The guard must never take State down: if the metrics table cannot be read, allow the call
         # (and on Postgres clear the aborted transaction, CLAUDE.md Sept 14 incident).
         # #548 (Paige, Oct 20): still fails open (a broken metrics table must not take Ask down), but loudly.

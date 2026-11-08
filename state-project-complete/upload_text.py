@@ -6,10 +6,13 @@ which used to carry identical copies (#620). Errors are 422s with a code the fro
 from __future__ import annotations
 
 import io
+import logging
 
 from docx import Document as DocxDocument
 from fastapi import HTTPException
 from pypdf import PdfReader
+
+logger = logging.getLogger("state.upload")
 
 UPLOAD_EXTENSIONS = {".txt", ".md", ".pdf", ".docx"}
 UPLOAD_MAX_BYTES = 15_000_000
@@ -33,7 +36,8 @@ def extract_upload_text(raw: bytes, extension: str) -> str:
             pages_text = [page.extract_text() or "" for page in reader.pages]
         except HTTPException:
             raise
-        except Exception as exc:
+        except Exception as exc:  # broad on purpose: pypdf raises many types on corrupt input; all become a 422
+            logger.info("Uploaded PDF could not be parsed (%s)", type(exc).__name__)
             raise unreadable("That PDF could not be read. It may be corrupted.") from exc
         text = "\n\n".join(pages_text).strip()
         if not text:
@@ -48,7 +52,8 @@ def extract_upload_text(raw: bytes, extension: str) -> str:
     if extension == ".docx":
         try:
             document = DocxDocument(io.BytesIO(raw))
-        except Exception as exc:
+        except Exception as exc:  # broad on purpose: python-docx/zipfile/lxml raise many types on corrupt input; all become a 422
+            logger.info("Uploaded .docx could not be parsed (%s)", type(exc).__name__)
             raise unreadable("That .docx file could not be read. It may be corrupted.") from exc
         parts = [p.text for p in document.paragraphs if p.text.strip()]
         for table in document.tables:

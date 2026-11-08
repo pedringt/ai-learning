@@ -327,7 +327,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 row = connection.execute("SELECT project_id FROM active_project WHERE id=1").fetchone()
                 if row:
                     connection.project_id = row["project_id"]
-            except Exception:
+            except Exception:  # broad on purpose: speculative lookup; table is absent on first boot (sqlite3 or psycopg2 error)
+                logger.info("Could not read active_project (expected before migrations); using the default project",
+                            exc_info=True)
                 # Production incident (2026-09-14): on Postgres, a failed
                 # SELECT against a not-yet-existing table poisons the whole
                 # transaction until an explicit ROLLBACK -- unlike SQLite,
@@ -345,7 +347,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             if requested and requested != connection.project_id:
                 try:
                     exists = connection.execute("SELECT id FROM projects WHERE id=?", (requested,)).fetchone()
-                except Exception:
+                except Exception:  # broad on purpose: unverifiable header falls back to the shared active project
+                    logger.warning("Could not verify requested project %r; using the active project", requested,
+                                   exc_info=True)
                     exists = None
                     if connection.is_postgres:
                         connection.rollback()
@@ -830,7 +834,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 ))
             finally:
                 connection.close()
-        except Exception:
+        except Exception:  # broad on purpose: best-effort analytics write on its own connection; the 409 must still return
             logger.warning("Could not record a refused review conflict", exc_info=True)
 
     @app.post("/api/reviews/{review_id}/resolve")
@@ -965,7 +969,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             except (ValueError, TypeError, json.JSONDecodeError) as exc:
                 logger.warning("Streaming Ask contract failure after retry: %s", exc)
                 yield "event: error\ndata: {\"message\": \"Ask could not produce a valid grounded answer\"}\n\n"
-            except Exception as exc:
+            except Exception as exc:  # broad on purpose: stream-level safety net; any provider failure becomes an error event
                 logger.exception("Streaming Ask provider failure")
                 message = AI_BUDGET_MESSAGE if is_ai_budget_exhausted(exc) else "Ask is temporarily unavailable. Please try again."
                 yield f"event: error\ndata: {json.dumps({'message': message})}\n\n"
@@ -1016,7 +1020,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         except (ValueError, TypeError) as exc:
             logger.warning("Ask contract failure after retry: %s", exc)
             raise HTTPException(status_code=422, detail="Ask could not produce a valid grounded answer") from exc
-        except Exception as exc:
+        except Exception as exc:  # broad on purpose: request-level safety net; any provider failure becomes a 503
             logger.exception("Ask provider failure")
             if is_ai_budget_exhausted(exc):
                 raise HTTPException(status_code=503, detail=AI_BUDGET_MESSAGE) from exc

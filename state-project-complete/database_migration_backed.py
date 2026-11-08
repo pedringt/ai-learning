@@ -280,7 +280,7 @@ def initialize_db(connection: Connection) -> None:
             if rebuild_sqlite and connection.execute("PRAGMA foreign_key_check").fetchall():
                 raise RuntimeError(f"Foreign key check failed during migration {version}")
             connection.execute("COMMIT")
-        except Exception:
+        except Exception:  # broad on purpose: rollback then re-raise
             connection.execute("ROLLBACK")
             raise
         finally:
@@ -296,7 +296,7 @@ def initialize_db(connection: Connection) -> None:
         _install_evidence_immutability(connection)
         _install_slack_checkpoint_immutability(connection)
         connection.execute("COMMIT")
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
 

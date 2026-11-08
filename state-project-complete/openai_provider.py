@@ -227,7 +227,7 @@ class OpenAIProvider:
                 "SELECT id, text, blocking, blocks FROM questions WHERE status='open' AND project_id=? ORDER BY created_at, id",
                 (project_id_of(connection),),
             ).fetchall()
-        except Exception as exc:
+        except Exception as exc:  # broad on purpose: re-raised unless it is the pre-013 missing-column error (sqlite3 or psycopg2)
             if not _missing_project_id_column(exc):
                 raise
             if getattr(connection, "is_postgres", False):
@@ -244,7 +244,7 @@ class OpenAIProvider:
                 "SELECT statement, COALESCE(rationale, 'Interpretation') FROM project_rules WHERE status='active' AND project_id=? ORDER BY created_at, id",
                 (project_id_of(connection),),
             ).fetchall()
-        except Exception:
+        except Exception:  # broad on purpose: rules are optional prompt context; degrade to none, logged
             logger.warning("Could not read project rules; interpreting without them", exc_info=True)
             if getattr(connection, "is_postgres", False):
                 connection.rollback()

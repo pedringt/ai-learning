@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import uuid
 from dataclasses import dataclass
@@ -16,6 +17,8 @@ from .semantic_validation import (
     StructuredInterpretationSemanticError,
     validate_semantics,
 )
+
+logger = logging.getLogger("state.interpretation.validation")
 
 
 class InterpretationProvider(Protocol):
@@ -148,7 +151,7 @@ def _persist_success(connection: sqlite3.Connection, *, evidence_id: str, provid
                 )
         connection.execute("UPDATE evidence SET processing_status='processed' WHERE id=?", (evidence_id,))
         connection.execute("COMMIT")
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
     return ProcessResult(record_id, "succeeded", tuple(review_ids))
@@ -166,7 +169,7 @@ def _persist_failure(connection: sqlite3.Connection, *, evidence_id: str, provid
         )
         connection.execute("UPDATE evidence SET processing_status='failed' WHERE id=?", (evidence_id,))
         connection.execute("COMMIT")
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
     return ProcessResult(record_id, "failed")
@@ -187,6 +190,7 @@ def process_evidence(connection: sqlite3.Connection, *, evidence_id: str, provid
         return _persist_failure(connection, evidence_id=evidence_id, provider=provider, payload=payload, error_code="schema_violation")
     except StructuredInterpretationSemanticError as exc:
         return _persist_failure(connection, evidence_id=evidence_id, provider=provider, payload=payload, error_code=exc.code)
-    except Exception:
+    except Exception:  # broad on purpose: any provider failure is persisted as provider_error
+        logger.warning("Provider error while interpreting evidence %s", evidence_id, exc_info=True)
         return _persist_failure(connection, evidence_id=evidence_id, provider=provider, payload=payload, error_code="provider_error")
     return _persist_success(connection, evidence_id=evidence_id, provider=provider, payload=payload)
