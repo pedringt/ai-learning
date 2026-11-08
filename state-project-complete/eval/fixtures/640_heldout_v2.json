@@ -1,0 +1,43 @@
+{
+  "about": "Held-out set v2 for #640's direct record-built response (written Nov 8 after held-out run 1, which is now development data). Frozen before its single run; do not tune against it before reporting. Synthetic; topics are new (none from v1, the 43 development answers or earlier fixtures). Expected labels are Claude's. It deliberately includes cases the Nov 8 fixes do not cover (an -ation word whose verb is not '-ate', list requests, pronoun-only requests, new answer-quality wording) so it is not written around those fixes.",
+  "questions": [
+    {"id": "v-hr-owner", "text": "Who in HR owns the onboarding checklist?", "status": "resolved", "answer": "HR operations confirmed Priya owns the onboarding checklist."},
+    {"id": "v-us-region", "text": "Which AWS region hosts US customer logs?", "status": "resolved", "answer": "Infrastructure confirmed US customer logs are hosted in us-east-1."},
+    {"id": "v-eu-region", "text": "Which AWS region hosts EU customer logs?", "status": "open"},
+    {"id": "v-migration", "text": "When does the ticket migration to the new queue start?", "status": "resolved", "answer": "Operations scheduled the ticket migration to start on November 20."},
+    {"id": "v-cancel", "text": "Can customers cancel the pilot contract early?", "status": "resolved", "answer": "Legal confirmed customers may cancel with 30 days' notice."},
+    {"id": "v-notify", "text": "Must we notify users before the AI assistant replies?", "status": "open", "answer": "Draft: show a banner before the first reply."},
+    {"id": "v-internal-pricing", "text": "What pricing applies to internal users?", "status": "resolved", "answer": "Finance set internal users at no charge during the pilot."},
+    {"id": "v-external-pricing", "text": "What pricing applies to external users?", "status": "open"},
+    {"id": "v-dashboard", "text": "Which metrics belong on the executive dashboard?", "status": "resolved", "answer": "Product leadership chose resolution time, escalation rate and CSAT."},
+    {"id": "v-accessibility", "text": "Does the agent console meet WCAG AA?", "status": "open"},
+    {"id": "v-backup", "text": "How often are conversation transcripts backed up?", "status": "resolved", "answer": "Infrastructure confirmed transcripts are backed up every six hours."},
+    {"id": "v-vendor-sla", "text": "What uptime does the vendor guarantee in its SLA?", "status": "resolved", "answer": "Procurement confirmed the vendor guarantees 99.9% uptime."}
+  ],
+  "requests": [
+    {"text": "Was the HR onboarding checklist question answered?", "in_scope": true, "match": "v-hr-owner", "asks": "answered"},
+    {"text": "Has HR answered who owns the onboarding checklist?", "in_scope": true, "match": "v-hr-owner", "asks": "answered", "note": "answerer named; HR is also in the Question"},
+    {"text": "Was the US log region question answered?", "in_scope": true, "match": "v-us-region", "asks": "answered", "note": "two-letter acronym decides US vs EU"},
+    {"text": "Is the EU log region question still open?", "in_scope": true, "match": "v-eu-region", "asks": "open"},
+    {"text": "Is the log region question answered?", "in_scope": true, "match": "clarify", "note": "US vs EU"},
+    {"text": "Has Operations answered when the ticket migration starts?", "in_scope": true, "match": "v-migration", "asks": "answered", "note": "answerer named; Operations only in the recorded answer"},
+    {"text": "Was the migration question resolved?", "in_scope": true, "match": "v-migration", "asks": "answered", "note": "one unique word"},
+    {"text": "Was the contract cancellation question answered?", "in_scope": true, "match": "v-cancel", "asks": "answered", "note": "cancellation vs cancel: not an -ate verb; 'contract' also shared"},
+    {"text": "Is the cancellation question answered?", "in_scope": true, "match": "v-cancel", "asks": "answered", "note": "cancellation vs cancel with no other shared word"},
+    {"text": "Is the user notification question answered?", "in_scope": true, "match": "v-notify", "asks": "answered", "note": "open with draft text: must report open; notification vs notify"},
+    {"text": "Was the internal pricing question answered?", "in_scope": true, "match": "v-internal-pricing", "asks": "answered"},
+    {"text": "Is the external user pricing question still unanswered?", "in_scope": true, "match": "v-external-pricing", "asks": "open"},
+    {"text": "Is the pricing question answered?", "in_scope": true, "match": "clarify", "note": "internal vs external"},
+    {"text": "Was the executive dashboard question answered?", "in_scope": true, "match": "v-dashboard", "asks": "answered"},
+    {"text": "Is the WCAG question still open?", "in_scope": true, "match": "v-accessibility", "asks": "open", "note": "acronym of four letters"},
+    {"text": "Was the transcript backup question answered?", "in_scope": true, "match": "v-backup", "asks": "answered"},
+    {"text": "Has Procurement answered the vendor SLA question?", "in_scope": true, "match": "v-vendor-sla", "asks": "answered", "note": "three-letter acronym and answerer"},
+    {"text": "Was it answered?", "in_scope": true, "match": "none", "note": "pronoun only: no Question is named, so normal Ask"},
+    {"text": "Which questions are still open about the migration?", "in_scope": true, "match": "none", "note": "a list request, not one Question's status: must not be answered with a single record. Labelled none (pass-through); a direct answer here is an intercept."},
+    {"text": "Is the vendor SLA question answered satisfactorily?", "in_scope": false, "note": "answer quality, wording not in the exclusion list"},
+    {"text": "Is the backup answer outdated?", "in_scope": false, "note": "validity"},
+    {"text": "Is the dashboard settled?", "in_scope": false},
+    {"text": "What did Legal decide about cancelling early?", "in_scope": false},
+    {"text": "Was the question about the holiday party answered?", "in_scope": true, "match": "none"}
+  ]
+}

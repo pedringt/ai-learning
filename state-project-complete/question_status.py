@@ -51,6 +51,10 @@ def normalize(word: str) -> str:
     w = word.lower()
     if w in _DERIVATIONS:
         w = _DERIVATIONS[w]
+    elif len(w) >= 9 and w.endswith("ations"):  # escalations -> escalate
+        w = w[:-6] + "ate"
+    elif len(w) >= 8 and w.endswith("ation"):  # escalation -> escalate (held-out run 1, Nov 8); "station" (7) is too short
+        w = w[:-5] + "ate"
     else:
         for suffix, keep in (("ies", "y"), ("ied", "y"), ("ing", ""), ("ed", ""), ("es", ""), ("s", "")):
             if len(w) > len(suffix) + 3 and w.endswith(suffix) and not w.endswith("ss"):
@@ -63,9 +67,13 @@ def normalize(word: str) -> str:
 
 
 def identity_terms(text: str) -> set[str]:
-    """Normalized words that can name a Question: no stop words, no status words, hyphenated words split."""
-    words = re.findall(r"[a-z0-9]+", (text or "").lower())
-    return {normalize(w) for w in words if len(w) > 2 and w not in _STOP and w not in STATUS_WORDS}
+    """Normalized words that can name a Question: no stop words, no status words, hyphenated words split. Words under
+    three letters are dropped unless written in capitals (EU, US, AI, HR): held-out run 1 lost "EU" (Nov 8)."""
+    raw = text or ""
+    acronyms = {w.lower() for w in re.findall(r"\b[A-Z]{2}\b", raw)}
+    words = re.findall(r"[a-z0-9]+", raw.lower())
+    return {normalize(w) for w in words
+            if (len(w) > 2 or w in acronyms) and w not in _STOP and w not in STATUS_WORDS}
 
 
 # ---------------------------------------------------------------------------------------------- request scope
@@ -135,11 +143,17 @@ def match_question(request: str, questions: Sequence[Mapping[str, Any]]) -> Matc
     top_score, top = candidates[0]
     runner_up = candidates[1][0] if len(candidates) > 1 else 0
     shortlist = tuple(q for _, q in candidates[:MAX_CANDIDATES])
-    if top_score < MIN_SHARED:
-        return Match("clarify", candidates=shortlist, reason=f"best match shares only {top_score} word")
+    # One shared word is enough when no other Question shares any word with the request: a unique topic can be
+    # named by one word ("Was the escalation question answered?"; Paige, Nov 8). Shared by several, it asks.
+    if top_score < MIN_SHARED and len(candidates) > 1:
+        return Match("clarify", candidates=shortlist, reason=f"best match shares only {top_score} word and others share one too")
     if top_score - runner_up < MIN_LEAD:
         return Match("clarify", candidates=shortlist, reason="two Questions match equally")
     top_terms = identity_terms(top.get("text", ""))
+    # A request word the top record's own recorded answer explains (who answered it, e.g. "Has Security answered...")
+    # is not evidence for another Question (held-out run 1, Nov 8). Identity itself still comes from Question text.
+    if is_resolved(top):
+        top_terms |= identity_terms(str(top.get("answer") or ""))
     unexplained = wanted - top_terms
     conflict = [w for w in unexplained if any(w in identity_terms(q.get("text", "")) for _, q in candidates[1:])]
     if conflict:

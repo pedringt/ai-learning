@@ -19,8 +19,8 @@ from question_status import is_resolved, route
 PATH = Path(__file__).parent / "fixtures" / "640_heldout_v1.json"
 
 
-def evaluate(data: dict[str, Any] | None = None) -> list[dict[str, Any]]:
-    data = data or json.loads(PATH.read_text())
+def evaluate(data: dict[str, Any] | None = None, path: Path | None = None) -> list[dict[str, Any]]:
+    data = data or json.loads((path or PATH).read_text())
     questions = data["questions"]
     by_id = {q["id"]: q for q in questions}
     rows = []

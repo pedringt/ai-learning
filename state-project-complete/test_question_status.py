@@ -91,12 +91,21 @@ def test_a_conflicting_scope_word_asks_even_when_one_candidate_scores_higher():
 
 
 @pytest.mark.parametrize("request_text", [
-    "Is the vendor question answered?",                # a single shared word is a weak match
-    "Is the budget question answered?",
-    "Was the customer question resolved?",
+    "Is the password question answered?",              # one word shared by two Questions (privileged, standard)
+    "Is the reset automation question answered?",      # the same words in both password Questions
+    "Is the customer password question answered?",     # one word each from different Questions
 ])
 def test_weak_and_misleading_near_matches_ask_instead_of_guessing(request_text):
     assert match_question(request_text, QUESTIONS).kind == "clarify"
+
+
+@pytest.mark.parametrize("request_text,expected", [
+    ("Is the vendor question answered?", "vend"),      # one word, and only one Question has it (Paige, Nov 8)
+    ("Is the budget question answered?", "budget"),
+])
+def test_a_unique_one_word_topic_identifies_its_question(request_text, expected):
+    match = match_question(request_text, QUESTIONS)
+    assert match.kind == "matched" and match.question["id"] == expected
 
 
 def test_no_shared_word_means_no_match():
@@ -293,3 +302,44 @@ def test_the_held_out_set_is_frozen():
     import hashlib
     data = (Path(__file__).parent / "eval" / "fixtures" / "640_heldout_v1.json").read_bytes()
     assert hashlib.sha256(data).hexdigest() == "2d824655bfea37c9674db6107d86bdf26dd52930dfb4cb0d16ee157c559c582e"
+
+
+# ------------------------------------------------------------------ held-out run 1 misses (v1 is now development data)
+
+def _v1():
+    return json.loads((Path(__file__).parent / "eval" / "fixtures" / "640_heldout_v1.json").read_text())["questions"]
+
+
+@pytest.mark.parametrize("request_text,expected", [
+    ("Has Security answered which SSO provider the client will use?", "h-sso"),   # answerer named in the request
+    ("Was the EU data residency question answered?", "h-residency"),             # a two-letter acronym
+    ("Was the escalation question answered?", "h-escalation"),                   # -ation vs -ate
+])
+def test_the_v1_misses_now_route_to_the_right_question(request_text, expected):
+    from question_status import route
+    routed = route(request_text, _v1())
+    assert routed.kind == "direct" and routed.question["id"] == expected, routed.reason
+
+
+def test_a_word_from_the_recorded_answer_does_not_hide_a_real_scope_conflict():
+    """The answer text explains only the top record's own words; a scope word naming the other Question still asks."""
+    a = {"id": "a", "text": "Which privileged password resets qualify for automation?", "status": "resolved",
+         "answer": "Security approved privileged resets for automation."}
+    b = {"id": "b", "text": "Will standard resets launch?", "status": "open"}
+    match = match_question("Is the question on which standard password resets qualify for automation answered?", [a, b])
+    assert match.kind == "clarify" and "standard" in match.reason
+
+
+def test_lowercase_short_words_are_still_dropped():
+    assert identity_terms("is it on us to do it?") == set()
+    assert "us" in identity_terms("Must US data stay in Virginia?")
+
+
+def test_the_v2_held_out_set_is_well_formed_and_frozen():
+    """Frozen Nov 8 before its single run; shape only, never scored here."""
+    import hashlib
+    raw = (Path(__file__).parent / "eval" / "fixtures" / "640_heldout_v2.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "085814ff713d5a9c41da2ca5d22c08946b2c066c1c8bba88d0d9a7a1b04c9766"
+    data = json.loads(raw)
+    ids = {q["id"] for q in data["questions"]}
+    assert all(r["match"] in ids | {"clarify", "none"} for r in data["requests"] if r["in_scope"])
