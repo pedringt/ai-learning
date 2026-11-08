@@ -142,12 +142,15 @@ _RESOLVING_OUTCOMES = ("updated", "confirmed_current")
 
 def resolving_review(connection: Connection, question_id: str) -> dict | None:
     """The Review that resolved this Question, when the records establish it (#640, Paige, Nov 8): exactly one Review is
-    explicitly linked to the Question and could have resolved it under the write path above. Timestamps are not used.
-    None when there is no such Review or more than one (the view then says "Resolving Review not recorded")."""
+    explicitly linked to the Question, could have resolved it under the write path above, and its link records the same
+    Evidence the Question records as its resolution (the write path copies review_questions.evidence_id into
+    questions.source_evidence_id). Timestamps are not used. A legacy link with no evidence_id cannot establish it.
+    None otherwise (the view then says "Resolving Review not recorded")."""
     rows = connection.execute(
         "SELECT r.id, r.decision_question, r.resolution, r.resolution_note, r.resolved_at FROM review_questions rq "
-        "JOIN review_issues r ON r.id=rq.review_id "
+        "JOIN review_issues r ON r.id=rq.review_id JOIN questions q ON q.id=rq.question_id "
         "WHERE rq.question_id=? AND r.project_id=? AND r.status='resolved' AND r.resolution IN (?, ?) "
+        "AND rq.evidence_id IS NOT NULL AND rq.evidence_id=q.source_evidence_id "
         "AND NOT EXISTS (SELECT 1 FROM proposed_state_changes p JOIN history_transitions h ON h.proposed_change_id=p.id "
         "                WHERE p.review_id=r.id AND h.accepted_as_adjusted=1)",
         (question_id, project_id_of(connection), *_RESOLVING_OUTCOMES),

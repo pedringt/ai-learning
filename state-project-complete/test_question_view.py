@@ -23,11 +23,12 @@ def _evidence(db, eid, content="Legal confirmed 30 days.", project="northstar"):
     db.execute("INSERT INTO evidence(id, content, project_id) VALUES (?, ?, ?)", (eid, content, project))
 
 
-def _review(db, rid, qid, resolution="confirmed_current", note=None, resolved_at="2026-10-01 09:00:00", link=True, project="northstar"):
+def _review(db, rid, qid, resolution="confirmed_current", note=None, resolved_at="2026-10-01 09:00:00", link=True, project="northstar", link_evidence=None):
     db.execute("INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status, resolution, resolution_note, resolved_at, project_id) "
                "VALUES (?, 'proposed_update', ?, '', 'resolved', ?, ?, ?, ?)", (rid, f"Review {rid}", resolution, note, resolved_at, project))
     if link:
-        db.execute("INSERT INTO review_questions(review_id, question_id) VALUES (?, ?)", (rid, qid))
+        # link_evidence: the Evidence this Review-Question link records (review_questions.evidence_id; None = legacy row).
+        db.execute("INSERT INTO review_questions(review_id, question_id, evidence_id) VALUES (?, ?, ?)", (rid, qid, link_evidence))
 
 
 def _transition(db, rid, tid, statement="Retention is 30 days.", adjusted=0):
@@ -42,7 +43,7 @@ def _transition(db, rid, tid, statement="Retention is 30 days.", adjusted=0):
 
 def test_one_linked_accepted_review_is_the_resolver_with_its_note_and_linked_updates(db):
     _evidence(db, "e1"); _question(db, "q1", evidence_id="e1")
-    _review(db, "r1", "q1", resolution="updated", note="Matches the contract."); _transition(db, "r1", "t1")
+    _review(db, "r1", "q1", resolution="updated", note="Matches the contract.", link_evidence="e1"); _transition(db, "r1", "t1")
     details = question_details(db, get_question(db, "q1"))
     assert details["evidence"]["content"] == "Legal confirmed 30 days."
     assert details["resolving_review"]["id"] == "r1" and details["resolving_review"]["resolution_note"] == "Matches the contract."
@@ -51,7 +52,7 @@ def test_one_linked_accepted_review_is_the_resolver_with_its_note_and_linked_upd
 
 def test_two_linked_accepted_reviews_are_ambiguous_so_no_review_note_or_state_claim(db):
     _evidence(db, "e1"); _question(db, "q1", evidence_id="e1")
-    _review(db, "r1", "q1", note="first"); _review(db, "r2", "q1", resolution="updated", note="second"); _transition(db, "r2", "t2")
+    _review(db, "r1", "q1", note="first", link_evidence="e1"); _review(db, "r2", "q1", resolution="updated", note="second", link_evidence="e1"); _transition(db, "r2", "t2")
     details = question_details(db, get_question(db, "q1"))
     assert details["resolving_review"] is None and details["state_updates"] == []
     assert details["evidence"]["id"] == "e1"  # the Question's own explicit link is still shown
@@ -64,12 +65,36 @@ def test_a_review_with_a_coincident_timestamp_but_no_link_is_never_the_resolver(
 
 
 def test_linked_reviews_that_could_not_resolve_it_are_not_the_resolver(db):
-    _question(db, "q1")
-    _review(db, "r-linked-question", "q1", resolution="question_linked")  # links a Question, never resolves one
-    _review(db, "r-rejected", "q1", resolution="not_applied")
-    _review(db, "r-adjusted", "q1", resolution="updated"); _transition(db, "r-adjusted", "ta", adjusted=1)  # #106: leaves Questions open
+    _evidence(db, "e1"); _question(db, "q1", evidence_id="e1")
+    _review(db, "r-linked-question", "q1", resolution="question_linked", link_evidence="e1")  # links a Question, never resolves one
+    _review(db, "r-rejected", "q1", resolution="not_applied", link_evidence="e1")
+    _review(db, "r-adjusted", "q1", resolution="updated", link_evidence="e1"); _transition(db, "r-adjusted", "ta", adjusted=1)  # #106: leaves Questions open
     assert resolving_review(db, "q1") is None
-    _review(db, "r-real", "q1")
+    _review(db, "r-real", "q1", link_evidence="e1")
+    assert resolving_review(db, "q1")["id"] == "r-real"
+
+
+def test_an_eligible_review_whose_link_records_different_evidence_is_not_the_resolver(db):
+    """Paige, Nov 8: the write path copies the link's evidence_id into the Question's source_evidence_id, so a mismatch
+    means this Review's link did not record the resolution."""
+    _evidence(db, "e-resolution"); _evidence(db, "e-other", "Something else.")
+    _question(db, "q1", evidence_id="e-resolution")
+    _review(db, "r1", "q1", note="should not show", link_evidence="e-other"); _transition(db, "r1", "t1")
+    details = question_details(db, get_question(db, "q1"))
+    assert details["resolving_review"] is None and details["state_updates"] == []
+    assert details["evidence"]["id"] == "e-resolution"
+
+
+def test_a_legacy_link_without_recorded_evidence_cannot_establish_the_resolver(db):
+    _evidence(db, "e1"); _question(db, "q1", evidence_id="e1")
+    _review(db, "r-legacy", "q1", link_evidence=None)
+    assert resolving_review(db, "q1") is None
+
+
+def test_one_consistent_link_among_inconsistent_ones_is_the_resolver(db):
+    _evidence(db, "e1"); _evidence(db, "e2", "Other."); _question(db, "q1", evidence_id="e1")
+    _review(db, "r-other-evidence", "q1", link_evidence="e2"); _review(db, "r-legacy", "q1", link_evidence=None)
+    _review(db, "r-real", "q1", link_evidence="e1")
     assert resolving_review(db, "q1")["id"] == "r-real"
 
 
