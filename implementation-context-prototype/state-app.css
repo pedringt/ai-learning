@@ -118,11 +118,11 @@
       .state-reviewer-guide-start{display:inline-flex;align-items:center;min-height:0;padding:4px 0;border:0;border-radius:0;background:transparent;box-shadow:none;color:#1769e8;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
       .state-reviewer-guide-dismiss{min-width:38px;min-height:38px;border:0;background:transparent;color:#6b778a;font:inherit;font-size:20px;line-height:1;cursor:pointer;border-radius:8px}
       .state-reviewer-guide-dismiss:hover,.state-reviewer-guide-dismiss:focus-visible{background:#edf3f9;color:#26344c}
-      body.v88-dark .state-reviewer-guide{background:#171b22;border-color:#303946;color:#eef2f7}
-      body.v88-dark .state-reviewer-guide-copy strong{color:#f2f5f8}
-      body.v88-dark .state-reviewer-guide-copy p{color:#b5bfcc}
-      body.v88-dark .state-reviewer-guide-start{background:transparent;border-color:transparent;color:#9fc6ff}
-      body.v88-dark .state-reviewer-guide-dismiss{color:#aeb8c5}
+      
+      
+      
+      
+      
       @media(max-width:760px){
         .state-reviewer-guide{grid-template-columns:1fr;gap:11px;margin:0 14px 14px;padding:13px 14px}
         .state-reviewer-guide-actions{justify-content:flex-start}
@@ -736,12 +736,12 @@
         .mobile-primary-nav .nav-icon{display:none}
       }
 
-      body.v88-dark .workspace-stage-pill{background:#3a2d19;color:#efbd66}
-      body.v88-dark .workspace-stage-divider{background:#3b3a45}
-      body.v88-dark .workspace-attention{background:#241a1d!important;border-color:#51323a!important}
-      body.v88-dark .workspace-attention-head h3{color:#f2c3ca!important}
-      body.v88-dark .attention-list,body.v88-dark .attention-item{background:#17171d!important;border-color:#34313d!important}
-      body.v88-dark .workspace-recent,body.v88-dark .workspace-status-card{background:#17171d!important;border-color:#34313d!important}
+      
+      
+      
+      
+      
+      
 
 /* ==== section product-polish: Ask drawer. Added by context-product-polish.js. ==== */
       .ask-state-drawer-form{grid-template-columns:minmax(0,1fr) auto;gap:8px;min-width:0;align-items:center}
@@ -1192,7 +1192,7 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
 
       @media(max-width:760px){
         html body .mobile-subnav.is-pinned{position:fixed!important;top:0!important;left:0!important;right:0!important;margin:0!important;width:auto!important;z-index:9!important;background:var(--bg,#fff)!important;padding:8px 12px 10px!important;border-bottom:1px solid var(--line)!important;box-shadow:0 2px 8px rgba(24,20,48,.08)!important}
-        html body.v88-dark .mobile-subnav.is-pinned{background:#14131a!important}
+        
         html body .settings-page .settings-actions .text-button{font-size:11.5px!important;font-weight:700!important}
         html body .app-workspace{padding-left:0!important;padding-right:0!important}
         .prototype-productbar{align-items:center;flex-wrap:nowrap;padding:10px 14px;min-height:48px}
