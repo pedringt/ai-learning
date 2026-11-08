@@ -6,7 +6,7 @@
       "staging": true
     }
   },
-  "ignoreCommand": "P=\"$VERCEL_GIT_PREVIOUS_SHA\";[ -n \"$P\" ]&&[ \"$P\" != \"$(git rev-parse HEAD)\" ]&&git cat-file -e \"$P^{commit}\"&&git diff --quiet \"$P\" HEAD -- . ':!docs' ':!state-project-complete' ':!qa' ':!scripts' ':!tools' ':!.github' ':(glob,exclude)*.md'&&exit 0;exit 1",
+  "ignoreCommand": "node api/_vercel-ignore-build.js",
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [

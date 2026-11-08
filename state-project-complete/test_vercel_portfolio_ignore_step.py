@@ -1,16 +1,16 @@
 """The portfolio (`ai-learning`) Vercel project's Ignored Build Step (root vercel.json, #627).
 
 Before Nov 7 it had none, so every push to main/staging rebuilt the portfolio, including backend-only and docs-only
-pushes, against the Hobby plan's ~100 deployments a day shared with the `state` project. It follows the `state`
-project's guarded rule (see test_vercel_ignore_step.py): skip only when nothing the site serves changed since the last
-deployed commit, build whenever that cannot be checked, and only ever exit 0 or 1. "Not served" matches .vercelignore.
+pushes, against the Hobby plan's ~100 deployments a day shared with the `state` project. The Nov 7 rule used `git diff`,
+but the root .vercelignore allowlist removes `.git` before the step runs, so it never skipped (found Nov 8). It now runs
+api/_vercel-ignore-build.js, which asks GitHub's compare API: skip only when every changed file is one the site never
+serves, and build whenever that cannot be checked.
 
-These tests run the real command from vercel.json in scratch git repos. No network.
+These tests drive the real script with a fake GitHub response. No network.
 """
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -19,78 +19,73 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 COMMAND = json.loads((ROOT / "vercel.json").read_text())["ignoreCommand"]
+SCRIPT = ROOT / "api" / "_vercel-ignore-build.js"
+PREV, CUR = "a" * 40, "b" * 40
+
+pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="needs node")
 
 
-def test_command_fits_vercels_256_character_limit():
+def test_command_fits_vercels_256_character_limit_and_runs_the_script():
     """Vercel fails the deployment when ignoreCommand is longer than 256 characters (the first version was 379)."""
     assert len(COMMAND) <= 256
-
-pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
-
-
-def _git(repo: Path, *args: str) -> str:
-    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
-    return subprocess.run(["git", *args], cwd=repo, env=env, check=True, capture_output=True, text=True).stdout.strip()
+    assert COMMAND == "node api/_vercel-ignore-build.js"
 
 
-def _commit(repo: Path, path: str, text: str) -> str:
-    target = repo / path
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(text)
-    _git(repo, "add", "-A")
-    _git(repo, "commit", "-q", "-m", path)
-    return _git(repo, "rev-parse", "HEAD")
+def test_the_script_survives_the_root_allowlist():
+    """The step runs after .vercelignore is applied, so the script must be in a re-included folder."""
+    ignore = (ROOT / ".vercelignore").read_text().splitlines()
+    assert "/*" in ignore and "!/api" in ignore
 
 
-def _run(repo: Path, previous: str | None) -> int:
-    env = {**os.environ}
-    env.pop("VERCEL_GIT_PREVIOUS_SHA", None)
-    if previous is not None:
-        env["VERCEL_GIT_PREVIOUS_SHA"] = previous
-    # The portfolio project's Root Directory is the repository root.
-    return subprocess.run(["sh", "-c", COMMAND], cwd=repo, env=env, capture_output=True).returncode
+def _skip(previous, current, response):
+    """response: a dict served as the compare JSON, an int HTTP status, or "throw"."""
+    js = f"""
+const {{shouldSkip}}=require({json.dumps(str(SCRIPT))});
+const response={json.dumps(response)};
+const fakeFetch=async url=>{{
+  if(response==='throw')throw new Error('network');
+  if(typeof response==='number')return {{ok:false,status:response,json:async()=>({{}})}};
+  if(!url.endsWith('/compare/'+{json.dumps(previous)}+'...'+{json.dumps(current)}))throw new Error('wrong url '+url);
+  return {{ok:true,status:200,json:async()=>response}};
+}};
+shouldSkip({json.dumps(previous)},{json.dumps(current)},fakeFetch).then(s=>process.stdout.write(String(s)));
+"""
+    out = subprocess.run(["node", "-e", js], capture_output=True, text=True, check=True).stdout
+    return out == "true"
 
 
-@pytest.fixture
-def repo(tmp_path):
-    r = tmp_path / "repo"
-    r.mkdir()
-    _git(r, "init", "-q")
-    for path in ("index.html", "docs/readme.md", "state-project-complete/api.py", "content/edge.md", "CLAUDE.md", "QA.md"):
-        _commit(r, path, "v1")
-    return r
+def _ahead(*paths):
+    return {"status": "ahead", "files": [{"filename": p} for p in paths]}
 
 
-def test_first_deploy_and_redeploys_build(repo):
-    assert _run(repo, None) == 1
-    assert _run(repo, "") == 1
-    assert _run(repo, _git(repo, "rev-parse", "HEAD")) == 1
+def test_first_deploy_and_redeploys_build():
+    assert not _skip("", CUR, _ahead("docs/x.md"))
+    assert not _skip(PREV, "", _ahead("docs/x.md"))
+    assert not _skip(CUR, CUR, _ahead("docs/x.md"))
 
 
-def test_an_unknown_previous_commit_builds_instead_of_failing(repo):
-    assert _run(repo, "0123456789abcdef0123456789abcdef01234567") == 1
+def test_anything_unverifiable_builds():
+    assert not _skip(PREV, CUR, 404)                      # unknown previous commit
+    assert not _skip(PREV, CUR, 403)                      # rate limited
+    assert not _skip(PREV, CUR, "throw")                  # network error
+    assert not _skip(PREV, CUR, {"status": "diverged", "files": [{"filename": "docs/x.md"}]})   # force push
+    assert not _skip(PREV, CUR, {"status": "ahead", "files": []})
+    assert not _skip(PREV, CUR, _ahead(*[f"docs/{i}.md" for i in range(300)]))  # GitHub's list may be truncated
 
 
 @pytest.mark.parametrize("path", ["docs/readme.md", "state-project-complete/api.py", "CLAUDE.md", "qa/deployed/x.spec.js",
                                   "scripts/x.sh", "tools/x.py", ".github/workflows/x.yml", "QA.md"])
-def test_changes_only_to_files_the_site_does_not_serve_skip(repo, path):
-    previous = _git(repo, "rev-parse", "HEAD")
-    _commit(repo, path, "v2")
-    assert _run(repo, previous) == 0
+def test_changes_only_to_files_the_site_does_not_serve_skip(path):
+    assert _skip(PREV, CUR, _ahead(path))
 
 
 @pytest.mark.parametrize("path", ["index.html", "content/edge.md", "api/new.js", "assets/x.png", "cheat-sheets/x.html",
                                   "implementation-context-prototype/index.html", "vercel.json", ".vercelignore", "new.css",
-                                  # Not served, but left out of the exclusions to fit the 256-character limit; they rarely change.
+                                  # Not served, but not listed as unserved; they rarely change.
                                   "Makefile", "render.yaml", "package.json"])
-def test_changes_to_served_files_or_deploy_config_build(repo, path):
-    previous = _git(repo, "rev-parse", "HEAD")
-    _commit(repo, path, "v2")
-    assert _run(repo, previous) == 1
+def test_changes_to_served_files_or_deploy_config_build(path):
+    assert not _skip(PREV, CUR, _ahead(path))
 
 
-def test_a_site_change_hidden_behind_a_docs_only_tip_still_builds(repo):
-    previous = _git(repo, "rev-parse", "HEAD")
-    _commit(repo, "index.html", "v2")
-    _commit(repo, "docs/readme.md", "v2")
-    assert _run(repo, previous) == 1
+def test_a_site_change_in_a_mostly_docs_push_still_builds():
+    assert not _skip(PREV, CUR, _ahead("docs/a.md", "index.html", "state-project-complete/x.py"))
