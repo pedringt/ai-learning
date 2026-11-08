@@ -642,11 +642,19 @@
   }
   // Opens any Question by id from the server, whatever its status, so old Ask cards, Questions resolved since the page
   // loaded and later pages all work (#640, Nov 8).
+  // #650 review (Nov 8): a reply is shown only while it still belongs to the dialog that asked for it. Closing the
+  // dialog, opening any other dialog (another Question included) or switching projects makes a pending reply stale,
+  // and a stale reply, success or error, is dropped.
+  let questionRequestSeq=0;
   async function openQuestionById(id){
     if(!id)return;
-    showDialog('<span class="eyebrow">Question</span><h2 id="dialogTitle">Loading…</h2>');
+    const token=String(++questionRequestSeq), generation=state.hydrationGeneration, projectId=state.data.project?.id;
+    showDialog(`<span class="eyebrow" data-question-request="${token}">Question</span><h2 id="dialogTitle">Loading…</h2>`);
+    const current=()=>generation===state.hydrationGeneration&&projectId===state.data.project?.id
+      &&!overlay.hidden&&!!dialogBody.querySelector(`[data-question-request="${token}"]`);
     try{
       const {item,details}=await API.getQuestion(id);
+      if(!current())return;
       if(item.status==='resolved'){
         showDialog(OPEN_ITEMS_VIEW.answeredQuestionDialogHtml(item,details,{sourceLabel,hasNoteFor:eid=>state.data.notes.some(n=>n.evidenceId===eid)}));
       }else if(item.status==='open'){
@@ -655,6 +663,7 @@
         showDialog(`<span class="eyebrow">No longer tracked</span><h2 id="dialogTitle">${esc(item.text)}</h2><p>This Question was stopped without an answer.</p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Close</button></div>`);
       }
     }catch(_){
+      if(!current())return;
       showDialog('<span class="eyebrow">Question</span><h2 id="dialogTitle">This Question could not be loaded.</h2><p>It may belong to another project, or the connection failed.</p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Close</button></div>');
     }
   }
@@ -1191,7 +1200,7 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,openReviewSource,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry,hydrateBackend,showProjectSettings};
+  window.STATE_ASK_TEST_API={state,openReviewSource,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry,hydrateBackend,showProjectSettings,openQuestionById,showDialog,closeDialog,activateProject};
   // state.md #115: the live Ask State drawer (context-product-polish.js's
   // runAsk) is the only Ask surface a user actually reaches. Generic
   // inventory questions ("What needs review?") still need to route to a
