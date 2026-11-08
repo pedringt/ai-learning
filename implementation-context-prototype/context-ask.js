@@ -106,6 +106,9 @@
       link=`<button class="text-button ask-item-link ask-item-action" data-action="open-related-review" data-review-id="${esc(i.record_id)}">Review →</button>`;
     }else if((i.record_type==='blocking_question'||i.record_type==='question')&&i.record_id){
       link=`<button class="text-button ask-item-link ask-item-action" data-action="go-open-question" data-question-id="${esc(i.record_id)}">Open →</button>`;
+    }else if(i.record_type==='answered_question'&&i.record_id){
+      // #640 Draft 1: opens the Question's record view by id (status, Evidence used, provenance).
+      link=`<button class="text-button ask-item-link ask-item-action" data-action="open-answered-question" data-question-id="${esc(i.record_id)}">Open →</button>`;
     }
     // The link is a sibling of the copy block, not nested inside it, so
     // .ask-answer-item's flex layout can place it beside the item instead of

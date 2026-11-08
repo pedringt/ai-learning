@@ -38,7 +38,7 @@ from ask_authority_text import (  # noqa: F401  (re-exported: tests and callers 
     _soften_unearned_settled_words,
     _words,
 )
-from review_service import list_evidence, list_history, list_project_rules, list_questions, list_state
+from review_service import list_evidence, list_history, list_project_rules, list_questions, list_state, question_source_evidence
 # Ask sees the Review list people see (an extension point; Baseline hides routine
 # Starting State creates), so it never counts draft facts as separate Reviews.
 from review_service import list_presented_reviews as list_reviews
@@ -214,7 +214,9 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
 def _answered_question(connection: Any, question: Mapping[str, Any]) -> dict:
     """A resolved Question with its answer and provenance: the Evidence it was resolved by and the Review that accepted it."""
     evidence_id = question.get("source_evidence_id")
-    evidence = connection.execute("SELECT content FROM evidence WHERE id=?", (evidence_id,)).fetchone() if evidence_id else None
+    # Shared with the Question view (review_service.question_source_evidence, #640 Nov 8). The Review below is still
+    # chosen as before (most recently resolved linked Review); the view uses the stricter write-path rule instead.
+    evidence = question_source_evidence(connection, question)
     review = connection.execute(
         "SELECT rq.review_id FROM review_questions rq JOIN review_issues r ON r.id=rq.review_id "
         "WHERE rq.question_id=? AND r.status='resolved' ORDER BY r.resolved_at DESC LIMIT 1", (question["id"],)).fetchone()

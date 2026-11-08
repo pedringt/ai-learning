@@ -962,3 +962,15 @@ body.v88-dark .project-outline{background:#17151d!important;border-color:var(--l
 .state-fact-preview li{position:relative;padding:10px 0 10px 24px;border-top:1px solid #edf1f6;font-size:12px;line-height:1.45;color:#25334e}
 .state-fact-preview li::before{content:'✓';position:absolute;left:1px;top:10px;color:var(--state-blue,var(--accent));font-weight:800}
 .state-fact-preview .text-button{margin-top:12px;display:inline-flex!important}
+/* #640 Draft 1: Answered Questions (Open Items) and the record-built Question view. */
+.open-item-label.answered{color:var(--state,var(--muted))}
+.answered-question-row{padding-top:15px;padding-bottom:13px}
+.answered-date{font-size:13px;color:var(--muted);margin:2px 0 10px}
+.answered-evidence{border-left:3px solid var(--line);padding:6px 0 6px 12px;margin:12px 0}
+.answered-evidence-source{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.answered-evidence-text{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.answered-review,.answered-state{margin:12px 0}
+.answered-review p,.answered-state ul{margin:4px 0}
+.answered-state ul{padding-left:18px;font-size:13.5px;line-height:1.5}
+.answered-review-note strong{font-weight:700}
+.answered-review-missing,.answered-state-none{font-size:13px;color:var(--muted);margin:10px 0}
