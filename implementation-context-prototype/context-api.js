@@ -185,6 +185,9 @@
     getReviews: status => request(`/api/reviews?status=${encodeURIComponent(status)}`),
     getHistory: () => request('/api/history'),
     getQuestions: status => request(`/api/questions?status=${encodeURIComponent(status)}`),
+    // #640 Draft 1: one page of Questions (newest resolved first) and one Question by id, scoped to the project.
+    getQuestionPage: (status,limit,offset) => request(`/api/questions?status=${encodeURIComponent(status)}&limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`),
+    getQuestion: id => request(`/api/questions/${encodeURIComponent(id)}`),
     getRules: () => request('/api/rules'),
     getDrafts: () => request('/api/drafts'),
     createDraft: (title, content) => jsonPost('/api/drafts', {title, content}),
