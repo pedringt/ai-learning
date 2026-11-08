@@ -60,6 +60,15 @@ Reusable eval fixtures should remain synthetic/curated unless a separately appro
 
 The dashboard may ingest aggregate eval results such as precision, recall, miss/error counts, build, provider, and model identifier. It must not ingest scenario Evidence, prompts, model responses, or trace bodies merely to make a dashboard richer.
 
+**Exception: synthetic eval excerpts (Paige, Nov 7, #643).** A failed scenario in a controlled eval run may carry one short excerpt of the model's answer, because these answers come only from deliberately constructed synthetic test fixtures and the excerpt is what makes a failure assessable. Its limits:
+
+- at most 200 characters, cut at that length;
+- only for failed scenarios, and only in `controlled_eval` runs; never production, demo or visitor project content;
+- stored in its own field, `synthetic_answer_excerpt`, and always shown labeled as a synthetic eval excerpt, separate from the software-generated explanation of what failed;
+- kept and pruned with the eval record (365 days, as above).
+
+**Full controlled-eval reports (Paige, Nov 7).** The "State AI quality check" workflow saves its full report, with every synthetic-fixture answer (passing ones too), the build, model and scoring version, as a GitHub Actions artifact kept **30 days**, so passing answers can be read for mistakes the scorer missed. It is never sent to the dashboard or any other service. The #640 diagnostic runner's report (`eval/run_ask_diagnostic.py`) also holds each call's exact prompt (State's instructions plus the synthetic fixture) and the model's raw output before post-processing, under the same artifact and 30-day retention (Paige, Nov 7).
+
 Eval result ingestion requires a server-side `STATE_EVAL_INGEST_KEY`. The key must never be shipped to the browser.
 
 ### Authority Lab evidence export (#517)

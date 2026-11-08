@@ -92,6 +92,7 @@ _SELECTION_LIMITS = {
     "question_ids": 10,
     "history_ids": 12,
     "evidence_ids": 12,
+    "answered_question_ids": 6,
 }
 
 
@@ -167,6 +168,7 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
     state = list_state(connection)
     reviews = list_reviews(connection, "open")
     questions = list_questions(connection, "open")
+    answered = list_questions(connection, "resolved")[:30]
     history = list_history(connection)[:18]
     evidence = list_evidence(connection)[:24]
     rules = list_project_rules(connection)
@@ -182,6 +184,9 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
                  ("id", "text", "evidence_id", "existing_question_id")}} if x.get("question_to_create") else {}),
         } for x in reviews],
         "questions": [{"id": x["id"], "text": x["text"], "blocking": bool(x["blocking"]), "blocks": x["blocks"], "authority": "known_unknown"} for x in questions],
+        # #640 (Nov 7): Questions a human closed by accepting a Review. The answer is the Evidence that Review accepted;
+        # answering a Question is not a Current State change, so this has its own authority level.
+        "answered_questions": [_answered_question(connection, x) for x in answered],
         "history": [{
             "id": x["id"], "state_item_id": x["state_item_id"], "old_statement": x.get("old_statement"),
             "new_statement": x.get("new_statement"), "changed_at": str(x.get("changed_at") or ""),
@@ -204,6 +209,23 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
     }
 
 
+
+
+def _answered_question(connection: Any, question: Mapping[str, Any]) -> dict:
+    """A resolved Question with its answer and provenance: the Evidence it was resolved by and the Review that accepted it."""
+    evidence_id = question.get("source_evidence_id")
+    evidence = connection.execute("SELECT content FROM evidence WHERE id=?", (evidence_id,)).fetchone() if evidence_id else None
+    review = connection.execute(
+        "SELECT rq.review_id FROM review_questions rq JOIN review_issues r ON r.id=rq.review_id "
+        "WHERE rq.question_id=? AND r.status='resolved' ORDER BY r.resolved_at DESC LIMIT 1", (question["id"],)).fetchone()
+    return {
+        "id": question["id"], "text": question["text"], "status": "resolved",
+        "answer": (str(evidence["content"])[:600] if evidence else None),
+        "resolved_at": str(question.get("resolved_at") or ""),
+        "answered_by_review_id": review["review_id"] if review else None,
+        "answer_evidence_id": evidence_id,
+        "authority": "answered_question",
+    }
 
 
 def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]]) -> dict[str, list[dict]]:
@@ -237,10 +259,13 @@ def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]])
         if sid in state_by_id and sid not in {x["id"] for x in state}:
             state.append(state_by_id[sid])
 
+    # Only answered Questions that share a term with the request: an unrelated old answer is not context (#640).
+    answered = [x for x in ranked("answered_questions", 6) if any(term in text(x) for term in terms)]
     return {
         "state": state[:14],
         "reviews": reviews,
         "questions": ranked("questions", 12),
+        "answered_questions": answered,
         "history": ranked("history", 10),
         "evidence": ranked("evidence", 12),
         "rules": list(candidates["rules"]),
@@ -317,6 +342,7 @@ def _grounding_rules(today: date | None = None) -> str:
 - Section, group, and category titles must accurately describe the actual conceptual domain of their contents (for example, do not label access or security constraints as retention constraints, or vice versa). If items span more than one domain, either split them into separate sections or use a domain-neutral title.
 - Consequentiality ordering must stay consistent for the same underlying records across every job and every refinement in this conversation. A refinement may narrow, reformat, or shorten what is shown, but it must select from what a fuller answer to the same request would already treat as most important -- never independently re-rank the same records into a different priority order, and never introduce a record that a fuller answer would have omitted.
 - An open Review's proposed statement, number, or decision is not yet true and does not close its linked Question, no matter how certain the underlying Evidence sounds (e.g. "Legal confirmed X"). Never describe an open Review's content as "confirmed", "established", "accepted", or as resolving/answering/closing a Question -- describe it as proposed and awaiting review, and state plainly that the linked Question remains open and Current State has not changed. Only an item actually present in Current State, or a Question actually absent from the open Questions list, may be described as settled.
+- Answered Questions are Questions a human closed by accepting a Review; each carries its recorded answer (the Evidence that Review accepted). When the request is about one, say plainly that the Question was answered and give the recorded answer as what the record says. Answering a Question is not a Current State change: never say the answer was recorded in, changed, or replaced Current State unless a Current State record itself says so, and state any related Current State fact exactly as it stands (for example, a contract that "remains under review" still remains under review).
 - When Current State says one thing and an open Review contains potentially conflicting evidence, state the maintained Current State first, then explicitly say the conflicting Review is unresolved and may change that understanding if a human accepts it. Do not flatten the two into a single confident answer, and do not present the Review as equivalent authority to Current State. Use explicit uncertainty language such as "under review", "unresolved", or "may change" so a reader can tell what is true now from what is still being evaluated.
 - If Current State establishes that an outcome happened but no supplied Current State, Review, Question, History, or Evidence record establishes why it happened, separate the known outcome from the unknown reason. State the known outcome, then explicitly say the reason is unknown, not established, or cannot be determined from the project record. Never infer a motive, cause, or rationale from the outcome alone.
 - The words "confirmed" and "resolved" (as a section title, headline, or plain claim) are reserved for something actually in Current State, or a Question actually closed -- never for anything whose only support is an open Review, Evidence, or an open Question, even when the Evidence text itself uses that word. Evidence saying "Legal confirmed X" describes what a source reported to Evidence, not an accepted fact -- phrase it as "Evidence reports Legal said X" or "Legal is reported to have said X", never as "X is confirmed" or "X (Confirmed)". This applies to short labels exactly as much as full sentences: a section titled "Retention Terms: Legal Confirmed" or "Confirmed Retention and Deletion" is the same violation as a sentence claiming retention is confirmed, just shorter -- titles and headlines get the identical scrutiny as prose, they are not exempt because they are brief.
@@ -446,6 +472,7 @@ def _validate_selection(selection: AskSelection, candidates: Mapping[str, list[d
     fields = {
         "state_ids": "state", "review_ids": "reviews", "blocking_question_ids": "questions",
         "question_ids": "questions", "history_ids": "history", "evidence_ids": "evidence",
+        "answered_question_ids": "answered_questions",
     }
     data = selection.model_dump()
     for field, bucket in fields.items():
@@ -498,6 +525,8 @@ def _selected_context(selection: AskSelection, candidates: Mapping[str, list[dic
         wanted = set(ids[field]); out[bucket] = [x for x in candidates[bucket] if x["id"] in wanted]
     qids = set(ids["blocking_question_ids"] + ids["question_ids"])
     out["questions"] = [x for x in candidates["questions"] if x["id"] in qids]
+    answered = set(ids["answered_question_ids"])
+    out["answered_questions"] = [x for x in candidates.get("answered_questions", []) if x["id"] in answered]
     return out
 
 
@@ -563,12 +592,14 @@ def _validate_synthesis(
         "evidence": {x["id"] for x in context.get("evidence", [])},
         "blocking_question": {x["id"] for x in context.get("questions", []) if x["blocking"]},
         "question": {x["id"] for x in context.get("questions", []) if not x["blocking"]},
+        "answered_question": {x["id"] for x in context.get("answered_questions", [])},
     }
     all_internal_ids = set().union(*allowed.values(), {x["id"] for x in context.get("rules", [])})
     all_internal_ids |= _candidate_pool_ids(candidates)          # ids the model was shown, selected or not (#247)
     labels = _source_type_labels(candidates)                     # vendor_email -> vendor email (#478)
     canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
     canonical_questions = {x["id"]: x for x in context.get("questions", [])}
+    canonical_answered = {x["id"]: x for x in context.get("answered_questions", [])}
 
     # Bug fix (2026-09-14, live QA): this used to check `context` -- the
     # *selected* reviews/questions for this run -- so whether the hedging
@@ -636,6 +667,11 @@ def _validate_synthesis(
                     source = canonical_questions[item.record_id]
                     item.text = source["text"]
                     item.detail = source.get("blocks") if item.record_type == "blocking_question" else None
+                elif item.record_type == "answered_question" and item.record_id in canonical_answered:
+                    # #640: the Question and its recorded answer, from the records, never a model paraphrase.
+                    source = canonical_answered[item.record_id]
+                    item.text = source["text"]
+                    item.detail = ("Answered: " + source["answer"]) if source.get("answer") else "Answered."
                 else:
                     item.text = _clean_visible_ask_text(item.text, all_internal_ids, labels) or "Project context"
                     item.detail = _clean_visible_ask_text(item.detail, all_internal_ids, labels)
@@ -827,7 +863,7 @@ def _selection_raw_from_answer(answer: Mapping[str, Any]) -> dict[str, Any]:
     fresh model call selects new candidates. `_validate_selection` still checks
     every id against real candidates, so a stale or malformed id here is inert.
     """
-    ids: dict[str, list[str]] = {"state": [], "review": [], "blocking_question": [], "question": [], "history": [], "evidence": []}
+    ids: dict[str, list[str]] = {"state": [], "review": [], "blocking_question": [], "question": [], "answered_question": [], "history": [], "evidence": []}
     for section in answer.get("sections", []) or []:
         for item in section.get("items", []) or []:
             record_type = item.get("record_type")
@@ -842,6 +878,7 @@ def _selection_raw_from_answer(answer: Mapping[str, Any]) -> dict[str, Any]:
         "question_ids": ids["question"],
         "history_ids": ids["history"],
         "evidence_ids": ids["evidence"],
+        "answered_question_ids": ids["answered_question"],
     }
 
 

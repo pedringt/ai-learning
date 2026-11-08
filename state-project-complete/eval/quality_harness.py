@@ -302,6 +302,8 @@ class AskQualityResult:
     missing_facts: tuple[str, ...] = ()
     asserted_claims: tuple[str, ...] = ()
     unsupported_numbers: tuple[str, ...] = ()
+    headline_opening: str = ""
+    headline_missing: tuple[str, ...] = ()
 
     @property
     def number_ok(self) -> bool:
@@ -311,11 +313,14 @@ class AskQualityResult:
     def failed_items(self) -> list[str]:
         return ([f"missing required fact: {fact}" for fact in self.missing_facts]
                 + [f"asserted forbidden claim: {claim}" for claim in self.asserted_claims]
-                + [f"number not in any record: {number}" for number in self.unsupported_numbers])
+                + [f"number not in any record: {number}" for number in self.unsupported_numbers]
+                + ([f"headline opens with forbidden: {self.headline_opening}"] if self.headline_opening else [])
+                + [f"headline lacks: {fact}" for fact in self.headline_missing])
 
     @property
     def grounding_ok(self) -> bool:
-        return self.required_facts_ok and self.forbidden_claims_ok and self.number_ok
+        return (self.required_facts_ok and self.forbidden_claims_ok and self.number_ok
+                and not self.headline_opening and not self.headline_missing)
 
     @property
     def passed(self) -> bool:
@@ -345,11 +350,19 @@ def _seed_ask_scenario(connection, scenario: AskQualityScenario) -> None:
             "INSERT INTO questions(id, text, status, blocking, blocks) VALUES (?, ?, 'open', ?, ?)",
             (f"ask-question-{idx}", clean, blocking, "Launch readiness" if blocking else None),
         )
+    # The way State closes a Question (review_service.resolve_review): an accepted Review links it, the Question is
+    # marked resolved, and its answer is the Evidence the Review accepted (#640).
     for idx, (text, answer) in enumerate(scenario.closed_questions):
+        question_id, evidence_id, review_id = f"ask-closed-question-{idx}", f"ask-answer-evidence-{idx}", f"ask-answer-review-{idx}"
+        connection.execute("INSERT INTO evidence(id, content) VALUES (?, ?)", (evidence_id, answer))
         connection.execute(
-            "INSERT INTO questions(id, text, status, blocking, resolution, resolved_at) VALUES (?, ?, 'resolved', 0, ?, CURRENT_TIMESTAMP)",
-            (f"ask-closed-question-{idx}", text, answer),
-        )
+            "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status, resolution, resolved_at) "
+            "VALUES (?, 'proposed_update', ?, '', 'resolved', 'question_linked', CURRENT_TIMESTAMP)", (review_id, text))
+        connection.execute("INSERT INTO review_evidence(review_id, evidence_id) VALUES (?, ?)", (review_id, evidence_id))
+        connection.execute(
+            "INSERT INTO questions(id, text, status, blocking, resolution, resolved_at, source_evidence_id) "
+            "VALUES (?, ?, 'resolved', 0, 'Resolved by reviewed evidence', CURRENT_TIMESTAMP, ?)", (question_id, text, evidence_id))
+        connection.execute("INSERT INTO review_questions(review_id, question_id, evidence_id) VALUES (?, ?, ?)", (review_id, question_id, evidence_id))
 
     for idx, (old_statement, new_statement, changed_at) in enumerate(scenario.history):
         state_id = f"ask-history-state-{idx}"
@@ -432,7 +445,9 @@ _INSIDE_WHETHER = re.compile(r"\bwhether\b[^,.;:!?]*$")
 # names the user's premise to correct it; it is not the claim.
 _NAMES_PREMISE = re.compile(r"\bpremise\s+that\s+(?:the\s+|a\s+|an\s+)?$")
 _NEGATED_REPORT_BEFORE = re.compile(
-    r"(?:\bnot|n't|\bcannot|\bno)\s+(?:\w+\s+){0,6}?"
+    # Nov 7 (Paige): "Nothing in the project record shows leadership approved removing human review" is a correct
+    # answer that failed ask_pending_review_not_truth (staging run 42407853204); "nothing" negates the frame too.
+    r"(?:\bnot|n't|\bcannot|\bno|\bnothing)\s+(?:\w+\s+){0,6}?"
     r"(?:show|shows|showing|say|says|indicate|indicates|establish|establishes|establishing|confirm|confirms|"
     r"confirming|record|records|support|supports"
     # Oct 27 (approved by Paige): "State does not have confirmed information that leadership approved
@@ -514,6 +529,30 @@ def answer_excerpt(answer: Any, needles: list[str] | tuple[str, ...] = (), limit
     return lead if len(lead) <= limit else lead[:limit - 1].rstrip() + "…"
 
 
+def headline_opening(answer: Any, openings: tuple[str, ...]) -> str:
+    """The forbidden opening the headline starts with, if any (#640): "No: ..." answers a yes question with a denial
+    even when the body is right. Longest match first, so "not yet confirmed" is reported rather than "not yet"."""
+    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
+    headline = _normalize(str(inner.get("headline") or "")) if isinstance(inner, dict) else ""
+    words = re.sub(r"[^\w\s]", " ", headline).split()
+    for opening in sorted(openings, key=len, reverse=True):
+        target = _normalize(opening).split()
+        if target and words[:len(target)] == target:
+            return opening
+    return ""
+
+
+def _headline_missing(answer: Any, facts) -> tuple[str, ...]:
+    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
+    headline = _normalize(str(inner.get("headline") or "")) if isinstance(inner, dict) else ""
+    words = set(re.sub(r"[^\w\s]", " ", headline).split())
+    def present(phrase: str) -> bool:
+        norm = _normalize(phrase)
+        return norm in words if " " not in norm else norm in headline
+    return tuple(fact if isinstance(fact, str) else " / ".join(fact) for fact in facts
+                 if not any(present(p) for p in ((fact,) if isinstance(fact, str) else fact)))
+
+
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
     text = _normalize(_flatten_strings(answer))
     missing = tuple(
@@ -539,6 +578,8 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
         missing_facts=missing,
         asserted_claims=asserted,
         unsupported_numbers=numbers,
+        headline_opening=headline_opening(answer, scenario.forbidden_headline_openings),
+        headline_missing=_headline_missing(answer, scenario.headline_required_facts),
     )
 
 

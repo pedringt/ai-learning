@@ -35,7 +35,7 @@ from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 from eval.authority_lab_export import build_envelope
 from eval.scoring_version import scoring_version
 from eval.quality_report import analytics_payload as _analytics_payload, failure_details as _failure_details
-from eval.release_gate import ASK_SUITE, REVIEW_SUITE, fetch_analytics, gate, previous_failed_ids
+from eval.release_gate import ASK_SUITE, REVIEW_SUITE, fetch_analytics, gate, not_counted, previous_failed_ids
 
 
 def _record(url: str, key: str, payload: dict) -> None:
@@ -163,6 +163,8 @@ def main() -> int:
     parser.add_argument("--record-key", metavar="KEY", help="defaults to STATE_EVAL_INGEST_KEY")
     parser.add_argument("--authority-lab-envelope", metavar="PATH", help="write the review suite's aggregate results as Authority Lab evidence (#517)")
     parser.add_argument("--dry-run", action="store_true", help="print the planned paid model calls and exit without calling the model")
+    parser.add_argument("--max-calls", type=int, metavar="N",
+                        help="hard cap on model calls, counted before each call is sent; a capped scenario is reported as an error")
     args = parser.parse_args()
 
     if args.dry_run:
@@ -177,10 +179,25 @@ def main() -> int:
 
     provider = AnthropicProvider()
     reports = []
-    if args.suite in {"all", "review"}:
-        reports.append(_review_report(provider))
-    if args.suite in {"all", "ask"}:
-        reports.append(_ask_report(provider))
+    started_at = datetime.now(timezone.utc).isoformat()
+    # Nov 7: the same counter the eval matrix uses, so a run can be held to a stated budget.
+    from contextlib import nullcontext
+    from eval.matrix import CallCounter, call_cost
+    with (CallCounter(args.max_calls) if args.max_calls else nullcontext()) as counter:
+        if args.suite in {"all", "review"}:
+            reports.append(_review_report(provider))
+        if args.suite in {"all", "ask"}:
+            reports.append(_ask_report(provider))
+    model_id = getattr(provider, "model_identifier", os.getenv("CLAUDE_MODEL", "configured-default"))
+    spend = None
+    if counter is not None:
+        try:
+            cost = round(sum(call_cost(u.get("model") or model_id, u.get("input_tokens"), u.get("output_tokens")) for u in counter.usage), 4)
+        except KeyError:  # a model missing from the price table: report the calls, not a made-up cost
+            cost = None
+        spend = {"calls": counter.calls, "call_cap": args.max_calls, "estimated_cost_usd": cost}
+        print(f"\nModel calls: {counter.calls} of cap {args.max_calls}; estimated cost "
+              + (f"${cost:.4f} (usage x list price)" if cost is not None else "unknown (model not in the price table)"))
 
     for report in reports:
         _print_report(report)
@@ -190,7 +207,13 @@ def main() -> int:
     previous = {suite: (previous_failed_ids(analytics, suite) if analytics else None) for suite in (REVIEW_SUITE, ASK_SUITE)}
 
     if args.json:
-        Path(args.json).write_text(json.dumps({"reports": reports}, indent=2))
+        # Nov 7 (Paige): the full report, synthetic controlled-eval answers included, saved as a workflow artifact so
+        # passing answers can be read too. It is never sent to the dashboard (DATA_PRIVACY.md).
+        meta = {"run_kind": "controlled_eval", "synthetic_fixtures_only": True, "started_at": started_at,
+                "build": os.getenv("RENDER_GIT_COMMIT", os.getenv("GITHUB_SHA", "local"))[:120],
+                "provider": getattr(provider, "name", "anthropic"), "model": model_id,
+                "scoring_versions": {r["suite"]: r.get("scoring_version") for r in reports}, "spend": spend}
+        Path(args.json).write_text(json.dumps({**meta, "reports": reports}, indent=2, default=str))
         print(f"\nWrote detailed report to {args.json}")
 
     if args.record_url:
@@ -218,6 +241,8 @@ def main() -> int:
 
     # RELEASE.md's reading rules decide the exit code, not "any miss" (Oct 19).
     reasons = gate(reports, {REVIEW_SUITE: REVIEW_SCENARIOS, ASK_SUITE: ASK_SCENARIOS}, previous)
+    for line in not_counted(reports, {REVIEW_SUITE: REVIEW_SCENARIOS, ASK_SUITE: ASK_SCENARIOS}):
+        print("  " + line)
     print("\nRelease reading (RELEASE.md):")
     for suite, why in reasons.items():
         note = "" if previous.get(suite) is not None else " (previous run unknown, consecutive check skipped)"

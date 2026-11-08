@@ -2,11 +2,14 @@
 
 A library module, so tests can import it without the run script loading .env (#224). The dashboard stores
 content-minimizing results (DATA_PRIVACY.md "Controlled eval data"): counts, rates, scenario ids, the failed checks and
-the failed items named from each scenario's own phrase lists. Model answers stay in the local report.
+the failed items named from each scenario's own phrase lists. A failed Ask scenario may also carry one synthetic eval
+excerpt of at most 200 characters (the Nov 7 exception, #643); the full answer stays in the local report.
 """
 from __future__ import annotations
 
 import os
+
+SYNTHETIC_EXCERPT_LIMIT = 200
 
 
 def recordable_items(items: list) -> list[str]:
@@ -68,7 +71,11 @@ def failure_details(report: dict) -> list[dict]:
             # #639/#643: which required or forbidden item failed, so a reader sees what was wrong, not only which check.
             "failed_items": recordable_items(row.get("failed_items") or []),
         }
-        # The answer excerpt stays in the local report: DATA_PRIVACY.md keeps model responses out of the dashboard.
+        # #643 (Paige, Nov 7): the DATA_PRIVACY.md exception for synthetic eval excerpts. Failed controlled scenarios only,
+        # 200 characters at most, in its own field so it is never mixed with the software-generated explanation.
+        excerpt = str(row.get("answer_excerpt") or "").strip()
+        if not is_review and excerpt and report.get("run_kind", "controlled_eval") == "controlled_eval":
+            detail["synthetic_answer_excerpt"] = excerpt if len(excerpt) <= SYNTHETIC_EXCERPT_LIMIT else excerpt[:SYNTHETIC_EXCERPT_LIMIT - 1].rstrip() + "…"
         details.append(detail)
     return details[:16]
 

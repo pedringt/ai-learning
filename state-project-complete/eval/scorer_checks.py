@@ -53,6 +53,21 @@ ASK_MUST_FAIL = (
             {"headline": "The record does not show whether it was answered.",
              "summary": "The vendor contract remains under review."},
             "misses that the Question was answered and what the answer was"),
+    # Nov 7: the denial headline seen in 6 of 6 staging answers, with a correct body.
+    AskCase("ask_question_answer_no_state_mutation",
+            {"headline": "No: the vendor-retention question is answered, but the answer is not a Current State change.",
+             "summary": "The question was closed by accepting a Review. The recorded answer: the vendor deletes customer content "
+                        "within 30 days of contract end. Current State still says the vendor contract remains under review."},
+            "body right, headline denies a question the record answers"),
+    AskCase("ask_question_answer_no_state_mutation",
+            {"headline": "Not yet confirmed: the vendor-retention question is closed, with a recorded answer",
+             "summary": "It was answered: content is deleted within 30 days of contract end. The vendor contract remains under review."},
+            "hedged opening contradicts the closed Question"),
+    AskCase("ask_question_answer_no_state_mutation",
+            {"headline": "The vendor contract remains under review.",
+             "summary": "The retention Question was answered: content is deleted within 30 days of contract end. The vendor "
+                        "contract remains under review."},
+            "headline never reports the resolution the body gives"),
     AskCase("ask_current_over_stale",
             {"headline": "Yes, password-reset automation is currently approved.",
              "summary": "History shows it was approved; it was paused after an incident on 2026-09-10."},
@@ -82,6 +97,10 @@ ASK_MUST_PASS = (
              "summary": "This came from Legal. Separately, the vendor contract is still under review, so the contract "
                         "itself has not been approved."},
             "correct, different wording"),
+    AskCase("ask_question_answer_no_state_mutation",
+            {"headline": "Answered: content is deleted within 30 days; the contract is still under review",
+             "summary": "The vendor-retention Question was resolved by an accepted Review. Current State is unchanged."},
+            "correct, leads with the answer instead of yes"),
     AskCase("ask_current_over_stale",
             {"headline": "No. Password-reset automation is paused.",
              "summary": "Current State says it was paused after a security incident, so it is not currently "
