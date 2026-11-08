@@ -209,8 +209,43 @@
     if(!backgroundLocked)return;
     Object.assign(document.body.style,{position:'',top:'',left:'',right:'',width:'',overflow:''});backgroundLocked=false;window.scrollTo(0,backgroundScrollY);
   }
+  // #613 (Paige, Nov 4, Option A): on phones, where the drawer covers the page, it is a real modal dialog: focus moves
+  // in, the page behind is inert and Tab stays inside. On desktop it stays a non-modal side panel. Either way focus
+  // goes in on open and back to whatever opened it on close. Safari does not focus a clicked button, so the last
+  // clicked control stands in for the opener.
+  const PHONE_DIALOG=window.matchMedia?.('(max-width:760px)');
+  let askOpener=null,lastClicked=null,inertedForAsk=[];
+  document.addEventListener('click',event=>{lastClicked=event.target?.closest?.('button,a,[tabindex]')||null;},true);
+  function focusableIn(root){return [...root.querySelectorAll('button,a[href],input,textarea,select,[tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled&&!el.hidden&&el.getClientRects().length);}
+  function setAskModal(drawer,on){
+    inertedForAsk.forEach(el=>el.removeAttribute?.('inert'));inertedForAsk=[];
+    if(on){
+      drawer.setAttribute?.('role','dialog');drawer.setAttribute?.('aria-modal','true');
+      // #overlay (Review and other dialogs) can open over the drawer and must stay usable; it is hidden when closed.
+      for(const el of document.body?.children||[])if(el!==drawer&&el.id!=='overlay'&&el.hasAttribute&&!el.hasAttribute('inert')&&!['SCRIPT','STYLE','LINK'].includes(el.tagName)){el.setAttribute('inert','');inertedForAsk.push(el);}
+    }else{drawer.removeAttribute?.('role');drawer.removeAttribute?.('aria-modal');}
+  }
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Tab'||!ui.drawerOpen||!PHONE_DIALOG?.matches||!document.getElementById('overlay')?.hidden)return;
+    const drawer=document.getElementById('askStateDrawer');if(!drawer)return;
+    const items=focusableIn(drawer);if(!items.length)return;
+    const first=items[0],last=items[items.length-1],active=document.activeElement;
+    if(event.shiftKey&&(active===first||!drawer.contains(active))){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&(active===last||!drawer.contains(active))){event.preventDefault();first.focus();}
+  });
   function openAskDrawer({focus=true}={}){
-    ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');lockBackground();announceDrawer();syncAskInputs();syncLauncherVisibility();if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());checkAnswerFreshness();
+    const wasOpen=ui.drawerOpen;
+    ensureAskShell();ui.drawerOpen=true;const drawer=document.getElementById('askStateDrawer');if(drawer)drawer.hidden=false;document.body.classList.add('ask-state-drawer-open');lockBackground();announceDrawer();syncAskInputs();syncLauncherVisibility();
+    if(drawer&&!wasOpen){
+      const active=document.activeElement;
+      const inside=el=>!!drawer.contains?.(el);
+      askOpener=active&&active!==document.body&&!inside(active)?active:lastClicked&&!inside(lastClicked)?lastClicked:null;
+      setAskModal(drawer,!!PHONE_DIALOG?.matches);
+      if(drawer.getAttribute?.('tabindex')==null)drawer.setAttribute?.('tabindex','-1');
+      const input=document.getElementById('askStateDrawerInput');
+      if(focus)input?.focus?.();else drawer.focus?.({preventScroll:true});
+    }else if(focus)requestAnimationFrame(()=>document.getElementById('askStateDrawerInput')?.focus());
+    checkAnswerFreshness();
   }
   function closeAskDrawer(){
     // QA follow-up (2026-09-14): closing while an answer was still loading
@@ -226,7 +261,13 @@
     // requestId. running is cleared immediately either way, so a new
     // question can be asked right away instead of waiting out the old one.
     if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();ui.requestId++;ui.running=false;ui.streamRaw='';}
-    ui.drawerOpen=false;document.getElementById('askStateDrawer')?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');unlockBackground();syncLauncherVisibility();announceDrawer();
+    const wasOpen=ui.drawerOpen,drawer=document.getElementById('askStateDrawer');
+    ui.drawerOpen=false;drawer?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');unlockBackground();syncLauncherVisibility();announceDrawer();
+    if(drawer)setAskModal(drawer,false);
+    if(wasOpen){
+      const back=askOpener?.isConnected&&askOpener.getClientRects?.().length?askOpener:document.getElementById('askStateLauncher');
+      askOpener=null;back?.focus?.({preventScroll:true});
+    }
   }
   // state.md QA follow-up: Ask's drawer state (the last-rendered answer,
   // in-flight query, resolved-context signature) used to survive a project
