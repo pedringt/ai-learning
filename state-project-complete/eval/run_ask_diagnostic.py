@@ -28,9 +28,10 @@ def main() -> int:
     parser.add_argument("--max-calls", type=int, required=True)
     parser.add_argument("--json", metavar="PATH")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--set", choices=("640", "step1"), default="640", help="640: the Nov 7 cause diagnostic; step1: the headline rule check")
+    parser.add_argument("--set", choices=("640", "step1", "one"), default="640",
+                        help="640: the Nov 7 cause diagnostic; step1: the headline rule check; one: the #640 scenario alone, to capture one answer")
     args = parser.parse_args()
-    cases = step1_cases() if args.set == "step1" else variants()
+    cases = step1_cases() if args.set == "step1" else step1_cases()[:1] if args.set == "one" else variants()
 
     model = os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5"
     planned = len(cases) * args.repeats
