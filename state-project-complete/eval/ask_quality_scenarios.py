@@ -24,10 +24,21 @@ class AskQualityScenario:
     history: tuple[tuple[str, str, str], ...] = field(default_factory=tuple)
     # Evidence text, seeded as Evidence records and linked to the first pending Review (#567).
     evidence: tuple[str, ...] = field(default_factory=tuple)
+    # (question text, recorded answer): Questions already resolved, seeded with status 'resolved' (#640).
+    closed_questions: tuple[tuple[str, str], ...] = field(default_factory=tuple)
     # Each entry is a required fact: either one phrase, or a tuple of acceptable
     # phrasings of the same fact (any one satisfies it).
     required_facts: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
     forbidden_claims: tuple[str, ...] = field(default_factory=tuple)
+    # #639: any number the answer asserts that appears in none of the supplied records (or the question) is an
+    # invented specific, e.g. "use 75% as the agreed target" where no percentage is established.
+    forbid_unsupported_numbers: bool = False
+    # Nov 7 (#640): what the headline itself must report, so a correct body cannot hide a headline that says the
+    # opposite. Each entry is one phrase or a tuple of alternatives, checked in the headline only.
+    headline_required_facts: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
+    # Openings that contradict the record for this scenario's question. Scenario-specific: "No" is wrong for "Was it
+    # answered?" when it was, and can be right for a differently phrased question. First words only.
+    forbidden_headline_openings: tuple[str, ...] = field(default_factory=tuple)
     should_express_uncertainty: bool = False
     should_reference_open_item: bool = False
     should_distinguish_proposal_from_truth: bool = False
@@ -36,6 +47,10 @@ class AskQualityScenario:
     # Measured and reported, but never fails the Ask gate (eval/release_gate.py). For a known hard case
     # tracked in an issue; remove the flag when the issue is fixed (Paige, Oct 27, DEC-017).
     observe_only: bool = False
+    # Nov 7 (Paige, #640/#642): a capability this release configuration does not have. Still run and reported (as a
+    # failure, never as passed), but left out of the Ask gate's checks. The text says why and when it comes off;
+    # remove it when the capability ships.
+    known_unsupported: str = ""
 
 
 SCENARIOS = (
@@ -70,6 +85,7 @@ SCENARIOS = (
         open_questions=("What autonomous-resolution percentage is safe and achievable?",),
         required_facts=(("not established", "not yet established", "not been established"),),
         forbidden_claims=("0%", "50%"),
+        forbid_unsupported_numbers=True,
         should_express_uncertainty=True,
         should_reference_open_item=True,
         severity="high",
@@ -94,6 +110,7 @@ SCENARIOS = (
         open_questions=("How much automation is safe after the pilot?",),
         required_facts=("human-reviewed",),
         forbidden_claims=("we decided to fully automate",),
+        forbid_unsupported_numbers=True,
         should_express_uncertainty=True,
         should_reference_open_item=True,
         severity="high",
@@ -129,10 +146,23 @@ SCENARIOS = (
         category="question_resolution",
         question="Was the vendor-retention question answered?",
         current_state=(("vendor", "The vendor contract remains under review."),),
-        history=(),
-        required_facts=("question",),
+        # #640 (Nov 7): the first version seeded no Question and required only the word "question", so it could not
+        # test what its rationale says. The Question is answered; the contract fact it relates to has not changed.
+        closed_questions=((
+            "Does the vendor retain customer content after the contract ends?",
+            "Legal confirmed the vendor deletes customer content within 30 days of contract end.",
+        ),),
+        required_facts=(("answered", "resolved"), "30 days", "under review"),
+        forbidden_claims=("contract review is complete", "contract is approved", "contract has been approved",
+                          "contract was approved", "contract is no longer under review"),
+        # Nov 7: 6 of 6 answers read on staging opened "No:" or "Not yet:" while the body said it was answered. The
+        # headline must report the resolution, and must not open by denying it.
+        headline_required_facts=(("yes", "answered", "resolved", "closed"),),
+        forbidden_headline_openings=("no", "not yet", "not confirmed", "not yet confirmed", "unclear", "unknown"),
         severity="medium",
-        rationale="Ask should be able to distinguish a resolved Question from a Current State mutation.",
+        rationale="Ask should report that a Question was answered, with its answer, without presenting that answer as a change to Current State.",
+        known_unsupported=("#640: production Ask does not retrieve resolved Questions yet (held on staging because its "
+                           "headline contradicts its body). Remove this exception when #640 ships."),
     ),
     AskQualityScenario(
         id="ask_superseded_pending_review",

@@ -7,7 +7,8 @@ see ``authority_lab_export.unsafe_direction_miss``).
 
 Ask quality (Paige, Oct 19, DEC-013, a trial): the same shape without the unsafe-direction check, so a run
 passes when at most one scenario misses and no scenario fails in two consecutive runs. A scenario marked
-``observe_only`` (DEC-017, Oct 27) is reported but left out of both checks.
+``observe_only`` (DEC-017, Oct 27) is reported but left out of both checks, and so is one marked
+``known_unsupported`` (Nov 7, #640): a capability this release does not have, reported as failing, never as passed.
 
 This is a library: it never loads ``.env`` and never calls a model. ``run_quality_evals`` uses it.
 """
@@ -43,8 +44,9 @@ def review_gate(rows: list[Mapping[str, Any]], scenarios: Iterable[Any], previou
 
 
 def ask_gate(rows: list[Mapping[str, Any]], previous_failed_ids: set[str] | None, scenarios: Iterable[Any] = ()) -> list[str]:
-    """Reasons the Ask run fails; empty when it passes (DEC-013 trial). Observe-only scenarios don't count (DEC-017)."""
-    observed = {s.id for s in scenarios if getattr(s, "observe_only", False)}
+    """Reasons the Ask run fails; empty when it passes (DEC-013 trial). Observe-only (DEC-017) and known-unsupported
+    (#640) scenarios don't count; every other rule is unchanged."""
+    observed = {s.id for s in scenarios if getattr(s, "observe_only", False) or getattr(s, "known_unsupported", "")}
     rows = [r for r in rows if r.get("id") not in observed]
     failed = [r for r in rows if not r.get("passed")]
     reasons: list[str] = []
@@ -55,6 +57,22 @@ def ask_gate(rows: list[Mapping[str, Any]], previous_failed_ids: set[str] | None
         if repeated:
             reasons.append("failed in two consecutive runs: " + ", ".join(repeated))
     return reasons
+
+
+def not_counted(reports: list[Mapping[str, Any]], scenarios_by_suite: Mapping[str, Iterable[Any]]) -> list[str]:
+    """One line per scenario the gate left out, with its result, so a log never shows it as passing by omission."""
+    lines = []
+    for report in reports:
+        by_id = {s.id: s for s in scenarios_by_suite.get(report["suite"], ())}
+        for row in report["results"]:
+            s = by_id.get(row.get("id"))
+            if s is None:
+                continue
+            why = getattr(s, "known_unsupported", "") or ("observe-only (DEC-017)" if getattr(s, "observe_only", False) else "")
+            if why:
+                result = "passed (check whether the exception can come off)" if row.get("passed") else "FAILED"
+                lines.append(f"{report['suite']}: {s.id} {result}; not counted: {why}")
+    return lines
 
 
 def gate(reports: list[Mapping[str, Any]], scenarios_by_suite: Mapping[str, Iterable[Any]], previous_failed: Mapping[str, set[str] | None]) -> dict[str, list[str]]:

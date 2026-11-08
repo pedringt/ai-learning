@@ -41,6 +41,12 @@
     .summary-card:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--accent)}
     .summary-card>strong{display:block;font-size:14px}
     .summary-card .score{font-size:32px;font-weight:850;letter-spacing:-.045em;margin:6px 0 2px}
+    .summary-card .score .score-unit{font-size:16px;font-weight:650;letter-spacing:0}
+    .summary-card .scoring-version{font-size:12px;opacity:.75;overflow-wrap:anywhere}
+    .summary-card .gate-eligibility{font-size:13px;margin-top:4px}
+    .known-unsupported{background:#fff6e5;border-radius:8px;padding:8px 10px;overflow-wrap:anywhere}
+    .synthetic-excerpt{border-left:3px solid #d7d7df;padding-left:10px;font-style:italic;overflow-wrap:anywhere}
+    .synthetic-excerpt strong{font-style:normal}
     .summary-card p{margin:0;color:var(--muted);font-size:12px}
     .panel{padding:20px;margin-top:14px}
     .panel h2{margin:0;font-size:22px;letter-spacing:-.03em}
@@ -140,7 +146,7 @@
       </div>
     </section>
 
-    <div class="note"><strong>Read-only details.</strong> Run controlled AI evals from Project Health, where paid-model confirmation, one active run at a time, and the cooldown are enforced. These cases are deliberately constructed test data, not customer or private project content. State records aggregate run metrics and, for failed controlled scenarios, limited scenario IDs and pass/fail metadata. Raw production content and full model transcripts are not published here.</div>
+    <div class="note"><strong>Read-only details.</strong> Run controlled AI evals from Project Health, where paid-model confirmation, one active run at a time, and the cooldown are enforced. These cases are deliberately constructed test data, not customer or private project content. State records aggregate run metrics and, for failed controlled scenarios, limited scenario IDs, pass/fail metadata and a short labeled excerpt of the answer to the synthetic test fixture. Raw production content and full model transcripts are not published here.</div>
 
     <section class="summary-grid" aria-label="Latest eval summaries">
       <div class="summary-card" id="reviewSummary"><strong>Update understanding</strong><div class="score">Loading…</div><p>Checking the latest recorded run.</p></div>
@@ -205,7 +211,7 @@
         {id:'ask_false_premise',title:'Correct a false premise',severity:'high',setup:'The question assumes support was fully automated, while Current State says the first implementation remains human-reviewed.',expected:'Correct the premise, preserve uncertainty about future automation, and reference the open Question.',why:'Ask should not accept a user’s false premise as project truth.'},
         {id:'ask_blocker_not_omitted',title:'Do not omit a consequential blocker',severity:'high',setup:'A launch target exists, but Security approval of the production data path is still a blocking open Question.',expected:'Surface the Security blocker and avoid declaring the project simply ready.',why:'Broad readiness answers must include consequential unresolved blockers.'},
         {id:'ask_conflicting_evidence',title:'Surface unresolved conflicting evidence',severity:'high',setup:'Current State reflects approved enterprise terms, while a pending legal Review may contradict that interpretation.',expected:'Report maintained truth while clearly surfacing the unresolved conflict and uncertainty.',why:'Ask should distinguish current authority from evidence that may later change it.'},
-        {id:'ask_question_answer_no_state_mutation',title:'Question resolution is not a State mutation',severity:'medium',setup:'The vendor contract remains under review, but a separate vendor-retention Question may have been answered.',expected:'Distinguish the resolved Question from any change to Current State.',why:'Answers to open Questions and maintained facts are different product concepts.'},
+        {id:'ask_question_answer_no_state_mutation',title:'Question resolution is not a State mutation',severity:'medium',setup:'A vendor-retention Question has been answered: Legal confirmed customer content is deleted within 30 days of contract end. The vendor contract itself remains under review.',expected:'Report that the Question was answered and what the answer was, while keeping the contract fact unchanged.',why:'Answers to open Questions and maintained facts are different product concepts.'},
         {id:'ask_superseded_pending_review',title:'Prefer the newest pending proposal',severity:'high',setup:'Current State says 10 users. An older pending proposal says 50; a newer pending proposal replaces it with 25.',expected:'Report 10 as approved truth, 25 as the current pending proposal, and do not treat the superseded 50-user proposal as equally current.',why:'Ask must distinguish governing truth from the active proposal and from superseded pending context.'},
         {id:'ask_known_outcome_unknown_reason',title:'Know what happened without inventing why',severity:'high',setup:'Current State records that the pilot was paused, but no reason is recorded.',expected:'Say the pilot was paused and explicitly state that the reason is not established.',why:'State should not invent rationale, cause, or motivation just because an outcome is known.'}
       ]
@@ -259,9 +265,17 @@
     tabs.forEach(tab=>tab.addEventListener('click',()=>renderSuite(tab.dataset.suite)));
     renderSuite('review');
 
+    // #643 (Nov 7): the count leads. The percentage is a pass rate over controlled scenarios, not production accuracy.
+    const passedLabel=(run,metric)=>{
+      const counts=model?.scenarioCounts?.(run,metric);
+      return counts?counts.passed+'/'+counts.scored+' controlled scenarios passed':pct(metric);
+    };
+    const versionLabel=run=>model?.scoringVersionLabel?model.scoringVersionLabel(run):(run?.scoring_version||'legacy / version unknown');
     function suiteSummary(element,label,run,metric){
       if(!run){element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">No run yet</div><p>No recorded aggregate result is available.</p>';return;}
-      element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">'+esc(pct(metric))+'</div><p>'+esc(countLabel(run.total,'scenario','scenarios'))+' · '+esc(countLabel(run.high_severity_failures??0,'high-impact failure','high-impact failures'))+' · '+esc(fmt(run.created_at))+'</p>';
+      const counts=model?.scenarioCounts?.(run,metric);
+      const score=counts?esc(counts.passed+'/'+counts.scored)+' <span class="score-unit">controlled scenarios passed</span>':esc(pct(metric));
+      element.innerHTML='<strong>'+esc(label)+'</strong><div class="score">'+score+'</div><p>'+(counts?esc(pct(metric))+' scenario pass rate':'Scenario count not recorded; '+esc(pct(metric))+' is a scenario pass rate')+', not production accuracy · '+esc(countLabel(run.high_severity_failures??0,'high-impact failure','high-impact failures'))+' · '+esc(fmt(run.created_at))+'</p>'+(model?.gateEligibility?.(run)?'<p class="gate-eligibility">'+esc(model.gateEligibility(run).text)+'</p>':'')+'<p class="scoring-version">Scoring version: '+esc(versionLabel(run))+'</p>';
     }
     fetch('/api/project-health-state-quality?env=production',{headers:{Accept:'application/json'}})
       .then(response=>response.ok?response.json():Promise.reject(new Error('Quality data unavailable')))
@@ -283,10 +297,18 @@
           failureList.innerHTML=failures.map(item=>{
             const catalog=(scenarios[item.suite]||[]).find(row=>row.id===item.scenario_id)||{};
             const checks=(item.failed_checks||[]).map(check=>'<span>'+esc(check)+'</span>').join('');
+            // #643: what the run got wrong and what a reader would have believed, from the record and catalog only (#596).
+            const story=model?model.failureStory(item,item.suite==='review'?review:ask):null;
             return '<article class="failure-item"><h3>'+esc(catalog.title||(model?model.scenarioTitle(item.scenario_id,item.category):item.scenario_id)||'Failed scenario')+'</h3><div class="eyebrow">'+esc(item.scenario_id||'')+'</div>'+
               '<div class="failure-meta"><span>'+esc(item.severity||catalog.severity||'unknown')+' severity</span>'+checks+'</div>'+
-              (item.expected?'<p><strong>Expected:</strong> '+esc(item.expected)+'</p>':'')+
-              (item.observed?'<p><strong>Observed:</strong> '+esc(item.observed)+'</p>':'')+
+              (story?.knownUnsupported?'<p class="known-unsupported"><strong>Known unsupported in this release, not counted by the release gate:</strong> '+esc(story.knownUnsupported)+'</p>':'')+
+              (story?'<p><strong>Observed:</strong> '+esc(story.observed.text)+'</p>'+
+                (story.observed.excerpt?'<p><strong>Proposed State (recorded excerpt):</strong> '+esc(story.observed.excerpt.text)+'</p>':'')+
+                (story.syntheticExcerpt?'<p class="synthetic-excerpt"><strong>'+esc(story.syntheticExcerpt.label)+':</strong> “'+esc(story.syntheticExcerpt.text)+'”</p>':'')+
+                '<p><strong>Expected:</strong> '+esc(story.expected.text)+'</p>'+
+                '<p><strong>Consequence:</strong> '+esc(story.consequence.text)+'</p>'
+              :(item.expected?'<p><strong>Expected:</strong> '+esc(item.expected)+'</p>':'')+
+               (item.observed?'<p><strong>Observed:</strong> '+esc(item.observed)+'</p>':''))+
               (catalog.why?'<p><strong>Why it matters:</strong> '+esc(catalog.why)+'</p>':'')+
               '<div class="failure-actions"><a class="button" href="/project-health?project=state&tab=ai-quality&investigate=quality&failure='+encodeURIComponent(item.scenario_id||'')+'">Investigate this failure</a><button class="button" type="button" data-jump-failure="'+esc(item.scenario_id)+'" data-suite="'+esc(item.suite)+'">View scenario below</button></div></article>';
           }).join('');
@@ -309,7 +331,7 @@
           const metric=run.suite==='review_interpretation'?run.interpretation_accuracy:run.overall_pass_rate;
           const label=run.suite==='review_interpretation'?'Update understanding':'Answer quality';
           const tech=[run.provider,run.model_identifier,run.build].filter(Boolean).join(' · ');
-          return '<div class="run-row"><div><strong>'+esc(label)+' · '+esc(pct(metric))+'</strong><span>'+esc(fmt(run.created_at))+' · '+esc(countLabel(run.total,'scenario','scenarios'))+' · '+esc(countLabel(run.high_severity_failures??0,'high-impact failure','high-impact failures'))+'</span></div><span>'+esc(tech||'Technical record unavailable')+'</span></div>';
+          return '<div class="run-row"><div><strong>'+esc(label)+' · '+esc(passedLabel(run,metric))+'</strong><span>'+esc(fmt(run.created_at))+' · '+esc(pct(metric))+' · '+esc(countLabel(run.high_severity_failures??0,'high-impact failure','high-impact failures'))+' · scoring '+esc(versionLabel(run))+'</span></div><span>'+esc(tech||'Technical record unavailable')+'</span></div>';
         }).join(''):'<div class="status">No recorded runs yet.</div>';
       })
       .catch(()=>{

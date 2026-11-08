@@ -170,6 +170,59 @@ function cachedSnapshot(){
     assert.ok(story.gaps.some(gap=>/answer text is not recorded/.test(gap)));
     assert.match(story.consequence.text,/Ask is read-only/);
   });
+  await check('#643: recorded failed items give the specific miss and what a reader would wrongly believe',()=>{
+    const story=M.failureStory({scenario_id:'ask_unknown_stays_unknown',severity:'high',failed_checks:['grounding'],
+      failed_items:['number not in any record','asserted forbidden claim: 50%']},ask());
+    assert.match(story.observed.text,/The answer said “50%”, which this scenario forbids\./);
+    assert.match(story.observed.text,/gave a number that appears in none of the supplied records/);
+    assert.doesNotMatch(story.observed.text,/missed a required fact or made a claim/,'the generic check text gives way to the specific items');
+    assert.match(story.consequence.text,/^A reader could believe “50%”, which the record does not support\. A reader could take an invented number as an agreed figure\./);
+    const missing=M.failureStory({scenario_id:'ask_question_answer_no_state_mutation',severity:'medium',failed_checks:['grounding','required_facts'],
+      failed_items:['missing required fact: 30 days']},ask());
+    assert.match(missing.observed.text,/Expected wording not found in the answer: “30 days”\./);
+    assert.match(missing.observed.text,/This check looks for wording: missing wording does not by itself show the answer is wrong\./);
+    assert.match(missing.consequence.text,/If the answer does not convey “30 days”, a reader would not learn what the record establishes\./);
+    assert.ok(missing.evidence.setup.some(line=>line.label==='Resolved Question'&&/30 days/.test(line.text)),'the resolved Question is part of the setup');
+    assert.deepStrictEqual(M.failureStory({scenario_id:'ask_unknown_stays_unknown',failed_checks:['uncertainty']},ask()).technical.failedItems,[]);
+  });
+  await check('#643: a synthetic eval excerpt is shown labeled and apart from the explanation',()=>{
+    const story=M.failureStory({scenario_id:'ask_unknown_stays_unknown',severity:'high',failed_checks:['grounding'],
+      failed_items:['number not in any record'],synthetic_answer_excerpt:'For planning purposes, use 75% as the agreed target.'},ask());
+    assert.deepStrictEqual(story.syntheticExcerpt,{label:'Synthetic eval excerpt (model answer to a test fixture)',text:'For planning purposes, use 75% as the agreed target.'});
+    assert.doesNotMatch(story.observed.text,/75%/,'the software-generated explanation never quotes the model');
+    assert.ok(!story.gaps.some(gap=>/answer text is not recorded/.test(gap)));
+    assert.strictEqual(M.failureStory({scenario_id:'ask_unknown_stays_unknown',failed_checks:['grounding']},ask()).syntheticExcerpt,null);
+  });
+  await check('#640 copy review: headline checks appear in Observed, with every accepted alternative',()=>{
+    const story=M.failureStory({scenario_id:'ask_question_answer_no_state_mutation',severity:'medium',failed_checks:['grounding','required_facts'],
+      failed_items:['missing required fact: answered / resolved','missing required fact: 30 days','headline lacks: yes / answered / resolved / closed','headline opens with forbidden: no']},ask());
+    assert.match(story.observed.text,/Expected wording not found in the answer: “answered” or “resolved”; “30 days”\./);
+    assert.match(story.observed.text,/Expected wording not found in the headline: “yes”, “answered”, “resolved” or “closed”\./);
+    assert.match(story.observed.text,/The headline opens with “no”, an opening this scenario does not accept for its question\./);
+    assert.match(story.observed.text,/missing wording does not by itself show the answer is wrong/);
+    assert.doesNotMatch(story.observed.text,/left out/,'no claim that the meaning was missing');
+    assert.match(story.consequence.text,/A reader who reads only the headline may take away a different status/);
+    assert.match(story.knownUnsupported,/^#640: .*Remove this exception when #640 ships\.$/);
+    assert.doesNotMatch(story.knownUnsupported,/not counted/);
+  });
+  await check('#639: a review failure with recorded items says what the scorer found instead of a gap',()=>{
+    const story=M.failureStory({scenario_id:'review_direct_reversal',severity:'high',expected:'update_state',observed:'update_state | proposed State: Password-reset automation is approved and fully operational.',
+      failed_checks:['interpretation'],failed_items:['proposed state lacks paused / suspended / halted / on hold / not approved / no longer approved']},review());
+    assert.match(story.observed.text,/The proposed change does not say “paused” or “suspended” or “halted” or “on hold” or “not approved” or “no longer approved”\./);
+    assert.doesNotMatch(story.observed.text,/miss was in the wording/,'the specific reason replaces the generic one');
+    assert.ok(!story.gaps.some(gap=>/exact reason is not recorded/.test(gap)));
+  });
+  await check('#639: runs compare only under the same scoring version; older runs are legacy / version unknown',()=>{
+    const a=review({scoring_version:'review-16-aaa',created_at:'2026-11-08 10:00:00'}),b=review({scoring_version:'review-16-aaa',created_at:'2026-11-07 10:00:00'});
+    assert.deepStrictEqual(M.runComparability(a,b),{comparable:true,reason:null,text:''});
+    assert.strictEqual(M.runComparability(a,review({scoring_version:'review-16-bbb'})).reason,'scoring-version');
+    const legacy=M.runComparability(a,review());
+    assert.strictEqual(legacy.comparable,false);
+    assert.match(legacy.text,/legacy \/ version unknown/);
+    assert.strictEqual(M.scoringVersionLabel(review()),'legacy / version unknown');
+    assert.strictEqual(M.scoringVersionLabel(a),'review-16-aaa');
+    assert.match(M.evalTrend([a,review()],'review_interpretation','interpretation_accuracy'),/^Not comparable with the previous run: one of the runs is legacy/);
+  });
   await check('a scenario-specific explanation is used only when the recorded miss is the one it describes',()=>{
     const matching=M.failureStory({scenario_id:'review_partial_reversal',severity:'high',expected:'update_state',observed:'preserve_evidence_only',failed_checks:['interpretation']},review());
     assert.match(matching.observed.text,/kept this as Evidence/);

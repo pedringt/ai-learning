@@ -35,6 +35,7 @@ class EvalEnvIsolationTests(unittest.TestCase):
             import eval.harness, eval.quality_harness, eval.env  # noqa: F401
             import eval.meeting_prep_shape, eval.meeting_prep_shape_run  # noqa: F401
             import eval.matrix, eval.aggregate_matrix  # noqa: F401
+            import eval.quality_report, eval.scoring_version, eval.scorer_checks  # noqa: F401
             assert not calls, f"load_dotenv called at import time: {calls}"
             """
         )

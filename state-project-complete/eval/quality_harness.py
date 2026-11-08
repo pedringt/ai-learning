@@ -298,10 +298,29 @@ class AskQualityResult:
     open_item_ok: bool
     authority_ok: bool
     error: str = ""
+    # Which items failed (#639/#643), so a report can say what the answer got wrong instead of which check fired.
+    missing_facts: tuple[str, ...] = ()
+    asserted_claims: tuple[str, ...] = ()
+    unsupported_numbers: tuple[str, ...] = ()
+    headline_opening: str = ""
+    headline_missing: tuple[str, ...] = ()
+
+    @property
+    def number_ok(self) -> bool:
+        return not self.unsupported_numbers
+
+    @property
+    def failed_items(self) -> list[str]:
+        return ([f"missing required fact: {fact}" for fact in self.missing_facts]
+                + [f"asserted forbidden claim: {claim}" for claim in self.asserted_claims]
+                + [f"number not in any record: {number}" for number in self.unsupported_numbers]
+                + ([f"headline opens with forbidden: {self.headline_opening}"] if self.headline_opening else [])
+                + [f"headline lacks: {fact}" for fact in self.headline_missing])
 
     @property
     def grounding_ok(self) -> bool:
-        return self.required_facts_ok and self.forbidden_claims_ok
+        return (self.required_facts_ok and self.forbidden_claims_ok and self.number_ok
+                and not self.headline_opening and not self.headline_missing)
 
     @property
     def passed(self) -> bool:
@@ -331,6 +350,19 @@ def _seed_ask_scenario(connection, scenario: AskQualityScenario) -> None:
             "INSERT INTO questions(id, text, status, blocking, blocks) VALUES (?, ?, 'open', ?, ?)",
             (f"ask-question-{idx}", clean, blocking, "Launch readiness" if blocking else None),
         )
+    # The way State closes a Question (review_service.resolve_review): an accepted Review links it, the Question is
+    # marked resolved, and its answer is the Evidence the Review accepted (#640).
+    for idx, (text, answer) in enumerate(scenario.closed_questions):
+        question_id, evidence_id, review_id = f"ask-closed-question-{idx}", f"ask-answer-evidence-{idx}", f"ask-answer-review-{idx}"
+        connection.execute("INSERT INTO evidence(id, content) VALUES (?, ?)", (evidence_id, answer))
+        connection.execute(
+            "INSERT INTO review_issues(id, review_type, decision_question, why_consequential, status, resolution, resolved_at) "
+            "VALUES (?, 'proposed_update', ?, '', 'resolved', 'question_linked', CURRENT_TIMESTAMP)", (review_id, text))
+        connection.execute("INSERT INTO review_evidence(review_id, evidence_id) VALUES (?, ?)", (review_id, evidence_id))
+        connection.execute(
+            "INSERT INTO questions(id, text, status, blocking, resolution, resolved_at, source_evidence_id) "
+            "VALUES (?, ?, 'resolved', 0, 'Resolved by reviewed evidence', CURRENT_TIMESTAMP, ?)", (question_id, text, evidence_id))
+        connection.execute("INSERT INTO review_questions(review_id, question_id, evidence_id) VALUES (?, ?, ?)", (review_id, question_id, evidence_id))
 
     for idx, (old_statement, new_statement, changed_at) in enumerate(scenario.history):
         state_id = f"ask-history-state-{idx}"
@@ -430,6 +462,10 @@ def _asserts(text: str, claim: str) -> bool:
     "currently approved" (Oct 10, Haiku 5.5's correct answer to ask_current_over_stale)."""
     start = text.find(claim)
     while start != -1:
+        # #639 (Nov 7): a claim that starts with a digit is a number, so "0%" is not inside "100%".
+        if claim[:1].isdigit() and start and (text[start - 1].isdigit() or text[start - 1] in ".,"):
+            start = text.find(claim, start + 1)
+            continue
         if not (_NEGATION_BEFORE.search(text[:start]) or _NEGATED_REPORT_BEFORE.search(text[:start])
                 or _INSIDE_WHETHER.search(text[:start]) or _NAMES_PREMISE.search(text[:start])):
             return True
@@ -437,13 +473,95 @@ def _asserts(text: str, claim: str) -> bool:
     return False
 
 
+# Not part of a word or identifier: record ids such as "ask-state-0" appear on answer cards.
+_NUMBER = re.compile(r"(?<![\w-])\d[\d,]*(?:\.\d+)?")
+
+
+def _number_key(token: str) -> str:
+    token = token.replace(",", "").rstrip(".")
+    whole, _, fraction = token.partition(".")
+    whole = whole.lstrip("0") or "0"
+    fraction = fraction.rstrip("0")
+    return whole + ("." + fraction if fraction else "")
+
+
+def scenario_record_text(scenario: AskQualityScenario) -> str:
+    """Every string the Ask call was seeded with, plus the question: what an answer may take numbers from."""
+    return _flatten_strings([scenario.question, scenario.current_state, scenario.pending_reviews, scenario.open_questions,
+                             scenario.closed_questions, scenario.history, scenario.evidence])
+
+
+def unsupported_numbers(text: str, supplied: str) -> list[str]:
+    """Numbers `text` asserts that appear nowhere in `supplied` (#639). "Not 100% automated" names a number to deny it,
+    so a number under the same negation rules as a forbidden claim is not counted."""
+    known = {_number_key(match.group()) for match in _NUMBER.finditer(supplied)}
+    found: list[str] = []
+    for match in _NUMBER.finditer(text):
+        before = text[:match.start()]
+        if (_NEGATION_BEFORE.search(before) or _NEGATED_REPORT_BEFORE.search(before)
+                or _INSIDE_WHETHER.search(before) or _NAMES_PREMISE.search(before)):
+            continue
+        key = _number_key(match.group())
+        if key not in known and match.group() not in found:
+            found.append(match.group().rstrip(".,"))
+    return found
+
+
+def answer_excerpt(answer: Any, needles: list[str] | tuple[str, ...] = (), limit: int = 240) -> str:
+    """A short excerpt of what the answer said (#643): the sentence holding the first failed item when there is one,
+    otherwise the headline (or the start of the answer). Recorded text only; nothing is reworded."""
+    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
+    flat = " ".join(_flatten_strings(inner).split())
+    if not flat:
+        return ""
+    lowered = flat.lower()
+    for needle in needles:
+        at = lowered.find(_normalize(needle))
+        if at != -1:
+            start = max(flat.rfind(". ", 0, at) + 2, 0) if flat.rfind(". ", 0, at) != -1 else 0
+            end = flat.find(". ", at)
+            sentence = flat[start:(end + 1) if end != -1 else len(flat)]
+            return sentence if len(sentence) <= limit else sentence[:limit - 1].rstrip() + "…"
+    headline = inner.get("headline") if isinstance(inner, dict) else None
+    lead = " ".join(str(headline).split()) if isinstance(headline, str) and headline.strip() else flat
+    return lead if len(lead) <= limit else lead[:limit - 1].rstrip() + "…"
+
+
+def headline_opening(answer: Any, openings: tuple[str, ...]) -> str:
+    """The forbidden opening the headline starts with, if any (#640): "No: ..." answers a yes question with a denial
+    even when the body is right. Longest match first, so "not yet confirmed" is reported rather than "not yet"."""
+    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
+    headline = _normalize(str(inner.get("headline") or "")) if isinstance(inner, dict) else ""
+    words = re.sub(r"[^\w\s]", " ", headline).split()
+    for opening in sorted(openings, key=len, reverse=True):
+        target = _normalize(opening).split()
+        if target and words[:len(target)] == target:
+            return opening
+    return ""
+
+
+def _headline_missing(answer: Any, facts) -> tuple[str, ...]:
+    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
+    headline = _normalize(str(inner.get("headline") or "")) if isinstance(inner, dict) else ""
+    words = set(re.sub(r"[^\w\s]", " ", headline).split())
+    def present(phrase: str) -> bool:
+        norm = _normalize(phrase)
+        return norm in words if " " not in norm else norm in headline
+    return tuple(fact if isinstance(fact, str) else " / ".join(fact) for fact in facts
+                 if not any(present(p) for p in ((fact,) if isinstance(fact, str) else fact)))
+
+
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
     text = _normalize(_flatten_strings(answer))
-    required_ok = all(
-        any(_normalize(phrase) in text for phrase in ((fact,) if isinstance(fact, str) else fact))
+    missing = tuple(
+        fact if isinstance(fact, str) else " / ".join(fact)
         for fact in scenario.required_facts
+        if not any(_normalize(phrase) in text for phrase in ((fact,) if isinstance(fact, str) else fact))
     )
-    forbidden_ok = all(not _asserts(text, _normalize(claim)) for claim in scenario.forbidden_claims)
+    asserted = tuple(claim for claim in scenario.forbidden_claims if _asserts(text, _normalize(claim)))
+    numbers = tuple(unsupported_numbers(text, _normalize(scenario_record_text(scenario)))) if scenario.forbid_unsupported_numbers else ()
+    required_ok = not missing
+    forbidden_ok = not asserted
     uncertainty_ok = (not scenario.should_express_uncertainty) or _expresses_uncertainty(text)
     open_item_ok = (not scenario.should_reference_open_item) or _has_open_item_language(text)
     authority_ok = (not scenario.should_distinguish_proposal_from_truth) or _distinguishes_proposal(text)
@@ -455,6 +573,11 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
         uncertainty_ok=uncertainty_ok,
         open_item_ok=open_item_ok,
         authority_ok=authority_ok,
+        missing_facts=missing,
+        asserted_claims=asserted,
+        unsupported_numbers=numbers,
+        headline_opening=headline_opening(answer, scenario.forbidden_headline_openings),
+        headline_missing=_headline_missing(answer, scenario.headline_required_facts),
     )
 
 

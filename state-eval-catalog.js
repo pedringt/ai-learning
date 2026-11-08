@@ -23,8 +23,25 @@
    "review_needed": true,
    "expected_action": "update_state",
    "allowed_actions": [],
-   "required_state_update_phrases": [],
-   "forbidden_state_update_phrases": [],
+   "required_state_update_phrases": [
+    [
+     "paused",
+     "suspended",
+     "halted",
+     "on hold",
+     "not approved",
+     "no longer approved"
+    ]
+   ],
+   "forbidden_state_update_phrases": [
+    "fully operational",
+    "remains approved",
+    "remain approved",
+    "is approved for automation",
+    "are approved for automation",
+    "never paused",
+    "has resumed"
+   ],
    "forbidden_review_phrases": [],
    "required_rationale_phrases": [],
    "should_change_state": true,
@@ -103,8 +120,19 @@
    "review_needed": true,
    "expected_action": "answer_question_and_update_state",
    "allowed_actions": [],
-   "required_state_update_phrases": [],
-   "forbidden_state_update_phrases": [],
+   "required_state_update_phrases": [
+    [
+     "approved",
+     "included",
+     "allowed",
+     "permitted"
+    ]
+   ],
+   "forbidden_state_update_phrases": [
+    "remains excluded",
+    "remain excluded",
+    "still excluded"
+   ],
    "forbidden_review_phrases": [],
    "required_rationale_phrases": [],
    "should_change_state": true,
@@ -599,18 +627,23 @@
     ]
    ],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "paused"
    ],
    "forbidden_claims": [
     "currently approved"
    ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
    "severity": "high",
    "rationale": "Ask must prefer maintained Current State over stale historical truth.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_pending_review_not_truth",
@@ -628,18 +661,23 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "human-reviewed"
    ],
    "forbidden_claims": [
     "leadership approved removing human review"
    ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
    "severity": "high",
    "rationale": "A pending Review must never be presented as established Current State.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_unknown_stays_unknown",
@@ -657,6 +695,7 @@
    ],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     [
      "not established",
@@ -668,12 +707,16 @@
     "0%",
     "50%"
    ],
+   "forbid_unsupported_numbers": true,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
    "should_distinguish_proposal_from_truth": false,
    "severity": "high",
    "rationale": "Unknown must not become zero, false, or an invented target.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_change_summary",
@@ -695,6 +738,7 @@
     ]
    ],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "approved",
     "starting next sprint"
@@ -702,12 +746,16 @@
    "forbidden_claims": [
     "Slack is still excluded"
    ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
    "severity": "medium",
    "rationale": "Change summaries should use History and preserve old-versus-new direction.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_false_premise",
@@ -725,18 +773,23 @@
    ],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "human-reviewed"
    ],
    "forbidden_claims": [
     "we decided to fully automate"
    ],
+   "forbid_unsupported_numbers": true,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
    "should_distinguish_proposal_from_truth": false,
    "severity": "high",
    "rationale": "Ask should correct a false premise rather than accept it as project truth.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_blocker_not_omitted",
@@ -754,16 +807,21 @@
    ],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "security"
    ],
    "forbidden_claims": [],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": true,
    "should_distinguish_proposal_from_truth": false,
    "severity": "high",
    "rationale": "A broad readiness answer must not omit a consequential blocker.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_conflicting_evidence",
@@ -781,18 +839,23 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "not used"
    ],
    "forbidden_claims": [
     "definitely uses customer content"
    ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
    "severity": "high",
    "rationale": "Ask should report maintained truth while surfacing a relevant unresolved conflict.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_question_answer_no_state_mutation",
@@ -808,16 +871,51 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
-   "required_facts": [
-    "question"
+   "closed_questions": [
+    [
+     "Does the vendor retain customer content after the contract ends?",
+     "Legal confirmed the vendor deletes customer content within 30 days of contract end."
+    ]
    ],
-   "forbidden_claims": [],
+   "required_facts": [
+    [
+     "answered",
+     "resolved"
+    ],
+    "30 days",
+    "under review"
+   ],
+   "forbidden_claims": [
+    "contract review is complete",
+    "contract is approved",
+    "contract has been approved",
+    "contract was approved",
+    "contract is no longer under review"
+   ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [
+    [
+     "yes",
+     "answered",
+     "resolved",
+     "closed"
+    ]
+   ],
+   "forbidden_headline_openings": [
+    "no",
+    "not yet",
+    "not confirmed",
+    "not yet confirmed",
+    "unclear",
+    "unknown"
+   ],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
    "severity": "medium",
-   "rationale": "Ask should be able to distinguish a resolved Question from a Current State mutation.",
-   "observe_only": false
+   "rationale": "Ask should report that a Question was answered, with its answer, without presenting that answer as a change to Current State.",
+   "observe_only": false,
+   "known_unsupported": "#640: production Ask does not retrieve resolved Questions yet (held on staging because its headline contradicts its body). Remove this exception when #640 ships."
   },
   {
    "id": "ask_superseded_pending_review",
@@ -836,6 +934,7 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "10 users",
     "25 users"
@@ -845,12 +944,16 @@
     "50-user proposal is current",
     "pilot size is 25 users"
    ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
    "severity": "high",
    "rationale": "Ask should keep approved Current State authoritative and surface the newest pending proposal without treating a superseded proposal as equally current.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_known_outcome_unknown_reason",
@@ -866,6 +969,7 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "paused"
    ],
@@ -875,12 +979,16 @@
     "budget issue",
     "leadership concern"
    ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": true,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": false,
    "severity": "high",
    "rationale": "Ask may know that an outcome happened without knowing why; it should not invent rationale or motivation.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_source_words_not_demoted",
@@ -898,6 +1006,7 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "$40,000",
     [
@@ -917,12 +1026,16 @@
     "not yet approved",
     "has not been approved"
    ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
    "severity": "high",
    "rationale": "Ask must report what a source said in the source's terms; the pending step is the Current State decision, not the source's approval.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_compound_question_keeps_governing_state",
@@ -948,6 +1061,7 @@
    "open_questions": [],
    "history": [],
    "evidence": [],
+   "closed_questions": [],
    "required_facts": [
     "$40,000",
     [
@@ -966,12 +1080,16 @@
     "cannot begin",
     "cannot proceed"
    ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
    "severity": "high",
    "rationale": "Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   },
   {
    "id": "ask_evidence_backed_approval_qualified",
@@ -991,6 +1109,7 @@
    "evidence": [
     "Q3 planning session: the pilot budget is approved at $40,000 for discovery and first implementation."
    ],
+   "closed_questions": [],
    "required_facts": [
     "$40,000",
     [
@@ -1016,12 +1135,16 @@
     "proposed for approval",
     "has not been approved"
    ],
+   "forbid_unsupported_numbers": false,
+   "headline_required_facts": [],
+   "forbidden_headline_openings": [],
    "should_express_uncertainty": false,
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
    "severity": "high",
    "rationale": "Evidence that says approved is reported as approved, qualified as not in Current State; never denied.",
-   "observe_only": false
+   "observe_only": false,
+   "known_unsupported": ""
   }
  ]
 };

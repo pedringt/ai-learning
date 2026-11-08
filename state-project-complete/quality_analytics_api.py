@@ -22,6 +22,10 @@ class QualityEvalFailure(BaseModel):
     expected: str | None = Field(default=None, max_length=240)
     observed: str | None = Field(default=None, max_length=240)
     failed_checks: list[str] = Field(default_factory=list, max_length=8)
+    # #639/#643: which required or forbidden item failed, named from the scenario's own phrase lists.
+    failed_items: list[str] = Field(default_factory=list, max_length=8)
+    # #643: DATA_PRIVACY.md's synthetic eval excerpt exception: a failed controlled scenario's model answer, 200 chars max.
+    synthetic_answer_excerpt: str | None = Field(default=None, max_length=200)
 
 
 class QualityEvalRunInput(BaseModel):
@@ -30,6 +34,8 @@ class QualityEvalRunInput(BaseModel):
     suite: Literal["review_interpretation", "ask_quality"]
     run_kind: Literal["controlled_eval", "synthetic_eval"] = "controlled_eval"
     build: str | None = Field(default=None, max_length=120)
+    # #639: eval/scoring_version.py. Runs recorded before Nov 7 have none.
+    scoring_version: str | None = Field(default=None, max_length=80)
     provider: str | None = Field(default=None, max_length=80)
     model_identifier: str | None = Field(default=None, max_length=160)
     total: int = Field(ge=0)
@@ -102,6 +108,8 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
             raise HTTPException(status_code=503, detail="Eval result ingestion is not configured")
         if x_state_eval_key != expected:
             raise HTTPException(status_code=403, detail="Invalid eval ingestion key")
+        if payload.run_kind != "controlled_eval" and any(item.synthetic_answer_excerpt for item in payload.failure_details):
+            raise HTTPException(status_code=422, detail="Answer excerpts are accepted only from controlled eval runs")
         connection = connect(settings.connection_url())
         try:
             run_id = f"quality_eval_{uuid.uuid4().hex[:16]}"
@@ -110,8 +118,9 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
                 INSERT INTO product_eval_runs(
                     id,suite,run_kind,build,provider,model_identifier,total,errors,high_severity_failures,
                     precision,recall,false_positives,false_negatives,interpretation_accuracy,ask_grounding,
-                    uncertainty_accuracy,open_item_accuracy,authority_accuracy,overall_pass_rate,failure_details_json
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    uncertainty_accuracy,open_item_accuracy,authority_accuracy,overall_pass_rate,failure_details_json,
+                    scoring_version
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     run_id,payload.suite,payload.run_kind,payload.build,payload.provider,payload.model_identifier,
@@ -120,6 +129,7 @@ def register_quality_analytics(application: FastAPI, settings) -> None:
                     payload.ask_grounding,payload.uncertainty_accuracy,payload.open_item_accuracy,
                     payload.authority_accuracy,payload.overall_pass_rate,
                     json.dumps([item.model_dump() for item in payload.failure_details], separators=(",", ":")),
+                    payload.scoring_version,
                 ),
             )
             connection.commit()
