@@ -1,0 +1,61 @@
+{
+ "source": "State AI quality check run 42445998717 (staging 52ee742, claude-haiku-5-5, Nov 7): the raw model output for ask_question_answer_no_state_mutation, before post-processing. Synthetic fixture only.",
+ "raw": {
+  "answer": {
+   "job": "current_fact",
+   "headline": "Not yet: the vendor-retention question is answered, but the vendor contract itself still remains under review.",
+   "summary": "The question 'Does the vendor retain customer content after the contract ends?' is closed (resolved). Its recorded answer, from an accepted Review and supporting Evidence, is that Legal confirmed the vendor deletes customer content within 30 days of contract end. Answering the Question does not change Current State: the vendor contract still remains under review.",
+   "sections": [
+    {
+     "kind": "established",
+     "title": "Answered question",
+     "items": [
+      {
+       "text": "Question answered: Does the vendor retain customer content after the contract ends?",
+       "record_type": "answered_question",
+       "record_id": "ask-closed-question-0",
+       "detail": "Recorded answer: Legal confirmed the vendor deletes customer content within 30 days of contract end. Answered 2026-11-08."
+      }
+     ]
+    },
+    {
+     "kind": "established",
+     "title": "Current State",
+     "items": [
+      {
+       "text": "The vendor contract remains under review.",
+       "record_type": "state",
+       "record_id": "ask-state-0",
+       "detail": null
+      }
+     ]
+    }
+   ],
+   "source_ids": [
+    "ask-closed-question-0",
+    "ask-answer-review-0",
+    "ask-answer-evidence-0",
+    "ask-state-0"
+   ],
+   "uncertainty_ids": [],
+   "suggested_refinements": [],
+   "suggested_question": null
+  },
+  "selection": {
+   "job": "current_fact",
+   "state_ids": [
+    "ask-state-0"
+   ],
+   "review_ids": [],
+   "blocking_question_ids": [],
+   "question_ids": [],
+   "history_ids": [],
+   "evidence_ids": [
+    "ask-answer-evidence-0"
+   ],
+   "answered_question_ids": [
+    "ask-closed-question-0"
+   ]
+  }
+ }
+}
