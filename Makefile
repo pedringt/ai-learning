@@ -19,11 +19,17 @@ qa-js:
 	for f in $$files; do echo "==> $$f"; node "$$f"; done
 	node --test tools/portfolio-editor/test/*.test.js
 
+# Tests that need a real model key (#624). qa-python unsets the keys, so they run only here: about 50 Haiku calls,
+# well under $0.20. OPENAI_API_KEY is unset because State runs on Anthropic, so the OpenAI comparisons stay skipped.
+# test_real_model_test_list.py fails if a new key-gated test file is missing from this list.
+REAL_MODEL_TESTS = test_ask_pending_review_authority.py test_bootstrap_mixed_spec_eval.py test_consequentiality_eval_dataset.py test_evidence_intake_consequentiality.py test_live_providers.py
+
 qa-real-model:
 	@if [ -z "$${ANTHROPIC_API_KEY:-}" ]; then \
 		echo "ANTHROPIC_API_KEY is required for real-model QA."; exit 2; \
 	fi
 	cd state-project-complete && $(PYTHON) -m eval.run_eval
+	cd state-project-complete && env -u OPENAI_API_KEY $(PYTHON) -m pytest -q $(REAL_MODEL_TESTS)
 
 qa-release: qa-fast
 	@set -eu; \

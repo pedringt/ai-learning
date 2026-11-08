@@ -32,7 +32,7 @@ Use for consequential changes or release verification. It always runs `qa-fast` 
 After that it checks the branch diff against `origin/main` when run on `staging` (so a promotion sees everything it would ship), and against `origin/staging` on any other branch. Set `QA_BASE_REF` to override:
 
 - if no model-sensitive State files changed, it skips the paid live-model eval;
-- if model-sensitive files changed, it runs `state-project-complete/eval/run_eval.py` against the real Anthropic provider;
+- if model-sensitive files changed, it runs `state-project-complete/eval/run_eval.py` against the real Anthropic provider, then the pytest files that need a real model key (`REAL_MODEL_TESTS` in the Makefile, #624: consequentiality, the pending-vs-confirmed Ask repro, bootstrap mixed-spec and the live-provider check; about 50 Haiku calls, under $0.20). `qa-python` unsets the keys, so these run nowhere else; OpenAI comparisons stay skipped;
 - if a real-model eval is required but `ANTHROPIC_API_KEY` is unavailable, release QA stops clearly instead of silently reporting success;
 - set `QA_FORCE_REAL_MODEL=1` to force the live eval even when the diff would normally skip it.
 - before a `staging` -> `main` promotion, run it on `staging` (locally or the **State QA Release** workflow, which also has a `force_real_model` box); it compares against `origin/main` by itself. Before Nov 5 the default was always `origin/staging`, which on `staging` found no difference and skipped the paid eval.
