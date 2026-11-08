@@ -123,6 +123,26 @@
     // settles to one stable version after each view has rendered once.
     for (const v of VIEWS) await go(v);
     for (const v of VIEWS) { await go(v); if (await record(v)) return out.__detail; }
+    // Opened-up states (Nov 8): UI the views above leave closed, so CSS for it is exercised too. Each one is
+    // undone before the next, so later states see the same page as before.
+    const tap = sel => document.querySelector(sel)?.click();
+    await go('open-items');
+    tap('[data-action="toggle-review-card"]'); await settle();
+    document.querySelectorAll('.open-items-page details.reasoning').forEach(d => { d.open = true; }); await settle();
+    if (await record('open-items-review-expanded')) return out.__detail;
+    document.querySelectorAll('.open-items-page details.reasoning').forEach(d => { d.open = false; });
+    tap('[data-action="toggle-review-card"]'); await settle();
+    await go('workspace');
+    tap('[data-action="add-info"]'); await settle();
+    if (await record('add-evidence-dialog')) return out.__detail;
+    tap('#overlay [data-action="close-dialog"]'); await settle();
+    await go('notes');
+    tap('[data-action="toggle-note"]'); await settle();
+    if (await record('notes-expanded')) return out.__detail;
+    if (document.querySelector('.note-full-text')) { tap('[data-action="toggle-note"]'); await settle(); }
+    tap('[data-action="new-note"]'); await settle();
+    if (await record('notes-new')) return out.__detail;
+    tap('[data-action="cancel-new-note"]'); await settle();
     await go('workspace');
     document.getElementById('askStateLauncher')?.click();
     await settle();
