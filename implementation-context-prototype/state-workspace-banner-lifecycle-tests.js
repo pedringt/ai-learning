@@ -4,7 +4,7 @@
 const fs=require('fs'), path=require('path');
 const dir=__dirname;
 const app=fs.readFileSync(path.join(dir,'context-app.js'),'utf8');
-const guide=fs.readFileSync(path.join(dir,'context-ask-followup.js'),'utf8')+require('./state-layer-css')('context-ask-followup.js');
+const guide=fs.readFileSync(path.join(dir,'context-ask-followup.js'),'utf8')+require('./state-layer-css')('reviewer-guide');
 const openItems=fs.readFileSync(path.join(dir,'context-open-items-view.js'),'utf8');
 let pass=0,fail=0;
 function check(name,ok){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name)}}

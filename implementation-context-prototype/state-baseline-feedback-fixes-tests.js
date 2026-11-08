@@ -5,8 +5,8 @@ const evidence=fs.readFileSync(path.join(dir,'context-evidence-resilience.js'),'
 const layerCss=require('./state-layer-css');
 // The three Baseline layers were consolidated into context-baseline.js (#450).
 const baselineJs=fs.readFileSync(path.join(dir,'context-baseline.js'),'utf8');
-const setup=baselineJs+layerCss('context-baseline-setup.js');
-const polish=baselineJs+layerCss('context-baseline-polish.js');
+const setup=baselineJs+layerCss('baseline-setup');
+const polish=baselineJs+layerCss('baseline-polish');
 const appJs=['context-app.js','context-app-dialogs.js','context-app-navigation.js','context-app-hydration.js','context-app-review-actions.js'].map(file=>fs.readFileSync(path.join(dir,file),'utf8')).join('\n');
 const projectViewJs=fs.readFileSync(path.join(dir,'context-project-view.js'),'utf8');
 let pass=0,fail=0;

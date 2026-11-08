@@ -6,9 +6,13 @@
    once the app settled, because later blocks deliberately override earlier
    ones. Do not reorder sections; consolidating them into context-tool.css is
    the next step of #450.
+
+   Each section starts with "/* ==== section <name>: <what it styles>. Added by <file>."
+   Many of those files were later folded into other scripts; "(since removed)" marks them.
+   state-layer-css.js looks sections up by name for source-level tests.
 */
 
-/* ==== from final-freeze-polish.css: final-freeze-polish.css ==== */
+/* ==== section final-freeze-polish: Ask drawer. Added by final-freeze-polish.css (since removed). ==== */
 /* Final pre-freeze visual polish. Intentionally small and presentation-only. */
 
 /* Learning Guide: keep the Professional Edge entry useful without letting a short reference card span the full reading canvas. */
@@ -27,7 +31,7 @@
   .ask-state-launcher:hover,.ask-state-launcher:focus-visible{transform:none}
 }
 
-/* ==== from state-shell.js: portfolio-signal-and-mobile-fixes ==== */
+/* ==== section portfolio-signal-and-mobile-fixes: Settings, Notes, Ask drawer. Added by state-shell.js. ==== */
       .settings-channel-heading{
         margin-top:18px!important;
         padding-top:16px!important;
@@ -105,11 +109,7 @@
         }
       }
 
-/* ==== from state-shell.js: learning-mobile-bounds-fix ==== */
-
-/* ==== from context-analytics.js: state-ask-redundancy-cleanup ==== */
-
-/* ==== from context-ask-followup.js: state-reviewer-guide-styles ==== */
+/* ==== section reviewer-guide: Reviewer guide. Added by context-ask-followup.js. ==== */
       .state-reviewer-guide{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;margin:0 0 16px;padding:14px 16px;border:1px solid #d9e3f0;border-radius:12px;background:#fff;color:#26344c;box-sizing:border-box}
       .state-reviewer-guide-copy{min-width:0}
       .state-reviewer-guide-copy strong{display:block;margin-bottom:3px;font-size:13px;color:#18253a}
@@ -132,7 +132,7 @@
         #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link,#askStateDrawer .ask-copy-answer{min-height:44px;padding-top:8px;padding-bottom:8px}
       }
 
-/* ==== from context-history.js: state-release-finish ==== */
+/* ==== section release-finish: History, Open Items, Settings, Notes. Added by context-history.js. ==== */
     /* Final release rhythm: keep Open Items sections visually consistent. */
     html body .open-items-page .open-items-section{margin:0!important;padding:0!important}
     html body .open-items-page .open-items-section + .open-items-section{margin-top:28px!important}
@@ -185,7 +185,7 @@
       html body .history-page .history-entry-body::before{left:-18px!important}
     }
 
-/* ==== from context-provenance.js: (unnamed style) ==== */
+/* ==== section provenance-detail: History provenance. Added by context-provenance.js. ==== */
     .history-provenance-detail{margin-top:16px;padding-top:14px;border-top:1px solid var(--border,#d9dde3);font-size:13px;line-height:1.45}
     .history-provenance-detail>strong{display:block;margin-bottom:5px;font-size:13px}
     .history-provenance-detail>p{margin:0;color:var(--muted,#626779)}
@@ -199,11 +199,11 @@
     .history-source-detail{font-size:12px;color:var(--muted,#626779)}
     .history-source-line a{margin-left:auto;font-size:12px;font-weight:600;text-decoration:none}
 
-/* ==== from context-ask-question-handoff.js: ask-question-handoff-styles ==== */
+/* ==== section ask-question-handoff: Ask drawer question handoff. Added by context-ask-question-handoff.js. ==== */
 .ask-scope-note{margin:12px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
 .ask-question-handoff{margin-top:16px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}.ask-question-handoff strong{display:block;margin-bottom:4px;font-size:13px}.ask-question-handoff p{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.45}.ask-question-handoff .btn{width:auto}
 
-/* ==== from context-settings.js: state-settings-view-styles ==== */
+/* ==== section settings-view: Settings. Added by context-settings.js. ==== */
       .settings-page{max-width:920px;margin:0 auto;padding:8px 0 48px}
       
       .settings-section{border:1px solid var(--line,#d8d8df);border-radius:16px;padding:20px;margin:0 0 18px;background:var(--surface,#fff)}
@@ -238,7 +238,7 @@
       .settings-danger{border-color:#c8a7a7;padding:16px 20px}.settings-danger .settings-section-head{align-items:center;margin:0}.settings-danger .settings-actions{margin:0}
       @media(max-width:680px){.settings-section{padding:16px}.settings-section-head,.slack-preview-row{align-items:flex-start;flex-direction:column}.settings-rule-form{display:grid}.settings-rule-list li{align-items:center}.settings-status{align-self:flex-start}.settings-behavior-list,.settings-source-grid{grid-template-columns:1fr}.source-row,.source-row:nth-child(-n+2){border-top:1px solid var(--line,#e5e5ea)}.source-row:first-child{border-top:0}.settings-danger .settings-actions{margin-top:12px}}
 
-/* ==== from context-attention-alignment.js: state-attention-alignment ==== */
+/* ==== section attention-alignment: Workspace, Settings, Open Items. Added by context-attention-alignment.js (since removed). ==== */
     /* Record surfaces: headers stay on the page background; records live on one white surface. */
     
     html body .open-items-page .open-items-section-body,
@@ -342,10 +342,10 @@
       html body .settings-page .settings-source-grid>.source-row>.settings-status{font-size:11px;padding-left:9px;padding-right:9px}
     }
 
-/* ==== from context-attention-alignment.js: (unnamed style) ==== */
+/* ==== section ask-close-shield: Ask drawer closing on phones. Added by context-attention-alignment.js (since removed). ==== */
 @media(max-width:760px){body.state-ask-close-shield [data-mobile-menu]{pointer-events:none!important}}
 
-/* ==== from context-baseline-setup.js: state-baseline-setup-styles ==== */
+/* ==== section baseline-setup: Baseline Setup. Added by context-baseline-setup.js (since removed). ==== */
       .baseline-setup-banner{margin:24px 30px 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:none}
       body.state-baseline-active .app-workspace>.view-root{padding-top:16px}
       .baseline-setup-row{display:flex;align-items:center;justify-content:space-between;gap:18px}
@@ -375,7 +375,7 @@
       .baseline-draft-status{margin-right:auto;font-size:11px;color:var(--muted);max-width:360px}
       @media(max-width:760px){.baseline-setup-banner{margin:14px 0 0}.baseline-setup-row{align-items:flex-start;flex-direction:column}.baseline-draft-grid{grid-template-columns:1fr}.baseline-draft-actions{align-items:stretch;flex-direction:column}.baseline-draft-status{margin-right:0}.baseline-draft-actions .btn{width:100%}}
 
-/* ==== from context-baseline-polish.js: state-baseline-polish-styles ==== */
+/* ==== section baseline-polish: Baseline Setup. Added by context-baseline-polish.js (since removed). ==== */
       body.state-baseline-active .state-reviewer-guide{display:none}
       #baselineSetupBanner{padding:10px 12px!important;border-radius:10px!important;box-shadow:none!important}
 
@@ -388,14 +388,14 @@
       .baseline-manual-status{margin-right:auto;font-size:11px;color:var(--muted)}
       @media(max-width:760px){.baseline-manual-grid{grid-template-columns:1fr}.baseline-manual-actions{align-items:stretch;flex-direction:column}.baseline-manual-status{margin-right:0}.baseline-manual-actions .btn{width:100%}}
 
-/* ==== from context-baseline-dogfood-fixes.js: state-baseline-dogfood-fixes-styles ==== */
+/* ==== section baseline-dogfood-fixes: Baseline Setup, Workspace. Added by context-baseline-dogfood-fixes.js (since removed). ==== */
       #baselineSetupBanner .baseline-setup-row{align-items:center}#baselineSetupBanner .baseline-retry-status{margin-top:6px;color:var(--muted);font-size:11.5px;line-height:1.4}#baselineSetupBanner .baseline-retry-status:empty{display:none}#baselineSetupBanner .baseline-dogfood-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto}#baselineSetupBanner .baseline-dogfood-actions .btn{width:auto!important;min-height:34px!important;padding:7px 11px!important;font-size:12px!important;white-space:nowrap}
       .baseline-draft-actions [data-baseline-confirm-starting]{white-space:nowrap!important;flex:0 0 auto;min-width:max-content}.baseline-add-fact{margin:2px 0 10px}.baseline-inline-new-fact{margin:8px 0 14px;padding:12px;border:1px dashed var(--line);border-radius:9px;background:var(--surface2)}.baseline-inline-new-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:8px}.baseline-inline-new-status{margin-right:auto;color:var(--muted);font-size:11px}
       .baseline-starting-upload{display:flex;align-items:center;gap:8px;margin:5px 0 12px;color:var(--muted);font-size:12px}.baseline-starting-upload label{cursor:pointer;padding:7px 10px}.baseline-starting-filename{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.baseline-starting-status{min-height:18px;color:var(--muted);font-size:11px}
       html body .workspace-attention.is-clear.dogfood-caught-up{border-color:color-mix(in srgb,var(--good) 24%,var(--line))!important;background:color-mix(in srgb,var(--surface) 94%,#eaf7ee)!important;box-shadow:none!important}html body .workspace-attention.is-clear.dogfood-caught-up .attention-head-icon{background:#eaf7ee;border-color:#cfe8d7;color:#277b45;box-shadow:none}html body .workspace-attention.is-clear.dogfood-caught-up .attention-head-icon::before{color:#277b45}html body .workspace-attention .dogfood-quiet-link{color:var(--muted)!important;font-weight:650!important;font-size:11.5px!important}
       @media(max-width:760px){#baselineSetupBanner .baseline-dogfood-actions{width:100%;flex-direction:column;align-items:stretch}#baselineSetupBanner .baseline-dogfood-actions .btn{width:100%!important}.baseline-draft-actions [data-baseline-confirm-starting]{width:100%}.baseline-inline-new-actions{align-items:stretch;flex-direction:column}.baseline-inline-new-status{margin-right:0}.baseline-inline-new-actions .btn{width:100%}}
 
-/* ==== from context-feedback-pass.js: state-final-feedback ==== */
+/* ==== section final-feedback: Ask drawer, Open Items, Settings, Workspace. Added by context-feedback-pass.js (since removed). ==== */
       .prototype-productbar{background:#dce8fa;border-bottom-color:#c3d4ed}
 
       /* Workspace attention: one calm surface with dividers instead of white cards on pink. */
@@ -473,7 +473,7 @@
         body #askStateDrawer .ask-live-answer .result-lede,body #askStateDrawer .ask-item-text{font-size:12.5px}
       }
 
-/* ==== from context-feedback-pass-4.js: state-final-feedback-r61 ==== */
+/* ==== section final-feedback-r61: Open Items, Settings, History, Ask drawer. Added by context-feedback-pass-4.js (since removed). ==== */
       /* Product chrome */
       html body:not(.v88-dark) .prototype-productbar{border-bottom-color:#9fb9d8}
       html body .workspace-attention .workspace-attention-head p{display:none}
@@ -603,7 +603,7 @@
         html body .dialog h2{font-size:20px}
       }
 
-/* ==== from context-quickwins.js: state-quickwin-styles ==== */
+/* ==== section quickwins: Workspace. Added by context-quickwins.js (since removed). ==== */
       :root{
         --mock-blue:#1769e8;
         --mock-blue-soft:#eaf2ff;
@@ -743,7 +743,7 @@
       body.v88-dark .attention-list,body.v88-dark .attention-item{background:#17171d!important;border-color:#34313d!important}
       body.v88-dark .workspace-recent,body.v88-dark .workspace-status-card{background:#17171d!important;border-color:#34313d!important}
 
-/* ==== from context-product-polish.js: state-product-polish-styles ==== */
+/* ==== section product-polish: Ask drawer. Added by context-product-polish.js. ==== */
       .ask-state-drawer-form{grid-template-columns:minmax(0,1fr) auto;gap:8px;min-width:0;align-items:center}
       .ask-state-drawer-form input{min-width:0;box-sizing:border-box;border:1px solid #cfc9bd;background:#fff;color:var(--ink);outline:none}
       .ask-state-drawer-form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
@@ -797,7 +797,7 @@
         .ask-state-drawer{top:0;height:100dvh;border-left:0}.ask-state-drawer-form{grid-template-columns:1fr}.project-head-copy-context{margin-left:0}
       }
 
-/* ==== from context-design-pass.js: state-design-pass ==== */
+/* ==== section design-pass: Navigation, Ask drawer, Workspace. Added by context-design-pass.js (since removed). ==== */
 :root{--state-blue:#1769e8;--state-blue-soft:#eaf2ff;--state-green:#20a875;--state-green-soft:#e8f8f2;--state-purple:#7657e8;--state-purple-soft:#f0ebff;--state-red:#e84b5d;--state-red-soft:#fff1f2;--state-line:#e0e7f1;--state-ink:#101a31;--state-muted:#64718a}
 body:not(.v88-dark) .prototype-productbar{background:#f7faff;border-color:#dfe7f2;color:#334766}body:not(.v88-dark) .prototype-productbar .product-mark{color:var(--state-blue)}body:not(.v88-dark) .prototype-productbar .product-name{color:#12213d}body:not(.v88-dark) .prototype-productbar .product-tagline{color:#687791}
 .sidebar-nav .nav-item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;column-gap:12px;align-items:center;justify-items:start;text-align:left;padding-left:18px;padding-right:18px}.sidebar-nav .nav-item>.nav-icon{grid-column:1;margin:0}.sidebar-nav .nav-item>.nav-label{grid-column:2;margin:0}.sidebar-nav .nav-item>.nav-count{grid-column:3;justify-self:end}.sidebar-nav .nav-item>svg:not(.nav-icon),.sidebar-nav .nav-item>.icon:not(.nav-icon){display:none!important}.project-nav-group>.nav-item{width:100%}.sidebar-nav .nav-item:not(.active):not([aria-current="page"]){background:transparent!important}
@@ -813,7 +813,7 @@ body:not(.v88-dark) [role="dialog"]{border-color:#dce6f3}body:not(.v88-dark) .op
 body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head h2{font-size:20px;line-height:1.2}.ask-state-drawer-form{position:relative;display:block}.ask-state-drawer-form input{width:100%;min-height:64px;height:64px;padding:12px 50px 12px 13px;border-radius:12px;border-color:#dce5f1;font-size:14px}.ask-state-drawer-form button{position:absolute!important;right:9px!important;top:50%!important;transform:translateY(-50%)!important;width:34px!important;height:34px!important;border-radius:50%!important;padding:0!important;font-size:0!important}.ask-state-drawer-form button::after{content:'→';font-size:18px!important}.ask-state-starters{display:grid;grid-template-columns:1fr;gap:4px;margin-top:15px}.ask-state-starters::before{content:'Suggested questions';font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:#8793a8;margin:0 0 4px 2px}.ask-state-starters button{border:0;background:#f6f9fd;border-radius:9px;position:relative;font-size:11.5px;min-height:0}.ask-state-starters button::before{content:'✦';position:absolute;left:11px;color:#647da9}.ask-state-starters button:hover{background:#eef4fc!important}.ask-state-drawer-controls>p:last-child{border-top:1px solid #e5ebf3;margin-top:14px!important;padding-top:12px!important;font-size:10.5px!important;line-height:1.45!important;color:#7c879a!important}
 @media(max-width:760px){.attention-arrow{display:none}.demo-help-button.state-help-card{display:none}}
 
-/* ==== from context-feedback-pass-2.js: state-feedback-pass-2 ==== */
+/* ==== section feedback-pass-2: Ask drawer, Notes, Workspace, Navigation. Added by context-feedback-pass-2.js (since removed). ==== */
       /* compact desktop navigation */
       .sidebar-nav{display:flex;flex-direction:column}
       .sidebar-nav .nav-item{border-radius:12px;gap:12px}
@@ -880,7 +880,7 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
         #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link{font-size:10.5px}
       }
 
-/* ==== from context-feedback-pass-3.js: state-feedback-pass-3 ==== */
+/* ==== section feedback-pass-3: Workspace, Ask drawer, Settings, Navigation. Added by context-feedback-pass-3.js (since removed). ==== */
       :root{color-scheme:light}
       
       body{background:#f7f9fc!important;color:#101a31!important}
@@ -1049,7 +1049,7 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
         .mobile-primary-nav .nav-item,.mobile-subnav button{padding:6px 10px!important;font-size:11.5px!important;white-space:nowrap!important}
       }
 
-/* ==== from context-final-mobile.js: state-final-mobile-r67 ==== */
+/* ==== section final-mobile-r67: phone layout of Open Items, History, Navigation, Workspace. Added by context-final-mobile.js (since removed). ==== */
       /* Product chrome: quiet separation from the portfolio, not a colored banner. */
       html body:not(.v88-dark) .prototype-productbar{background:#fbfcfd;border-bottom:1px solid #d8e1eb;color:#1e3048;box-shadow:none}
       html body:not(.v88-dark) .prototype-productbar .product-name,
@@ -1239,7 +1239,8 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
         html body .prototype-productbar{gap:8px}
       }
 
-/* ==== from context-attention-alignment.js: inline !important styles (#450) ====
+/* ==== section inline-important-450: Workspace, Settings, Open Items, History. Inline !important styles (#450). ====
+   Set by context-attention-alignment.js (since removed).
    These were set as inline !important styles on every render by normalizeAttention,
    normalizeWorkspacePair, normalizeSettings, normalizeStage and normalizeRecordSurfaces.
    :has() keeps the original "only when this child exists" conditions. html:not(#_#_#_) gives
@@ -1295,13 +1296,21 @@ html:not(#_#_#_) .history-page .history-change>p{width:100%!important;max-width:
   html:not(#_#_#_) .history-page .history-list,html:not(#_#_#_) .history-page #historyList{padding:18px 16px 20px!important}
 }
 
-/* ==== from context-feedback-pass-3.js forceLightState (#450): State is light-only. It was an inline
+/* ==== section force-light-450: from context-feedback-pass-3.js (since removed) forceLightState (#450): State is light-only. It was an inline
    style on <html>; the prefix and !important keep that precedence. ==== */
 html:not(#_#_#_){color-scheme:light}
 
-/* ==== from context-attention-alignment.js normalizeStage (#450): a "Late discovery" stage pill.
+/* ==== section late-discovery-pill-450: from context-attention-alignment.js (since removed) normalizeStage (#450): a "Late discovery" stage pill.
    It was matched by text and styled inline; the template now adds .is-late-discovery. ==== */
 html:not(#_#_#_) .overview-stage .workspace-stage-pill.is-late-discovery{background:#e8edff!important;background-color:#e8edff!important;color:#4f5f8e!important;border-color:#d9def2!important;box-shadow:none!important}
+
+/* ==== section ask-controls-450: from context-ask-controls.js syncAskControls (#450): the Ask drawer shows either submit or the
+   reset (×) button. Both were inline !important styles; the drawer's data-ask-controls now carries the
+   state and the prefix keeps that precedence. ==== */
+html:not(#_#_#_) #askStateDrawer[data-ask-controls="asking"] .ask-state-drawer-form .state-ask-reset{display:none!important;visibility:hidden!important}
+html:not(#_#_#_) #askStateDrawer[data-ask-controls="answered"] .ask-state-drawer-form .state-ask-reset{display:block!important;visibility:visible!important}
+html:not(#_#_#_) #askStateDrawer[data-ask-controls="asking"] .ask-state-drawer-form button[type="submit"]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
+html:not(#_#_#_) #askStateDrawer[data-ask-controls="answered"] .ask-state-drawer-form button[type="submit"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 
 /* #482: inline validation message in dialogs (new project name). */
 .dialog-field-error{margin:6px 0 0;color:#b42318;font-size:13px;font-weight:600}
