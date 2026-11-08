@@ -286,3 +286,10 @@ def test_the_held_out_set_is_well_formed_but_is_not_scored_here():
     assert all(r["match"] in ids | {"clarify", "none"} for r in data["requests"] if r["in_scope"])
     assert all(a["question"] in ids and a["answer"]["cited"] in ids for a in data["answers"])
     assert {"correct"} < {a["label"].split(":")[0] for a in data["answers"]} | {"correct"}
+
+
+def test_the_held_out_set_is_frozen():
+    """Frozen Nov 8 before its single run (Paige). Any change after that is visible here and must be reported."""
+    import hashlib
+    data = (Path(__file__).parent / "eval" / "fixtures" / "640_heldout_v1.json").read_bytes()
+    assert hashlib.sha256(data).hexdigest() == "2d824655bfea37c9674db6107d86bdf26dd52930dfb4cb0d16ee157c559c582e"

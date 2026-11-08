@@ -313,3 +313,29 @@ def apply(scope: Scope, question: Mapping[str, Any], answer: Mapping[str, Any]) 
     if result.fallback == "headline":
         inner["headline"] = neutral_headline(question)
     return inner, result
+
+
+# ---------------------------------------------------------------------------------------------- direct response
+
+@dataclass(frozen=True)
+class Routed:
+    kind: str  # "direct" (record-built answer), "clarify" or "pass" (normal Ask)
+    answer: dict[str, Any] | None = None
+    question: Mapping[str, Any] | None = None
+    reason: str = ""
+
+
+def route(request: str, questions: Sequence[Mapping[str, Any]]) -> Routed:
+    """Paige, Nov 8: for an unambiguous request about one Question's resolution status, answer directly from the
+    record (canonical status, and the recorded answer only when the Question is resolved), with no model call. An
+    ambiguous one gets a clarification built from the records; anything else goes to normal Ask. Copying the record
+    is exact; whether this was the right Question and the right kind of request is what the held-out set measures."""
+    scope = request_scope(request)
+    if not scope.in_scope:
+        return Routed("pass", reason=scope.reason)
+    match = match_question(request, questions)
+    if match.kind == "matched":
+        return Routed("direct", answer=record_built_answer(match.question), question=match.question)
+    if match.kind == "clarify":
+        return Routed("clarify", answer=clarification_answer(match.candidates), reason=match.reason)
+    return Routed("pass", reason=match.reason)

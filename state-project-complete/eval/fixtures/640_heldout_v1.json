@@ -1,64 +1,304 @@
 {
-  "about": "Held-out set for #640 Option B (written Nov 7 after the reviewer's counterexamples; NOT run). Do not tune scope, matching or checks against it. Run it once, after Paige chooses between the fallback approach and a direct record-built response, and report the result as-is. Synthetic. Expected labels are Claude's and are open to Paige's review before the run. Topics are new: none of the 43 development answers or the earlier test fixtures use them.",
+  "about": "Held-out set for #640 Option B (written Nov 7 after the reviewer's counterexamples; corrected and frozen Nov 8 before its single run). Do not tune scope, matching or checks against it. Run it once, after Paige chooses between the fallback approach and a direct record-built response, and report the result as-is. Synthetic. Expected labels are Claude's and are open to Paige's review before the run. Topics are new: none of the 43 development answers or the earlier test fixtures use them.",
   "questions": [
-    {"id": "h-sso", "text": "Which SSO provider will the client use for the pilot?", "status": "resolved", "answer": "Security confirmed the client will use Okta for the pilot."},
-    {"id": "h-sso-timeout", "text": "What session timeout does Security require for SSO?", "status": "open"},
-    {"id": "h-training", "text": "When will support agents finish the pilot training?", "status": "resolved", "answer": "Enablement scheduled the last training session for October 14."},
-    {"id": "h-training-owner", "text": "Who owns the pilot training materials?", "status": "open"},
-    {"id": "h-residency", "text": "Must customer data stay in EU data centers?", "status": "resolved", "answer": "Legal confirmed EU customer data must stay in Frankfurt; US data may stay in Virginia."},
-    {"id": "h-budget-cap", "text": "What is the maximum monthly model spend for the pilot?", "status": "resolved", "answer": "Finance set the monthly model spend cap at $2,500."},
-    {"id": "h-budget-alert", "text": "At what monthly spend should the team get an alert?", "status": "open", "answer": "Draft proposal: alert at $2,000."},
-    {"id": "h-slack-product", "text": "Is the #product Slack channel approved as an evidence source?", "status": "resolved", "answer": "Leadership approved #product as an evidence source starting next sprint."},
-    {"id": "h-slack-support", "text": "Is the #support Slack channel approved as an evidence source?", "status": "open"},
-    {"id": "h-escalation", "text": "Which tickets must escalate to a human within 15 minutes?", "status": "resolved", "answer": "Support leadership set the rule: billing disputes and account lockouts escalate within 15 minutes."}
+    {
+      "id": "h-sso",
+      "text": "Which SSO provider will the client use for the pilot?",
+      "status": "resolved",
+      "answer": "Security confirmed the client will use Okta for the pilot."
+    },
+    {
+      "id": "h-sso-timeout",
+      "text": "What session timeout does Security require for SSO?",
+      "status": "open"
+    },
+    {
+      "id": "h-training",
+      "text": "What is the planned finish date for the pilot training?",
+      "status": "resolved",
+      "answer": "Enablement scheduled the last training session for October 14."
+    },
+    {
+      "id": "h-training-owner",
+      "text": "Who owns the pilot training materials?",
+      "status": "open"
+    },
+    {
+      "id": "h-residency",
+      "text": "Must customer data stay in EU data centers?",
+      "status": "resolved",
+      "answer": "Legal confirmed EU customer data must stay in Frankfurt; US data may stay in Virginia."
+    },
+    {
+      "id": "h-budget-cap",
+      "text": "What is the maximum monthly model spend for the pilot?",
+      "status": "resolved",
+      "answer": "Finance set the monthly model spend cap at $2,500."
+    },
+    {
+      "id": "h-budget-alert",
+      "text": "At what monthly spend should the team get an alert?",
+      "status": "open",
+      "answer": "Draft proposal: alert at $2,000."
+    },
+    {
+      "id": "h-slack-product",
+      "text": "Is the #product Slack channel approved as an evidence source?",
+      "status": "resolved",
+      "answer": "Leadership approved #product as an evidence source starting next sprint."
+    },
+    {
+      "id": "h-slack-support",
+      "text": "Is the #support Slack channel approved as an evidence source?",
+      "status": "open"
+    },
+    {
+      "id": "h-escalation",
+      "text": "Which tickets must escalate to a human within 15 minutes?",
+      "status": "resolved",
+      "answer": "Support leadership set the rule: billing disputes and account lockouts escalate within 15 minutes."
+    }
   ],
   "requests": [
-    {"text": "Was the SSO provider question answered?", "in_scope": true, "match": "h-sso", "asks": "answered"},
-    {"text": "Has Security answered which SSO provider the client will use?", "in_scope": true, "match": "h-sso", "asks": "answered"},
-    {"text": "Is the SSO session timeout question still open?", "in_scope": true, "match": "h-sso-timeout", "asks": "open"},
-    {"text": "Is the SSO question answered?", "in_scope": true, "match": "clarify", "note": "provider vs session timeout"},
-    {"text": "Was the question about when agents finish pilot training resolved?", "in_scope": true, "match": "h-training", "asks": "answered"},
-    {"text": "Is the training question still unanswered?", "in_scope": true, "match": "clarify", "note": "finish date vs materials owner"},
-    {"text": "Was the question on who owns the training materials answered?", "in_scope": true, "match": "h-training-owner", "asks": "answered"},
-    {"text": "Was the EU data residency question answered?", "in_scope": true, "match": "h-residency", "asks": "answered"},
-    {"text": "Has Finance answered the maximum monthly model spend question?", "in_scope": true, "match": "h-budget-cap", "asks": "answered"},
-    {"text": "Is the monthly spend alert question answered?", "in_scope": true, "match": "h-budget-alert", "asks": "answered", "note": "open with draft text: must report open"},
-    {"text": "Is the monthly spend question answered?", "in_scope": true, "match": "clarify", "note": "cap vs alert"},
-    {"text": "Was the #support Slack channel question answered?", "in_scope": true, "match": "h-slack-support", "asks": "answered"},
-    {"text": "Is the Slack channel evidence question resolved?", "in_scope": true, "match": "clarify", "note": "#product vs #support"},
-    {"text": "Was the escalation question answered?", "in_scope": true, "match": "h-escalation", "asks": "answered", "note": "single shared identity word: the rule may ask instead; label says matched, so a clarification here counts as a miss"},
-    {"text": "Is the SSO provider settled?", "in_scope": false, "note": "no explicit Question reference"},
-    {"text": "Is Okta approved?", "in_scope": false},
-    {"text": "Was the SSO provider question answered correctly?", "in_scope": false, "note": "answer quality"},
-    {"text": "Is the recorded answer on EU residency still valid?", "in_scope": false},
-    {"text": "What did Finance say about the monthly spend cap?", "in_scope": false},
-    {"text": "Why was the escalation question closed?", "in_scope": false},
-    {"text": "Was the question about the office move answered?", "in_scope": true, "match": "none"}
+    {
+      "text": "Was the SSO provider question answered?",
+      "in_scope": true,
+      "match": "h-sso",
+      "asks": "answered"
+    },
+    {
+      "text": "Has Security answered which SSO provider the client will use?",
+      "in_scope": true,
+      "match": "h-sso",
+      "asks": "answered"
+    },
+    {
+      "text": "Is the SSO session timeout question still open?",
+      "in_scope": true,
+      "match": "h-sso-timeout",
+      "asks": "open"
+    },
+    {
+      "text": "Is the SSO question answered?",
+      "in_scope": true,
+      "match": "clarify",
+      "note": "provider vs session timeout"
+    },
+    {
+      "text": "Was the question about the planned finish date for pilot training resolved?",
+      "in_scope": true,
+      "match": "h-training",
+      "asks": "answered"
+    },
+    {
+      "text": "Is the training question still unanswered?",
+      "in_scope": true,
+      "match": "clarify",
+      "note": "planned finish date vs materials owner"
+    },
+    {
+      "text": "Was the question on who owns the training materials answered?",
+      "in_scope": true,
+      "match": "h-training-owner",
+      "asks": "answered"
+    },
+    {
+      "text": "Was the EU data residency question answered?",
+      "in_scope": true,
+      "match": "h-residency",
+      "asks": "answered"
+    },
+    {
+      "text": "Has Finance answered the maximum monthly model spend question?",
+      "in_scope": true,
+      "match": "h-budget-cap",
+      "asks": "answered"
+    },
+    {
+      "text": "Is the monthly spend alert question answered?",
+      "in_scope": true,
+      "match": "h-budget-alert",
+      "asks": "answered",
+      "note": "open with draft text: must report open"
+    },
+    {
+      "text": "Is the monthly spend question answered?",
+      "in_scope": true,
+      "match": "clarify",
+      "note": "cap vs alert"
+    },
+    {
+      "text": "Was the #support Slack channel question answered?",
+      "in_scope": true,
+      "match": "h-slack-support",
+      "asks": "answered"
+    },
+    {
+      "text": "Is the Slack channel evidence question resolved?",
+      "in_scope": true,
+      "match": "clarify",
+      "note": "#product vs #support"
+    },
+    {
+      "text": "Was the escalation question answered?",
+      "in_scope": true,
+      "match": "h-escalation",
+      "asks": "answered",
+      "note": "single shared identity word but a unique topic: expected matched (Paige, Nov 8). A clarification here is an unnecessary clarification."
+    },
+    {
+      "text": "Is the SSO provider settled?",
+      "in_scope": false,
+      "note": "no explicit Question reference"
+    },
+    {
+      "text": "Is Okta approved?",
+      "in_scope": false
+    },
+    {
+      "text": "Was the SSO provider question answered correctly?",
+      "in_scope": false,
+      "note": "answer quality"
+    },
+    {
+      "text": "Is the recorded answer on EU residency still valid?",
+      "in_scope": false
+    },
+    {
+      "text": "What did Finance say about the monthly spend cap?",
+      "in_scope": false
+    },
+    {
+      "text": "Why was the escalation question closed?",
+      "in_scope": false
+    },
+    {
+      "text": "Was the question about the office move answered?",
+      "in_scope": true,
+      "match": "none"
+    }
   ],
   "answers": [
-    {"question": "h-budget-cap", "request": "Has Finance answered the maximum monthly model spend question?", "label": "correct",
-     "answer": {"headline": "Finance answered the monthly spend question: the cap is $2,500.", "summary": "The Question is closed. Finance set the monthly model spend cap at $2,500.", "cited": "h-budget-cap"}},
-    {"question": "h-budget-cap", "request": "Has Finance answered the maximum monthly model spend question?", "label": "wrong: changed number",
-     "answer": {"headline": "Finance answered the monthly spend question: the cap is $5,000.", "summary": "The Question is closed. Finance set the monthly model spend cap at $5,000.", "cited": "h-budget-cap"}},
-    {"question": "h-residency", "request": "Was the EU data residency question answered?", "label": "wrong: dropped scope",
-     "answer": {"headline": "Legal answered the residency question.", "summary": "The Question is closed. Legal confirmed all customer data must stay in Frankfurt.", "cited": "h-residency"}},
-    {"question": "h-training", "request": "Was the question about when agents finish pilot training resolved?", "label": "wrong: pronoun contradiction",
-     "answer": {"headline": "The training Question was answered.", "summary": "It is still unresolved. Enablement scheduled the last training session for October 14.", "cited": "h-training"}},
-    {"question": "h-training", "request": "Was the question about when agents finish pilot training resolved?", "label": "correct",
-     "answer": {"headline": "Yes, Enablement answered it: training ends October 14.", "summary": "The Question is resolved. Enablement scheduled the last training session for October 14.", "cited": "h-training"}},
-    {"question": "h-sso", "request": "Was the SSO provider question answered?", "label": "wrong: wrong record",
-     "answer": {"headline": "The SSO Question is still open.", "summary": "Security has not set the session timeout yet.", "cited": "h-sso-timeout"}},
-    {"question": "h-sso", "request": "Was the SSO provider question answered?", "label": "wrong: hedge",
-     "answer": {"headline": "Partly: Security answered the provider question, but timeouts remain open.", "summary": "The provider Question is closed: the client will use Okta. The timeout Question is still open.", "cited": "h-sso"}},
-    {"question": "h-budget-alert", "request": "Is the monthly spend alert question answered?", "label": "wrong: draft shown as answer",
-     "answer": {"headline": "Yes, the alert is set at $2,000.", "summary": "The alert Question was answered: alert at $2,000.", "cited": "h-budget-alert"}},
-    {"question": "h-budget-alert", "request": "Is the monthly spend alert question answered?", "label": "correct",
-     "answer": {"headline": "Not yet: the spend alert Question is still open.", "summary": "No answer is recorded for the alert Question; a draft proposal exists but has not been accepted.", "cited": "h-budget-alert"}},
-    {"question": "h-slack-support", "request": "Was the #support Slack channel question answered?", "label": "wrong: negation flipped",
-     "answer": {"headline": "The #support Question is not still open.", "summary": "The Question is not unanswered: #support is approved.", "cited": "h-slack-support"}},
-    {"question": "h-escalation", "request": "Was the escalation question answered?", "label": "correct",
-     "answer": {"headline": "Support leadership answered the escalation question.", "summary": "The Question is closed: billing disputes and account lockouts escalate within 15 minutes.", "cited": "h-escalation"}},
-    {"question": "h-escalation", "request": "Was the escalation question answered?", "label": "wrong: dropped item",
-     "answer": {"headline": "Support leadership answered the escalation question.", "summary": "The Question is closed: billing disputes escalate within 15 minutes.", "cited": "h-escalation"}}
-  ]
+    {
+      "question": "h-budget-cap",
+      "request": "Has Finance answered the maximum monthly model spend question?",
+      "label": "correct",
+      "answer": {
+        "headline": "Finance answered the monthly spend question: the cap is $2,500.",
+        "summary": "The Question is closed. Finance set the monthly model spend cap at $2,500.",
+        "cited": "h-budget-cap"
+      }
+    },
+    {
+      "question": "h-budget-cap",
+      "request": "Has Finance answered the maximum monthly model spend question?",
+      "label": "wrong: changed number",
+      "answer": {
+        "headline": "Finance answered the monthly spend question: the cap is $5,000.",
+        "summary": "The Question is closed. Finance set the monthly model spend cap at $5,000.",
+        "cited": "h-budget-cap"
+      }
+    },
+    {
+      "question": "h-residency",
+      "request": "Was the EU data residency question answered?",
+      "label": "wrong: dropped scope",
+      "answer": {
+        "headline": "Legal answered the residency question.",
+        "summary": "The Question is closed. Legal confirmed all customer data must stay in Frankfurt.",
+        "cited": "h-residency"
+      }
+    },
+    {
+      "question": "h-training",
+      "request": "Was the question about the planned finish date for pilot training resolved?",
+      "label": "wrong: pronoun contradiction",
+      "answer": {
+        "headline": "The training Question was answered.",
+        "summary": "It is still unresolved. Enablement scheduled the last training session for October 14.",
+        "cited": "h-training"
+      }
+    },
+    {
+      "question": "h-training",
+      "request": "Was the question about the planned finish date for pilot training resolved?",
+      "label": "correct",
+      "answer": {
+        "headline": "Yes, Enablement answered it: the planned finish is October 14.",
+        "summary": "The Question is resolved. Enablement scheduled the last training session for October 14.",
+        "cited": "h-training"
+      }
+    },
+    {
+      "question": "h-sso",
+      "request": "Was the SSO provider question answered?",
+      "label": "wrong: wrong record",
+      "answer": {
+        "headline": "The SSO Question is still open.",
+        "summary": "Security has not set the session timeout yet.",
+        "cited": "h-sso-timeout"
+      }
+    },
+    {
+      "question": "h-sso",
+      "request": "Was the SSO provider question answered?",
+      "label": "wrong: hedge",
+      "answer": {
+        "headline": "Partly: Security answered the provider question, but timeouts remain open.",
+        "summary": "The provider Question is closed: the client will use Okta. The timeout Question is still open.",
+        "cited": "h-sso"
+      }
+    },
+    {
+      "question": "h-budget-alert",
+      "request": "Is the monthly spend alert question answered?",
+      "label": "wrong: draft shown as answer",
+      "answer": {
+        "headline": "Yes, the alert is set at $2,000.",
+        "summary": "The alert Question was answered: alert at $2,000.",
+        "cited": "h-budget-alert"
+      }
+    },
+    {
+      "question": "h-budget-alert",
+      "request": "Is the monthly spend alert question answered?",
+      "label": "correct",
+      "answer": {
+        "headline": "Not yet: the spend alert Question is still open.",
+        "summary": "No answer is recorded for the alert Question; a draft proposal exists but has not been accepted.",
+        "cited": "h-budget-alert"
+      }
+    },
+    {
+      "question": "h-slack-support",
+      "request": "Was the #support Slack channel question answered?",
+      "label": "wrong: negation flipped",
+      "answer": {
+        "headline": "The #support Question is not still open.",
+        "summary": "The Question is not unanswered: #support is approved.",
+        "cited": "h-slack-support"
+      }
+    },
+    {
+      "question": "h-escalation",
+      "request": "Was the escalation question answered?",
+      "label": "correct",
+      "answer": {
+        "headline": "Support leadership answered the escalation question.",
+        "summary": "The Question is closed: billing disputes and account lockouts escalate within 15 minutes.",
+        "cited": "h-escalation"
+      }
+    },
+    {
+      "question": "h-escalation",
+      "request": "Was the escalation question answered?",
+      "label": "wrong: dropped item",
+      "answer": {
+        "headline": "Support leadership answered the escalation question.",
+        "summary": "The Question is closed: billing disputes escalate within 15 minutes.",
+        "cited": "h-escalation"
+      }
+    }
+  ],
+  "frozen": "2026-11-08: training Question made explicitly about the planned finish date; escalation expectation kept. No further edits before the run."
 }
