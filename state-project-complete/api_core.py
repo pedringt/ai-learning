@@ -102,6 +102,8 @@ from review_service import (
     list_state,
     list_project_areas,
     list_questions,
+    get_question,
+    question_details,
     with_linked_evidence,
     create_question,
     stop_question,
@@ -889,9 +891,30 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
             }
 
     @app.get("/api/questions")
-    def get_questions(status: Literal["open", "resolved", "stopped"] = Query(default="open")) -> dict:
+    def get_questions(
+        status: Literal["open", "resolved", "stopped"] = Query(default="open"),
+        limit: int | None = Query(default=None, ge=1, le=100),
+        offset: int = Query(default=0, ge=0),
+    ) -> dict:
+        # Without limit: unchanged for every existing caller. With it (#640 Answered Questions): one page, newest
+        # resolved first, and next_offset when there may be more.
         with get_connection() as connection:
-            return {"items": with_linked_evidence(connection, list_questions(connection, status))}
+            if limit is None:
+                return {"items": with_linked_evidence(connection, list_questions(connection, status))}
+            page = list_questions(connection, status, limit=limit + 1, offset=offset)
+            more = len(page) > limit
+            return {"items": with_linked_evidence(connection, page[:limit]), "next_offset": offset + limit if more else None}
+
+    @app.get("/api/questions/{question_id}")
+    def get_one_question(question_id: str) -> dict:
+        # #640: the Question view opens by id, scoped to the project, so it works for Questions resolved after loading,
+        # old Ask cards and later pages; another project's Question is a 404.
+        with get_connection() as connection:
+            question = get_question(connection, question_id)
+            if question is None:
+                raise HTTPException(status_code=404, detail="Question not found")
+            [item] = with_linked_evidence(connection, [question])
+            return {"item": item, "details": question_details(connection, question)}
 
     @app.post("/api/questions", status_code=201)
     def post_question(payload: QuestionInput) -> dict:
