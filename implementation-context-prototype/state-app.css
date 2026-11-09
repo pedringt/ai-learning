@@ -390,7 +390,7 @@
 
 /* ==== section baseline-dogfood-fixes: Baseline Setup, Workspace. Added by context-baseline-dogfood-fixes.js (since removed). ==== */
       #baselineSetupBanner .baseline-setup-row{align-items:center}#baselineSetupBanner .baseline-retry-status{margin-top:6px;color:var(--muted);font-size:11.5px;line-height:1.4}#baselineSetupBanner .baseline-retry-status:empty{display:none}#baselineSetupBanner .baseline-dogfood-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto}#baselineSetupBanner .baseline-dogfood-actions .btn{width:auto!important;min-height:34px!important;padding:7px 11px!important;font-size:12px!important;white-space:nowrap}
-      .baseline-draft-actions [data-baseline-confirm-starting]{white-space:nowrap!important;flex:0 0 auto;min-width:max-content}.baseline-add-fact{margin:2px 0 10px}.baseline-inline-new-fact{margin:8px 0 14px;padding:12px;border:1px dashed var(--line);border-radius:9px;background:var(--surface2)}.baseline-inline-new-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:8px}.baseline-inline-new-status{margin-right:auto;color:var(--muted);font-size:11px}
+      .baseline-draft-actions [data-baseline-confirm-starting]{white-space:nowrap;flex:0 0 auto;min-width:max-content}.baseline-add-fact{margin:2px 0 10px}.baseline-inline-new-fact{margin:8px 0 14px;padding:12px;border:1px dashed var(--line);border-radius:9px;background:var(--surface2)}.baseline-inline-new-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:8px}.baseline-inline-new-status{margin-right:auto;color:var(--muted);font-size:11px}
       .baseline-starting-upload{display:flex;align-items:center;gap:8px;margin:5px 0 12px;color:var(--muted);font-size:12px}.baseline-starting-upload label{cursor:pointer;padding:7px 10px}.baseline-starting-filename{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.baseline-starting-status{min-height:18px;color:var(--muted);font-size:11px}
       .workspace-attention.is-clear.dogfood-caught-up{border-color:color-mix(in srgb,var(--good) 24%,var(--line))!important;background:color-mix(in srgb,var(--surface) 94%,#eaf7ee)!important;box-shadow:none!important}.workspace-attention.is-clear.dogfood-caught-up .attention-head-icon{background:#eaf7ee;border-color:#cfe8d7;color:#277b45;box-shadow:none}.workspace-attention.is-clear.dogfood-caught-up .attention-head-icon::before{color:#277b45}html body .workspace-attention .dogfood-quiet-link{color:var(--muted)!important;font-weight:650!important;font-size:11.5px!important}
       @media(max-width:760px){#baselineSetupBanner .baseline-dogfood-actions{width:100%;flex-direction:column;align-items:stretch}#baselineSetupBanner .baseline-dogfood-actions .btn{width:100%!important}.baseline-draft-actions [data-baseline-confirm-starting]{width:100%}.baseline-inline-new-actions{align-items:stretch;flex-direction:column}.baseline-inline-new-status{margin-right:0}.baseline-inline-new-actions .btn{width:100%}}
@@ -417,7 +417,7 @@
       body .open-items-page details.reasoning{margin-top:10px!important;padding-top:10px!important}
       body .open-items-page details.reasoning summary{font-size:12px!important;line-height:1.3!important;font-weight:700!important;color:#667085!important}
       body .open-items-page details.reasoning p{margin:7px 0!important;font-size:13px!important;line-height:1.45!important;color:#4f5b70!important}
-      body .open-items-page details.reasoning p strong{font-size:inherit!important;color:#26344d!important}
+      body .open-items-page details.reasoning p strong{font-size:inherit;color:#26344d}
 
       /* History is a flat decision log. Remove timeline rails and hover geometry entirely. */
       body .history-page #historyList,body .history-page .history-list{border-left:0!important;background-image:none!important}
@@ -1168,14 +1168,14 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
 
       /* Evidence intake uses the same neutral + blue action language as State. */
       html body .dialog:has(#addInfoText){background:#fff!important;border:1px solid #dfe5ed!important;box-shadow:0 22px 70px rgba(24,43,70,.16)!important}
-      html body .dialog:has(#addInfoText)>.dialog-close{background:#f7f9fc!important;color:#647084!important}
+      html body .dialog:has(#addInfoText)>.dialog-close{background:#f7f9fc;color:#647084}
       html body .dialog:has(#addInfoText) .eyebrow,
-      html body .dialog:has(#addInfoText) .meta-label{color:#68768a!important}
-      html body .dialog:has(#addInfoText) #addInfoText{border-color:#cfd8e4!important;background:#fff!important;box-shadow:none!important}
+      html body .dialog:has(#addInfoText) .meta-label{color:#68768a}
+      html body .dialog:has(#addInfoText) #addInfoText{border-color:#cfd8e4;background:#fff;box-shadow:none}
       html body .dialog:has(#addInfoText) #addInfoText:focus{border-color:#6f9bc8!important;box-shadow:0 0 0 3px #edf4fb!important}
-      html body .dialog:has(#addInfoText) .note-example-chips button{border:1px solid #d8e0e9!important;background:#f7f9fb!important;color:#476789!important;box-shadow:none!important}
+      html body .dialog:has(#addInfoText) .note-example-chips button{border:1px solid #d8e0e9;background:#f7f9fb;color:#476789;box-shadow:none}
       html body .dialog:has(#addInfoText) .note-example-chips button:hover{border-color:#b9c9dc!important;background:#f0f5fa!important}
-      html body .dialog:has(#addInfoText) [data-action='save-info']{background:#1769e8!important;border-color:#1769e8!important;color:#fff!important}
+      html body .dialog:has(#addInfoText) [data-action='save-info']{background:#1769e8;border-color:#1769e8;color:#fff}
 
       /* Evidence analysis uses the same neutral/blue language as the rest of State. */
       html body .dialog:has(.analysis-state){background:#fff!important;border:1px solid #dfe5ed!important;box-shadow:0 22px 70px rgba(24,43,70,.16)!important}
@@ -1310,7 +1310,7 @@ html:not(#_#_#_) .overview-stage .workspace-stage-pill.is-late-discovery{backgro
 html:not(#_#_#_) #askStateDrawer[data-ask-controls="asking"] .ask-state-drawer-form .state-ask-reset{display:none!important;visibility:hidden!important}
 html:not(#_#_#_) #askStateDrawer[data-ask-controls="answered"] .ask-state-drawer-form .state-ask-reset{display:block!important;visibility:visible!important}
 html:not(#_#_#_) #askStateDrawer[data-ask-controls="asking"] .ask-state-drawer-form button[type="submit"]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
-html:not(#_#_#_) #askStateDrawer[data-ask-controls="answered"] .ask-state-drawer-form button[type="submit"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+html:not(#_#_#_) #askStateDrawer[data-ask-controls="answered"] .ask-state-drawer-form button[type="submit"]{display:none;visibility:hidden;pointer-events:none}
 
 /* #612 (Nov 8): phone tap targets at least 24px tall (WCAG 2.2 SC 2.5.8) without moving anything. An invisible
    ::after (out of flow, so no layout effect) extends the tap area; clicks on it reach the control. These controls are
