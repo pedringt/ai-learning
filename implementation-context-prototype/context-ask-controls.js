@@ -124,19 +124,13 @@
     const drawer=document.getElementById('askStateDrawer'),form=drawer?.querySelector('.ask-state-drawer-form');
     if(!drawer||!form)return;
     ensureResetButton();
-    const reset=form.querySelector('.state-ask-reset'),submit=form.querySelector('button[type="submit"]'),result=drawer.querySelector('#askStateDrawerResult');
+    const result=drawer.querySelector('#askStateDrawerResult');
     const hasAnswer=!!result?.querySelector('.ask-live-answer,.ask-answer-item') || (!!result?.textContent?.trim()&&!result?.querySelector('.ask-live-loading,.ask-live-error'));
     const generating=drawer.classList.contains('is-generating')||drawer.dataset.askPending==='1'||!!result?.querySelector('.ask-live-loading');
     drawer.classList.toggle('has-answer',hasAnswer&&!generating);
-    if(reset){
-      reset.style.setProperty('display',hasAnswer&&!generating?'block':'none','important');
-      reset.style.setProperty('visibility',hasAnswer&&!generating?'visible':'hidden','important');
-    }
-    if(submit){
-      submit.style.setProperty('display',hasAnswer&&!generating?'none':'grid','important');
-      submit.style.setProperty('visibility',hasAnswer&&!generating?'hidden':'visible','important');
-      submit.style.setProperty('pointer-events',hasAnswer&&!generating?'none':'auto','important');
-    }
+    // Which of submit / reset shows; styled in state-app.css (#450 section). Set only here, so it
+    // changes exactly when the inline !important styles it replaced did.
+    drawer.dataset.askControls=hasAnswer&&!generating?'answered':'asking';
   }
 
   function restoreAskDiscovery(){

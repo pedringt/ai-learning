@@ -110,11 +110,11 @@
     const head=`<span class="open-question-copy"><span class="open-item-label blocking">Review</span><span class="open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><span class="question-card-chevron" aria-hidden="true">${chevron}</span>`;
     const rowStyle='width:100%;display:flex;align-items:center;justify-content:space-between;gap:20px;text-align:left;border:0;background:transparent;color:inherit;cursor:pointer;box-sizing:border-box';
     const recordStyle='width:100%;max-width:none;margin:12px 0 0;padding:0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none';
-    if(accordion&&!expanded) return `<article class="review-record is-collapsed" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="false">${head}</button></article>`;
+    if(accordion&&!expanded) return `<article class="review-record is-collapsed" style="${recordStyle}" data-review-card="${esc(r.id)}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${esc(r.id)}" aria-expanded="false">${head}</button></article>`;
     const actions=isQuestionReview
-      ? `<button class="btn primary" data-action="review-update" data-review="${r.id}"${questionReady?'':' disabled'}>${questionProposal?.existing_question_id?'Link existing Question':'Create Question'}</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}"${questionReady?'':' disabled'}>Dismiss suggestion</button>`
+      ? `<button class="btn primary" data-action="review-update" data-review="${esc(r.id)}"${questionReady?'':' disabled'}>${questionProposal?.existing_question_id?'Link existing Question':'Create Question'}</button><button class="btn secondary" data-action="review-keep" data-review="${esc(r.id)}"${questionReady?'':' disabled'}>Dismiss suggestion</button>`
       : checkOnly
-      ? `<button class="btn primary" data-action="review-acknowledge-risk" data-review="${r.id}">Keep tracking</button><button class="btn secondary" data-action="review-dismiss-risk" data-review="${r.id}">Dismiss concern</button>`
+      ? `<button class="btn primary" data-action="review-acknowledge-risk" data-review="${esc(r.id)}">Keep tracking</button><button class="btn secondary" data-action="review-dismiss-risk" data-review="${esc(r.id)}">Dismiss concern</button>`
       // QA follow-up (2026-09-14): Adjust used to simply disappear for a
       // retire-only review (nothing left to reword once every proposal is
       // "remove this fact"), leaving the three-button row silently down to
@@ -123,7 +123,7 @@
       // Keeping the button always present (disabled + a title on the
       // retire-only case) keeps the row's shape predictable across every
       // Review of this type.
-      : `<button class="btn primary" data-action="review-update" data-review="${r.id}"${blocked}>Update Current State</button><button class="btn secondary" data-action="open-adjust-review" data-review="${r.id}"${sourceMissing?blocked:adjustableCount?'':' disabled title="Nothing to adjust -- every proposal here retires a fact rather than proposing wording."'}>Adjust</button><button class="btn secondary" data-action="review-keep" data-review="${r.id}" title="Do not apply this evidence to Current State.">Leave unchanged</button>`;
+      : `<button class="btn primary" data-action="review-update" data-review="${esc(r.id)}"${blocked}>Update Current State</button><button class="btn secondary" data-action="open-adjust-review" data-review="${esc(r.id)}"${sourceMissing?blocked:adjustableCount?'':' disabled title="Nothing to adjust -- every proposal here retires a fact rather than proposing wording."'}>Adjust</button><button class="btn secondary" data-action="review-keep" data-review="${esc(r.id)}" title="Do not apply this evidence to Current State.">Leave unchanged</button>`;
     // A related open Review is a structural pointer only (same State item or
     // Question as this one) -- never a claim that the two are the same
     // decision. Shown plainly, not as an action, so the human decides
@@ -133,8 +133,8 @@
       : '';
     const addition=!isQuestionReview&&!checkOnly&&!sourceMissing&&isPureAddition(r);
     const body=`<div class="review-decision-context">${addition?'':`<div class="review-context-block"><span>Current understanding</span><p>${esc(cleanReviewCopy(r.current))}</p></div>`}<div class="review-context-block review-evidence-block"><span>${isQuestionReview?(questionProposal?.existing_question_id?'Already tracked':'Question to track'):checkOnly?'What the evidence says':addition?'Proposed addition to Current State':'Proposed change'}</span><p>${esc(isQuestionReview?(questionReady?questionProposal.existing_question_text||questionProposal.text:'Question suggestion unavailable. Refresh and review it again.'):checkOnly?cleanReviewCopy(r.evidence):cleanReviewCopy(r.proposed))}</p>${checkOnly?'':sourceExcerptHtml(r,!simple)}</div>${!checkOnly&&meaningfulUnresolved?`<div class="review-context-block"><span>Still unresolved</span><p>${esc(cleanReviewCopy(r.unresolved))}</p></div>`:''}${relatedBlock}</div>${sourceMissing?`<p class="review-blocked-note" id="${blockedId}">No source Evidence is recorded, so this Review can&rsquo;t change Current State. You can still leave it unchanged.</p>`:''}<div class="review-actions">${actions}</div>${simple?'':`<details class="reasoning"><summary>Why / source</summary>${fullSourcesHtml(r)}<p><strong>Establishes:</strong> ${esc(cleanReviewCopy(r.establishes))}</p>${r.doesNot?`<p><strong>Does not establish:</strong> ${esc(r.doesNot)}</p>`:''}</details>`}`;
-    if(accordion) return `<article class="review-record is-expanded" style="${recordStyle}" data-review-card="${r.id}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${r.id}" aria-expanded="true">${head}</button><div class="review-card-body" style="padding:0 16px 16px 16px!important;box-sizing:border-box">${body}</div></article>`;
-    return `<article class="review-card compact-review" data-review-card="${r.id}"><span class="review-row-head open-question-copy"><span class="open-item-label review">Review</span><span class="review-card-title open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><div class="review-card-body">${body}</div></article>`;
+    if(accordion) return `<article class="review-record is-expanded" style="${recordStyle}" data-review-card="${esc(r.id)}"><button type="button" class="open-question-row review-record-toggle" style="${rowStyle}" data-action="toggle-review-card" data-review-id="${esc(r.id)}" aria-expanded="true">${head}</button><div class="review-card-body" style="padding:0 16px 16px 16px!important;box-sizing:border-box">${body}</div></article>`;
+    return `<article class="review-card compact-review" data-review-card="${esc(r.id)}"><span class="review-row-head open-question-copy"><span class="open-item-label review">Review</span><span class="review-card-title open-question-title">${esc(r.summary)}</span>${sourceMeta?`<span class="review-source-meta open-question-meta">Evidence · ${esc(sourceMeta)}</span>`:''}</span><div class="review-card-body">${body}</div></article>`;
   }
 
   // #107 Adjust flow: correcting State's interpretation before it becomes
@@ -179,11 +179,54 @@
     return `<span class="eyebrow">${q.blocking?'Blocking question':'Open question'}</span><h2 id="dialogTitle">${esc(q.text)}</h2><p>This stays unresolved until reviewed evidence establishes an answer.</p>${linkedEvidenceHtml(q)}${q.blocking&&q.blocks?`<p class="blocking-detail"><strong>Blocks:</strong> ${esc(q.blocks)}</p>`:''}<div class="dialog-actions"><button class="btn primary" data-action="answer-question" data-question-id="${q.id}">Add what you learned</button>${q.blocking?`<button class="btn secondary" data-action="unmark-blocking" data-question-id="${q.id}">No longer blocking</button>`:`<button class="btn secondary" data-action="mark-blocking" data-question-id="${q.id}">Mark as blocking</button>`}<button class="btn secondary" data-action="confirm-stop-question" data-question-id="${q.id}">Stop tracking</button></div>`;
   }
 
+  // #640 Draft 1 (Paige, Nov 8): Answered Questions, built only from records. Each line appears only when the record
+  // supports it; State stores no dedicated answer, so the Evidence is labelled as the Evidence used to resolve it.
+  function answeredDate(value){
+    if(!value)return '';
+    const fmt=window.STATE_BACKEND_SYNC?.formatBackendDate;
+    return fmt?fmt(value):'';
+  }
+  function answeredRow(q){
+    const date=answeredDate(q.resolved_at);
+    return `<button type="button" class="open-question-row answered-question-row" data-action="open-answered-question" data-question-id="${esc(q.id)}" aria-label="Answered question: ${esc(q.text)}"><span class="open-question-copy"><span class="open-item-label answered">Answered</span><span class="open-question-title">${esc(q.text)}</span>${date?`<span class="open-question-meta">Answered · ${esc(date)}</span>`:''}</span><span class="question-card-chevron" aria-hidden="true">›</span></button>`;
+  }
+  function answeredSectionBody(answered){
+    const a=answered||{};
+    if(a.status==='loading'&&!(a.items||[]).length)return '<div class="open-items-empty" role="status">Loading answered questions…</div>';
+    if(a.status==='error')return '<div class="open-items-empty unavailable-inline">Answered questions could not be loaded. <button class="text-button" data-action="retry-answered-questions">Try again</button></div>';
+    const items=a.items||[];
+    if(!items.length)return '<div class="open-items-empty">No questions have been answered yet.</div>';
+    const more=a.nextOffset!=null?`<button class="open-questions-more" data-action="show-more-answered"${a.status==='loading'?' disabled':''}>${a.status==='loading'?'Loading…':'Show more'} <span aria-hidden="true">↓</span></button>`:'';
+    return `<div class="open-question-list" style="border-top:0">${items.map(answeredRow).join('')}</div>${more}`;
+  }
+  function answeredQuestionDialogHtml(item,details,opts={}){
+    const d=details||{};
+    const date=answeredDate(item.resolved_at);
+    const ev=d.evidence;
+    const review=d.resolving_review;
+    const updates=Array.isArray(d.state_updates)?d.state_updates:[];
+    const evDate=ev?answeredDate(ev.submitted_at):'';
+    const evSource=ev?(opts.sourceLabel?opts.sourceLabel(ev.source_type):ev.source_type||'Evidence'):'';
+    const evidenceHtml=ev?`<div class="answered-evidence"><span class="meta-label">Evidence used to resolve this Question</span><span class="answered-evidence-source">${esc(evSource)}${evDate?` · ${esc(evDate)}`:''}</span><p class="answered-evidence-text">${esc(ev.content)}</p></div>`:'';
+    const reviewHtml=review
+      ?`<div class="answered-review"><span class="meta-label">Resolved by review</span><p>${esc(review.decision_question)}</p>${review.resolution_note?`<p class="answered-review-note"><strong>Reviewer's note:</strong> “${esc(review.resolution_note)}”</p>`:''}</div>`
+      :'<p class="answered-review-missing">Resolving Review not recorded.</p>';
+    const stateHtml=review
+      ?(updates.length?`<div class="answered-state"><span class="meta-label">This Review also updated</span><ul>${updates.map(u=>`<li>${esc(u.new_statement)}</li>`).join('')}</ul></div>`:'<p class="answered-state-none">No linked Current State update is recorded.</p>')
+      :'';
+    const actions=[
+      ev&&opts.hasNoteFor&&opts.hasNoteFor(ev.id)?`<button class="btn secondary" data-action="view-answer-evidence" data-evidence-id="${esc(ev.id)}">View evidence</button>`:'',
+      review&&updates.length&&ev?`<button class="btn secondary" data-action="view-answer-history" data-evidence-id="${esc(ev.id)}">View in History</button>`:'',
+      '<button class="btn secondary" data-action="close-dialog">Close</button>'
+    ].join('');
+    return `<span class="eyebrow">Answered</span><h2 id="dialogTitle">${esc(item.text)}</h2>${date?`<p class="answered-date">Answered · ${esc(date)}</p>`:''}${evidenceHtml}${reviewHtml}${stateHtml}<div class="dialog-actions">${actions}</div>`;
+  }
+
   function openItemSection(title,count,key,body,empty,openItemSections){
-    const defaultCollapsed=key==='questions' && count>5;
+    const defaultCollapsed=(key==='questions' && count>5) || key==='answered';
     const stored=openItemSections[key];
     const collapsed=stored===null?defaultCollapsed:!!stored;
-    return `<section class="open-items-section open-items-${key}${collapsed?' is-collapsed':''}${empty?' is-empty':''}"><button type="button" class="open-items-section-head" data-action="toggle-open-item-section" data-section="${key}" aria-expanded="${collapsed?'false':'true'}"><span class="open-items-section-copy"><span class="open-items-section-title">${esc(title)} <span class="open-items-section-count">${count}</span></span></span><span class="open-items-section-chevron" aria-hidden="true">${collapsed?'⌄':'⌃'}</span></button>${collapsed?'':`<div class="open-items-section-body">${body}</div>`}</section>`;
+    return `<section class="open-items-section open-items-${key}${collapsed?' is-collapsed':''}${empty?' is-empty':''}"><button type="button" class="open-items-section-head" data-action="toggle-open-item-section" data-section="${key}" aria-expanded="${collapsed?'false':'true'}"><span class="open-items-section-copy"><span class="open-items-section-title">${esc(title)}${count===''?'':` <span class="open-items-section-count">${count}</span>`}</span></span><span class="open-items-section-chevron" aria-hidden="true">${collapsed?'⌄':'⌃'}</span></button>${collapsed?'':`<div class="open-items-section-body">${body}</div>`}</section>`;
   }
 
   // props: {reviewsStatus, questionsStatus, draftsStatus, reviews, questions,
@@ -197,7 +240,7 @@
   // injected so this module never needs to reach into another view module
   // directly.
   function render(props){
-    const {reviewsStatus,questionsStatus,draftsStatus,reviews,questions,draftNotes,notes,openQuestionsExpanded,expandedReviewId,openItemSections,renderDraftNote,hasCurrentState=true,openQuestionIds=new Set()}=props;
+    const {reviewsStatus,questionsStatus,draftsStatus,reviews,questions,draftNotes,notes,openQuestionsExpanded,expandedReviewId,openItemSections,renderDraftNote,hasCurrentState=true,openQuestionIds=new Set(),answered=null}=props;
     if(reviewsStatus==='loading' || questionsStatus==='loading'){
       return `<section class="page collection-page open-items-page"><div class="empty-state unavailable-state"><h2>Loading Open Items…</h2><p>Checking Reviews and Questions that need attention.</p></div></section>`;
     }
@@ -236,8 +279,8 @@
     const reviewHelp=`<span class="review-help" tabindex="0"><span class="review-help-trigger">What do these decisions mean?</span><table class="review-help-panel"><tbody><tr><th>Update Current State</th><td>Accept the proposed change -- Current State changes and the decision is recorded in History.</td></tr><tr><th>Adjust</th><td>Correct the wording before it becomes Current State, rather than accepting it as proposed.</td></tr><tr><th>Leave unchanged</th><td>Current State stays as it is. The evidence is kept on record even though nothing changed.</td></tr><tr><th>Keep tracking / Dismiss concern</th><td>For a Review flagging that existing Current State may be unreliable: keep the uncertainty tracked as an open Question, or dismiss the concern.</td></tr><tr><th>Create Question / Link existing Question</th><td>For a Review about a new unknown rather than a fact: start tracking it as a Question, or attach this evidence to one already being tracked.</td></tr></tbody></table></span>`;
     // Count line above the intro (#450, from context-quickwins.js); omitted while a list is unavailable.
     const countSummary=reviewUnavailable||questionUnavailable?'':`<strong class="open-items-count-summary">${reviews.length} ${reviews.length===1?'needs review':'need review'} · ${blockers.length} blocking · ${waiting.length} ${waiting.length===1?'other question':'other questions'}</strong><br>`;
-    return `<section class="page collection-page open-items-page"><div class="page-head"><div><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>${countSummary}Review what State thinks new information means, then decide what happens to Current State.</p>${reviewHelp}</div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable,openItemSections)}${openItemSection('Blocking questions',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable,openItemSections)}${openItemSection('Open questions',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable,openItemSections)}${openItemSection('Draft notes',draftsLoading?'…':draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,draftsStatus==='loaded'&&!draftNotes.length,openItemSections)}</div></section>`;
+    return `<section class="page collection-page open-items-page"><div class="page-head"><div><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>${countSummary}Review what State thinks new information means, then decide what happens to Current State.</p>${reviewHelp}</div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review',reviewUnavailable?'Unavailable':reviews.length,'reviews',reviewBody,!reviews.length&&!reviewUnavailable,openItemSections)}${openItemSection('Blocking questions',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable,openItemSections)}${openItemSection('Open questions',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable,openItemSections)}${openItemSection('Draft notes',draftsLoading?'…':draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,draftsStatus==='loaded'&&!draftNotes.length,openItemSections)}${answered?openItemSection('Answered Questions',answered.status==='loaded'?`${answered.items.length}${answered.nextOffset!=null?'+':''}`:'','answered',answeredSectionBody(answered),answered.status==='loaded'&&!answered.items.length,openItemSections):''}</div></section>`;
   }
 
-  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,isStraightforwardReview,adjustDialogHtml,questionDialogHtml,cleanReviewCopy});
+  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,isStraightforwardReview,adjustDialogHtml,questionDialogHtml,cleanReviewCopy,answeredQuestionDialogHtml,answeredSectionBody});
 })();

@@ -1,7 +1,9 @@
 (() => {
-  const inferredBase = /(^|[-.])staging([-.]|$)|-git-/i.test(location.hostname)
-    ? 'https://state-api-staging.onrender.com'
-    : 'https://state-api-6waw.onrender.com';
+  // Only the production hostnames use the production API when api/state-config.js has not set one; every other host
+  // (file://, localhost, an unrecognised preview) uses staging, whose data is reseeded on each deploy (#621).
+  const inferredBase = /^(state\.|www\.)?contextswitch\.tech$/i.test(location.hostname)
+    ? 'https://state-api-6waw.onrender.com'
+    : 'https://state-api-staging.onrender.com';
   const base = window.STATE_API_BASE || document.documentElement?.dataset?.apiBase || inferredBase;
 
   // The backend used to resolve "which project" purely from a shared,
@@ -185,6 +187,9 @@
     getReviews: status => request(`/api/reviews?status=${encodeURIComponent(status)}`),
     getHistory: () => request('/api/history'),
     getQuestions: status => request(`/api/questions?status=${encodeURIComponent(status)}`),
+    // #640 Draft 1: one page of Questions (newest resolved first) and one Question by id, scoped to the project.
+    getQuestionPage: (status,limit,offset) => request(`/api/questions?status=${encodeURIComponent(status)}&limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`),
+    getQuestion: id => request(`/api/questions/${encodeURIComponent(id)}`),
     getRules: () => request('/api/rules'),
     getDrafts: () => request('/api/drafts'),
     createDraft: (title, content) => jsonPost('/api/drafts', {title, content}),

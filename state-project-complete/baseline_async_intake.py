@@ -13,24 +13,21 @@ creates draft proposals/Reviews, and a person still confirms Starting State.
 """
 from __future__ import annotations
 
-import io
 import logging
 from typing import Any
 
-from docx import Document as DocxDocument
 from fastapi import BackgroundTasks, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from starlette.concurrency import run_in_threadpool
-from pypdf import PdfReader
 
 from baseline_setup import is_baseline_setup
 from db import connect
 from interpretation_pipeline_integrated import new_id
+from upload_text import UPLOAD_EXTENSIONS as _UPLOAD_EXTENSIONS, UPLOAD_MAX_BYTES as _UPLOAD_MAX_BYTES
+from upload_text import extract_upload_text as _extract_upload_text
 
 logger = logging.getLogger("state.baseline.intake")
 
-_UPLOAD_EXTENSIONS = {".txt", ".md", ".pdf", ".docx"}
-_UPLOAD_MAX_BYTES = 15_000_000
 
 
 class BaselineEvidenceInput(BaseModel):
@@ -45,55 +42,6 @@ class BaselineEvidenceInput(BaseModel):
         if not value:
             raise ValueError("content must not be blank")
         return value
-
-
-def _unreadable(message: str, code: str = "unreadable_file") -> HTTPException:
-    return HTTPException(
-        status_code=422,
-        detail={"code": code, "error_details": {"error_message": message}},
-    )
-
-
-def _extract_upload_text(raw: bytes, extension: str) -> str:
-    """Mirror the existing State upload contract for Baseline fast intake."""
-    if extension in (".txt", ".md"):
-        try:
-            return raw.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            raise _unreadable("That file doesn't look like plain text State can read.") from exc
-
-    if extension == ".pdf":
-        try:
-            reader = PdfReader(io.BytesIO(raw))
-            if reader.is_encrypted:
-                raise _unreadable("That PDF is password-protected. Remove the password and try again.")
-            pages_text = [page.extract_text() or "" for page in reader.pages]
-        except HTTPException:
-            raise
-        except Exception as exc:
-            raise _unreadable("That PDF could not be read. It may be corrupted.") from exc
-        text = "\n\n".join(pages_text).strip()
-        if not text:
-            raise _unreadable(
-                "State couldn't find readable text in that PDF. Scanned or image-only PDFs aren't supported yet -- try a text-based PDF instead.",
-                code="no_extractable_text",
-            )
-        return text
-
-    if extension == ".docx":
-        try:
-            document = DocxDocument(io.BytesIO(raw))
-        except Exception as exc:
-            raise _unreadable("That .docx file could not be read. It may be corrupted.") from exc
-        parts = [paragraph.text for paragraph in document.paragraphs if paragraph.text.strip()]
-        for table in document.tables:
-            for row in table.rows:
-                row_text = " | ".join(cell.text.strip() for cell in row.cells if cell.text.strip())
-                if row_text:
-                    parts.append(row_text)
-        return "\n\n".join(parts)
-
-    raise _unreadable("Unsupported file type.", code="unsupported_file_type")
 
 
 def _selected_provider(app: Any, settings: Any):
@@ -163,14 +111,14 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
 
         try:
             api_core.process_evidence(connection, evidence_id=evidence_id, provider=provider)
-        except Exception:
+        except Exception:  # broad on purpose: background-task safety net; logged below, Evidence marked failed
             # Most provider/contract failures are already persisted by
             # process_evidence. This fallback handles unexpected failures so the
             # UI does not display an Evidence item as "Analyzing" forever.
             try:
                 connection.rollback()
-            except Exception:
-                pass
+            except Exception:  # broad on purpose: a failed rollback must not stop marking the Evidence failed
+                logger.warning("Rollback after Baseline analysis failure failed for %s", evidence_id, exc_info=True)
 
             # Deletion can race the provider call itself. Re-check after the
             # failure; if the project/Evidence disappeared, there is nothing
@@ -184,7 +132,7 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
                     "SELECT id FROM evidence WHERE id=? AND project_id=?",
                     (evidence_id, project_id),
                 ).fetchone()
-            except Exception:
+            except Exception:  # broad on purpose: any re-check failure falls through to marking the Evidence failed
                 # #548 (Paige, Oct 20): a failed re-check is not a deletion. Fall through and mark the
                 # Evidence failed (retryable) so the UI never shows "Analyzing" forever.
                 logger.warning("Could not re-check Baseline Evidence %s after a failure", evidence_id, exc_info=True)
@@ -207,7 +155,7 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
                     (evidence_id, project_id),
                 )
                 connection.commit()
-            except Exception:
+            except Exception:  # broad on purpose: last write of a background task; logged, nothing left to do
                 logger.exception("Could not mark failed Baseline Evidence %s", evidence_id)
     finally:
         connection.close()
@@ -256,7 +204,8 @@ def register_baseline_async_intake_routes(app: Any, settings: Any) -> None:
                     "error_message": "State can currently read .txt, .md, .pdf, and .docx files. Other formats aren't supported yet.",
                 }},
             )
-        raw = await file.read()
+        # Read at most one byte past the limit, so an oversized upload is rejected without loading it all (#619).
+        raw = await file.read(_UPLOAD_MAX_BYTES + 1)
         if len(raw) > _UPLOAD_MAX_BYTES:
             raise HTTPException(
                 status_code=422,

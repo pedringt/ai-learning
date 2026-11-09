@@ -10,7 +10,7 @@
   const initial = clone(D);
   const state = {
     data: clone(D), view:'overview', result:null, resultQuery:'', askInputDraft:'', projectMenuOpen:false, refinements:[], lastScenario:null,
-    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, openQuestionIds:new Set(), expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}, projectConfirmed:false, hydrationGeneration:0
+    addedSample:false, pendingCreated:false, reviewBannerDismissed:false, dialogReturnFocus:null, expandedNotes:new Set(), noteComposerOpen:false, editingNoteId:null, dismissedNudges:new Set(), historyTopic:null, historyEvidenceId:null, historySearch:'', notesFilter:'all', notesDateFilter:'all', notesSearch:'', isAnalyzing:false, openQuestionsExpanded:false, openQuestionIds:new Set(), expandedReviewId:null, openItemSections:{reviews:false,blockers:false,drafts:true,questions:null,answered:null}, answered:{status:'idle',items:[],nextOffset:0,generation:-1}, projectRules:[], workspaceAttentionStatus:'loading', backendStatus:{state:'loading',evidence:'loading',reviews:'loading',history:'loading',questions:'loading',rules:'loading',drafts:'loading'}, projectConfirmed:false, hydrationGeneration:0
   };
 
   const root = document.getElementById('viewRoot');
@@ -621,6 +621,52 @@
      becomes a State change; it stays here since it mutates `state` and
      talks to the backend, which the view module deliberately never does.
      ------------------------------------------------------------------- */
+  // #640 Draft 1: Answered Questions load when the section is first opened, one page at a time, and are dropped
+  // whenever the app re-hydrates (a project switch included), so another project's Questions never show.
+  const ANSWERED_PAGE=10;
+  function answeredState(){
+    if(state.answered.generation!==state.hydrationGeneration)state.answered={status:'idle',items:[],nextOffset:0,generation:state.hydrationGeneration};
+    return state.answered;
+  }
+  async function loadAnswered(offset){
+    const a=answeredState(); const generation=a.generation;
+    a.status='loading'; renderOpenItems();
+    try{
+      const page=await API.getQuestionPage('resolved',ANSWERED_PAGE,offset);
+      if(state.answered.generation!==generation)return;
+      state.answered.items=offset?state.answered.items.concat(page.items||[]):(page.items||[]);
+      state.answered.nextOffset=page.next_offset??null;
+      state.answered.status='loaded';
+    }catch(_){ if(state.answered.generation===generation)state.answered.status='error'; }
+    if(state.view==='open-items')renderOpenItems();
+  }
+  // Opens any Question by id from the server, whatever its status, so old Ask cards, Questions resolved since the page
+  // loaded and later pages all work (#640, Nov 8).
+  // #650 review (Nov 8): a reply is shown only while it still belongs to the dialog that asked for it. Closing the
+  // dialog, opening any other dialog (another Question included) or switching projects makes a pending reply stale,
+  // and a stale reply, success or error, is dropped.
+  let questionRequestSeq=0;
+  async function openQuestionById(id){
+    if(!id)return;
+    const token=String(++questionRequestSeq), generation=state.hydrationGeneration, projectId=state.data.project?.id;
+    showDialog(`<span class="eyebrow" data-question-request="${token}">Question</span><h2 id="dialogTitle">Loading…</h2>`);
+    const current=()=>generation===state.hydrationGeneration&&projectId===state.data.project?.id
+      &&!overlay.hidden&&!!dialogBody.querySelector(`[data-question-request="${token}"]`);
+    try{
+      const {item,details}=await API.getQuestion(id);
+      if(!current())return;
+      if(item.status==='resolved'){
+        showDialog(OPEN_ITEMS_VIEW.answeredQuestionDialogHtml(item,details,{sourceLabel,hasNoteFor:eid=>state.data.notes.some(n=>n.evidenceId===eid)}));
+      }else if(item.status==='open'){
+        showDialog(questionDialogHtml({id:item.id,text:item.text,blocking:!!item.blocking,blocks:item.blocks,linkedEvidence:(item.linked_evidence||[]).map(x=>({evidenceId:x.evidence_id,excerpt:x.excerpt||'',date:formatBackendDate(x.submitted_at),how:x.how}))}));
+      }else{
+        showDialog(`<span class="eyebrow">No longer tracked</span><h2 id="dialogTitle">${esc(item.text)}</h2><p>This Question was stopped without an answer.</p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Close</button></div>`);
+      }
+    }catch(_){
+      if(!current())return;
+      showDialog('<span class="eyebrow">Question</span><h2 id="dialogTitle">This Question could not be loaded.</h2><p>It may belong to another project, or the connection failed.</p><div class="dialog-actions"><button class="btn secondary" data-action="close-dialog">Close</button></div>');
+    }
+  }
   function openItemsProps(){
     return {
       reviewsStatus:state.backendStatus.reviews,questionsStatus:state.backendStatus.questions,draftsStatus:state.backendStatus.drafts,
@@ -630,6 +676,7 @@
       draftNotes:state.data.notes.filter(n=>n.status==='working'||n.status==='draft'||!!n.backendDraft),
       notes:state.data.notes,
       openQuestionsExpanded:state.openQuestionsExpanded,openQuestionIds:state.openQuestionIds,expandedReviewId:state.expandedReviewId,openItemSections:state.openItemSections,
+      answered:answeredState(),
       renderDraftNote:n=>NOTES_VIEW.draftNoteRow(n)
     };
   }
@@ -847,7 +894,7 @@
     const dateFilter=e.target.closest('.notes-date-filters [data-date-filter]'); if(dateFilter){ state.notesDateFilter=dateFilter.dataset.dateFilter; renderNotes(); return; }
     const noteFilter=e.target.closest('.notes-filters [data-filter]'); if(noteFilter){ state.notesFilter=noteFilter.dataset.filter; renderNotes(); return; }
     const reviewFilter=e.target.closest('.review-filters [data-review-filter]'); if(reviewFilter){ state.reviewFilter=reviewFilter.dataset.reviewFilter; renderReview(); return; }
-    const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?(key==='questions'&&count>5):!!state.openItemSections[key]; state.openItemSections[key]=!current; renderOpenItems(); return; }
+    const sectionToggle=e.target.closest('[data-action="toggle-open-item-section"]'); if(sectionToggle){ const key=sectionToggle.dataset.section; const reviews=uiPendingReviews(), questions=openQuestions(); const count=key==='reviews'?reviews.length:key==='blockers'?questions.filter(q=>q.blocking).length:questions.filter(q=>!q.blocking).length; const current=state.openItemSections[key]===null?((key==='questions'&&count>5)||key==='answered'):!!state.openItemSections[key]; state.openItemSections[key]=!current; if(key==='answered'&&current&&answeredState().status==='idle'){loadAnswered(0);return;} renderOpenItems(); return; }
     const reviewToggle=e.target.closest('[data-action="toggle-review-card"]'); if(reviewToggle){ const id=reviewToggle.dataset.reviewId; const wasOpen=state.expandedReviewId===id; state.expandedReviewId=state.expandedReviewId===id?null:id; if(!wasOpen) window.StateAnalytics?.track('review_opened',{reviewId:id}); renderOpenItems(); return; }
     const provenanceToggle=e.target.closest('[data-action="toggle-provenance"]'); if(provenanceToggle){ const body=provenanceToggle.parentElement?.querySelector('.project-provenance-body'); if(body){ const expanded=!body.hidden; body.hidden=expanded; provenanceToggle.setAttribute('aria-expanded',String(!expanded)); provenanceToggle.textContent=expanded?'Why this is current →':'Hide why this is current'; if(!expanded) window.StateAnalytics?.track('provenance_opened'); } return; }
     const a=e.target.closest('[data-action]'); if(!a)return;
@@ -955,7 +1002,12 @@
     }
     else if(act==='send-note-review'){sendNoteToReview(a.dataset.noteId);}
     else if(act==='go-notes'){closeDialog();navigateTo('notes');}
-    else if(act==='open-question'){ const q=state.data.questions.find(x=>x.id===a.dataset.questionId); if(q) showDialog(questionDialogHtml(q)); }
+    else if(act==='open-question'){ const q=state.data.questions.find(x=>x.id===a.dataset.questionId); if(q) showDialog(questionDialogHtml(q)); else openQuestionById(a.dataset.questionId); }
+    else if(act==='open-answered-question'){ openQuestionById(a.dataset.questionId); }
+    else if(act==='show-more-answered'){ const s=answeredState(); if(s.status!=='loading'&&s.nextOffset!=null) loadAnswered(s.nextOffset); }
+    else if(act==='retry-answered-questions'){ loadAnswered(0); }
+    else if(act==='view-answer-evidence'){ const n=state.data.notes.find(x=>x.evidenceId===a.dataset.evidenceId); if(n){ closeDialog(); state.expandedNotes.add(n.id); navigateTo('notes'); setTimeout(()=>root.querySelector(`[data-note-id="${CSS.escape(n.id)}"]`)?.scrollIntoView({block:'center'}),60); } }
+    else if(act==='view-answer-history'){ closeDialog(); state.historyEvidenceId=a.dataset.evidenceId; state.historyTopic=null; state.historySearch=''; navigateTo('history',{preserveHistoryEvidence:true}); window.STATE_HISTORY_NAV?.pushHistoryTopic?.(null); }
     else if(act==='mark-blocking'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q)showDialog(`<span class="eyebrow">Blocking question</span><h2 id="dialogTitle">What does this block?</h2><p>A question is blocking only when a concrete project dependency cannot move without the answer.</p><p><strong>${esc(q.text)}</strong></p><input id="questionBlocks" class="dialog-input" aria-label="Blocked dependency" placeholder="Example: Security approval for pilot data flow"><div class="dialog-actions"><button class="btn primary" data-action="save-blocking" data-question-id="${q.id}">Mark blocking</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
     else if(act==='save-blocking'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);const blocks=document.getElementById('questionBlocks')?.value.trim();if(q&&blocks){try{const updated=await API.setQuestionBlocking(q.id,true,blocks);q.blocking=!!updated.blocking;q.blocks=updated.blocks||blocks;closeDialog();renderOpenItems();}catch(err){showDialog(`<span class="eyebrow">Couldn’t update question</span><h2 id="dialogTitle">Question is still open.</h2><p>${esc(err.message)}</p>`);}}}
     else if(act==='unmark-blocking'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q){try{const updated=await API.setQuestionBlocking(q.id,false,null);q.blocking=!!updated.blocking;q.blocks=updated.blocks||null;closeDialog();renderOpenItems();}catch(err){showDialog(`<span class="eyebrow">Couldn’t update question</span><h2 id="dialogTitle">Blocking status was not changed.</h2><p>${esc(err.message)}</p>`);}}}
@@ -978,7 +1030,7 @@
       }
     }
     else if(act==='close-result'||act==='new-ask'){const oldAskInput=document.getElementById('askInput');if(oldAskInput)oldAskInput.value='';state.result=null;state.resultQuery='';state.askInputDraft='';state.refinements=[];renderOverview();requestAnimationFrame(()=>document.getElementById('askInput')?.focus());}
-    else if(act==='go-open-question'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q)showDialog(questionDialogHtml(q));}
+    else if(act==='go-open-question'){const q=state.data.questions.find(x=>x.id===a.dataset.questionId);if(q)showDialog(questionDialogHtml(q));else openQuestionById(a.dataset.questionId);}
     else if(act==='add-info'||act==='suggest-update')showAddDialog();
     else if(act==='something-changed')showAddDialog('',{description:'What changed or what is incorrect? Add what you learned — State will compare it with Current State.'});
     else if(act==='confirm-demo-reset'){const projectName=state.data.project?.name||'this project';showDialog(`<span class="eyebrow">Reset to starting scenario</span><h2 id="dialogTitle">Restore the ${esc(projectName)} starting scenario?</h2><p>This removes everything created during testing and restores the same curated starting State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" data-action="reset-demo">Reset ${esc(projectName)}</button><button class="btn secondary" data-action="project-settings">Cancel</button></div>`);}
@@ -1148,7 +1200,7 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,openReviewSource,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry,hydrateBackend,showProjectSettings};
+  window.STATE_ASK_TEST_API={state,openReviewSource,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry,hydrateBackend,showProjectSettings,openQuestionById,showDialog,closeDialog,activateProject};
   // state.md #115: the live Ask State drawer (context-product-polish.js's
   // runAsk) is the only Ask surface a user actually reaches. Generic
   // inventory questions ("What needs review?") still need to route to a

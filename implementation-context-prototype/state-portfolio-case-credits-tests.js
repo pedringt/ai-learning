@@ -32,9 +32,15 @@ const tastemake=withoutEditMarkers(fs.readFileSync(path.join(root,'tastemake.htm
 const tasteHero=tastemake.slice(tastemake.indexOf('<header class="meridian-case-hero'),tastemake.indexOf('</header>'));
 check('Tastemake hero keeps only the Status line',/<div class="case-meta"><span><b>Status<\/b>/.test(tasteHero)&&!/My role|AI collaborator/.test(tasteHero));
 // Nov 4 (Paige): the v7.3 case study is five sections, with one comparison figure and a findings list.
-// Nov 5 (Paige): heading wording is edited in the portfolio editor (#617), so only the count is checked.
-const tasteH2s=[...tastemake.matchAll(/<h2>([^<]+)<\/h2>/g)].map(m=>m[1]);
-check('Tastemake: five section headings',tasteH2s.length===5,JSON.stringify(tasteH2s));
+// Nov 5 (Paige): heading wording is edited in the portfolio editor (#617), so wording is never checked.
+// Nov 7 (Paige): a sixth section, the shorter second example ("Better information wasn't enough"), sits
+// after the findings and before "What's next". Checked by section and order, each with one heading.
+const TASTE_SECTIONS=['narrative-open','product-model','seam-learning','next-tests','feedback-example','current-conclusion'];
+const tasteSections=[...tastemake.matchAll(/<section class="section ([\w-]+)">([\s\S]*?)<\/section>/g)].map(m=>({name:m[1],h2s:(m[2].match(/<h2>[^<]+<\/h2>/g)||[]).length}));
+check('Tastemake: six sections in the approved order',JSON.stringify(tasteSections.map(x=>x.name))===JSON.stringify(TASTE_SECTIONS),JSON.stringify(tasteSections.map(x=>x.name)));
+check('Tastemake: each section has exactly one heading',tasteSections.length===TASTE_SECTIONS.length&&tasteSections.every(x=>x.h2s===1),JSON.stringify(tasteSections));
+check('Tastemake: the second example keeps its research-prototype label',
+  /<section class="section feedback-example">[\s\S]*<figure class="progression"[\s\S]*Research prototype only, not part of Tastemake\.[\s\S]*hand-written suggestions[\s\S]*<\/figure>/.test(tastemake));
 check('Tastemake: the two tests are one labelled figure, 98% beside 53%',
   /<figure class="test-compare" aria-labelledby="test-compare-label">[\s\S]*>98%<[\s\S]*>53%<[\s\S]*<\/figure>/.test(tastemake));
 check('Tastemake: the three findings are a list with their own headings',

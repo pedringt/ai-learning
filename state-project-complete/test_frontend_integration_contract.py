@@ -275,11 +275,13 @@ def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydr
 def test_r82_open_item_sections_are_collapsible_and_keep_attention_hierarchy():
     app = _app_js()
     css = (FRONTEND / "context-tool.css").read_text(encoding="utf-8")
-    assert "openItemSections:{reviews:false,blockers:false,drafts:true,questions:null}" in app
+    # #640 Draft 1 (Nov 8): Answered Questions is a fifth section, at the bottom and collapsed by default.
+    assert "openItemSections:{reviews:false,blockers:false,drafts:true,questions:null,answered:null}" in app
     assert "toggle-open-item-section" in app
     # openItemSection()'s own default-collapse rule and the section
     # title/copy strings moved to context-open-items-view.js 2026-09-06.
-    assert "key==='questions' && count>5" in OPEN_ITEMS_VIEW_JS
+    assert "(key==='questions' && count>5) || key==='answered'" in OPEN_ITEMS_VIEW_JS
+    assert "Answered Questions" in OPEN_ITEMS_VIEW_JS
     assert "Needs your review" in OPEN_ITEMS_VIEW_JS and "Blocking questions" in OPEN_ITEMS_VIEW_JS and "Draft notes" in OPEN_ITEMS_VIEW_JS and "Open questions" in OPEN_ITEMS_VIEW_JS
     assert ".open-items-reviews" in css and ".open-items-blockers" in css and ".open-items-drafts" in css and ".open-items-questions" in css
 

@@ -342,7 +342,7 @@
 /* Shared "Go deeper" becomes a lightweight footer resource band, not a hero card. */
 
 </style>
-<link href="site-components.css?v=r18-stage-badges" rel="stylesheet"/>
+<link href="site-components.css" rel="stylesheet"/>
 <!-- Vercel Web Analytics -->
 <script>
   // Owner mode: use ?owner=true once to disable Vercel Analytics in this browser.
@@ -378,7 +378,7 @@
 .applied-major-with-actions .applied-card-primary-link{color:inherit;text-decoration:none}.applied-major-with-actions .applied-card-primary-link::after{content:"";position:absolute;inset:0;z-index:1}.applied-major-with-actions:has(.applied-card-primary-link:focus-visible){outline:3px solid color-mix(in srgb,var(--purple) 55%,transparent);outline-offset:3px}.applied-major-with-actions .applied-card-primary-link:focus-visible{outline:none}.applied-major-with-actions .applied-card-actions{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:auto;padding-top:18px;position:relative;z-index:2}.applied-major-with-actions .applied-card-actions a{color:var(--purple);font-size:12px;font-weight:800;text-decoration:none}.applied-major-with-actions .applied-card-actions a:hover{text-decoration:underline}
 .applied-secondary-grid>.card{display:flex;flex-direction:column}
 @media(max-width:620px){.applied-major-grid,.applied-secondary-grid{grid-template-columns:1fr}}
-</style></link><style>
+</style><style>
 /* Final portfolio hierarchy pass */
 
 </style>
@@ -642,7 +642,7 @@ html body #ai-cs-mock [data-page="portfolio"] > .page-intro .section-lead::befor
 }
 </style>
 <script defer src="site-environment.js"></script>
-<style id="rd-hold">html.rd-pending body{visibility:hidden}</style><script>document.documentElement.classList.add("rd-pending");setTimeout(function(){document.documentElement.classList.remove("rd-pending")},2500)</script><!-- social-preview:begin -->
+<!-- social-preview:begin -->
 <meta content="website" property="og:type"/>
 <meta content="https://www.contextswitch.tech/" property="og:url"/>
 <meta content="Context Switch | Software Delivery, Product Quality + AI" property="og:title"/>
@@ -657,9 +657,6 @@ html body #ai-cs-mock [data-page="portfolio"] > .page-intro .section-lead::befor
 <meta content="https://www.contextswitch.tech/assets/social/index.png?v=3" name="twitter:image"/>
 <meta content="Context Switch | Software Delivery, Product Quality + AI" name="twitter:image:alt"/>
 <!-- social-preview:end -->
-</head>
-<body>
-<div class="app-root" id="ai-cs-mock">
 <style>
 #ai-cs-mock{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fbf8f3;color:#171419;min-height:100%;--purple:#5b478f;--purple2:#705b9f;--blue:#355f8f;--cyan:#3d7f88;--green:#4e7a5e;--gold:#96742d;--muted:#6d676f;--border:#e5ddd6;--soft:#f6f1ec;--softp:#f0e9f3;--card:#fffdfa;--ink:#171419;--bg:#fbf8f3;}
 
@@ -692,6 +689,57 @@ body.v88-dark #ai-cs-mock{background:#171419!important;color:#f3ede8!important;-
 body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 
 </style>
+<style>
+/* Final layout polish */
+
+/* v95.67, customer communication brief: editorial artifact, not generic cards */
+
+</style>
+<style>
+/* Spacing and alignment cleanup */
+.view{padding-top:66px!important}
+.eyebrow{margin:0 0 16px!important}
+
+@media(max-width:560px){.view{padding-top:48px!important}}
+
+/* Meridian: keep the new overview, but make the work itself visible. */
+
+/* Navigation and proof refinements */
+
+.home-start{margin-top:32px}@media(max-width:560px){.home-start{margin-top:24px}}
+
+/* Dark mode should read as one continuous canvas, without an outer frame. */
+
+/* Final portfolio lock: stable proof, deep links, print, and compact mobile behavior. */
+
+@media print{#ai-cs-mock{background:#fff!important;color:#000!important;--muted:#444;--border:#bbb;--soft:#fff;--softp:#fff;--card:#fff}.topbar,#mobileNav{display:none!important}.view{display:block!important;padding-top:18px!important;break-before:page}.view:first-of-type{break-before:auto}.card,.decision,.band,.metric,.stage{break-inside:avoid;box-shadow:none!important;background:#fff!important}.shell{max-width:none!important;padding:0!important}.nav-card::after,.resource-link::after{display:none!important}}
+</style>
+<style>
+/* v87: clarify the learning boundary, reduce status noise, and surface the strongest proof. */
+
+/* v83 proof-restoration and browser-navigation polish */
+
+/* v88, information architecture + progressive disclosure. No substantive-content deletion. */
+
+/* Calm the visual hierarchy: cards remain for destinations/artifacts; reference grids read more quietly. */
+
+/* QA: study utilities belong to the Learning Library, not the portfolio-facing views. */
+
+/* QA: the case hub is the primary Meridian navigation; older in-page mini-nav is redundant. */
+
+@media(max-width:640px){
+  .learning-stage .stage-body{padding:4px 12px 16px 16px!important}
+  .learning-stage summary{grid-template-columns:28px minmax(0,1fr)!important;padding:14px 44px 14px 10px!important;gap:6px!important}
+}
+
+/* V12 feedback: principles return to the lighter Learning Guide treatment. */
+
+</style>
+<link href="site-redesign.css" rel="stylesheet">
+</head>
+<body>
+<div class="app-root" id="ai-cs-mock">
+
 <main class="shell" id="main-content">
 <div class="topbar"><div class="topinner"><button aria-label="Go to home" class="brand-button" data-brand-home="" type="button"><span class="brand">Context <span>Switch</span></span></button><nav aria-label="Primary pages" class="nav"><button class="active" data-view="home" aria-current="page">Home</button><button data-view="portfolio">Applied Work</button><button data-view="learn">Library</button></nav><div class="top-actions"><select aria-label="Choose page" id="mobileNav"><option value="home">Home</option><option value="portfolio">Applied Work</option><option value="learn">Library</option></select></div></div></div>
 <section class="view active" data-page="home" id="home">
@@ -889,53 +937,10 @@ body.v88-dark .learning-how-note strong{color:#f5f2fb!important}
 <script>
 (()=>{const root=document.getElementById('ai-cs-mock');if(!root)return;root.querySelectorAll('[data-page="home"] .journey .step').forEach(step=>{step.style.cursor='default';step.removeAttribute('tabindex');step.removeAttribute('role');});})();
 </script>
-<style>
-/* Final layout polish */
 
-/* v95.67, customer communication brief: editorial artifact, not generic cards */
 
-</style>
-<style>
-/* Spacing and alignment cleanup */
-.view{padding-top:66px!important}
-.eyebrow{margin:0 0 16px!important}
-
-@media(max-width:560px){.view{padding-top:48px!important}}
-
-/* Meridian: keep the new overview, but make the work itself visible. */
-
-/* Navigation and proof refinements */
-
-.home-start{margin-top:32px}@media(max-width:560px){.home-start{margin-top:24px}}
-
-/* Dark mode should read as one continuous canvas, without an outer frame. */
-
-/* Final portfolio lock: stable proof, deep links, print, and compact mobile behavior. */
-
-@media print{#ai-cs-mock{background:#fff!important;color:#000!important;--muted:#444;--border:#bbb;--soft:#fff;--softp:#fff;--card:#fff}.topbar,#mobileNav{display:none!important}.view{display:block!important;padding-top:18px!important;break-before:page}.view:first-of-type{break-before:auto}.card,.decision,.band,.metric,.stage{break-inside:avoid;box-shadow:none!important;background:#fff!important}.shell{max-width:none!important;padding:0!important}.nav-card::after,.resource-link::after{display:none!important}}
-</style>
 </main>
-<style>
-/* v87: clarify the learning boundary, reduce status noise, and surface the strongest proof. */
 
-/* v83 proof-restoration and browser-navigation polish */
-
-/* v88, information architecture + progressive disclosure. No substantive-content deletion. */
-
-/* Calm the visual hierarchy: cards remain for destinations/artifacts; reference grids read more quietly. */
-
-/* QA: study utilities belong to the Learning Library, not the portfolio-facing views. */
-
-/* QA: the case hub is the primary Meridian navigation; older in-page mini-nav is redundant. */
-
-@media(max-width:640px){
-  .learning-stage .stage-body{padding:4px 12px 16px 16px!important}
-  .learning-stage summary{grid-template-columns:28px minmax(0,1fr)!important;padding:14px 44px 14px 10px!important;gap:6px!important}
-}
-
-/* V12 feedback: principles return to the lighter Learning Guide treatment. */
-
-</style>
 <script id="v895-router">
 (()=>{
   const root=document.getElementById('ai-cs-mock'); if(!root)return;
@@ -1174,7 +1179,7 @@ window.addEventListener('popstate',()=>render(pageFromHash(),false,true));
     if(e.key==='Escape')tip.hidden=true;
   });
 })();
-</script></div><link href="site-redesign.css?v=588-identity-nov4" rel="stylesheet" onload="document.documentElement.classList.remove('rd-pending')" onerror="document.documentElement.classList.remove('rd-pending')">
+</script></div>
 <script id="rd-type-rail-script">
 (() => {
   const el = document.getElementById('rd-type-text');

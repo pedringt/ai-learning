@@ -90,14 +90,89 @@ def delete_draft_note(connection: Connection, draft_id: str) -> None:
     connection.commit()
 
 
-def list_questions(connection: Connection, status: str = "open") -> list[dict]:
+_QUESTION_COLUMNS = "id, text, status, blocking, blocks, origin, created_at, resolved_at, resolution, source_evidence_id"
+
+
+def list_questions(connection: Connection, status: str = "open", *, limit: int | None = None, offset: int = 0) -> list[dict]:
+    """Questions of one status in this project. Without `limit` the order is unchanged (blocking first, then oldest).
+    With `limit` (#640 Answered Questions, Nov 8) it is newest-resolved first with the id as a tie-breaker, so pages
+    never repeat or skip Questions that share a date; a Question with no recorded date comes last."""
     connection.row_factory = sqlite3.Row
-    rows = connection.execute(
-        "SELECT id, text, status, blocking, blocks, origin, created_at, resolved_at, resolution, source_evidence_id "
-        "FROM questions WHERE status=? AND project_id=? ORDER BY blocking DESC, created_at, id",
-        (status, project_id_of(connection)),
-    ).fetchall()
+    if limit is None:
+        rows = connection.execute(
+            f"SELECT {_QUESTION_COLUMNS} FROM questions WHERE status=? AND project_id=? ORDER BY blocking DESC, created_at, id",
+            (status, project_id_of(connection)),
+        ).fetchall()
+    else:
+        rows = connection.execute(
+            f"SELECT {_QUESTION_COLUMNS} FROM questions WHERE status=? AND project_id=? "
+            "ORDER BY resolved_at IS NULL, resolved_at DESC, id ASC LIMIT ? OFFSET ?",
+            (status, project_id_of(connection), int(limit), max(0, int(offset))),
+        ).fetchall()
     return [dict(row) for row in rows]
+
+
+def get_question(connection: Connection, question_id: str) -> dict | None:
+    """One Question in this project, by id, whatever its status; None when it is not in this project."""
+    connection.row_factory = sqlite3.Row
+    row = connection.execute(
+        f"SELECT {_QUESTION_COLUMNS} FROM questions WHERE id=? AND project_id=?", (question_id, project_id_of(connection))
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def question_source_evidence(connection: Connection, question: dict) -> dict | None:
+    """The Evidence a resolved Question points to (questions.source_evidence_id). It is the Evidence the resolution used,
+    not a dedicated answer: State stores no separate answer text."""
+    evidence_id = question.get("source_evidence_id")
+    if not evidence_id:
+        return None
+    row = connection.execute(
+        "SELECT id, content, source_type, source_name, submitted_at FROM evidence WHERE id=? AND project_id=?",
+        (evidence_id, project_id_of(connection)),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+# The only write path that resolves a Question (resolve_review, below): accepting a Review linked to it through
+# review_questions, as outcome 'updated' or 'confirmed_current', with no material adjustment (a materially adjusted
+# Review leaves its linked Questions open, #106; recorded as history_transitions.accepted_as_adjusted).
+_RESOLVING_OUTCOMES = ("updated", "confirmed_current")
+
+
+def resolving_review(connection: Connection, question_id: str) -> dict | None:
+    """The Review that resolved this Question, when the records establish it (#640, Paige, Nov 8): exactly one Review is
+    explicitly linked to the Question, could have resolved it under the write path above, and its link records the same
+    Evidence the Question records as its resolution (the write path copies review_questions.evidence_id into
+    questions.source_evidence_id). Timestamps are not used. A legacy link with no evidence_id cannot establish it.
+    None otherwise (the view then says "Resolving Review not recorded")."""
+    rows = connection.execute(
+        "SELECT r.id, r.decision_question, r.resolution, r.resolution_note, r.resolved_at FROM review_questions rq "
+        "JOIN review_issues r ON r.id=rq.review_id JOIN questions q ON q.id=rq.question_id "
+        "WHERE rq.question_id=? AND r.project_id=? AND r.status='resolved' AND r.resolution IN (?, ?) "
+        "AND rq.evidence_id IS NOT NULL AND rq.evidence_id=q.source_evidence_id "
+        "AND NOT EXISTS (SELECT 1 FROM proposed_state_changes p JOIN history_transitions h ON h.proposed_change_id=p.id "
+        "                WHERE p.review_id=r.id AND h.accepted_as_adjusted=1)",
+        (question_id, project_id_of(connection), *_RESOLVING_OUTCOMES),
+    ).fetchall()
+    return dict(rows[0]) if len(rows) == 1 else None
+
+
+def question_details(connection: Connection, question: dict) -> dict:
+    """What the Question view may show, each part only when the records support it (#640, Nov 8)."""
+    details: dict = {"evidence": None, "resolving_review": None, "state_updates": []}
+    if question.get("status") != "resolved":
+        return details
+    details["evidence"] = question_source_evidence(connection, question)
+    review = resolving_review(connection, question["id"])
+    if review:
+        details["resolving_review"] = review
+        details["state_updates"] = [dict(row) for row in connection.execute(
+            "SELECT h.state_item_id, h.new_statement, h.changed_at FROM history_transitions h "
+            "JOIN proposed_state_changes p ON p.id=h.proposed_change_id WHERE p.review_id=? ORDER BY h.changed_at, h.id",
+            (review["id"],),
+        ).fetchall()]
+    return details
 
 
 def with_linked_evidence(connection: Connection, questions: list[dict]) -> list[dict]:
@@ -151,7 +226,7 @@ def create_question(connection: Connection, question_id: str, text: str, *, orig
         item, _ = create_or_find_question(connection, question_id, text, origin=origin, blocking=blocking, blocks=blocks)
         connection.execute("COMMIT")
         return item
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
 
@@ -377,7 +452,7 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             # from the explicit review_questions relationship created by validated resolves_question_ids.
             # This prevents unrelated Evidence submitted from the Question UI from incorrectly closing Questions.
         connection.execute("COMMIT")
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
 

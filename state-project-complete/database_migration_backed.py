@@ -9,7 +9,7 @@ from project_area_scope_migration import scope_project_area_keys
 from review_question_migration import extend_review_constraints
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
-_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql", "003_questions.sql", "004_link_reviews_questions.sql", "005_draft_notes.sql", "006_slack_phase1.sql", "007_slack_phase2.sql", "008_slack_oauth.sql", "009_question_review_proposals.sql", "010_review_questions_evidence_source.sql", "011_review_proposal_adjustments.sql", "012_project_areas.sql", "013_projects.sql", "014_proposed_area.sql", "015_baseline_setup.sql", "016_product_analytics.sql", "017_unify_quality_eval_storage.sql", "018_model_call_metrics.sql", "019_eval_failure_details.sql", "020_project_scoped_areas.sql", "021_project_health_decisions.sql", "022_eval_scoring_version.sql")
+_EXPECTED_MIGRATIONS = ("001_initial.sql", "002_add_operation_and_effective_date.sql", "003_questions.sql", "004_link_reviews_questions.sql", "005_draft_notes.sql", "006_slack_phase1.sql", "007_slack_phase2.sql", "008_slack_oauth.sql", "009_question_review_proposals.sql", "010_review_questions_evidence_source.sql", "011_review_proposal_adjustments.sql", "012_project_areas.sql", "013_projects.sql", "014_proposed_area.sql", "015_baseline_setup.sql", "016_product_analytics.sql", "017_unify_quality_eval_storage.sql", "018_model_call_metrics.sql", "019_eval_failure_details.sql", "020_project_scoped_areas.sql", "021_project_health_decisions.sql", "022_eval_scoring_version.sql", "023_project_health_claims.sql")
 
 # Migrations that rebuild a table on SQLite, so foreign-key checks are off during them and
 # `PRAGMA foreign_key_check` must be clean before they commit.
@@ -280,7 +280,7 @@ def initialize_db(connection: Connection) -> None:
             if rebuild_sqlite and connection.execute("PRAGMA foreign_key_check").fetchall():
                 raise RuntimeError(f"Foreign key check failed during migration {version}")
             connection.execute("COMMIT")
-        except Exception:
+        except Exception:  # broad on purpose: rollback then re-raise
             connection.execute("ROLLBACK")
             raise
         finally:
@@ -296,7 +296,7 @@ def initialize_db(connection: Connection) -> None:
         _install_evidence_immutability(connection)
         _install_slack_checkpoint_immutability(connection)
         connection.execute("COMMIT")
-    except Exception:
+    except Exception:  # broad on purpose: rollback then re-raise
         connection.execute("ROLLBACK")
         raise
 

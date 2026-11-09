@@ -71,13 +71,16 @@ test.describe('Current State', () => {
 
 
 test.describe('Open Items', () => {
-  test('Reviews, Blocking, Open questions and Drafts all load', async ({ page }) => {
+  test('Reviews, Blocking, Open questions, Drafts and Answered Questions all load', async ({ page }) => {
     const diag = attachDiagnostics(page);
     await gotoWithBypass(page, STATE_URL);
     await expect(page.locator('#appLoadStatus')).toBeHidden({ timeout: 30_000 });
     await page.locator('.sidebar-nav [data-view="open-items"]').click();
     await expect(page.locator('.open-items-page')).toBeVisible();
-    await expect(page.locator('.open-items-section')).toHaveCount(4, { timeout: 15_000 });
+    // #640 Draft 1 (Nov 8) added a fifth section, Answered Questions, collapsed by default at the bottom.
+    await expect(page.locator('.open-items-section')).toHaveCount(5, { timeout: 15_000 });
+    await expect(page.locator('.open-items-section').last()).toHaveClass(/open-items-answered/);
+    await expect(page.locator('.open-items-answered')).toHaveClass(/is-collapsed/);
     for (const label of ['unavailable', 'could not be loaded']) {
       await expect(page.getByText(label, { exact: false })).toHaveCount(0);
     }

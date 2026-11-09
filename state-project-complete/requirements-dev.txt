@@ -1,0 +1,5 @@
+# Test tools for `make qa-fast` and CI (#625). Pinned so a new release can't change test behavior between runs;
+# these are the versions the suite passed with on Nov 7. Bump them deliberately.
+pytest==9.1.1
+pytest-subtests==0.15.0
+playwright==1.62.0
