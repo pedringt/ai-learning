@@ -14,6 +14,13 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Protocol, Sequence
 
+# Errors either backend raises for a failed statement, commit or rollback; catch this instead of Exception.
+try:
+    import psycopg2 as _psycopg2
+    DB_ERRORS: tuple[type[BaseException], ...] = (sqlite3.Error, _psycopg2.Error)
+except ImportError:  # psycopg2 is only needed for Postgres
+    DB_ERRORS = (sqlite3.Error,)
+
 
 class Row(dict):
     """Mapping row with sqlite3.Row-compatible numeric indexing."""

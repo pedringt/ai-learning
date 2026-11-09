@@ -233,6 +233,9 @@ def main() -> int:
     print(json.dumps({"removable": len(removable), "of": len(decls), "kept_unobserved": len(unobserved), "per_sheet": per}, indent=1))
     json.dump([{k: d[k] for k in ("id", "sheet", "selector", "props", "media")} for d in removable],
               open(os.path.join(out_dir, f"state_{kind}_removable.json"), "w"), indent=1)
+    # Candidates no captured state matched: add capture states (scripts/state_ui_compare/capture.js) to test them.
+    json.dump([{k: meta[i][k] for k in ("id", "selector", "media")} for i in sorted(unobserved)],
+              open(os.path.join(out_dir, f"state_{kind}_unobserved.json"), "w"), indent=1)
     if "--apply" in sys.argv:
         drop = {d["id"] for d in removable}
         for f, text in src.items():

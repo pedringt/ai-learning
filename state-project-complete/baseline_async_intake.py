@@ -21,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from starlette.concurrency import run_in_threadpool
 
 from baseline_setup import is_baseline_setup
-from db import connect
+from db import DB_ERRORS, connect
 from interpretation_pipeline_integrated import new_id
 from upload_text import UPLOAD_EXTENSIONS as _UPLOAD_EXTENSIONS, UPLOAD_MAX_BYTES as _UPLOAD_MAX_BYTES
 from upload_text import extract_upload_text as _extract_upload_text
@@ -117,7 +117,7 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
             # UI does not display an Evidence item as "Analyzing" forever.
             try:
                 connection.rollback()
-            except Exception:  # broad on purpose: a failed rollback must not stop marking the Evidence failed
+            except DB_ERRORS:
                 logger.warning("Rollback after Baseline analysis failure failed for %s", evidence_id, exc_info=True)
 
             # Deletion can race the provider call itself. Re-check after the
@@ -132,7 +132,7 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
                     "SELECT id FROM evidence WHERE id=? AND project_id=?",
                     (evidence_id, project_id),
                 ).fetchone()
-            except Exception:  # broad on purpose: any re-check failure falls through to marking the Evidence failed
+            except DB_ERRORS:
                 # #548 (Paige, Oct 20): a failed re-check is not a deletion. Fall through and mark the
                 # Evidence failed (retryable) so the UI never shows "Analyzing" forever.
                 logger.warning("Could not re-check Baseline Evidence %s after a failure", evidence_id, exc_info=True)
@@ -155,7 +155,7 @@ def _analyze_in_background(settings: Any, provider: Any, project_id: str, eviden
                     (evidence_id, project_id),
                 )
                 connection.commit()
-            except Exception:  # broad on purpose: last write of a background task; logged, nothing left to do
+            except DB_ERRORS:
                 logger.exception("Could not mark failed Baseline Evidence %s", evidence_id)
     finally:
         connection.close()

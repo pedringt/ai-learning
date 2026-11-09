@@ -97,7 +97,7 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 .prototype-productbar .product-case-study{margin-left:auto;font-size:12.5px;font-weight:700;color:#334766;text-decoration:none;white-space:nowrap;border-bottom:1px solid transparent}
 .prototype-productbar .product-case-study:hover,.prototype-productbar .product-case-study:focus-visible{border-bottom-color:currentColor}
 
-body.v88-dark .prototype-productbar{background:linear-gradient(135deg,#352a5e,#251d45)!important;border-color:#1c1638!important}
+
 .overview-heading{padding-top:8px!important;max-width:none!important;width:100%!important}
 .overview-heading>p{max-width:980px!important}
 .overview-heading-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:24px!important;width:100%!important}
@@ -150,62 +150,35 @@ body.v88-dark .prototype-productbar{background:linear-gradient(135deg,#352a5e,#2
 .notes-page .notes-add{white-space:nowrap}
 
 /* Full prototype dark mode. The shared shell toggles body.v88-dark. */
-body.v88-dark{
-  color-scheme:dark;
-  --bg:#101014;
-  --surface:#17171d;
-  --surface2:#1e1d25;
-  --ink:#f3f1f6;
-  --muted:#aaa6b5;
-  --line:#34313d;
-  --border:#34313d;
-  --soft:#1b1921;
-  --softp:#252037;
-  --card:#17171d;
-  --purple:#b3a4f2;
-  --accent:#b3a4f2;
-  --accent-soft:#2a2540;
-  --warm:#e1a34f;
-  --warm-soft:#3a2b1b;
-  --good:#58b77a;
-  --tier-red:#e0685c;
-  --tier-yellow:#d9b054;
-  background:#101014!important;
-  color:var(--ink)!important;
-}
-body.v88-dark .software-shell,
-body.v88-dark .app-workspace,
-body.v88-dark .view-root{background:#101014!important}
-body.v88-dark .app-sidebar{background:#14131a!important;border-color:var(--line)!important}
-body.v88-dark .sidebar-nav .nav-item:hover,body.v88-dark .collection-page .simple-note:hover,body.v88-dark .collection-page .review-card:hover{background:#1d1b24!important}
-body.v88-dark .sidebar-nav .nav-item.active{background:#2a2540!important;color:#c5b9ff!important}
-body.v88-dark .project-switcher,body.v88-dark .project-menu,body.v88-dark .btn,body.v88-dark .filter,body.v88-dark .dialog,body.v88-dark .note-composer{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
-body.v88-dark .project-menu button.active{background:var(--surface2)!important}
-body.v88-dark input,
-body.v88-dark textarea,
-body.v88-dark .notes-search{background:#131218!important;color:var(--ink)!important;border-color:#403c4b!important}
-body.v88-dark .answer-stage,
-body.v88-dark .answer-stage.is-empty{background:#121117!important;border-color:var(--line)!important}
 
-body.v88-dark .pending-notice{background:#302619!important;border-color:#6e542a!important}
-body.v88-dark .pending-notice p{color:#c5b28f!important}
 
-body.v88-dark .overlay{background:rgba(0,0,0,.68)!important}
-body.v88-dark .review-card,body.v88-dark .simple-note,body.v88-dark .history-list article{color:var(--ink)!important}
-body.v88-dark .history-list p{color:#d4d0da!important}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Project context: make the persistent project switcher easy to verify at a glance. */
 .sidebar-project .project-switcher{min-height:42px!important;padding:9px 11px!important;font-size:14px!important;font-weight:700!important;border-radius:9px!important;gap:8px!important}
 .sidebar-project .project-switcher::before{content:'◆';font-size:9px;color:var(--accent);flex:0 0 auto}
 .sidebar-project .project-switcher span{margin-left:auto}
 .evidence-project-context{margin:4px 0 10px!important;font-size:12.5px!important;line-height:1.4!important;color:var(--muted)!important}
-.evidence-project-context strong{color:var(--ink)!important;font-weight:750!important}
+.evidence-project-context strong{color:var(--ink);font-weight:750}
 
 /* Project: readable, automatically organized Current State */
 .project-nav-group{margin:2px 0}.project-nav-toggle{width:100%;display:flex;align-items:center}.project-nav-toggle.active{color:var(--ink)}.project-chevron{font-size:11px;color:var(--muted)}
 .project-subnav{display:grid;gap:2px;margin:0 0 8px 14px;padding-left:11px;border-left:1px solid var(--line)}.project-subnav button{border:0;background:none;text-align:left;color:var(--muted);font-size:11.5px;font-weight:720;padding:7px 9px;border-radius:7px;cursor:pointer}.project-subnav button:hover{background:var(--surface2);color:var(--ink)}.project-subnav button.active{background:var(--accent-soft);color:var(--accent)}
 .project-page{max-width:900px}.project-page-head{align-items:flex-start;margin-bottom:20px}.project-page-head p{max-width:760px;line-height:1.6}.project-orientation{display:grid;grid-template-columns:1.2fr .8fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:30px}.project-orientation>div{padding:15px 16px;border-right:1px solid var(--line);background:var(--surface)}.project-orientation>div:last-child{border-right:0}.project-orientation span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:5px}.project-orientation strong{font-size:12.5px;line-height:1.45}.project-section-heading{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:12px}.project-section-heading h3{margin:0;font-size:15px}.project-section-heading p{margin:4px 0 0;color:var(--muted);font-size:12px;max-width:680px}.project-area-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.project-area-card{border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:16px;text-align:left;cursor:pointer;color:var(--ink)}.project-area-card:hover{border-color:#b7adce;background:var(--surface2)}.project-area-card span{display:block;font-size:14px;font-weight:820}.project-area-card strong{display:block;margin-top:4px;color:var(--accent);font-size:10.5px}.project-area-card p{margin:9px 0 0;color:var(--muted);font-size:12px;line-height:1.5}.project-hidden-link{margin-top:16px;font-size:11.5px}.project-area-top{display:flex;justify-content:space-between;align-items:center}.project-facts{border-top:1px solid var(--line)}.project-fact{padding:20px 2px;border-bottom:1px solid var(--line);max-width:820px}.project-fact-head{display:flex;align-items:center;gap:16px}.project-fact h3{margin:0;font-size:14px}.project-fact p{margin:7px 0 0;color:#4c4841;font-size:13.5px;line-height:1.65;max-width:760px}.project-pending{border:0;background:none;padding:0;margin-top:9px;color:var(--warm);font-size:10.5px;font-weight:800;cursor:pointer}.project-pending .status-dot{width:6px;height:6px;margin-right:5px}
-body.v88-dark .project-subnav button:hover,body.v88-dark .project-area-card:hover{background:#1d1b24!important}body.v88-dark .project-fact p{color:#d4d0da!important}
+
 
 /* State Project handoff refinement: grouped sidebar navigation, contextual history, consistent note filters. */
 .sidebar-nav-group{display:grid;gap:2px}
@@ -218,9 +191,9 @@ body.v88-dark .project-subnav button:hover,body.v88-dark .project-area-card:hove
 .notes-filters .filter{min-height:31px;display:inline-flex;align-items:center;gap:6px;padding:6px 10px}
 .notes-filters .filter .count-badge{margin:0;min-width:18px;height:18px;padding:0 5px;background:var(--surface2);color:var(--muted)}
 .notes-filters .filter.active .count-badge{background:var(--accent-soft);color:var(--accent)}
-body.v88-dark .history-context{background:#1d1b24!important;border-color:var(--line)!important}
-body.v88-dark .notes-filters .filter .count-badge{background:#25232d!important;color:var(--muted)!important}
-body.v88-dark .notes-filters .filter.active .count-badge{background:#352f50!important;color:#c5b9ff!important}
+
+
+
 
 /* Review count belongs with the Review workload, not the navigation hierarchy. */
 .review-title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -268,9 +241,9 @@ body.v88-dark .notes-filters .filter.active .count-badge{background:#352f50!impo
 @keyframes analysis-spin{to{transform:rotate(360deg)}}
 @keyframes analysis-spin-reverse{to{transform:rotate(-360deg)}}
 
-body.v88-dark .project-page{background:linear-gradient(180deg,#1b1822 0,#131218 220px)!important;border-color:#403c4b!important}
-body.v88-dark .project-page .project-area-card,body.v88-dark .project-page .project-fact,body.v88-dark .notes-page .simple-notes{background:#17151d!important}
-body.v88-dark .notes-page .page-head{background:#1b1921!important;border-color:#403c4b!important}
+
+
+
 .analysis-progress{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);color:var(--muted);font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
 .analysis-pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:analysis-pulse 1.3s ease-in-out infinite}
 .analysis-patience{font-size:11px!important;margin-top:10px!important;opacity:.8}
@@ -289,7 +262,7 @@ body.v88-dark .notes-page .page-head{background:#1b1921!important;border-color:#
 
 .history-page{max-width:920px!important}.history-page .page-head p{max-width:760px;line-height:1.65}.history-list{max-width:880px!important;position:relative}.history-list::before{content:"";position:absolute;left:86px;top:12px;bottom:12px;width:1px;background:var(--line)}.history-list article.history-entry{display:grid;grid-template-columns:72px minmax(0,1fr);gap:28px;border:0!important;padding:0 0 28px!important;margin:0!important;background:transparent!important;position:relative}.history-entry-date{font-size:11px;color:var(--muted);font-weight:750;text-align:right;padding-top:3px}.history-entry-body{position:relative;padding-left:0}.history-entry-body::before{content:"";position:absolute;left:-18px;top:6px;width:7px;height:7px;border-radius:50%;border:2px solid var(--accent)}.history-entry-body h3{font-size:15px!important;margin:0 0 10px!important}.history-change{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:9px 0}.history-change p{margin:0;padding:12px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:12.5px;line-height:1.55}.history-change p>span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:var(--muted);margin-bottom:5px}.history-sources{margin-top:10px}.history-sources>summary{cursor:pointer;font-size:11px;font-weight:750;color:var(--accent)}.history-source-list{display:grid;gap:8px;margin-top:9px}.history-source-list article{display:block;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0;background:var(--surface2)}.history-source-list article span{font-size:10px;color:var(--muted)}.history-source-list article p{margin:4px 0 0;font-size:12px;line-height:1.55}
 
-body.v88-dark .project-document-intro p,body.v88-dark .project-outline-copy span{color:#d4d0da!important}body.v88-dark .project-outline-section,body.v88-dark .project-outline-item{border-color:var(--line)!important}body.v88-dark .history-entry-body::before{background:#131218!important}body.v88-dark .history-change p,body.v88-dark .history-source-list article{background:#17151d!important;border-color:var(--line)!important}
+
 
 /* R6: quieter Notes controls, unified Open Items, document-style Project outline nav */
 .notes-toolbar--stacked{grid-template-columns:minmax(0,1fr) minmax(220px,340px)!important;align-items:center!important}
@@ -316,7 +289,7 @@ body.v88-dark .project-document-intro p,body.v88-dark .project-outline-copy span
 
 .open-questions-more{margin-top:12px;border:0;background:transparent;color:var(--accent);font:inherit;font-size:12px;font-weight:800;padding:7px 4px;cursor:pointer}
 .open-questions-more:hover{text-decoration:underline}
-body.v88-dark .project-section-sticky{background:transparent}
+
 
 /* R8.1 QA fixes: scalable review accordion */
 
@@ -381,7 +354,7 @@ body.v88-dark .project-section-sticky{background:transparent}
 /* R8.6: make workflow relationships visible without turning Notes into navigation cards. */
 
 .related-review-list{display:grid;gap:8px;margin:18px 0}.related-review-choice{width:100%;text-align:left;border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:12px 13px;cursor:pointer;color:var(--ink)}.related-review-choice:hover{border-color:var(--accent)}.related-review-choice strong{display:block;font-size:13px}.related-review-choice span{display:block;margin-top:4px;color:var(--muted);font-size:11.5px;line-height:1.5}
-body.v88-dark .related-review-choice{background:#17151d!important;border-color:var(--line)!important;color:var(--ink)!important}
+
 
 /* R9 Ask vertical slice: structured, grounded meeting-prep output. */
 .ask-live-loading,.ask-live-error{padding:22px 0}
@@ -452,7 +425,7 @@ body.v88-dark .related-review-choice{background:#17151d!important;border-color:v
 .review-source-excerpt .review-source-actions{margin:0 0 -8px}.review-source-excerpt .review-source-link{display:inline-flex;letter-spacing:normal!important;text-transform:none!important;align-items:center;min-height:44px;padding:0 6px!important;margin-left:-6px;font-size:12px!important;font-weight:600!important;color:var(--muted)!important;text-decoration:none}/* The higher-specificity selector beats the Open Items "html body .open-items-page .review-context-block span" label style. */
 html body .review-source-excerpt .review-source-link .review-source-link-text{display:inline!important;margin:0!important;font:inherit!important;letter-spacing:normal!important;text-transform:none!important;color:inherit!important;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 40%,transparent);text-underline-offset:3px;border-radius:3px}.review-source-excerpt .review-source-link:hover,.review-source-excerpt .review-source-link:focus-visible{color:var(--accent)!important}.review-source-excerpt .review-source-link:hover .review-source-link-text{text-decoration-color:currentColor}html body .review-source-excerpt .review-source-link:focus-visible{outline:none!important}.review-source-excerpt .review-source-link:focus-visible .review-source-link-text{outline:3px solid color-mix(in srgb,var(--purple,#7c5cff) 72%,white);outline-offset:3px}.review-source-dialog-text{white-space:pre-wrap;overflow-wrap:anywhere}
 .review-blocked-note{margin:12px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
-body.v88-dark .review-source-excerpt{background:#1d1a22}
+
 .adjust-proposal-block{margin:14px 0;padding-top:14px;border-top:1px solid var(--line)}.adjust-proposal-block:first-of-type{border-top:0;padding-top:0}.adjust-proposal-label{display:block;font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:6px}.adjust-ai-text{padding:10px 12px;border-radius:9px;background:var(--surface2);border-left:3px solid var(--line);margin-bottom:10px}.adjust-ai-text p{margin:0;font-size:13px;line-height:1.5;color:var(--muted)}.adjust-ai-tag{display:block;font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:4px}.adjust-textarea-label{display:block;font-size:11px;font-weight:800;margin-bottom:6px}.adjust-proposal-text{min-height:78px;margin:0}
 .review-actions .btn{padding:9px 13px}.open-items-section-chevron{font-size:14px}
 /* Notes: lifecycle pills use one geometry whether clickable or static. */
@@ -468,7 +441,7 @@ body.v88-dark .review-source-excerpt{background:#1d1a22}
 
 /* Responsive sanity: stack instead of squeeze. */
 
-body.v88-dark .compact-review.is-expanded{background:#17151d!important}body.v88-dark .review-evidence-block{background:#2a2117!important}body.v88-dark .history-change p:last-child{background:#18261c!important}
+
 .note-immutable-hint{display:inline-block;margin:12px 0 0!important;padding:7px 9px;border-radius:7px;background:var(--surface2);color:var(--muted)!important;font-size:10.5px!important}.note-immutable-hint strong{color:var(--ink)}
 
 /* R9.3.1: hierarchy, portable Ask artifacts, and viewport-safe dialogs */
@@ -525,7 +498,7 @@ body.v88-dark .compact-review.is-expanded{background:#17151d!important}body.v88-
   .notes-page .simple-note{grid-template-columns:1fr auto!important}
 }
 
-body.v88-dark .open-items-reviews .open-items-section-head,body.v88-dark .open-items-blockers .open-items-section-head,body.v88-dark .open-items-questions .open-items-section-head{background:#211e29!important}body.v88-dark .project-outline-group{background:#17151d!important}
+
 
 /* R9.3.2 Project finishing pass: reduce repeated orientation copy and quiet secondary workflow actions. */
 .project-document-summary{max-width:650px!important;font-size:13px!important;line-height:1.55!important}
@@ -552,7 +525,7 @@ body.v88-dark .open-items-reviews .open-items-section-head,body.v88-dark .open-i
 .attention-list{display:grid;gap:8px;margin-top:14px}.attention-item{width:100%;justify-content:space-between;border:1px solid var(--line);border-radius:9px;background:#fff;cursor:pointer}.attention-item:hover{border-color:color-mix(in srgb,var(--accent) 34%,var(--line));background:color-mix(in srgb,#fff 96%,var(--accent-soft))}.attention-item-copy{display:grid;gap:3px;min-width:0}.attention-item-copy strong{font-size:13px;line-height:1.35;color:var(--ink)}.attention-item-copy>span:last-child{font-size:11.5px;line-height:1.4;color:var(--muted)}.attention-kind{font-size:10px!important;line-height:1.2!important;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#8a5a08!important}.attention-item.blocker .attention-kind{color:#9b3c32!important}.attention-arrow{color:var(--accent);font-size:16px;flex:0 0 auto}
 
 .workspace-attention.is-clear{min-height:104px}.workspace-attention.is-loading{min-height:78px;display:flex;align-items:center}.workspace-attention.is-loading h3::after{content:"";display:inline-block;width:6px;height:6px;margin-left:9px;border-radius:50%;background:var(--accent);vertical-align:middle;animation:attention-pulse 1.2s ease-in-out infinite}@keyframes attention-pulse{50%{opacity:.35}}
-body.v88-dark .workspace-attention{background:#1d1d1f;border-color:#343438}body.v88-dark .attention-item{background:#232326;border-color:#39393e}body.v88-dark .attention-item:hover{background:#29292d}
+
 
 /* R9.8 QA consolidation — stable dialogs, action hierarchy, compact Project, calmer Ask. */
 .overlay{align-items:flex-start;justify-content:center;height:100dvh;overflow-y:auto;padding-bottom:max(18px,env(safe-area-inset-bottom))}
@@ -588,7 +561,7 @@ body.v88-dark .workspace-attention{background:#1d1d1f;border-color:#343438}body.
 .project-wiki-prose p{color:#403d37}.project-maintained-facts{margin-top:12px;max-width:790px}.project-maintained-facts summary{cursor:pointer;color:var(--muted);font-size:10.5px;font-weight:800}.project-maintained-facts ul{list-style:none;padding:8px 0 0;margin:0}.project-maintained-fact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;padding:10px 0;border-top:1px solid color-mix(in srgb,var(--line) 65%,transparent)}.project-maintained-fact>div:first-child{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr);gap:14px}.project-maintained-fact strong{font-size:11.5px;line-height:1.45}.project-maintained-fact span{font-size:12px;line-height:1.55}
 .project-fact-provenance{grid-column:1/-1}.project-provenance-toggle{font-size:11px}
 .open-question-title{font-size:13px!important;font-weight:720!important;line-height:1.5!important}.review-card-title{font-size:14.5px!important;font-weight:760!important;line-height:1.5!important}.open-question-row{padding:13px 6px!important}.open-question-meta{margin-top:2px}
-body.v88-dark .project-wiki-prose p{color:#d8d4df!important}.project-maintained-fact span{color:var(--muted)}
+.project-maintained-fact span{color:var(--muted)}
 /* Pinned here for the same reason as the .ask-followup rule above: moving this into the consolidated block would let a later rule win instead. */
 @media(max-width:760px){.project-document-meta div:last-child{grid-column:1/-1}}
 
@@ -605,7 +578,7 @@ body.v88-dark .project-wiki-prose p{color:#d8d4df!important}.project-maintained-
 .project-wiki-topic-head{margin-bottom:11px!important}
 
 .project-wiki-prose p{font-size:14px!important;line-height:1.75!important;margin:9px 0 14px!important}
-body.v88-dark .project-document-intro{background:transparent!important}
+
 
 /* Review is a human decision/authorization state, not a lower-severity warning. */
 :root{--review:#5b4a91;--review-soft:#f1eef8}
@@ -644,7 +617,7 @@ body.v88-dark .project-document-intro{background:transparent!important}
 /* R20 Ask refinement + Project reading canvas stabilization */
 .ask-answer-head{align-items:center;gap:16px}.ask-answer-actions{justify-content:flex-end}.ask-answer-actions .ask-new-session{font-size:12px!important;border-color:color-mix(in srgb,var(--accent) 28%,var(--line))!important;white-space:nowrap}.ask-answer-actions .ask-new-session:hover,.ask-answer-actions .ask-new-session:focus-visible{background:var(--accent-soft)!important;border-color:color-mix(in srgb,var(--accent) 46%,var(--line))!important}
 .project-page.project-document{max-width:940px!important}.project-outline{max-width:none!important;width:100%!important;margin-top:18px!important;background:var(--surface)!important;border:1px solid var(--line)!important;border-radius:14px!important;padding:2px 28px 10px!important;box-shadow:0 5px 18px rgba(31,25,56,.025)}.project-wiki-section{max-width:none!important;width:100%!important}.project-wiki-topic-head{max-width:800px!important}.project-wiki-prose{max-width:820px!important}.project-wiki-prose p{max-width:820px!important}.project-outline-description{max-width:820px!important}
-body.v88-dark .project-outline{background:#17151d!important;border-color:var(--line)!important}
+
 /* Pinned here for the same reason as the other exceptions in this file: moving this into the consolidated max-width:760px block would change which declaration wins at this breakpoint. */
 @media(max-width:760px){.project-outline{padding:0 18px 8px!important;border-radius:12px!important}}
 /* Consolidated max-width:430px breakpoint (2026-09-06): merges seven

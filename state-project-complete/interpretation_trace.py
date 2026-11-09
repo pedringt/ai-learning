@@ -209,6 +209,8 @@ def _rollback_if_postgres(connection: Any) -> None:
 
 
 def _review_actions(connection: Any, review_ids: tuple[str, ...] | list[str]) -> list[Mapping[str, Any]]:
+    from db import DB_ERRORS
+
     actions: list[Mapping[str, Any]] = []
     for review_id in review_ids:
         review = connection.execute(
@@ -231,7 +233,7 @@ def _review_actions(connection: Any, review_ids: tuple[str, ...] | list[str]) ->
                     (review_id,),
                 ).fetchall()
             ]
-        except Exception:  # broad on purpose: optional table on older schemas (sqlite3 or psycopg2 error)
+        except DB_ERRORS:
             logger.warning("Trace could not read review_questions for %s", review_id, exc_info=True)
             _rollback_if_postgres(connection)
         proposed_questions: list[Mapping[str, Any]] = []
@@ -243,7 +245,7 @@ def _review_actions(connection: Any, review_ids: tuple[str, ...] | list[str]) ->
                     (review_id,),
                 ).fetchall()
             ]
-        except Exception:  # broad on purpose: optional table on older schemas (sqlite3 or psycopg2 error)
+        except DB_ERRORS:
             logger.warning("Trace could not read proposed_questions for %s", review_id, exc_info=True)
             _rollback_if_postgres(connection)
         actions.append(

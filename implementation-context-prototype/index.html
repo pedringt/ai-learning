@@ -39,7 +39,7 @@
       window.__STATE_BASE = /(^|\/)index(\.html)?$/.test(path) ? path.replace(/index(\.html)?$/, '') : (path.slice(-1) === '/' ? path : path + '/');
       document.write('<link rel="icon" href="' + window.__STATE_BASE + 'favicon.svg">');
       document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'state-shell.css">');
-      document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'context-tool.css?v=r134-question-reply-guard">');
+      document.write('<link rel="stylesheet" href="' + window.__STATE_BASE + 'context-tool.css?v=r135-mobile-a11y">');
     })();
   </script>
   <style id="state-mobile-nav">
@@ -51,8 +51,9 @@
     .mobile-primary-nav::-webkit-scrollbar,.mobile-subnav::-webkit-scrollbar{display:none;}
     .mobile-primary-nav{border-bottom:1px solid var(--line);padding-bottom:10px;}
     .mobile-subnav{padding-top:8px;}
-    .mobile-primary-nav::after,.mobile-subnav::after{content:"›";position:sticky;right:0;flex:0 0 24px;align-self:stretch;display:grid;place-items:center;background:linear-gradient(90deg,transparent 0%,#f8f7fa 55%,#f8f7fa 100%);color:var(--accent);font-size:17px;font-weight:800;pointer-events:none;}
-    body.v88-dark .mobile-primary-nav::after,body.v88-dark .mobile-subnav::after{background:linear-gradient(90deg,transparent 0%,#14131a 55%,#14131a 100%);}
+    /* #612 (Nov 8): fade the right edge while more tabs are off-screen (context-layout.js sets .has-more-right). It
+       stops at 25% so the edge tab stays readable; the "›" block it replaces covered that tab's label. */
+    .mobile-primary-nav.has-more-right,.mobile-subnav.has-more-right{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 44px),rgba(0,0,0,.25));mask-image:linear-gradient(90deg,#000 calc(100% - 44px),rgba(0,0,0,.25));}
     .mobile-primary-nav .nav-item,.mobile-subnav button{flex:0 0 auto;white-space:nowrap;width:auto!important;display:inline-flex!important;align-items:center;gap:4px;padding:7px 12px!important;border-radius:999px!important;font-size:12px!important;color:var(--muted);background:var(--surface2);border:0;cursor:pointer;}
     .mobile-primary-nav .nav-item.active,.mobile-subnav button.active{background:var(--accent-soft);color:var(--accent);font-weight:800;}
     .mobile-primary-nav .nav-count{width:auto!important;height:auto!important;min-width:16px!important;padding:0 5px!important;border-radius:999px!important;background:var(--accent-soft);color:var(--accent);font-weight:750;}
@@ -85,7 +86,7 @@
       var local = location.protocol === 'file:';
       document.write('<script src="' + window.__STATE_BASE + 'state-shell.js"><\/script>');
       if(!local) document.write('<script src="/api/state-config.js"><\/script>');
-      var v='r134-question-reply-guard';
+      var v='r135-mobile-a11y';
       ['context-analytics.js','context-data.js','context-api.js','context-evidence-resilience.js','context-ask.js','context-ask-followup.js','context-notes-view.js','context-open-items-view.js','context-project-view.js','context-backend-sync.js','context-app-dialogs.js','context-app-navigation.js','context-app-hydration.js','context-app-review-actions.js','context-app.js','context-baseline.js','context-history.js','context-provenance.js','context-product-polish.js','context-ask-question-handoff.js','context-settings.js','context-ask-controls.js','context-layout.js'].forEach(function(file){document.write('<script src="'+window.__STATE_BASE+file+'?v='+v+'"><\/script>');});
       document.write('<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.documentElement.classList.remove("state-prepaint");clearTimeout(window.__stateRevealTimer);});});<\/script>');
     })();

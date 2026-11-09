@@ -19,7 +19,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Mapping, Protocol
 
-from db import Connection
+from db import DB_ERRORS, Connection
 from interpretation_pipeline_integrated import InterpretationProvider, new_id, process_evidence
 from slack_intake_service import utc_now_iso
 
@@ -185,7 +185,7 @@ def _give_up_on_checkpoint(connection: Connection, checkpoint_id: str, now_iso: 
         )
         connection.commit()
         _FAILED_ATTEMPTS.pop(checkpoint_id, None)
-    except Exception:  # broad on purpose: background bookkeeping; logged, retried on a later poll
+    except DB_ERRORS:
         logger.exception("Could not record giving up on Slack checkpoint %s", checkpoint_id)
         connection.rollback()
 

@@ -79,12 +79,20 @@
   // scroll container). A window-only listener silently never fires there.
   // capture:true on document catches the event during capture regardless
   // of which element it targets.
-  const onScroll=()=>{if(subnavSentinel)updateSubnavPin();};
+  // #612 (Paige, Nov 8): the phone tab strips fade at the right edge while more tabs are off-screen there, instead of
+  // a "›" block that covered the edge tab's label. The fade is CSS (index.html); this only says whether it applies.
+  function syncStripFades(){
+    document.querySelectorAll('.mobile-primary-nav,.mobile-subnav').forEach(nav=>{
+      const more=nav.scrollWidth-nav.clientWidth-nav.scrollLeft>1;
+      if(nav.classList.contains('has-more-right')!==more)nav.classList.toggle('has-more-right',more);
+    });
+  }
+  const onScroll=()=>{if(subnavSentinel)updateSubnavPin();syncStripFades();};
   document.addEventListener('scroll',onScroll,{passive:true,capture:true});
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',onScroll,{passive:true});
 
-  function run(){syncHelpCard();ensureMobileHelp();syncSubnavSentinel();reveal();}
+  function run(){syncHelpCard();ensureMobileHelp();syncSubnavSentinel();syncStripFades();reveal();}
   let queued=false;
   const schedule=()=>{
     if(queued)return;
@@ -94,6 +102,7 @@
       syncHelpCard();
       ensureMobileHelp();
       syncSubnavSentinel();
+      syncStripFades();
       reveal();
     });
   };

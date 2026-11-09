@@ -15,7 +15,7 @@ check('processing setup exposes progress and another-source path',fixes.includes
 check('starting material accepts one file at a time',fixes.includes('baselineStartingFile')&&fixes.includes('window.STATE_API.uploadEvidence(file)'));
 check('normal Add Evidence is intercepted only while Baseline is active',fixes.includes('[data-action="add-info"]')&&fixes.includes('addEvidence&&baselineActive()')&&fixes.includes('stopImmediatePropagation'));
 check('starting-state review can add a missing fact',fixes.includes('+ Add missing fact')&&fixes.includes('/api/baseline/manual')&&fixes.includes('data-baseline-new-area'));
-check('confirm starting state stays on one line at desktop widths',fixesCss.includes('[data-baseline-confirm-starting]')&&fixesCss.includes('white-space:nowrap!important'));
+check('confirm starting state stays on one line at desktop widths',/\[data-baseline-confirm-starting\]\{[^}]*white-space:nowrap/.test(fixesCss));
 check('caught-up workspace gets calm success treatment',fixes.includes('dogfood-caught-up')&&fixesCss.includes('.dogfood-caught-up')&&fixesCss.includes('#eaf7ee')&&fixes.includes("Nothing needs your attention right now."));
 check('brand-new workspace is distinguished from established caught-up state',fixes.includes('Your workspace is ready')&&fixes.includes('Starting State not confirmed'));
 check('What Changed empty state explains future content',fixes.includes('Changes will appear here as Current State is updated.'));
