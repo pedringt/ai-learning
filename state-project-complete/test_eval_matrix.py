@@ -536,6 +536,19 @@ def test_regrade_suite_grades_the_saved_calibration_answers_without_an_ask_call(
     assert p["total_calls"] == 75 and 0.5 < p["estimated_cost_usd"] < 4
 
 
+def test_calibration_suite_keeps_whole_answers_for_the_641_scenarios_and_recalibrate_grades_the_saved_set():
+    from eval.quality_harness import AskQualityResult
+    assert [s.id for s in matrix._scenarios("calibration")] == list(matrix.CALIBRATION_641_SCENARIOS)
+    assert "ask_question_answer_no_state_mutation" not in matrix.CALIBRATION_641_SCENARIOS
+    scenario = matrix._scenarios("calibration")[0]
+    rec = matrix.calibration_answer_record(AskQualityResult(scenario, {"headline": "h"}, True, True, True, True, True))
+    assert rec["answer"] == {"headline": "h"} and rec["scenario_id"] == scenario.id
+    assert matrix.plan(["calibration"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
+    items = matrix.calibration_items(matrix.CALIBRATION_641_ANSWERS)
+    assert {i.scenario.id for i in items} <= set(matrix.CALIBRATION_641_SCENARIOS)
+    assert matrix.calls_per_repeat("recalibrate") == len(items)
+
+
 def test_grader_is_told_todays_date():
     from datetime import date as _date
     from eval.ask_grader import user_message
