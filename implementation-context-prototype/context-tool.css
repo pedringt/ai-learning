@@ -172,7 +172,7 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 .sidebar-project .project-switcher::before{content:'◆';font-size:9px;color:var(--accent);flex:0 0 auto}
 .sidebar-project .project-switcher span{margin-left:auto}
 .evidence-project-context{margin:4px 0 10px!important;font-size:12.5px!important;line-height:1.4!important;color:var(--muted)!important}
-.evidence-project-context strong{color:var(--ink)!important;font-weight:750!important}
+.evidence-project-context strong{color:var(--ink);font-weight:750}
 
 /* Project: readable, automatically organized Current State */
 .project-nav-group{margin:2px 0}.project-nav-toggle{width:100%;display:flex;align-items:center}.project-nav-toggle.active{color:var(--ink)}.project-chevron{font-size:11px;color:var(--muted)}
