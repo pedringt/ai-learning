@@ -505,8 +505,12 @@ def test_r16_mobile_workspace_nav_has_horizontal_overflow_affordance():
     # no longer owns any mobile nav layout; asserting against it here would
     # just recreate the stale-test problem this consolidation fixed.
     html = (FRONTEND / "index.html").read_text(encoding="utf-8")
-    assert '.mobile-primary-nav::after,.mobile-subnav::after{' in html
-    assert 'content:"›"' in html
+    # #612 (Paige, Nov 8): the affordance is an edge fade while tabs remain off-screen (the "›" block it replaced
+    # covered the edge tab's label). context-layout.js sets .has-more-right; behaviour is checked in
+    # test_state_mobile_targets_browser.py.
+    assert '.mobile-primary-nav.has-more-right,.mobile-subnav.has-more-right{' in html
+    assert "mask-image:linear-gradient" in html
+    assert "has-more-right" in (FRONTEND / "context-layout.js").read_text(encoding="utf-8")
     assert "overflow-x:auto" in html
     assert 'class="mobile-primary-nav"' in html
     assert 'class="mobile-subnav" id="mobileProjectSubnav" hidden' in html
