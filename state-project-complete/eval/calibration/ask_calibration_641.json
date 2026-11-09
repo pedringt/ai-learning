@@ -2,6 +2,399 @@
  "about": "#641 blind calibration set (Nov 9; set approved by Paige): for each of four scenarios, two real Haiku 5.5 answers (r1-r8, State eval matrix suite 'calibration' on eval/641-blind-calibration) and one hand-written answer (h1-h4). Paige grades all twelve blind; the grader (suite 'recalibrate') then grades the same twelve, and eval.ask_grader.calibration_report compares them. Every scenario is synthetic.",
  "answers": [
   {
+   "answer_id": "r1",
+   "scenario_id": "ask_evidence_backed_approval_qualified",
+   "source": "Haiku 5.5, State eval matrix run 42669348026 repeat 0 (3c14c9f)",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget is $40,000 per Q3 planning notes, but it is not yet confirmed as approved in Current State.",
+    "summary": "Evidence from a Q3 planning session records the pilot budget as approved (per Evidence, not in Current State) at $40,000 for discovery and first implementation. However, an open Review asks whether that $40,000 approved (per Evidence, not in Current State) budget is ready to be recorded in Current State, so it remains pending and Current State has not changed. Current State does establish the core pilot use case as Tier 1 troubleshooting assistance, but it does not record a budget.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "Is the approved pilot budget of $40,000 ready to be recorded in Current State?",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Useful context",
+      "items": [
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-evidence-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "c06"
+  },
+  {
+   "answer_id": "r2",
+   "scenario_id": "ask_evidence_backed_approval_qualified",
+   "source": "Haiku 5.5, State eval matrix run 42669348026 repeat 1 (3c14c9f)",
+   "keyword_outcome": "fail",
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget is $40,000 per Q3 planning evidence, but it is not yet approved in Current State",
+    "summary": "The only record of the $40,000 pilot budget is evidence from a Q3 planning session stating it is approved (per Evidence, not in Current State). That approval has not been recorded in Current State: an open Review asks whether the $40,000 approved pilot budget is ready to be recorded, so it remains pending human review. State does not have a confirmed, recorded approval status to rely on yet.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending review",
+      "items": [
+       {
+        "text": "Is the approved pilot budget of $40,000 ready to be recorded in Current State?",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-evidence-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the budget and approval status",
+     "Summarize the pending review"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "c09"
+  },
+  {
+   "answer_id": "r3",
+   "scenario_id": "ask_source_words_not_demoted",
+   "source": "Haiku 5.5, State eval matrix run 42669348026 repeat 0 (3c14c9f)",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "The Q3 planning session pilot budget is not in Current State; it appears only in an open Review",
+    "summary": "State does not have a confirmed pilot budget. The only record touching this is an open Review noting the Q3 planning session note says the pilot budget is approved at $40,000 for discovery and the first implementation phase. That is a proposed record awaiting review, not an accepted fact, and Current State has not changed. The Review asks whether that budget should be recorded in Current State, so until a human accepts it, the budget remains unconfirmed in State.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "The Q3 planning session note says the pilot budget is approved at $40,000 for discovery and the first implementation phase. Should that budget be recorded in Current State?",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "c11"
+  },
+  {
+   "answer_id": "r4",
+   "scenario_id": "ask_source_words_not_demoted",
+   "source": "Haiku 5.5, State eval matrix run 42669348026 repeat 1 (3c14c9f)",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget from the Q3 planning session is not in Current State; it is only a pending Review.",
+    "summary": "Current State has no entry for the pilot budget. The only relevant record is an open Review proposing that the Q3 planning session note's figure of $40,000 for discovery and the first implementation phase be recorded in Current State. That Review is pending and unresolved, so the $40,000 figure is not yet a confirmed project fact.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending: pilot budget under review",
+      "items": [
+       {
+        "text": "The Q3 planning session note says the pilot budget is approved at $40,000 for discovery and the first implementation phase. Should that budget be recorded in Current State?",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "c04"
+  },
+  {
+   "answer_id": "r5",
+   "scenario_id": "ask_compound_question_keeps_governing_state",
+   "source": "Haiku 5.5, State eval matrix run 42669348026 repeat 0 (3c14c9f)",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Pilot budget is not yet recorded; implementation planning can proceed on the bounded scope, with pending budget review",
+    "summary": "State does not confirm a pilot budget. An open Review proposes recording an proposed (not yet approved) pilot budget of $40,000, but it is pending and has not been accepted, so that figure is not yet a Current State fact. Separately, Current State says implementation planning can proceed with the bounded Tier 1 troubleshooting use case, while pilot launch still requires agreed thresholds for high-risk failures. The Review notes implementation planning depends on a known budget ceiling, so the budget question is relevant to planning.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending review",
+      "items": [
+       {
+        "text": "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Current State on planning and scope",
+      "items": [
+       {
+        "text": "Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       },
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-1",
+        "detail": null
+       },
+       {
+        "text": "The pilot uses the minimum customer and account data needed for troubleshooting.",
+        "record_type": "state",
+        "record_id": "ask-state-2",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-state-1",
+     "ask-state-2",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Shorten to a two-sentence answer",
+     "Focus only on what blocks implementation planning"
+    ],
+    "suggested_question": "What is the confirmed pilot budget ceiling?"
+   },
+   "blind_id": "c05"
+  },
+  {
+   "answer_id": "r6",
+   "scenario_id": "ask_compound_question_keeps_governing_state",
+   "source": "Haiku 5.5, State eval matrix run 42669348026 repeat 1 (3c14c9f)",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Pilot budget is not yet recorded as settled; implementation planning can proceed on the bounded use case but launch thresholds remain open",
+    "summary": "State does not have a confirmed pilot budget. An open Review proposes recording an approved pilot budget of $40,000, but that proposal is pending review and has not changed Current State. Current State does say implementation planning can proceed with the bounded Tier 1 troubleshooting use case, while pilot launch still requires agreed thresholds for high-risk failures.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Decisions needed",
+      "items": [
+       {
+        "text": "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Useful context",
+      "items": [
+       {
+        "text": "Implementation planning can proceed with the bounded use case; pilot launch still requires agreed thresholds for high-risk failures.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       },
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-1",
+        "detail": null
+       },
+       {
+        "text": "The pilot uses the minimum customer and account data needed for troubleshooting.",
+        "record_type": "state",
+        "record_id": "ask-state-2",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-state-1",
+     "ask-state-2",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Shorten to just the budget and planning answer",
+     "Focus on what is needed before launch"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "c03"
+  },
+  {
+   "answer_id": "r7",
+   "scenario_id": "ask_pending_review_not_truth",
+   "source": "Haiku 5.5, State eval matrix run 42669348026 repeat 0 (3c14c9f)",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Not yet: a review proposing to allow skipping human review for low-risk cases is pending, and current policy still requires human review",
+    "summary": "Current State says customer-facing output remains human-reviewed. Leadership asked whether low-risk cases can skip human review, but no decision is recorded. The open Review is pending and has not changed Current State. It concerns only low-risk cases, not removing all human review.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Customer-facing output remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending review",
+      "items": [
+       {
+        "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the pending decision",
+     "Summarize for a leadership update"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "c08"
+  },
+  {
+   "answer_id": "r8",
+   "scenario_id": "ask_pending_review_not_truth",
+   "source": "Haiku 5.5, State eval matrix run 42669348026 repeat 1 (3c14c9f)",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Not decided yet: removing human review is an open Review, not an approved change",
+    "summary": "Current State says customer-facing output remains human-reviewed. An open Review records that leadership asked whether low-risk cases can skip human review, but no decision is recorded, so leadership has not approved removing human review. The Review remains pending and has not changed Current State.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Customer-facing output remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the pending decision",
+     "Summarize for a leadership update"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "c12"
+  },
+  {
    "answer_id": "h1",
    "scenario_id": "ask_evidence_backed_approval_qualified",
    "source": "hand-written by Claude (Nov 9), not a model answer",
@@ -39,7 +432,8 @@
     "suggested_refinements": [
      "Show what Current State says about the pilot today"
     ]
-   }
+   },
+   "blind_id": "c02"
   },
   {
    "answer_id": "h2",
@@ -73,7 +467,8 @@
     "suggested_refinements": [
      "Break the budget down by phase"
     ]
-   }
+   },
+   "blind_id": "c10"
   },
   {
    "answer_id": "h3",
@@ -119,7 +514,8 @@
     "suggested_refinements": [
      "Show what's needed to record the budget"
     ]
-   }
+   },
+   "blind_id": "c01"
   },
   {
    "answer_id": "h4",
@@ -159,7 +555,8 @@
     "suggested_refinements": [
      "Show who needs to decide the open Review"
     ]
-   }
+   },
+   "blind_id": "c07"
   }
  ]
 }
