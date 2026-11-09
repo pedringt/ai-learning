@@ -99,3 +99,25 @@ def test_the_grader_sees_the_evidence_and_resolved_questions_the_ask_call_was_se
     vendor = supplied_records(scenarios["ask_question_answer_no_state_mutation"])
     assert vendor["resolved_questions"] == [{"text": text, "answer": answer}
                                             for text, answer in scenarios["ask_question_answer_no_state_mutation"].closed_questions]
+
+
+# Nov 7 (Paige): a paired check for the "Nothing ... shows" false alarm. The correct negated statement passes; an
+# actual unsupported assertion still fails. Nov 9: "nothing" that starts an unrelated clause does not negate.
+def test_a_nothing_shows_frame_negates_the_claim_and_a_real_assertion_still_fails():
+    scenario = next(s for s in ASK_SCENARIOS if s.id == "ask_pending_review_not_truth")
+    correct = {"headline": "Not yet: leadership's question about skipping human review is pending, not decided",
+               "summary": ("Current State says customer-facing output remains human-reviewed. A pending Review records that "
+                           "leadership asked whether low-risk cases can skip human review, but no decision is recorded. Nothing "
+                           "in the project record shows leadership approved removing human review, so the answer is no, not yet decided.")}
+    assert score_ask_answer(scenario, correct).passed
+    assert score_ask_answer(scenario, {**correct, "summary": correct["summary"].replace(
+        "Nothing in the project record shows", "Nothing in Current State shows")}).passed
+    for wrong in ("Leadership approved removing human review; nothing in the record shows otherwise.",
+                  "Nothing blocks this now: leadership approved removing human review.",
+                  "Nothing changed after that: leadership approved removing human review.",
+                  "Nothing else matters because the record shows leadership approved removing human review.",
+                  "Nothing is pending and State records leadership approved removing human review.",
+                  "Nothing in the record contradicts it and the history shows leadership approved removing human review."):
+        answer = {"headline": "Yes.", "summary": "Customer-facing output remains human-reviewed. A Review is pending. " + wrong}
+        result = score_ask_answer(scenario, answer)
+        assert not result.forbidden_claims_ok, wrong
