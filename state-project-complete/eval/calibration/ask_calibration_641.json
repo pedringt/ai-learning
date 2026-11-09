@@ -1,0 +1,165 @@
+{
+ "about": "#641 blind calibration set (Nov 9; set approved by Paige): for each of four scenarios, two real Haiku 5.5 answers (r1-r8, State eval matrix suite 'calibration' on eval/641-blind-calibration) and one hand-written answer (h1-h4). Paige grades all twelve blind; the grader (suite 'recalibrate') then grades the same twelve, and eval.ask_grader.calibration_report compares them. Every scenario is synthetic.",
+ "answers": [
+  {
+   "answer_id": "h1",
+   "scenario_id": "ask_evidence_backed_approval_qualified",
+   "source": "hand-written by Claude (Nov 9), not a model answer",
+   "intent": "correct attributed paraphrase, worded unlike the #641 example sentence",
+   "answer": {
+    "job": "current_fact",
+    "headline": "According to the Q3 planning session, the pilot budget was approved at $40,000; Current State doesn't include it yet.",
+    "summary": "The Q3 planning session records the pilot budget as approved at $40,000 for discovery and first implementation. That figure comes from the session note, not from Current State: an open Review asks whether to record it there, and no one has accepted that yet.",
+    "sections": [
+     {
+      "kind": "evidence",
+      "title": "What the source says",
+      "items": [
+       {
+        "text": "Q3 planning session: pilot budget approved at $40,000 for discovery and first implementation.",
+        "record_type": "evidence",
+        "record_id": "ask-evidence-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Waiting to be recorded",
+      "items": [
+       {
+        "text": "Open Review: should the approved $40,000 pilot budget be recorded in Current State?",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what Current State says about the pilot today"
+    ]
+   }
+  },
+  {
+   "answer_id": "h2",
+   "scenario_id": "ask_source_words_not_demoted",
+   "source": "hand-written by Claude (Nov 9), not a model answer",
+   "intent": "wrong: treats the source's report as governing Current State",
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget is approved at $40,000 and is part of the current plan.",
+    "summary": "The pilot budget is $40,000, covering discovery and the first implementation phase. Planning can use that figure as the budget of record. A Review is open to tidy up how it is recorded.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current plan",
+      "items": [
+       {
+        "text": "Pilot budget: $40,000 for discovery and the first implementation phase.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": null
+       },
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Break the budget down by phase"
+    ]
+   }
+  },
+  {
+   "answer_id": "h3",
+   "scenario_id": "ask_compound_question_keeps_governing_state",
+   "source": "hand-written by Claude (Nov 9), not a model answer",
+   "intent": "wrong: lets the pending Review's rationale gate what Current State already allows",
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget is $40,000, but implementation planning should hold until that budget is recorded.",
+    "summary": "An open Review describes the pilot budget as approved at $40,000 and says implementation planning depends on a known budget ceiling. Until the Review is accepted and the budget is in Current State, it's safer to hold off on implementation planning. Pilot launch also still needs agreed thresholds for high-risk failures.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Budget (pending)",
+      "items": [
+       {
+        "text": "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Pilot launch still requires agreed thresholds for high-risk failures.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       },
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-1",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what's needed to record the budget"
+    ]
+   }
+  },
+  {
+   "answer_id": "h4",
+   "scenario_id": "ask_pending_review_not_truth",
+   "source": "hand-written by Claude (Nov 9), not a model answer",
+   "intent": "correct, worded differently from the recorded answers",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Not as far as the record shows: human review is still required, and leadership's question about skipping it is undecided.",
+    "summary": "Current State says customer-facing output remains human-reviewed. Leadership has asked whether low-risk cases could skip human review, but that question sits in an open Review with no decision recorded, so it hasn't changed anything yet.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "In effect now",
+      "items": [
+       {
+        "text": "Customer-facing output remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Undecided",
+      "items": [
+       {
+        "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show who needs to decide the open Review"
+    ]
+   }
+  }
+ ]
+}

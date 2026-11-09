@@ -25,7 +25,7 @@ on:
   workflow_dispatch:
     inputs:
       suites:
-        description: Comma list from review, ask, adversarial, consequentiality, baseline, graded, regrade
+        description: Comma list from review, ask, adversarial, consequentiality, baseline, graded, regrade, calibration, recalibrate
         required: true
         default: review,ask,consequentiality,baseline
       model:
