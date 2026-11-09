@@ -1,4 +1,4 @@
-"""#612 (Nov 8): on phones the Ask input is 16px (iOS Safari zooms a focused input under 16px) and small text links
+"""#612 (Nov 8): on phones the tab strip fades at its edge instead of covering a tab label, the Ask input is 16px (iOS Safari zooms a focused input under 16px) and small text links
 have a tap area of at least 24px (WCAG 2.2 SC 2.5.8), with the input's height and the page layout unchanged.
 
 iOS zoom itself was checked by computed style only; no iPhone or iOS Simulator was used.
@@ -66,5 +66,25 @@ def test_phone_text_links_have_24px_tap_areas(width):
         assert areas, "no small text controls rendered to check"
         small = [a for a in areas if a["tap"] < 24]
         assert not small, f"tap areas under 24px at {width}px: {small}"
+    finally:
+        browser.close(); pw.stop()
+
+
+@pytest.mark.parametrize("width", [375, 390])
+def test_phone_tab_strip_fades_while_tabs_remain_off_screen(width):
+    pw = sync_playwright().start()
+    browser = _launch(pw)
+    try:
+        page = browser.new_page(viewport={"width": width, "height": 812})
+        page.goto(STATE_URL)
+        page.wait_for_timeout(1500)
+        nav = page.locator(".mobile-primary-nav")
+        assert nav.evaluate("e => getComputedStyle(e, '::after').content") in ("none", "normal"), "the covering cue is back"
+        more = nav.evaluate("e => e.scrollWidth - e.clientWidth > 1")
+        assert nav.evaluate("e => e.classList.contains('has-more-right')") == more
+        if more:
+            nav.evaluate("e => { e.scrollLeft = e.scrollWidth; e.dispatchEvent(new Event('scroll')); }")
+            page.wait_for_timeout(200)
+            assert not nav.evaluate("e => e.classList.contains('has-more-right')"), "still faded at the end of the strip"
     finally:
         browser.close(); pw.stop()
