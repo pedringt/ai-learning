@@ -260,7 +260,7 @@
     // abort's rejection arrives after something else already changed
     // requestId. running is cleared immediately either way, so a new
     // question can be asked right away instead of waiting out the old one.
-    if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();ui.requestId++;ui.running=false;ui.streamRaw='';}
+    if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();ui.requestId++;ui.running=false;ui.stream=null;}
     const wasOpen=ui.drawerOpen,drawer=document.getElementById('askStateDrawer');
     ui.drawerOpen=false;drawer?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');unlockBackground();syncLauncherVisibility();announceDrawer();
     if(drawer)setAskModal(drawer,false);
@@ -283,7 +283,7 @@
     // closing the drawer directly did.
     closeAskDrawer();
     ui.query='';ui.skipRouting=false;ui.payload=null;ui.resolvedContext=[];
-    ui.answerStateSignature=null;ui.stale=false;ui.running=false;ui.streamRaw='';ui.requestId++;
+    ui.answerStateSignature=null;ui.stale=false;ui.running=false;ui.stream=null;ui.requestId++;
     renderDrawerResult('');
     syncAskInputs();
     starters=publishStarters(projectId||liveProjectId());
@@ -428,19 +428,22 @@
     ui.askTiming=askTiming||null;
     const statePromise=currentStateSignature();const resolvedPromise=relevantResolvedDecisions(clean);
     renderDrawerResult('<div class="ask-live-loading"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Checking the project record…</strong><p>Keeping accepted, pending, and unresolved information separate.</p></div></div>');
+    const paintCheckedStream=()=>{const html=ASK.renderStream?.(ui.stream,ui.stream?.preview||null);if(html){renderDrawerResult(html);if(html.includes('ask-live-answer'))askTiming?.firstResponse?.();}};
     try{
       let payload;
       if(liveStream){
         payload=await ASK.submitStream(clean,null,{
-          preview:preview=>{if(requestId!==ui.requestId)return;const html=ASK.renderStream?.('',preview);if(html)renderDrawerResult(html);},
-          delta:event=>{if(requestId!==ui.requestId)return;ui.streamRaw=(ui.streamRaw||'')+(event?.text||'');const html=ASK.renderStream?.(ui.streamRaw,null);if(html){renderDrawerResult(html);if(html.includes('ask-live-answer'))askTiming?.firstResponse?.();}}
+          preview:preview=>{if(requestId!==ui.requestId)return;ui.stream={claims:[],sections:[],preview};const html=ASK.renderStream?.(ui.stream,preview);if(html)renderDrawerResult(html);},
+          // #567: the server sends each claim and section only after checking it; nothing raw is drawn.
+          claim:event=>{if(requestId!==ui.requestId)return;ui.stream=ui.stream||{claims:[],sections:[]};ui.stream.claims.push(event);paintCheckedStream();},
+          section:event=>{if(requestId!==ui.requestId)return;ui.stream=ui.stream||{claims:[],sections:[]};ui.stream.sections.push(event);paintCheckedStream();}
         },ui.abortController.signal);
       }else payload=await ASK.submit(clean,null,ui.abortController.signal);
       if(requestId!==ui.requestId)return;
-      ui.payload=payload;ui.answerStateSignature=await statePromise;ui.resolvedContext=await resolvedPromise;ui.running=false;ui.streamRaw='';renderFinalAsk();askTiming?.completed?.();if(ui.askTiming===askTiming)ui.askTiming=null;
+      ui.payload=payload;ui.answerStateSignature=await statePromise;ui.resolvedContext=await resolvedPromise;ui.running=false;ui.stream=null;renderFinalAsk();askTiming?.completed?.();if(ui.askTiming===askTiming)ui.askTiming=null;
     }catch(error){
       askTiming?.failed?.();if(ui.askTiming===askTiming)ui.askTiming=null;
-      if(requestId!==ui.requestId)return;ui.running=false;ui.streamRaw='';
+      if(requestId!==ui.requestId)return;ui.running=false;ui.stream=null;
       // QA follow-up (2026-09-14): the backend's own 503 fallback text is
       // literally "Ask is temporarily unavailable. Please try again." --
       // identical to this card's hardcoded headline, so that specific

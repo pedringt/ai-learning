@@ -73,7 +73,8 @@ class _FakeAsk:
 
     def synthesize(self, prompt):
         return deepcopy({
-            "job": "catch_up", "headline": f"Where things stand ({self.leaked_id})", "summary": f"The move is on track, but {self.leaked_id} is open.",
+            "job": "catch_up", "claims": [{"text": f"The move is on track, but {self.leaked_id} is open.", "basis": "none",
+                                           "primary_record_id": None, "supporting_record_ids": []}],
             "sections": [{"kind": "other", "title": "Context", "items": [
                 {"text": f"Waiting on {self.leaked_id} before we confirm.", "record_type": "none", "record_id": None, "detail": f"See {self.leaked_id}."}]}],
             "source_ids": [], "uncertainty_ids": [], "suggested_refinements": [],
@@ -91,7 +92,7 @@ def test_an_id_the_model_was_shown_but_did_not_select_is_scrubbed_even_when_it_m
         # a Juniper id with no recognisable shape (e.g. "jq-elevator"): only the exact-id list can remove it
         leaked = next(i for i in sorted(pool) if not any(p.search(i) for p in SHAPES) and not _DEMO_SLUG_ID.search(i))
         result = run_ask(conn, _FakeAsk(leaked), "Where do things stand?")
-        visible = " ".join([result["answer"]["headline"], result["answer"]["summary"]]
+        visible = " ".join([result["answer"]["headline"]] + [c["text"] for c in result["answer"]["claims"]]
                            + [x for s in result["answer"]["sections"] for i in s["items"] for x in (i["text"], i.get("detail") or "")])
         assert leaked.lower() not in visible.lower(), (leaked, visible)
         assert "The move is on track" in visible                                                    # the rest of the answer survives

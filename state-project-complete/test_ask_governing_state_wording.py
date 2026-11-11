@@ -10,7 +10,9 @@ The backstop now leaves a matched word alone when the wording around it appears
 verbatim in a governing Current State statement, and still rewrites everything else.
 No model calls.
 """
-from ask_contract import AskAnswerItem, AskAnswerSection, AskSelection, AskSynthesis
+import re
+
+from ask_contract import AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis
 from ask_service import _governing_state_ngrams, _soften_unearned_settled_prose, _validate_synthesis
 
 STATE_STATEMENT = "The approved enterprise terms state customer content is not used for model training."
@@ -95,34 +97,41 @@ def _free_text_item(cleaned):
 
 
 def _answer(summary, item_text=None):
+    """#567: the old summary becomes unlabelled (`none`) claims, one per sentence; the backstop still applies to them."""
     sections = []
     if item_text:
         sections = [AskAnswerSection(kind="other", title="Context", items=[AskAnswerItem(text=item_text, record_type="none")])]
-    return AskSynthesis(job="current_fact", headline="Vendor training", summary=summary, sections=sections)
+    claims = [AskClaim(text=sentence) for sentence in re.split(r"(?<=[.!?])\s+", summary.strip()) if sentence]
+    return AskSynthesis(job="current_fact", claims=claims, sections=sections)
+
+
+def _shown(answer):
+    """The displayed claims' text, joined: what the summary held before #567."""
+    return " ".join(claim.text for claim in answer.claims)
 
 
 def test_validate_synthesis_keeps_a_summary_that_quotes_the_governing_fact():
     selection, context, candidates = _context()
     cleaned = _validate_synthesis(_answer(SUMMARY_QUOTING_STATE), selection, context, candidates)
-    assert _same(cleaned.summary, SUMMARY_QUOTING_STATE)
-    assert "not yet approved" not in cleaned.summary
+    assert _same(_shown(cleaned), SUMMARY_QUOTING_STATE)
+    assert "not yet approved" not in _shown(cleaned)
 
 
 def test_validate_synthesis_uses_the_candidate_pool_when_the_state_item_was_not_selected():
     """The selector may skip the state item; the backstop must not depend on that."""
     selection, context, candidates = _context(state_in_context=False)
     cleaned = _validate_synthesis(_answer(SUMMARY_QUOTING_STATE), selection, context, candidates)
-    assert _same(cleaned.summary, SUMMARY_QUOTING_STATE)
+    assert _same(_shown(cleaned), SUMMARY_QUOTING_STATE)
 
 
 def test_validate_synthesis_still_softens_a_pending_claim_and_a_free_text_item():
     selection, context, candidates = _context()
     cleaned = _validate_synthesis(_answer(f"{SUMMARY_QUOTING_STATE} {PENDING_CLAIM}", item_text=PENDING_CLAIM),
                                   selection, context, candidates)
-    assert SUMMARY_QUOTING_STATE in cleaned.summary
-    assert "proposed for approval (not yet approved)" in cleaned.summary
+    assert SUMMARY_QUOTING_STATE in _shown(cleaned)
+    assert "proposed for approval (not yet approved)" in _shown(cleaned)
     assert "proposed for approval (not yet approved)" in _free_text_item(cleaned).text
-    assert "are approved" not in cleaned.summary and "are approved" not in _free_text_item(cleaned).text
+    assert "are approved" not in _shown(cleaned) and "are approved" not in _free_text_item(cleaned).text
 
 
 def test_validate_synthesis_free_text_item_quoting_state_is_left_alone():
@@ -185,8 +194,8 @@ def test_validate_synthesis_keeps_the_juniper_budget_answer():
                              blocking_question_ids=[], question_ids=[], history_ids=[], evidence_ids=[])
     summary = "Current State records the approved move budget at $85,000."
     cleaned = _validate_synthesis(_answer(summary), selection, context, dict(context))
-    assert "not yet approved" not in cleaned.summary
-    assert "approved move budget at $85,000" in cleaned.summary
+    assert "not yet approved" not in _shown(cleaned)
+    assert "approved move budget at $85,000" in _shown(cleaned)
 
 
 # --- #474: unconfirmed claims presented as settled ----------------------------

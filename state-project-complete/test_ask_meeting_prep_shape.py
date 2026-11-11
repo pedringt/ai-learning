@@ -135,7 +135,7 @@ def test_shape_report_flags_a_reorder_a_retitle_and_a_duplicate_record_separatel
 def test_shape_report_ignores_other_jobs_and_reports_a_schema_invalid_answer():
     other = shape_report(_answer([_section("questions", 2)], job="current_fact"))
     assert other == {"valid": True, "applies": False, "job": "current_fact"}
-    bad = shape_report({"job": "meeting_prep"})
+    bad = shape_report({"job": "meeting_prep", "sections": "not a list"})
     assert bad["valid"] is False and not bad["applies"]
 
 
@@ -143,7 +143,7 @@ def test_summarize_reports_rates_over_meeting_prep_runs_only():
     good = shape_report(_answer([_section("needs_review", 1, title="Decisions needed")]))
     shrunk = shape_report(_answer([_section("established", 3, start=0), _section("established", 2, start=10)]))
     not_prep = shape_report(_answer([_section("questions", 1)], job="catch_up"))
-    invalid = shape_report({"job": "meeting_prep"})
+    invalid = shape_report({"job": "meeting_prep", "sections": "not a list"})
     s = summarize([good, shrunk, not_prep, invalid])
     assert s["runs"] == 4 and s["invalid_rate"] == 0.25 and s["chose_meeting_prep_rate"] == 0.5
     assert s["stable_rate"] == 0.5 and s["visible_shrink_rate"] == 0.5 and s["items_dropped_mean"] == 1.0

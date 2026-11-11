@@ -20,21 +20,19 @@ const ASK=context.window.STATE_ASK;
 let pass=0,fail=0;
 function check(name,ok,detail=''){if(ok){pass++;console.log('✓',name)}else{fail++;console.error('✗',name,detail)}}
 
-const streamItems=html=>[...html.matchAll(/class="ask-stream-item">([^<]*)</g)].map(m=>m[1]);
-const streamTitles=html=>[...html.matchAll(/class="ask-stream-section-title">([^<]*)</g)].map(m=>m[1]);
-const finalItems=html=>[...html.matchAll(/class="ask-item-text">([^<]*)</g)].map(m=>m[1]);
-const finalTitles=html=>[...html.matchAll(/<section class="ask-answer-section[^"]*"><h3>([^<]*)<\/h3>/g)].map(m=>m[1]);
+// #567 (Nov 10): the stream is now the server's checked claim and section events, not raw text, so these checks
+// replay those events. The property is unchanged: nothing drawn is taken away, and for an answer already in its
+// final shape the last streamed frame shows exactly the finished answer's cards.
+const streamItems=html=>[...html.matchAll(/class="ask-item-text">([^<]*)</g)].map(m=>m[1]);
+const streamTitles=html=>[...html.matchAll(/<section class="ask-answer-section[^"]*"><h3>([^<]*)<\/h3>/g)].map(m=>m[1]);
+const finalItems=streamItems, finalTitles=streamTitles;
 
-const item=(text,id)=>({text,record_type:'state',record_id:id,detail:null});
+const item=(text,id)=>({text,record_type:'state',record_id:id,detail:null,wording:'model'});
 const section=(kind,title,texts,start)=>({kind,title,items:texts.map((t,i)=>item(t,`rec-${start+i}`))});
-function streamOf(job,sections){
-  return JSON.stringify({answer:{
-    job,headline:'What to know before the meeting',
-    summary:'Two decisions are open and the launch date is settled.',
-    sections,source_ids:[],uncertainty_ids:[],suggested_refinements:[]
-  },selection:{job,state_ids:[],review_ids:[]}});
-}
-const payloadOf=(job,sections)=>({answer:JSON.parse(streamOf(job,sections)).answer});
+const claimEvent=(i,text)=>({index:i,status:'shown',claim:{text,label:null,basis:'none',primary_record_id:null,supporting_record_ids:[]}});
+const payloadOf=(job,sections)=>({answer:{job,headline:'Meeting brief',summary:'Two decisions are open and the launch date is settled.',
+  claims:[claimEvent(0,'Two decisions are open and the launch date is settled.').claim],withheld_claims:0,withheld_items:0,
+  sections,source_ids:[],uncertainty_ids:[],suggested_refinements:[]}});
 
 // An answer in the backend's final shape: sections in its order, each within its cap, with its titles
 // (needs_review 2, questions 4, established 3, recent_context 2; at most 4 sections). Mirrors MEETING_PREP_* in ask_contract.py.
@@ -46,28 +44,26 @@ const finalShape=[
 ];
 const totalItems=finalShape.reduce((n,s)=>n+s.items.length,0);
 
-const raw=streamOf('meeting_prep',finalShape);
-
-// Every prefix of the stream: nothing drawn is ever taken away, and nothing throws.
-let threw=null,prev=0,shrank=false,maxItems=0,sawHeadline=false,sawSummary=false,heldBackNote=false;
-for(let n=1;n<=raw.length;n++){
+// The events in the order the server sends them: the claim, then each checked section.
+const events=[{kind:'claim',event:claimEvent(0,'Two decisions are open and the launch date is settled.')},
+  ...finalShape.map((s,i)=>({kind:'section',event:{index:i,section:s,withheld_items:0}}))];
+let threw=null,prev=0,shrank=false,maxItems=0,sawClaim=false;
+const stream={claims:[],sections:[]};
+for(const {kind,event} of events){
+  (kind==='claim'?stream.claims:stream.sections).push(event);
   let html;
-  try{html=ASK.renderStream(raw.slice(0,n));}catch(e){threw=e;break;}
+  try{html=ASK.renderStream(stream);}catch(e){threw=e;break;}
   const drawn=streamItems(html).length;
   if(drawn<prev)shrank=true;
   prev=drawn;maxItems=Math.max(maxItems,drawn);
-  if(html.includes('<h2>What to know'))sawHeadline=true;
-  if(html.includes('Two decisions are open'))sawSummary=true;
-  if(html.includes('ask-stream-finalizing'))heldBackNote=true;
+  if(html.includes('Two decisions are open'))sawClaim=true;
 }
-check('renderStream never throws on any prefix of a meeting_prep stream',threw===null,String(threw));
-check('meeting_prep streams its headline and summary',sawHeadline&&sawSummary);
+check('renderStream never throws while checked events arrive',threw===null,String(threw));
+check('the checked claim streams before the cards',sawClaim);
 check('meeting_prep streams its section items live (they are not held back)',maxItems===totalItems,`max items drawn: ${maxItems} of ${totalItems}`);
 check('the number of items drawn never goes down while streaming',!shrank);
-check('there is no "held back" note any more',!heldBackNote);
 
-// The property that makes live streaming safe: for a final-shape answer, the last streamed frame IS the finished answer.
-const lastStream=ASK.renderStream(raw);
+const lastStream=ASK.renderStream(stream);
 const finished=ASK.render(payloadOf('meeting_prep',finalShape));
 check('the streamed items are exactly the finished answer\'s items, in the same order',
   JSON.stringify(streamItems(lastStream))===JSON.stringify(finalItems(finished)),
@@ -76,16 +72,6 @@ check('the streamed section titles are exactly the finished answer\'s titles, in
   JSON.stringify(streamTitles(lastStream))===JSON.stringify(finalTitles(finished)),
   `${JSON.stringify(streamTitles(lastStream))} vs ${JSON.stringify(finalTitles(finished))}`);
 check('the finished answer shows every item of the final-shape answer',finalItems(finished).length===totalItems);
-
-// Before the job value is complete nothing can be drawn yet; it must not throw or draw stale items.
-const early=ASK.renderStream('{"answer":{"job":"meeting_pr');
-check('a partially streamed job value renders the normal grounded-loading state',early.includes('ask-live-loading'),early.slice(0,200));
-
-// meeting_prep is not special-cased: another job streams the same way.
-const other=streamOf('current_fact',finalShape);
-let otherItems=0;
-for(let n=1;n<=other.length;n++)otherItems=Math.max(otherItems,streamItems(ASK.renderStream(other.slice(0,n))).length);
-check('other jobs stream the same way (no special case for meeting_prep)',otherItems===totalItems,`items: ${otherItems}`);
 
 // #544 (Oct 20): every finished answer, and its copied text, says it covers only what State has on record.
 {

@@ -12,8 +12,10 @@ from typing import Any, Iterator, Mapping, Protocol
 
 from ask_contract import (
     MEETING_PREP_ITEM_CAPS, MEETING_PREP_MAX_REFINEMENTS, MEETING_PREP_MAX_SECTIONS, MEETING_PREP_SECTION_ORDER,
-    MEETING_PREP_SECTION_TITLES, AskSelection, AskSynthesis,
+    MEETING_PREP_SECTION_TITLES, AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis,
 )
+from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_card, fixed_headline, prepare_answer_raw, record_text
+from ask_display import claim_lines, has_withheld, WITHHELD_LINE
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from db import project_id_of
 from ask_authority_text import (  # noqa: F401  (re-exported: tests and callers import these from ask_service)
@@ -132,6 +134,8 @@ def ask_cache_key(
         "previous_answer": previous_answer,
         "candidates": _compact_candidates(connection),
         "as_of_date": (today or date.today()).isoformat(),
+        # #567: answers changed shape (claims, fixed headlines); never serve one cached in the older shape.
+        "answer_shape": "claims-v1",
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
@@ -373,6 +377,19 @@ def meeting_prep_shape_guidance() -> str:
     )
 
 
+def claims_guidance() -> str:
+    """How the model writes `claims` (#567). Shared by the one-call and synthesis prompts."""
+    return """Write the answer's opening as `claims`: 1 to 4 short sentences (each under 300 characters) that answer the request first, most important first. State software writes the headline; do not write one, and do not write a summary. Each claim states one fact with exactly one basis:
+- current_state: what an accepted Current State record says. primary_record_id is that Current State record.
+- pending_review: what an open Review proposes, described as proposed and awaiting review, never as decided. primary_record_id is that Review.
+- evidence_says: what a source reported, attributed to that source (for example "The Q3 planning note says the pilot budget is approved at $40,000"). A source reporting approval is not State recording it. primary_record_id is that Evidence.
+- open_question: an unknown an open Question tracks. primary_record_id is that Question.
+- answered_question: a Question a human closed, with its recorded answer. primary_record_id is that answered Question.
+- history: an accepted past change. primary_record_id is that History record.
+- none: anything that does not rest on one record, such as what State does not have on record, or a corrected premise. primary_record_id is null.
+Never put two bases in one claim. If a sentence would combine an accepted fact with a proposal, a source report or an unknown, write two claims. supporting_record_ids (at most 2) lists records that back a claim up without setting its authority, such as the History entry behind a Current State fact. Every number, amount and date in a claim must appear in its records. A claim that cites a record it does not rest on, or names a number or date its records do not contain, is not shown."""
+
+
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None, today: date | None = None) -> str:
     previous = json.dumps(previous_answer, ensure_ascii=False)[:12000] if previous_answer else "null"
     
@@ -433,7 +450,9 @@ Previous answer (for refinement only): {previous}
 Authority-tagged candidate records:
 {json.dumps(candidates, ensure_ascii=False)}
 
-Return the required JSON object with both `selection` and `answer`. Every answer record_id must be present in the selection and candidate records. Relevant Reviews must appear visibly in the main answer, not only in source_ids. {meeting_prep_shape_guidance()} Prefer one synthesized opening over many State cards. Do not create a section titled Current State or Open Reviews Qualifying Current State. Keep the full answer comfortably under 500 words.
+{claims_guidance()}
+
+Return the required JSON object with `selection` first, then `answer`. Every answer record_id, primary_record_id and supporting_record_id must be present in the selection and candidate records. Relevant Reviews must appear visibly in the main answer, not only in source_ids. {meeting_prep_shape_guidance()} Prefer one synthesized opening over many State cards. Do not create a section titled Current State or Open Reviews Qualifying Current State. Keep the full answer comfortably under 500 words.
 Use concise adaptive sections and short suggested refinements."""
 
 def _selector_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None, today: date | None = None) -> str:
@@ -580,126 +599,174 @@ Previous answer: {previous}
 Selected validated context:
 {json.dumps(context, ensure_ascii=False)}
 
+{claims_guidance()}
+
 Use record IDs on items whenever they correspond to a source record. Suggested refinements should be short actions."""
+
+
+class _AnswerChecks:
+    """The application-side checks on an answer's visible parts, built from the records Ask selected for this request.
+    _validate_synthesis runs them on the finished answer; streaming runs the same object on each claim and section as
+    it completes (#567), so nothing is shown while streaming that the finished answer would not show."""
+
+    def __init__(self, context: Mapping[str, Any], candidates: Mapping[str, list[dict]] | None = None, *,
+                 query: str = "", today: date | None = None):
+        self.context = context
+        self.allowed: dict[str, set[str]] = {
+            "state": {x["id"] for x in context.get("state", [])},
+            "review": {x["id"] for x in context.get("reviews", [])},
+            "history": {x["id"] for x in context.get("history", [])},
+            "evidence": {x["id"] for x in context.get("evidence", [])},
+            "blocking_question": {x["id"] for x in context.get("questions", []) if x["blocking"]},
+            "question": {x["id"] for x in context.get("questions", []) if not x["blocking"]},
+            "answered_question": {x["id"] for x in context.get("answered_questions", [])},
+        }
+        self.all_internal_ids = set().union(*self.allowed.values(), {x["id"] for x in context.get("rules", [])})
+        self.all_internal_ids |= _candidate_pool_ids(candidates)          # ids the model was shown, selected or not (#247)
+        self.labels = _source_type_labels(candidates)                     # vendor_email -> vendor email (#478)
+        self.canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
+        self.canonical_questions = {x["id"]: x for x in context.get("questions", [])}
+        self.canonical_answered = {x["id"]: x for x in context.get("answered_questions", [])}
+
+        # Bug fix (2026-09-14, live QA): this used to check `context` -- the
+        # *selected* reviews/questions for this run -- so whether the hedging
+        # backstop below fired depended on the selector model's non-deterministic
+        # choice of what to include, not on whether pending material actually
+        # exists. Two runs of the identical question could select the same
+        # underlying Review differently and get a hedged vs. unhedged answer
+        # about the same fact (e.g. pilot budget "approved" vs. "not yet
+        # approved"). `candidates` is the deterministic, pre-selection pool for
+        # this query, so checking it instead removes that source of
+        # inconsistency while preserving the original intent: a genuinely
+        # fully-settled project (no pending Reviews/Questions at all) still never
+        # gets its answer touched by this backstop.
+        pending_pool = candidates if candidates is not None else context
+        self.has_pending_material = bool(pending_pool.get("reviews")) or bool(pending_pool.get("questions"))
+        # Governing Current State wording the backstop must not rewrite (#227). Uses the
+        # candidate pool as well as the selected context, for the same reason as above:
+        # what the selector happened to choose must not change how the answer is worded.
+        self.governing_ngrams = _governing_state_ngrams(
+            x.get("statement", "") for x in [*context.get("state", []), *((candidates or {}).get("state", []))]
+        )
+        # Evidence the answer may be quoting (#567): a settled word it uses about the same thing is
+        # qualified rather than denied. Candidate pool too, for the same reason as above.
+        self.evidence_backing = _evidence_backing(
+            x.get("content", "") for x in [*context.get("evidence", []), *((candidates or {}).get("evidence", []))]
+        )
+        self.checker = ClaimChecker(context, query=query, today=today)
+
+    def clean(self, value: str | None) -> str | None:
+        return _clean_visible_ask_text(value, self.all_internal_ids, self.labels)
+
+    def claim(self, claim: AskClaim) -> AskClaim | None:
+        """#567: the claim with its chip label, or None to withhold it. Its text is never shown otherwise. Only an
+        unlabelled `none` claim still goes through the word backstop ("qualify, don't deny")."""
+        claim.text = self.clean(claim.text) or ""
+        label = self.checker.check_claim(claim.model_dump()) if claim.text else None
+        if label is None:
+            return None
+        if claim.basis == "none" and self.has_pending_material:
+            claim.text = _soften_unearned_settled_prose(claim.text, self.governing_ngrams, self.evidence_backing)
+        claim.label = label or None
+        return claim
+
+    def section(self, section: AskAnswerSection) -> tuple[AskAnswerSection, int]:
+        """The section with its cards checked, and how many cards were withheld."""
+        withheld = 0
+        section.title = self.clean(section.title) or "Project context"
+        if self.has_pending_material:
+            section.title = _soften_unearned_settled_words(section.title, self.evidence_backing)
+        clean_items = []
+        for item in section.items:
+            item.wording = "model"
+            if item.record_type == "none":
+                item.text = self.clean(item.text) or "Project context"
+                item.detail = self.clean(item.detail)
+                if self.has_pending_material:
+                    item.text = _soften_unearned_settled_prose(item.text, self.governing_ngrams, self.evidence_backing)
+                    item.detail = _soften_unearned_settled_prose(item.detail, self.governing_ngrams, self.evidence_backing)
+                clean_items.append(item)
+                continue
+            if not (item.record_id and item.record_id in self.allowed.get(item.record_type, set())):
+                # #567: a card whose record isn't among the selected records is withheld, and counted.
+                withheld += 1
+                continue
+            # For unresolved decisions/questions, visible wording comes from
+            # application-owned records rather than model paraphrase.
+            if item.record_type == "review" and item.record_id in self.canonical_reviews:
+                source = self.canonical_reviews[item.record_id]
+                item.text = source["decision_question"]
+                item.detail = source.get("why_consequential")
+                item.wording = "record"
+            elif item.record_type in {"question", "blocking_question"} and item.record_id in self.canonical_questions:
+                source = self.canonical_questions[item.record_id]
+                item.text = source["text"]
+                item.detail = source.get("blocks") if item.record_type == "blocking_question" else None
+                item.wording = "record"
+            elif item.record_type == "answered_question" and item.record_id in self.canonical_answered:
+                # #640: the Question and its recorded answer, from the records, never a model paraphrase.
+                source = self.canonical_answered[item.record_id]
+                item.text = source["text"]
+                item.detail = ("Answered: " + source["answer"]) if source.get("answer") else "Answered."
+                item.wording = "record"
+            else:
+                # #567: a Current State, History or Evidence card keeps the model's wording only when every number
+                # and month it names is in its record; otherwise it shows the record's own text. Its reference has
+                # already passed (selected, this project, this type, this status).
+                record = self.checker.card_record(item.record_type, item.record_id)
+                item.text = self.clean(item.text) or ""
+                item.detail = self.clean(item.detail)
+                if record is None:
+                    withheld += 1
+                    continue
+                if not item.text or not anchors_supported(f"{item.text} {item.detail or ''}", [record_text(record)]):
+                    item.text, item.detail = canonical_card(item.record_type, record, self.labels)
+                    item.wording = "record_fallback"
+            clean_items.append(item)
+        section.items = clean_items
+        return section, withheld
 
 
 def _validate_synthesis(
     answer: AskSynthesis, selection: AskSelection, context: Mapping[str, Any],
-    candidates: Mapping[str, list[dict]] | None = None,
+    candidates: Mapping[str, list[dict]] | None = None, *, query: str = "", today: date | None = None,
 ) -> AskSynthesis:
-    allowed: dict[str, set[str]] = {
-        "state": {x["id"] for x in context.get("state", [])},
-        "review": {x["id"] for x in context.get("reviews", [])},
-        "history": {x["id"] for x in context.get("history", [])},
-        "evidence": {x["id"] for x in context.get("evidence", [])},
-        "blocking_question": {x["id"] for x in context.get("questions", []) if x["blocking"]},
-        "question": {x["id"] for x in context.get("questions", []) if not x["blocking"]},
-        "answered_question": {x["id"] for x in context.get("answered_questions", [])},
-    }
-    all_internal_ids = set().union(*allowed.values(), {x["id"] for x in context.get("rules", [])})
-    all_internal_ids |= _candidate_pool_ids(candidates)          # ids the model was shown, selected or not (#247)
-    labels = _source_type_labels(candidates)                     # vendor_email -> vendor email (#478)
-    canonical_reviews = {x["id"]: x for x in context.get("reviews", [])}
-    canonical_questions = {x["id"]: x for x in context.get("questions", [])}
-    canonical_answered = {x["id"]: x for x in context.get("answered_questions", [])}
-
-    # Bug fix (2026-09-14, live QA): this used to check `context` -- the
-    # *selected* reviews/questions for this run -- so whether the hedging
-    # backstop below fired depended on the selector model's non-deterministic
-    # choice of what to include, not on whether pending material actually
-    # exists. Two runs of the identical question could select the same
-    # underlying Review differently and get a hedged vs. unhedged answer
-    # about the same fact (e.g. pilot budget "approved" vs. "not yet
-    # approved"). `candidates` is the deterministic, pre-selection pool for
-    # this query, so checking it instead removes that source of
-    # inconsistency while preserving the original intent: a genuinely
-    # fully-settled project (no pending Reviews/Questions at all) still never
-    # gets its answer touched by this backstop.
-    pending_pool = candidates if candidates is not None else context
-    has_pending_material = bool(pending_pool.get("reviews")) or bool(pending_pool.get("questions"))
-    # Governing Current State wording the backstop must not rewrite (#227). Uses the
-    # candidate pool as well as the selected context, for the same reason as above:
-    # what the selector happened to choose must not change how the answer is worded.
-    governing_ngrams = _governing_state_ngrams(
-        x.get("statement", "") for x in [*context.get("state", []), *((candidates or {}).get("state", []))]
-    )
-
-    # Evidence the answer may be quoting (#567): a settled word it uses about the same thing is
-    # qualified rather than denied. Candidate pool too, for the same reason as above.
-    evidence_backing = _evidence_backing(
-        x.get("content", "") for x in [*context.get("evidence", []), *((candidates or {}).get("evidence", []))]
-    )
-
-    answer.headline = _clean_visible_ask_text(answer.headline, all_internal_ids, labels) or "Project answer"
-    if has_pending_material:
-        answer.headline = _soften_unearned_settled_words(answer.headline, evidence_backing)
-    answer.summary = _clean_visible_ask_text(answer.summary, all_internal_ids, labels) or "See the grounded project details below."
-    if has_pending_material:
-        answer.summary = _soften_unearned_settled_prose(answer.summary, governing_ngrams, evidence_backing)
-    answer.suggested_refinements = [
-        cleaned for value in answer.suggested_refinements
-        if (cleaned := _clean_visible_ask_text(value, all_internal_ids, labels))
-    ]
+    checks = _AnswerChecks(context, candidates, query=query, today=today)
+    shown_claims = []
+    for claim in answer.claims:
+        checked = checks.claim(claim)
+        if checked is None:
+            answer.withheld_claims += 1
+        else:
+            shown_claims.append(checked)
+    answer.claims = shown_claims
+    answer.suggested_refinements = [cleaned for value in answer.suggested_refinements if (cleaned := checks.clean(value))]
     if answer.suggested_question:
-        answer.suggested_question = _clean_visible_ask_text(answer.suggested_question, all_internal_ids, labels) or None
+        answer.suggested_question = checks.clean(answer.suggested_question) or None
 
     clean_sections = []
     for section in answer.sections:
-        section.title = _clean_visible_ask_text(section.title, all_internal_ids, labels) or "Project context"
-        if has_pending_material:
-            section.title = _soften_unearned_settled_words(section.title, evidence_backing)
-        clean_items = []
-        for item in section.items:
-            if item.record_type == "none":
-                item.text = _clean_visible_ask_text(item.text, all_internal_ids, labels) or "Project context"
-                item.detail = _clean_visible_ask_text(item.detail, all_internal_ids, labels)
-                if has_pending_material:
-                    item.text = _soften_unearned_settled_prose(item.text, governing_ngrams, evidence_backing)
-                    item.detail = _soften_unearned_settled_prose(item.detail, governing_ngrams, evidence_backing)
-                clean_items.append(item)
-                continue
-            if item.record_id and item.record_id in allowed.get(item.record_type, set()):
-                # For unresolved decisions/questions, visible wording comes from
-                # application-owned records rather than model paraphrase.
-                if item.record_type == "review" and item.record_id in canonical_reviews:
-                    source = canonical_reviews[item.record_id]
-                    item.text = source["decision_question"]
-                    item.detail = source.get("why_consequential")
-                elif item.record_type in {"question", "blocking_question"} and item.record_id in canonical_questions:
-                    source = canonical_questions[item.record_id]
-                    item.text = source["text"]
-                    item.detail = source.get("blocks") if item.record_type == "blocking_question" else None
-                elif item.record_type == "answered_question" and item.record_id in canonical_answered:
-                    # #640: the Question and its recorded answer, from the records, never a model paraphrase.
-                    source = canonical_answered[item.record_id]
-                    item.text = source["text"]
-                    item.detail = ("Answered: " + source["answer"]) if source.get("answer") else "Answered."
-                else:
-                    item.text = _clean_visible_ask_text(item.text, all_internal_ids, labels) or "Project context"
-                    item.detail = _clean_visible_ask_text(item.detail, all_internal_ids, labels)
-                clean_items.append(item)
-        section.items = clean_items
+        section, withheld = checks.section(section)
+        answer.withheld_items += withheld
         clean_sections.append(section)
     answer.sections = clean_sections
-    all_allowed_ids = all_internal_ids
+    allowed = checks.allowed
     uncertainty_allowed = allowed["review"] | allowed["blocking_question"] | allowed["question"]
-    answer.source_ids = list(dict.fromkeys(x for x in answer.source_ids if x in all_allowed_ids))
+    answer.source_ids = list(dict.fromkeys(x for x in answer.source_ids if x in checks.all_internal_ids))
     answer.uncertainty_ids = list(dict.fromkeys(x for x in answer.uncertainty_ids if x in uncertainty_allowed))
 
     present_reviews = {i.record_id for s in answer.sections for i in s.items if i.record_type == "review" and i.record_id}
     missing_reviews = [x for x in context.get("reviews", []) if x["id"] not in present_reviews]
     if missing_reviews:
-        from ask_contract import AskAnswerItem, AskAnswerSection
         answer.sections.insert(0, AskAnswerSection(
             kind="needs_review", title="Needs your review",
-            items=[AskAnswerItem(text=x["decision_question"], record_type="review", record_id=x["id"], detail=x["why_consequential"]) for x in missing_reviews]
+            items=[AskAnswerItem(text=x["decision_question"], record_type="review", record_id=x["id"], detail=x["why_consequential"], wording="record") for x in missing_reviews]
         ))
     present_blockers = {i.record_id for s in answer.sections for i in s.items if i.record_type == "blocking_question" and i.record_id}
     missing_blockers = [x for x in context.get("questions", []) if x["blocking"] and x["id"] not in present_blockers]
     if missing_blockers:
-        from ask_contract import AskAnswerItem, AskAnswerSection
         question_section = next((s for s in answer.sections if s.kind == "questions"), None)
-        items = [AskAnswerItem(text=x["text"], record_type="blocking_question", record_id=x["id"], detail=x.get("blocks")) for x in missing_blockers]
+        items = [AskAnswerItem(text=x["text"], record_type="blocking_question", record_id=x["id"], detail=x.get("blocks"), wording="record") for x in missing_blockers]
         if question_section:
             question_section.items = items + question_section.items
         else:
@@ -758,54 +825,16 @@ def _parse_streamed_json(text: str) -> Mapping[str, Any]:
         return json.loads(match.group(1))
 
 
-def _max_length(field: str) -> int:
-    return next(m.max_length for m in AskSynthesis.model_fields[field].metadata if getattr(m, "max_length", None))
-
-
-OVERFLOW_HEADLINE = "Answer"
-_HEADLINE_LIMIT = _max_length("headline")
-
-
-def _whitespace_and_case_folded(text: str) -> str:
-    return " ".join(text.split()).lower()
-
-
-def _recover_headline_overflow(answer_raw: Any) -> Any:
-    """Nov 4 (Paige): an over-long headline was the only thing wrong with an answer (eval matrix run
-    41891991008), but validation rejected the whole answer and production paid for a second model call.
-    When headline length is the only validation problem, the heading becomes "Answer" and the complete
-    original headline opens the summary, unless the summary already contains it (ignoring whitespace and
-    case). Nothing is dropped and nothing judges what the headline means: the moved text then goes through
-    every check the summary already gets. Anything else returns the answer unchanged, so the caller's
-    validation raises the original error and the existing retry still applies."""
-    if not isinstance(answer_raw, Mapping):
-        return answer_raw
-    headline, summary = answer_raw.get("headline"), answer_raw.get("summary")
-    if not isinstance(headline, str) or len(headline) <= _HEADLINE_LIMIT or not isinstance(summary, str):
-        return answer_raw
-    try:
-        # The headline must be the only problem: with just the heading replaced, the answer is valid.
-        # (Moving the text into an empty summary must not repair a second error.)
-        AskSynthesis.model_validate({**answer_raw, "headline": OVERFLOW_HEADLINE})
-    except ValueError:
-        return answer_raw
-    original = headline.strip()
-    if _whitespace_and_case_folded(original) in _whitespace_and_case_folded(summary):
-        repaired_summary = summary
-    else:
-        opening = original if original[-1:] in ".!?" else original + "."
-        repaired_summary = f"{opening} {summary.strip()}".strip()
-    repaired = {**answer_raw, "headline": OVERFLOW_HEADLINE, "summary": repaired_summary}
-    try:
-        AskSynthesis.model_validate(repaired)
-    except ValueError:
-        return answer_raw
-    # Lengths only: answer text stays out of the logs.
-    logger.warning(
-        "Ask headline over %s characters (%s); moved into the summary (%s -> %s characters)",
-        _HEADLINE_LIMIT, len(headline), len(summary), len(repaired_summary),
-    )
-    return repaired
+def _finish_display_fields(answer: AskSynthesis, previous_answer: Mapping[str, Any] | None) -> None:
+    """#567: software writes the headline (fixed per job) and the compatibility summary: the displayed claims as
+    plain text with their chips, plus the withheld line when something was withheld. Runs after refinement
+    transforms, which may clear the headline or the claims."""
+    if answer.headline:
+        answer.headline = fixed_headline(answer.job, previous_answer)
+    lines = claim_lines(answer.model_dump())
+    if has_withheld(answer.model_dump()):
+        lines.append(WITHHELD_LINE)
+    answer.summary = "\n".join(lines)
 
 
 def _finalize_ask_result(
@@ -822,11 +851,17 @@ def _finalize_ask_result(
     db_ms: int | None = None,
     trim_ms: int | None = None,
     first_token_ms: int | None = None,
+    today: date | None = None,
 ) -> dict[str, Any]:
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
     context = _selected_context(selection, candidates)
-    answer = apply_refinement_transform(query, _normalize_meeting_prep(_validate_synthesis(AskSynthesis.model_validate(_recover_headline_overflow(answer_raw)), selection, context, candidates)))
+    prepared, withheld_before = prepare_answer_raw(answer_raw)
+    answer = AskSynthesis.model_validate(prepared)
+    answer.withheld_claims = withheld_before
+    answer = _validate_synthesis(answer, selection, context, candidates, query=query, today=today)
+    answer = apply_refinement_transform(query, _normalize_meeting_prep(answer))
+    _finish_display_fields(answer, previous_answer)
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
 
     selected_open = set(selection.review_ids + selection.blocking_question_ids + selection.question_ids)
@@ -889,6 +924,7 @@ def _refinement_shortcut_result(
     query: str,
     previous_answer: Mapping[str, Any],
     total_started: float,
+    today: date | None = None,
 ) -> dict[str, Any]:
     """Serve a recognized refinement ("make this 3 bullets", "shorten it", "focus
     on blockers", etc.) without a model round-trip.
@@ -909,8 +945,98 @@ def _refinement_shortcut_result(
     return _finalize_ask_result(
         candidates, selection_raw, previous_answer, pipeline="deterministic_refinement",
         context_ms=db_ms + trim_ms, provider_ms=0, total_started=total_started,
-        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms,
+        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, today=today,
     )
+
+
+class _StreamedAnswerScanner:
+    """Reads the one-call Ask JSON as it streams ({"selection": {...}, "answer": {..., "claims": [...], "sections":
+    [...], ...}}) and returns the selection once it is complete, then each claim and each section once its object is
+    complete (#567). Nothing is returned before the selection, because nothing can be checked without it."""
+
+    _SELECTION_KEY = re.compile(r'"selection"\s*:\s*')
+    _ARRAYS = ("claims", "sections")      # in the order ANSWER_JSON_SCHEMA puts them
+
+    def __init__(self) -> None:
+        self.text = ""
+        self.selection: Mapping[str, Any] | None = None
+        self._search_from = 0
+        self._array = 0                    # index into _ARRAYS
+        self._pos: int | None = None       # inside the current array
+        self._decoder = json.JSONDecoder()
+
+    def feed(self, chunk: str) -> list[tuple[str, Mapping[str, Any]]]:
+        """Add text; return ("claim" | "section", object) for each object completed by it."""
+        self.text += chunk
+        if self.selection is None:
+            match = self._SELECTION_KEY.search(self.text)
+            if not match:
+                return []
+            try:
+                value, end = self._decoder.raw_decode(self.text, match.end())
+            except json.JSONDecodeError:
+                return []
+            if not isinstance(value, Mapping):
+                self._array = len(self._ARRAYS)
+                return []
+            self.selection, self._search_from = value, end
+        found: list[tuple[str, Mapping[str, Any]]] = []
+        while self._array < len(self._ARRAYS):
+            name = self._ARRAYS[self._array]
+            if self._pos is None:
+                match = re.compile(rf'"{name}"\s*:\s*\[').search(self.text, self._search_from)
+                if not match:
+                    break
+                self._pos = match.end()
+            pos = self._pos
+            while pos < len(self.text) and self.text[pos] in " \t\r\n,":
+                pos += 1
+            if pos >= len(self.text):
+                break
+            if self.text[pos] == "]":
+                self._array, self._pos, self._search_from = self._array + 1, None, pos + 1
+                continue
+            try:
+                value, end = self._decoder.raw_decode(self.text, pos)
+            except json.JSONDecodeError:
+                break
+            self._pos = end
+            if isinstance(value, Mapping):
+                found.append((name[:-1], value))
+        return found
+
+
+class _StreamChecks:
+    """Checks streamed claims and sections with the same _AnswerChecks the finished answer uses."""
+
+    def __init__(self, selection_raw: Any, candidates: Mapping[str, list[dict]], query: str, today: date | None):
+        selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
+        self.checks = _AnswerChecks(_selected_context(selection, candidates), candidates, query=query, today=today)
+        self.claims_kept = 0        # prepare_answer_raw keeps the first MAX_CLAIMS claims that pass its bounds
+        self.claim_index = 0
+        self.section_index = 0
+
+    def claim_event(self, raw: Mapping[str, Any]) -> dict[str, Any]:
+        index, self.claim_index = self.claim_index, self.claim_index + 1
+        prepared, withheld = prepare_answer_raw({"claims": [raw]})
+        if withheld or not prepared["claims"] or self.claims_kept >= MAX_CLAIMS:
+            return {"index": index, "status": "withheld"}
+        self.claims_kept += 1
+        try:
+            checked = self.checks.claim(AskClaim.model_validate(prepared["claims"][0]))
+        except ValueError:
+            checked = None
+        if checked is None:
+            return {"index": index, "status": "withheld"}
+        return {"index": index, "status": "shown", "claim": checked.model_dump()}
+
+    def section_event(self, raw: Mapping[str, Any]) -> dict[str, Any] | None:
+        index, self.section_index = self.section_index, self.section_index + 1
+        try:
+            section, withheld = self.checks.section(AskAnswerSection.model_validate(raw))
+        except ValueError:
+            return None             # the finished answer fails validation too, and the endpoint retries
+        return {"index": index, "section": section.model_dump(), "withheld_items": withheld}
 
 
 def stream_ask_events(
@@ -924,7 +1050,7 @@ def stream_ask_events(
     total_started = time.perf_counter()
 
     if previous_answer and detect_refinement_type(query):
-        yield "final", _refinement_shortcut_result(connection, query, previous_answer, total_started)
+        yield "final", _refinement_shortcut_result(connection, query, previous_answer, total_started, today)
         return
 
     db_started = time.perf_counter()
@@ -950,13 +1076,30 @@ def stream_ask_events(
     provider_started = time.perf_counter()
     first_token_ms: int | None = None
     chunks: list[str] = []
+    # #567: the browser never receives the model's raw text. Each claim and each section is checked against the
+    # selected records (the same checks as the finished answer) once the selection and that object are complete, and
+    # only then sent. The final payload stays authoritative.
+    scanner = _StreamedAnswerScanner()
+    stream_checks: _StreamChecks | None = None
+    selection_failed = False
     for text in provider.stream(_one_call_prompt(query, candidates, previous_answer, today=today)):
         if not text:
             continue
         if first_token_ms is None:
             first_token_ms = round((time.perf_counter() - provider_started) * 1000)
         chunks.append(text)
-        yield "delta", {"text": text}
+        for kind, raw in scanner.feed(text):
+            if selection_failed:
+                break
+            if stream_checks is None:
+                try:
+                    stream_checks = _StreamChecks(scanner.selection, candidates, query, today)
+                except ValueError:
+                    selection_failed = True     # it fails the finished answer too; nothing is shown
+                    break
+            event = stream_checks.claim_event(raw) if kind == "claim" else stream_checks.section_event(raw)
+            if event is not None:
+                yield kind, event
     provider_ms = round((time.perf_counter() - provider_started) * 1000)
     _persist_model_call_metrics(connection, provider)
     combined = _parse_streamed_json("".join(chunks))
@@ -966,6 +1109,7 @@ def stream_ask_events(
         candidates, selection_raw, answer_raw, pipeline="one_call_stream",
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
         query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, first_token_ms=first_token_ms,
+        today=today,
     )
     yield "final", result
 
@@ -974,7 +1118,7 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     total_started = time.perf_counter()
 
     if previous_answer and detect_refinement_type(query):
-        return _refinement_shortcut_result(connection, query, previous_answer, total_started)
+        return _refinement_shortcut_result(connection, query, previous_answer, total_started, today)
 
     db_started = time.perf_counter()
     raw_candidates = _compact_candidates(connection)
@@ -1018,5 +1162,5 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     return _finalize_ask_result(
         candidates, selection_raw, answer_raw, pipeline=pipeline,
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
-        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms,
+        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, today=today,
     )

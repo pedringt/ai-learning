@@ -46,11 +46,11 @@ import re
 
 import pytest
 
-from ask_contract import AskAnswerItem, AskAnswerSection, AskSelection, AskSynthesis
+from ask_contract import AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis
 from ask_provider import LiveAskProvider
 from ask_service import (
     _clean_visible_ask_text, _grounding_rules, _one_call_prompt, _soften_unearned_settled_prose,
-    _soften_unearned_settled_words, _synthesis_prompt, _validate_synthesis, run_ask,
+    _finish_display_fields, _soften_unearned_settled_words, _synthesis_prompt, _validate_synthesis, run_ask,
 )
 from database_migration_backed import get_test_db
 from anthropic_provider import AnthropicProvider
@@ -205,23 +205,22 @@ def _selection_and_context_with_open_review():
     return selection, context
 
 
-def test_validate_synthesis_softens_headline_and_titles_when_context_has_an_open_review():
+def test_validate_synthesis_softens_titles_and_the_headline_is_fixed_when_context_has_an_open_review():
+    """#567: the model no longer writes the headline; software sets a fixed one per job, so it can't claim a
+    status. Section titles still go through the backstop. An already-hedged unlabelled claim is left as written."""
     selection, context = _selection_and_context_with_open_review()
     answer = AskSynthesis(
         job="current_fact",
-        headline="Retention Terms: Legal Confirmed",
-        summary="Legal confirmed the terms, but the Review is still open and the Question remains unresolved.",
+        claims=[AskClaim(text="Legal confirmed the terms, but the Review is still open and the Question remains unresolved.")],
         sections=[AskAnswerSection(kind="other", title="Confirmed Retention and Deletion", items=[
             AskAnswerItem(text="Some free-text detail that says confirmed too", record_type="none"),
         ])],
     )
     cleaned = _validate_synthesis(answer, selection, context)
-    assert "Confirmed" not in cleaned.headline and "confirmed" not in cleaned.headline
+    _finish_display_fields(cleaned, None)
+    assert cleaned.headline == "What State has on record"
     assert "Confirmed" not in cleaned.sections[0].title and "confirmed" not in cleaned.sections[0].title
-    # Full prose (summary, free-text items) is left to the prompt rules, not
-    # the code-level backstop, since the model reliably hedges there already
-    # and blind word-replacement in longer sentences risks garbling meaning.
-    assert "confirmed" in cleaned.summary.lower()
+    assert "confirmed" in cleaned.claims[0].text.lower()
 
 
 def test_validate_synthesis_softens_headline_when_review_exists_but_was_not_selected():
@@ -244,9 +243,10 @@ def test_validate_synthesis_softens_headline_when_review_exists_but_was_not_sele
         "reviews": [{"id": "r-1", "review_type": "proposed_update", "decision_question": "Is the budget approved?", "why_consequential": "x", "affected_state_ids": [], "evidence_ids": []}],
         "questions": [],
     }
-    answer = AskSynthesis(job="current_fact", headline="Pilot Budget", summary="The pilot budget is approved at $40,000.", sections=[])
+    # #567: the unlabelled claim stands in for the old summary. (No figure: a figure in no selected record is withheld.)
+    answer = AskSynthesis(job="current_fact", claims=[AskClaim(text="The pilot budget is approved.")], sections=[])
     cleaned = _validate_synthesis(answer, selection, context, candidates)
-    assert "approved at $40,000" not in cleaned.summary, (
+    assert cleaned.claims and "budget is approved." not in cleaned.claims[0].text, (
         "The pending Review in the candidate pool was skipped by the selector, but the claim "
         "must still be hedged -- otherwise the same question can answer 'approved' on one run "
         "and 'not yet approved' on another depending on non-deterministic selection."
@@ -337,19 +337,19 @@ def test_soften_unearned_settled_prose_handles_none_and_empty():
     assert _soften_unearned_settled_prose("") == ""
 
 
-def test_validate_synthesis_softens_summary_and_free_text_items_when_pending():
+def test_validate_synthesis_softens_unlabelled_claims_and_free_text_items_when_pending():
     selection, context = _selection_and_context_with_open_review()
     answer = AskSynthesis(
         job="current_fact",
-        headline="Retention",
-        summary="Legal has confirmed retention is 30 days. This is still pending Security approval.",
+        claims=[AskClaim(text="Legal has confirmed the retention terms."),
+                AskClaim(text="This is still pending Security approval.")],
         sections=[AskAnswerSection(kind="other", title="Details", items=[
             AskAnswerItem(text="This resolves the retention blocker.", record_type="none"),
         ])],
     )
     cleaned = _validate_synthesis(answer, selection, context)
-    assert "Legal has confirmed" not in cleaned.summary
-    assert "still pending Security approval" in cleaned.summary, "The already-hedged sentence must survive unchanged."
+    assert "Legal has confirmed" not in cleaned.claims[0].text
+    assert cleaned.claims[1].text == "This is still pending Security approval.", "The already-hedged claim must survive unchanged."
     assert "This resolves" not in cleaned.sections[0].items[0].text
 
 

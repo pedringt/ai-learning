@@ -28,8 +28,12 @@ class FakeAskProvider:
         }
         self.answer = answer or {
             "job": "meeting_prep",
-            "headline": "Security meeting prep",
-            "summary": "The pilot is bounded and human-reviewed, while vendor retention authority still needs a decision.",
+            "claims": [
+                {"text": "The pilot remains read-only and human-reviewed.", "basis": "current_state",
+                 "primary_record_id": "k-data", "supporting_record_ids": []},
+                {"text": "Vendor retention authority still needs a decision.", "basis": "none",
+                 "primary_record_id": None, "supporting_record_ids": []},
+            ],
             "sections": [
                 {"kind": "established", "title": "Decisions already made", "items": [
                     {"text": "The pilot remains read-only and human-reviewed.", "record_type": "state", "record_id": "k-data", "detail": None}
@@ -209,10 +213,11 @@ def test_streaming_ask_retries_once_after_final_contract_failure_and_caches_resu
         first = client.post("/api/ask/stream", json={"query": "Prep me for the security meeting."})
 
         assert first.status_code == 200
-        assert "event: delta" in first.text
+        # #567: checked claims stream as `claim` events; the model's raw text is never sent.
+        assert "event: claim" in first.text and "event: delta" not in first.text
         assert "event: final" in first.text
         assert "event: error" not in first.text
-        assert "Security meeting prep" in first.text
+        assert "Meeting brief" in first.text
         assert provider.stream_calls == 1
         assert len(provider.prompts) == 2
 

@@ -118,74 +118,41 @@
   function meetingNotesScaffold(){return `<section class="ask-meeting-notes"><h3>Meeting notes</h3><div class="meeting-note-block"><strong>Decisions</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Answers / new information</strong><span>Add notes here</span></div><div class="meeting-note-block"><strong>Actions</strong><span>☐ Add actions here</span></div><div class="meeting-note-block"><strong>Follow-ups</strong><span>Add notes here</span></div></section>`;}
   // #544 (Oct 20, Paige): every answer says it covers only what State has on record.
   const SCOPE_NOTE="Based on what's recorded in State. There may be things it doesn't know about.";
-  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,'',a.summary];for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length)continue;lines.push('',s.title);for(const i of items){lines.push(`- ${i.text}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
+  // #567: one fixed line when a claim or card failed the server's checks and was left out (WITHHELD_LINE in ask_display.py).
+  const WITHHELD_LINE="Part of this answer couldn't be checked against State's records and was left out.";
+  const hasWithheld=a=>!!(a?.withheld_claims||a?.withheld_items);
+  const labelled=(label,text)=>label?`[${label}] ${text}`:text;
+  // #567: claims replace the summary; each keeps its chip, on screen and in copied text. An answer without claims
+  // (a software-written starter answer) still shows its summary.
+  function leadHtml(a){
+    if(!Array.isArray(a.claims))return `<p class="result-lede">${esc(a.summary||'')}</p>`;
+    const claims=a.claims.map(c=>`<li class="ask-claim">${c.label?`<span class="ask-record-badge ask-claim-${esc(c.basis||'none')}">${esc(c.label)}</span>`:''}<span class="ask-claim-text">${esc(c.text)}</span></li>`).join('');
+    return `${claims?`<ul class="ask-claims">${claims}</ul>`:''}${hasWithheld(a)?`<p class="ask-withheld-note">${esc(WITHHELD_LINE)}</p>`:''}`;
+  }
+  // Copy, in the same form as ask_display.displayed_lines: chips stay with the text they label.
+  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,''];if(Array.isArray(a.claims)){for(const c of a.claims)lines.push(labelled(c.label,c.text));if(hasWithheld(a))lines.push(WITHHELD_LINE);}else lines.push(a.summary);for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length)continue;lines.push('',s.title);for(const i of items){lines.push(`- ${labelled(labelFor(i.record_type),i.text)}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
 
-  function decodeJsonStringFragment(fragment){
-    try{return JSON.parse(`"${fragment}"`);}catch(_){return fragment.replace(/\\n/g,'\n').replace(/\\"/g,'"').replace(/\\\\/g,'\\');}
-  }
-  function streamedFields(raw){
-    const out=[];const re=/"(headline|summary|title|text|detail)"\s*:\s*"/g;let match;
-    while((match=re.exec(raw))){
-      let i=re.lastIndex,j=i,escaped=false,complete=false;
-      for(;j<raw.length;j++){
-        const ch=raw[j];
-        if(escaped){escaped=false;continue;}
-        if(ch==='\\'){escaped=true;continue;}
-        if(ch==='"'){complete=true;break;}
-      }
-      const value=decodeJsonStringFragment(raw.slice(i,j))
-        // Seeded demo ids are prefixed slugs ("demo-review-retention", "demo-juniper-review-elevator"); remove the whole slug first so the
-        // shape patterns below do not leave the prefix behind as "Demo-juniper-" (#247). Mirrors _DEMO_SLUG_ID in ask_service.py.
-        .replace(/\bdemo-(?:(?:northstar|juniper)-)?(?:review|state|question|evidence|proposal|history)-[a-z0-9-]+\b/gi,'')
-        .replace(/\b(?:state|question|evidence|review|proposal)_[a-z0-9]+\b/gi,'')
-        .replace(/\b(?:ask-evidence|state|question|evidence|review|proposal|k|q)-[a-z0-9-]+\b/gi,'')
-        .replace(/\s+([,.;:])/g,'$1')
-        .replace(/\s{2,}/g,' ')
-        .trim();
-      out.push({key:match[1],value,complete});
-      if(!complete)break;
-      re.lastIndex=j+1;
-    }
-    return out;
-  }
-  // #478: the draft is the model's raw text until the server's cleanup replaces it with the
-  // final answer; scrub the prompt's record format ("blocking=true; blocks:", "Review type:
-  // open_question", "decision_question:", record ids) so it doesn't flash on screen.
-  function cleanDraft(value){
-    return String(value||'')
-      .replace(/\b[a-z_]+=(?:true|false|null|none|\d+)\b[;,]?/gi,'')
-      .replace(/\b(?:decision_question|why_consequential|review_type|record_type|record_id|evidence_ids|affected_state_ids|source_type)\s*:?/gi,'')
-      .replace(/\bReview type:\s*/gi,'')
-      .replace(/\b(?:open_question|proposed_update|state_at_risk|missing_understanding)\b/g,m=>m.replace(/_/g,' '))
-      .replace(/\bdemo-(?:(?:northstar|juniper)-)?(?:review|state|question|evidence|proposal|history)-[a-z0-9-]+\b/gi,'')
-      .replace(/(?<![A-Za-z0-9_-])(?:k|q|jq|r|ask-evidence)-[a-z0-9-]+\b/g,'')
-      .replace(/\(\s*[:;,]\s*/g,'(').replace(/\(\s*\)/g,'').replace(/\s{2,}/g,' ');
-  }
-  function renderStream(raw,preview=null){
-    const fields=streamedFields(raw||'');
-    if(!fields.length){
+  // #567: the browser never draws the model's raw text. The server sends each claim and each section only after it
+  // has passed the same checks as the finished answer ({claims:[claim events], sections:[section events]}); the
+  // finished answer then replaces this view. Anything else (a raw string from an older caller) shows the loading state.
+  function renderStream(stream,preview=null){
+    const claimEvents=Array.isArray(stream?.claims)?stream.claims:[];
+    const sectionEvents=Array.isArray(stream?.sections)?stream.sections:[];
+    const shown=claimEvents.filter(e=>e?.status==='shown'&&e.claim).map(e=>e.claim);
+    const withheld=claimEvents.some(e=>e?.status==='withheld')||sectionEvents.some(e=>e?.withheld_items);
+    const sections=sectionEvents.map(e=>e?.section).filter(s=>s&&(s.items||[]).length);
+    if(!shown.length&&!sections.length&&!withheld){
       const counts=preview?.counts||{};const bits=[];
       if(counts.reviews)bits.push(`${counts.reviews} ${counts.reviews===1?'Review':'Reviews'}`);
       if(counts.blockers)bits.push(`${counts.blockers} ${counts.blockers===1?'blocker':'blockers'}`);
       if(counts.questions)bits.push(`${counts.questions} open ${counts.questions===1?'question':'questions'}`);
-      const msg=bits.length?`Grounded in ${bits.join(', ')}. Drafting the answer…`:'Grounded context ready. Drafting the answer…';
+      const msg=bits.length?`Grounded in ${bits.join(', ')}. Checking the answer against the record…`:'Grounded context ready. Checking the answer against the record…';
       return `<div class="ask-live-loading has-grounded-preview"><span class="ask-loading-mark" aria-hidden="true"></span><div><strong>Grounded context ready</strong><p>${esc(msg)}</p><p class="ask-loading-note">Suggested prompts above answer instantly from what's already known -- this one runs a live check against the full project record.</p></div></div>`;
     }
-    // Everything streams live, including meeting_prep. The backend reshapes a meeting_prep answer after the stream
-    // ends (_normalize_meeting_prep: merge, reorder, cap, retitle), which used to make the draft grow and then
-    // shrink (#239). The prompt now states that final shape, generated from the same constants the normalizer
-    // uses (#246), and a real-model A/B measured 83% of answers already in final shape (0% before), with order
-    // and titles never changing. The rare residual is one over-cap bullet trimmed at the end.
-    let body='';
-    for(const field of fields){
-      const cursor=field.complete?'':'<span class="ask-stream-cursor" aria-hidden="true"></span>';
-      if(field.key==='headline')body+=`<h2>${esc(cleanDraft(field.value))}${cursor}</h2>`;
-      else if(field.key==='summary')body+=`<p class="result-lede">${esc(cleanDraft(field.value))}${cursor}</p>`;
-      else if(field.key==='title')body+=`<h3 class="ask-stream-section-title">${esc(cleanDraft(field.value))}${cursor}</h3>`;
-      else if(field.key==='text')body+=`<div class="ask-stream-item">${esc(cleanDraft(field.value))}${cursor}</div>`;
-      else if(field.key==='detail'&&field.value)body+=`<div class="ask-stream-detail">${esc(cleanDraft(field.value))}${cursor}</div>`;
-    }
-    return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Drafting</div>${body}</div>`;
+    // Sections stream as they pass the checks (#246: the prompt asks for the final shape, so they rarely move when
+    // the answer finishes).
+    const sectionHtml=sections.map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3><ul>${s.items.map(i=>itemHtml(i,null)).join('')}</ul></section>`).join('');
+    return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Checking</div>${leadHtml({claims:shown,withheld_claims:withheld?1:0})}${sectionHtml}</div>`;
   }
 
   function render(payload,liveStatus){
@@ -217,7 +184,7 @@
     // drawer's own actually-wired refresh control instead.
     const staleNotice=resolvedCount>0?`<div class="ask-stale-notice"><span>${resolvedCount===1?'An item shown here has':`${resolvedCount} items shown here have`} since been resolved. This summary wasn't regenerated.</span><button class="text-button" type="button" data-review-batch-action="refresh-ask">Refresh this answer →</button></div>`:'';
     // #543: the model's suggested Question rides on the answer element for the Ask-to-Question handoff card.
-    return `<div class="ask-live-answer"${a.suggested_question?` data-suggested-question="${esc(a.suggested_question)}"`:''}><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2><p class="result-lede">${esc(a.summary)}</p>${staleNotice}${sections}${notes}<p class="ask-scope-note">${esc(SCOPE_NOTE)}</p>${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}</div>`;
+    return `<div class="ask-live-answer"${a.suggested_question?` data-suggested-question="${esc(a.suggested_question)}"`:''}><div class="ask-answer-head"><div class="result-label">${esc(a.job==='meeting_prep'?'Meeting prep':'State Ask')}</div><div class="ask-answer-actions"><button class="btn secondary ask-copy-answer" data-action="copy-result">Copy</button><button class="btn secondary ask-new-session" data-action="new-ask">New ask</button></div></div><h2>${esc(a.headline)}</h2>${leadHtml(a)}${staleNotice}${sections}${notes}<p class="ask-scope-note">${esc(SCOPE_NOTE)}</p>${refinements?`<div class="ask-refinement-chips">${refinements}</div>`:''}</div>`;
   }
   const INITIAL_WAIT_MESSAGES=['Finding the project context that matters for this question…','Checking Current State against open Reviews and Questions…','Keeping unresolved information unresolved…','Shaping the grounded answer around the useful parts…'];const LONG_WAIT_MESSAGES=['Still working. Checking the answer against the project record…','Still working — making sure Reviews qualify rather than silently replace Current State…'];const REFINEMENT_WAIT_MESSAGES=['Refining the existing answer without changing the underlying project truth…','Keeping the same grounding while changing the format and emphasis…','Still working — checking the refinement against the project record…'];const waitTimers=new WeakMap();
   function rotateStatus(node,target,messages,longMessages=null){if(!node||!target||waitTimers.has(node))return;const started=Date.now();let index=0;const timer=window.setInterval(()=>{if(!node.isConnected){window.clearInterval(timer);waitTimers.delete(node);return;}const pool=longMessages&&Date.now()-started>=10000?longMessages:messages;target.textContent=pool[index%pool.length];index+=1;},3000);waitTimers.set(node,timer);}

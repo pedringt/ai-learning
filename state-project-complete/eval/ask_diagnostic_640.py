@@ -122,7 +122,8 @@ def capture_model_calls() -> Iterator[list[dict[str, Any]]]:
 
 
 def raw_headline(raw_text: str | None) -> str | None:
-    """The headline as the model wrote it, from the raw one-call JSON ({"answer": {...}, "selection": {...}})."""
+    """The answer's lead as the model wrote it, from the raw one-call JSON ({"selection": {...}, "answer": {...}}):
+    its first claim (#567), or the headline in the older shape."""
     import json
 
     try:
@@ -130,17 +131,25 @@ def raw_headline(raw_text: str | None) -> str | None:
     except (TypeError, ValueError):
         return None
     answer = data.get("answer") if isinstance(data, dict) else None
-    return answer.get("headline") if isinstance(answer, dict) else None
+    if not isinstance(answer, dict):
+        return None
+    claims = answer.get("claims")
+    if isinstance(claims, list):
+        first = claims[0] if claims and isinstance(claims[0], dict) else {}
+        return first.get("text")
+    return answer.get("headline")
 
 
 def run_variant(variant: Variant, provider: Any) -> dict[str, Any]:
+    from ask_display import answer_lead
     from eval.quality_harness import run_ask_quality_scenario
 
     with without_duplicate_evidence(variant.drop_duplicate_evidence), capture_model_calls() as calls:
         result = run_ask_quality_scenario(variant.scenario, provider)
     answer = result.answer or {}
     inner = answer.get("answer") if isinstance(answer.get("answer"), dict) else answer
-    final_headline = inner.get("headline") if isinstance(inner, dict) else None
+    # #567: the lead is the first displayed claim (the headline is fixed by software), or the older headline.
+    final_headline = answer_lead(answer) if answer else None
     raw = raw_headline(calls[-1]["raw_text"]) if calls else None
     return {
         "model_calls": calls,
@@ -148,7 +157,7 @@ def run_variant(variant: Variant, provider: Any) -> dict[str, Any]:
         "raw_matches_final_headline": (raw == final_headline) if raw is not None else None,
         "variant": variant.id, "kind": variant.kind, "question": variant.scenario.question,
         "passed": result.passed, "failed_items": result.failed_items, "error": result.error,
-        "headline": inner.get("headline") if isinstance(inner, dict) else None,
+        "headline": final_headline,
         "summary": inner.get("summary") if isinstance(inner, dict) else None,
         "answer": answer,
     }

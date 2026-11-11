@@ -53,9 +53,8 @@ def displayed_lines(answer: Any, *, include_footer: bool = False) -> list[str]:
     lines: list[str] = []
     if a.get("headline"):
         lines.append(str(a["headline"]).strip())
-    claims = claim_lines(a)
-    if claims:
-        lines.extend(claims)
+    if isinstance(a.get("claims"), list):
+        lines.extend(claim_lines(a))
     elif a.get("summary"):
         lines.append(str(a["summary"]).strip())
     if has_withheld(a):

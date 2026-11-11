@@ -81,8 +81,9 @@ def test_the_diagnostic_saves_the_prompt_and_raw_output_and_compares_headlines(m
 
     raw = {"selection": {"job": "current_fact", "state_ids": ["ask-state-0"], "review_ids": [], "blocking_question_ids": [],
                          "question_ids": [], "history_ids": [], "evidence_ids": [], "answered_question_ids": ["ask-closed-question-0"]},
-           "answer": {"job": "current_fact", "headline": "No, the vendor-retention question is answered.",
-                      "summary": "It was answered: deleted within 30 days of contract end. The contract remains under review.",
+           "answer": {"job": "current_fact",
+                      "claims": [{"text": "No, the vendor-retention question is answered.", "basis": "none",
+                                  "primary_record_id": None, "supporting_record_ids": []}],
                       "sections": [], "source_ids": [], "uncertainty_ids": [], "suggested_refinements": [], "suggested_question": None}}
     sent = []
 
