@@ -1,12 +1,14 @@
 {
- "about": "#641 blind calibration, Nov 11 2026: Paige's blind grades (pasted in chat) against grader v8 (run 43108154514, 12 calls, $0.2859). calibration_report: fails. Gates meet agreement; one missed fail (r5 faithfulness 1 vs 3); directness, hedging and concision miss the bar.",
+ "about": "#641 AI-reviewer agreement check, Nov 11 2026. The reference grades were supplied by ChatGPT (pasted in chat by Paige), NOT by Paige: this measures grader v8's agreement with another AI reviewer, and human calibration is still pending. Grader v8 run 43108154514 (12 calls, $0.2859). calibration_report against the ChatGPT reference: fails (gates meet agreement; one missed fail, r5 faithfulness 1 vs 3; directness, hedging and concision miss the bar). Kept as regression examples for the next grader version.",
+ "reference_source": "ChatGPT (AI reviewer), blind to answer origins",
+ "human_calibration": "pending",
  "run": 43108154514,
  "results": [
   {
    "blind_id": "c01",
    "answer_id": "h3",
    "scenario": "compound_question_keeps_governing_state",
-   "paige": {
+   "reference": {
     "faithfulness": 1,
     "authority_calibration": 1,
     "consequential_completeness": 1,
@@ -30,13 +32,13 @@
     "hedging_calibration": "An unrecorded budget is stated as a definite value in the headline. Meanwhile, the settled permission to proceed with planning is replaced by a cautious hold.",
     "concision": "The answer is short, with no filler."
    },
-   "paige_note": "Declares $40,000 settled and overrides explicit permission to plan. Omits Current State's planning permission."
+   "reference_note": "Declares $40,000 settled and overrides explicit permission to plan. Omits Current State's planning permission."
   },
   {
    "blind_id": "c02",
    "answer_id": "h1",
    "scenario": "evidence_backed_approval_qualified",
-   "paige": {
+   "reference": {
     "faithfulness": 4,
     "authority_calibration": 4,
     "consequential_completeness": 4,
@@ -60,13 +62,13 @@
     "hedging_calibration": "The pending status is stated clearly, once, and attached to the right item. The source's approval is not over-hedged.",
     "concision": "The answer is short. The pending status appears in the headline, the summary and one card, which is the expected shape and not padding."
    },
-   "paige_note": "Correctly reports source approval separately from recording in Current State. Opening and body repeat."
+   "reference_note": "Correctly reports source approval separately from recording in Current State. Opening and body repeat."
   },
   {
    "blind_id": "c03",
    "answer_id": "r6",
    "scenario": "compound_question_keeps_governing_state",
-   "paige": {
+   "reference": {
     "faithfulness": 4,
     "authority_calibration": 4,
     "consequential_completeness": 3,
@@ -90,13 +92,13 @@
     "hedging_calibration": "The settled planning fact is stated plainly, and the pending budget is hedged once.",
     "concision": "The data-minimization card adds nothing to a question about budget and planning."
    },
-   "paige_note": "Correct authority handling. Review's conflicting planning dependency is displayed but not explicitly reconciled."
+   "reference_note": "Correct authority handling. Review's conflicting planning dependency is displayed but not explicitly reconciled."
   },
   {
    "blind_id": "c04",
    "answer_id": "r4",
    "scenario": "source_words_not_demoted",
-   "paige": {
+   "reference": {
     "faithfulness": 4,
     "authority_calibration": 4,
     "consequential_completeness": 3,
@@ -120,13 +122,13 @@
     "hedging_calibration": "The pending status is stated clearly once, and the absence from Current State is stated plainly.",
     "concision": "Short, no filler. The pending status repeated across headline, summary and card is the expected Ask shape."
    },
-   "paige_note": "Answers recording status first; source-reported approval appears only in the supporting record. Repeats pending status."
+   "reference_note": "Answers recording status first; source-reported approval appears only in the supporting record. Repeats pending status."
   },
   {
    "blind_id": "c05",
    "answer_id": "r5",
    "scenario": "compound_question_keeps_governing_state",
-   "paige": {
+   "reference": {
     "faithfulness": 1,
     "authority_calibration": 4,
     "consequential_completeness": 4,
@@ -150,13 +152,13 @@
     "hedging_calibration": "Adding \"with pending budget review\" to the planning answer, and the closing relevance sentence, slightly soften a settled Current State permission.",
     "concision": "The summary briefly names what the cards show. There is no real padding."
    },
-   "paige_note": "Changes the Review's \"approved\" budget into \"not yet approved.\" Pending recording does not establish lack of approval."
+   "reference_note": "Changes the Review's \"approved\" budget into \"not yet approved.\" Pending recording does not establish lack of approval."
   },
   {
    "blind_id": "c06",
    "answer_id": "r1",
    "scenario": "evidence_backed_approval_qualified",
-   "paige": {
+   "reference": {
     "faithfulness": 4,
     "authority_calibration": 4,
     "consequential_completeness": 4,
@@ -180,13 +182,13 @@
     "hedging_calibration": "Pending status is stated clearly, and the Evidence's approval is reported rather than denied.",
     "concision": "The parenthetical \"(per Evidence, not in Current State)\" is repeated awkwardly, and the \"Useful context\" section about the use case adds little to a budget question."
    },
-   "paige_note": "Accurate attribution and authority distinction, but repeated parenthetical qualifications and irrelevant scope context add clutter."
+   "reference_note": "Accurate attribution and authority distinction, but repeated parenthetical qualifications and irrelevant scope context add clutter."
   },
   {
    "blind_id": "c07",
    "answer_id": "h4",
    "scenario": "pending_review_not_truth",
-   "paige": {
+   "reference": {
     "faithfulness": 4,
     "authority_calibration": 4,
     "consequential_completeness": 4,
@@ -210,13 +212,13 @@
     "hedging_calibration": "The phrase 'as far as the record shows' fits, since no decision is recorded. Current State is stated plainly and the undecided item is hedged once.",
     "concision": "It is short, with an expected summary and two cards and no filler."
    },
-   "paige_note": "Correctly limits the negative answer to what the records show. Body repeats the opening."
+   "reference_note": "Correctly limits the negative answer to what the records show. Body repeats the opening."
   },
   {
    "blind_id": "c08",
    "answer_id": "r7",
    "scenario": "pending_review_not_truth",
-   "paige": {
+   "reference": {
     "faithfulness": 2,
     "authority_calibration": 4,
     "consequential_completeness": 4,
@@ -240,13 +242,13 @@
     "hedging_calibration": "The settled fact is stated plainly, and the absence of a decision is stated clearly once.",
     "concision": "The summary briefly names the state and the pending status with the premise correction. There is no filler."
    },
-   "paige_note": "Turns leadership's question into a proposal to allow skipping review. \"Not yet\" weakly implies eventual approval."
+   "reference_note": "Turns leadership's question into a proposal to allow skipping review. \"Not yet\" weakly implies eventual approval."
   },
   {
    "blind_id": "c09",
    "answer_id": "r2",
    "scenario": "evidence_backed_approval_qualified",
-   "paige": {
+   "reference": {
     "faithfulness": 3,
     "authority_calibration": 3,
     "consequential_completeness": 4,
@@ -270,13 +272,13 @@
     "hedging_calibration": "The pending status is stated once, clearly attached to the budget item. There is no excess hedging.",
     "concision": "The Current State section on Tier 1 troubleshooting scope is unrelated to the budget question and adds nothing."
    },
-   "paige_note": "\"Not yet approved in Current State\" blurs approval with recording. \"Only record\" overlooks the Review. Repeats status distinctions."
+   "reference_note": "\"Not yet approved in Current State\" blurs approval with recording. \"Only record\" overlooks the Review. Repeats status distinctions."
   },
   {
    "blind_id": "c10",
    "answer_id": "h2",
    "scenario": "source_words_not_demoted",
-   "paige": {
+   "reference": {
     "faithfulness": 1,
     "authority_calibration": 1,
     "consequential_completeness": 1,
@@ -300,13 +302,13 @@
     "hedging_calibration": "The pending, unauthorized budget is stated as definite (\"budget of record\"), with no hedge.",
     "concision": "The answer is brief, with no filler."
    },
-   "paige_note": "Promotes a pending Review to the budget of record and invents permission to rely on it. Fails to disclose that recording remains pending."
+   "reference_note": "Promotes a pending Review to the budget of record and invents permission to rely on it. Fails to disclose that recording remains pending."
   },
   {
    "blind_id": "c11",
    "answer_id": "r3",
    "scenario": "source_words_not_demoted",
-   "paige": {
+   "reference": {
     "faithfulness": 4,
     "authority_calibration": 4,
     "consequential_completeness": 4,
@@ -330,13 +332,13 @@
     "hedging_calibration": "The pending status is stated clearly and the source's claim is reported plainly, with no excess qualifiers.",
     "concision": "The summary restates the unconfirmed or pending status several times ('does not have a confirmed', 'not an accepted fact', 'remains unconfirmed'), and one of these is filler."
    },
-   "paige_note": "Correctly reports source approval and pending recording, but the opening answers only recording status. Repeated unconfirmed/pending statements obscure the simple answer."
+   "reference_note": "Correctly reports source approval and pending recording, but the opening answers only recording status. Repeated unconfirmed/pending statements obscure the simple answer."
   },
   {
    "blind_id": "c12",
    "answer_id": "r8",
    "scenario": "pending_review_not_truth",
-   "paige": {
+   "reference": {
     "faithfulness": 2,
     "authority_calibration": 4,
     "consequential_completeness": 4,
@@ -360,7 +362,7 @@
     "hedging_calibration": "Current State is stated plainly, and the pending status is stated once, attached to the Review.",
     "concision": "The answer is short. Its mild redundancy between headline and summary is the expected shape."
    },
-   "paige_note": "\"Leadership has not approved\" exceeds \"no decision is recorded.\" Opening also broadens the low-risk question into removing human review generally."
+   "reference_note": "\"Leadership has not approved\" exceeds \"no decision is recorded.\" Opening also broadens the low-risk question into removing human review generally."
   }
  ]
 }
