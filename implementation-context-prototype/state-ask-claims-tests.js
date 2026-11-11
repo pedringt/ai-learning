@@ -45,5 +45,11 @@ check('copied text labels claims and cards and keeps the withheld line',
   JSON.stringify(copied.slice(0,6))===JSON.stringify(['What State has on record','','[Current State] The pilot stays read-only.',"Part of this answer couldn't be checked against State's records and was left out.",'','Needs your review'])
   &&copied.includes('- [Needs review] Record the budget?'),JSON.stringify(copied));
 
+// The drawer's Copy button (context-product-polish.js portableAskText) must use this same formatter. Until Nov 10 it
+// had its own label set ("Evidence", "Blocking question", "Context") and no scope note.
+const polish=fs.readFileSync(path.join(dir,'context-product-polish.js'),'utf8');
+const copyFn=polish.slice(polish.indexOf('function portableAskText'),polish.indexOf('function sanitizeAskHtml'));
+check('the drawer Copy uses the shared formatter, with no label set of its own',copyFn.includes('ASK.portableText')&&!/blocking_question:'Blocking question'/.test(copyFn),copyFn.slice(0,200));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);

@@ -341,13 +341,12 @@
     if(!items.length)return'';
     return `<section class="ask-resolved-decisions"><span>Human review history</span><h3>Relevant prior decisions</h3><ul>${items.map(r=>{const label=r.resolution==='not_applied'?'Evidence was not applied':'Current State was left unchanged';const source=truncate((r.evidence_items||[])[0]?.content||'',120);return `<li><strong>${esc(label)}:</strong> ${esc(r.decision_question||'A prior Review was resolved.')} ${source?`<small>Evidence: ${esc(source)}</small>`:''}</li>`;}).join('')}</ul></section>`;
   }
+  // #567: Copy uses the same text as the answer on screen (context-ask.js portableText: the same chips, the withheld
+  // line and the scope note), so a copied claim keeps its authority label. Prior human decisions follow it.
   function portableAskText(payload,resolved=[]){
-    const answer=payload?.answer;if(!answer)return'';
-    const labels={state:'Current State',review:'Needs review',blocking_question:'Blocking question',question:'Open question',answered_question:'Answered question',history:'History',evidence:'Evidence',none:'Context'};
-    const lines=[answer.headline||'State Ask','',answer.summary||''];
-    for(const section of answer.sections||[]){if(!section?.items?.length)continue;lines.push('',section.title||'Project context');for(const item of section.items){const label=labels[item.record_type]||'Context';lines.push(`- [${label}] ${item.text}`);if(item.detail)lines.push(`  ${item.record_type==='blocking_question'?'Blocks: ':''}${item.detail}`);}}
-    if(resolved.length){lines.push('','RELEVANT PRIOR HUMAN REVIEW DECISIONS');resolved.forEach(r=>lines.push(`- [${r.resolution==='not_applied'?'Evidence not applied':'Current State left unchanged'}] ${r.decision_question||'Prior review decision'}`));}
-    return lines.join('\n').trim();
+    const text=ASK.portableText?.(payload,null)||'';
+    if(!text||!resolved.length)return text;
+    return [text,'','RELEVANT PRIOR HUMAN REVIEW DECISIONS',...resolved.map(r=>`- [${r.resolution==='not_applied'?'Evidence not applied':'Current State left unchanged'}] ${r.decision_question||'Prior review decision'}`)].join('\n');
   }
   function sanitizeAskHtml(html){
     const holder=document.createElement('div');holder.innerHTML=html;
