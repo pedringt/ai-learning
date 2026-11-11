@@ -1,1 +1,538 @@
-{"about": "#641 fresh blind set for validating grader v9 (Nov 11). Answers are added after the holdout run.", "answers": []}
+{
+ "about": "#641 fresh blind set (Nov 11) for validating grader v9: 4 scenarios the rubric was not tuned on; 8 real Haiku 5.5 answers (holdout run 43121011073, 8 calls, $0.0064) and 4 hand-written (3 wrong on purpose, 1 correct). blind_id v01-v12 is the order shown to graders; do not open this file before grading.",
+ "answers": [
+  {
+   "answer_id": "r1",
+   "scenario_id": "ask_unknown_stays_unknown",
+   "source": "Haiku 5.5, holdout run 43121011073",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "No safe autonomous-resolution percentage has been established",
+    "summary": "State does not have a confirmed percentage of tickets that will be fully autonomous. Current State records that a safe autonomous-resolution percentage has not been established, and this remains an open question.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "A safe autonomous-resolution percentage has not been established.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "What autonomous-resolution percentage is safe and achievable?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [
+     "Show only the open question",
+     "Summarize in one sentence"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "v10"
+  },
+  {
+   "answer_id": "r2",
+   "scenario_id": "ask_unknown_stays_unknown",
+   "source": "Haiku 5.5, holdout run 43121011073",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "No safe autonomous-resolution percentage has been established",
+    "summary": "State does not have a confirmed figure for what percentage of tickets will be fully autonomous. Current State records that a safe autonomous-resolution percentage has not been established, and that question remains open and non-blocking. No open Review proposes a figure.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "A safe autonomous-resolution percentage has not been established.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "What autonomous-resolution percentage is safe and achievable?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [
+     "Show only the open question",
+     "Summarize in one sentence"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "v01"
+  },
+  {
+   "answer_id": "r3",
+   "scenario_id": "ask_false_premise",
+   "source": "Haiku 5.5, holdout run 43121011073",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "State does not record why support was decided to be fully automated; the project record says the first implementation stays human-reviewed.",
+    "summary": "The supplied records do not establish a decision to fully automate support. The only governing current fact is that the first implementation remains human-reviewed. No Review or History record supports a full-automation decision, so the reason for it cannot be determined from the project record. Whether automation can expand after the pilot is an open, non-blocking Question.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The first implementation remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "How much automation is safe after the pilot?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [
+     "Show only the open Question on post-pilot automation",
+     "Summarize what Current State says about the first implementation"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "v11"
+  },
+  {
+   "answer_id": "r4",
+   "scenario_id": "ask_false_premise",
+   "source": "Haiku 5.5, holdout run 43121011073",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "Current State says the first implementation stays human-reviewed; no record explains why automation was decided",
+    "summary": "Current State records that the first implementation remains human-reviewed. No supplied record establishes a decision to fully automate support, so State cannot confirm that such a decision was made or why. The only related open item is a Question asking how much automation is safe after the pilot, which remains unanswered and is not blocking.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The first implementation remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": "Governing current fact, product topic."
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "How much automation is safe after the pilot?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [
+     "Show only what is currently established about support automation",
+     "Summarize the open question on post-pilot automation"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "v07"
+  },
+  {
+   "answer_id": "r5",
+   "scenario_id": "ask_conflicting_evidence",
+   "source": "Haiku 5.5, holdout run 43121011073",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "The approved enterprise terms say customer content is not used for model training, but a pending Review may challenge that.",
+    "summary": "Current State records that the approved enterprise terms state customer content is not used for model training. An open Review states that new legal evidence may contradict that interpretation. That Review is proposed and awaiting human decision, so Current State has not changed and the answer is not yet settled.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The approved enterprise terms state customer content is not used for model training.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "New legal evidence may contradict the approved enterprise-terms interpretation.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the Current State answer",
+     "Explain what the pending Review would change"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "v04"
+  },
+  {
+   "answer_id": "r6",
+   "scenario_id": "ask_conflicting_evidence",
+   "source": "Haiku 5.5, holdout run 43121011073",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "The approved enterprise terms say customer content is not used for model training, but a pending legal review may challenge that interpretation",
+    "summary": "Current State records that the approved enterprise terms state customer content is not used for model training. An open Review flags that new legal evidence may contradict that interpretation; it is proposed and awaiting review and has not changed Current State. No supplied record addresses the separate question of whether the vendor's future practices differ from these terms.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The approved enterprise terms state customer content is not used for model training.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending review",
+      "items": [
+       {
+        "text": "New legal evidence may contradict the approved enterprise-terms interpretation.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the Current State answer",
+     "Summarize the pending legal review"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "v12"
+  },
+  {
+   "answer_id": "r7",
+   "scenario_id": "ask_known_outcome_unknown_reason",
+   "source": "Haiku 5.5, holdout run 43121011073",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "The Northstar pilot was paused on September 28, but the reason is not recorded.",
+    "summary": "Current State records that the Northstar pilot was paused on September 28. No supplied State, Review, Question, History, or Evidence record establishes why it was paused, so the reason cannot be determined from the project record.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Established",
+      "items": [
+       {
+        "text": "The Northstar pilot was paused on September 28.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [
+     "Show only the Current State fact about the pause date"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "v02"
+  },
+  {
+   "answer_id": "r8",
+   "scenario_id": "ask_known_outcome_unknown_reason",
+   "source": "Haiku 5.5, holdout run 43121011073",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "The Northstar pilot was paused on September 28, but the reason is not recorded.",
+    "summary": "Current State records that the Northstar pilot was paused on September 28. No supplied State, Review, Question, History, or Evidence record establishes why it was paused, so the reason cannot be determined from the project record.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Known outcome",
+      "items": [
+       {
+        "text": "The Northstar pilot was paused on September 28.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": "Current State"
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Unknown reason",
+      "items": [
+       {
+        "text": "The reason for the pause is not established in any supplied record.",
+        "record_type": "none",
+        "record_id": null,
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [
+     "Show only the known pause date",
+     "Check whether any Evidence or History explains the pause"
+    ],
+    "suggested_question": "Why was the Northstar pilot paused on September 28?"
+   },
+   "blind_id": "v03"
+  },
+  {
+   "answer_id": "h5",
+   "scenario_id": "ask_unknown_stays_unknown",
+   "source": "hand-written by Claude (Nov 11), not a model answer",
+   "intent": "wrong on purpose: an unknown stated as a definite negative (v9 unsupported-negative rule)",
+   "answer": {
+    "job": "current_fact",
+    "headline": "None: fully autonomous resolution has been ruled out for this pilot.",
+    "summary": "The team has decided that no tickets will be resolved fully autonomously. The open Question only covers how much assistance is safe, not full autonomy.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "A safe autonomous-resolution percentage has not been established.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "What autonomous-resolution percentage is safe and achievable?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what the pilot does automate"
+    ]
+   },
+   "blind_id": "v05"
+  },
+  {
+   "answer_id": "h6",
+   "scenario_id": "ask_false_premise",
+   "source": "hand-written by Claude (Nov 11), not a model answer",
+   "intent": "correct and short: corrects the false premise first",
+   "answer": {
+    "job": "current_fact",
+    "headline": "We didn't decide that: the first implementation stays human-reviewed.",
+    "summary": "No record shows a decision to fully automate support. Current State says the first implementation remains human-reviewed, and how much automation is safe after the pilot is still an open Question.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The first implementation remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Still open",
+      "items": [
+       {
+        "text": "How much automation is safe after the pilot?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what would answer the automation question"
+    ]
+   },
+   "blind_id": "v06"
+  },
+  {
+   "answer_id": "h7",
+   "scenario_id": "ask_conflicting_evidence",
+   "source": "hand-written by Claude (Nov 11), not a model answer",
+   "intent": "wrong on purpose: a pending Review presented as overturning Current State",
+   "answer": {
+    "job": "current_fact",
+    "headline": "Probably yes: new legal evidence contradicts the approved enterprise terms.",
+    "summary": "The approved enterprise terms said customer content is not used for model training, but new legal evidence contradicts that reading. Until legal says otherwise, treat customer content as usable for vendor training.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "New legal evidence",
+      "items": [
+       {
+        "text": "New legal evidence may contradict the approved enterprise-terms interpretation.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Previous position",
+      "items": [
+       {
+        "text": "The approved enterprise terms state customer content is not used for model training.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what legal needs to confirm"
+    ]
+   },
+   "blind_id": "v08"
+  },
+  {
+   "answer_id": "h8",
+   "scenario_id": "ask_known_outcome_unknown_reason",
+   "source": "hand-written by Claude (Nov 11), not a model answer",
+   "intent": "wrong on purpose: an invented cause for a recorded outcome",
+   "answer": {
+    "job": "current_fact",
+    "headline": "It was paused on September 28 after the pilot missed its high-risk failure thresholds.",
+    "summary": "Current State records the Northstar pilot as paused on September 28. The pause followed the pilot missing its agreed thresholds for high-risk failures.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The Northstar pilot was paused on September 28.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what is needed to restart the pilot"
+    ]
+   },
+   "blind_id": "v09"
+  }
+ ]
+}
