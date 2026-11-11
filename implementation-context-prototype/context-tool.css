@@ -291,7 +291,6 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 .compact-review.is-collapsed h3{margin-bottom:0}
 .review-card-body{padding-top:2px}
 .review-card-title{display:block;color:var(--ink)}.compact-review.is-expanded .review-card-title{font-size:14px}
-.notes-result-count{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap;margin-left:auto}
 
 /* R8.2 Open Items hierarchy + section collapse */
 .open-items-sections{display:grid;gap:16px;margin-top:4px}
@@ -523,9 +522,8 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
 /* R10 QA hardening */
 .overlay{z-index:200;box-sizing:border-box;padding-top:max(24px,env(safe-area-inset-top))}
 .dialog{max-height:calc(100dvh - 48px);overflow:auto;overscroll-behavior:contain}
-.ask-followup-working{border-top:1px solid var(--line)}
 
-.demo-reset-zone{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}.demo-reset-zone p{font-size:12px;color:var(--muted);max-width:620px}.danger-light{color:#8c302a!important;border-color:#d8b4b1!important}
+.demo-reset-zone{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}.demo-reset-zone p{font-size:12px;color:var(--muted);max-width:620px}.danger-light{color:#8c302a;border-color:#d8b4b1}
 
 /* R11 browser-stability polish */
 
@@ -565,7 +563,7 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
 /* Keep a streamed draft visible while State retries final grounding once. */
 
 /* Final demo polish: quiet rule actions + discoverable reset. */
-.project-rule-row>.text-button{font-size:11px!important;font-weight:750!important;line-height:1.2!important;padding:4px 2px!important;color:var(--muted)!important;align-self:start}
+.project-rule-row>.text-button{font-size:11px;font-weight:750;line-height:1.2;padding:4px 2px;color:var(--muted);align-self:start}
 .project-rule-row>.text-button:hover{color:var(--accent)!important;text-decoration:underline}
 .demo-reset-help{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:18px;padding:13px 14px;border:1px solid var(--line);border-radius:9px;background:var(--surface2)}
 .demo-reset-help strong,.demo-reset-help span{display:block}.demo-reset-help strong{font-size:12px}.demo-reset-help span{margin-top:2px;font-size:11px;color:var(--muted)}
@@ -674,7 +672,6 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
   .notes-status-filter{margin-left:0;padding-left:0;border-left:0}
   .notes-toolbar--stacked{grid-template-columns:1fr!important}
   .project-section-sticky{position:relative;top:auto;margin:0;padding:0 0 7px;background:transparent;backdrop-filter:none}
-  .notes-result-count{margin-left:0}
   .open-items-sections{gap:12px}
   .open-items-section-body{padding:0 14px 14px}
   .current-state-page-actions{justify-content:flex-start;flex-wrap:wrap}
@@ -732,18 +729,7 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
   line-height:1.4;
 }
 /* Reserve a line so rotating wait copy does not make the block jump. */
-.ask-live-loading p,
-.ask-followup-working{min-height:1.55em}
-.ask-followup-working{
-  margin:2px 0 14px!important;
-  padding:10px 12px!important;
-  border:1px solid var(--line)!important;
-  border-radius:8px!important;
-  background:var(--surface2)!important;
-  color:var(--muted)!important;
-  font-size:.92rem!important;
-  line-height:1.45!important;
-}
+.ask-live-loading p{min-height:1.55em}
 
 /* Final Open Items tier colors (2026-09-06) -- supersedes the earlier
    layered overrides above (multiple past passes had progressively
