@@ -4,7 +4,7 @@
 
 Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
-<!-- edge-review: 2026-10-16 -->
+<!-- edge-review: 2026-11-11 -->
 
 ---
 
@@ -48,17 +48,27 @@ Multi-step AI work may time out, fail halfway through, receive the same request 
 
 ### Separate execution, checking, triggering, and improvement
 
-Long-running agents often involve several distinct loops, though they need not be separate services. The execution loop chooses steps, calls tools, and observes results. A verification loop checks the result against explicit criteria, using software checks, human review, or model-based assessment, and can request another attempt. A model checking another model's work does not guarantee correctness. An event-driven loop starts work when an approved signal occurs. An improvement loop examines past runs to propose changes to the instructions, tools, or workflow around the model.
+Long-running agents often involve several distinct loops, though they need not be separate services. The execution loop chooses steps, calls tools, and observes results. A verification loop checks the result against explicit criteria, using software checks, human review, or model-based assessment, and can request another attempt. An event-driven loop starts work when an approved signal occurs. An improvement loop examines past runs to propose changes to the instructions, tools, or workflow around the model.
 
 These loops need different controls. Bound retries by attempts, time, or cost, and define when to stop or escalate. Changes proposed from past runs are proposals: they should pass evaluation and the applicable approval process before release. Further reading: [Loop Engineering with LangChain Deep Agents](https://www.deeplearning.ai/courses/loop-engineering-with-langchain-deep-agents) (DeepLearning.AI course with LangChain, October 2026).
 
-**Ask:** Which part performs the task, which checks it, what starts it, and how do improvements become approved changes?
+A model checking another model's answer is not necessarily independent verification. For consequential work, check whether the result can be confirmed against trusted records, deterministic software rules, expert review, or, where a property can be stated precisely, a mathematical proof checker. Be clear about which properties that evidence actually establishes, and match the strength of the evidence to the cost of being wrong. For example, Google DeepMind's [AlphaProof Code](https://deepmind.google/blog/introducing-alphaproof-code/) (November 2026) describes formally verifying key security properties of Signal's core cryptographic code, using specifications reviewed by human experts. That is strong evidence for those stated properties. It is not a claim that the whole Signal app is secure.
+
+**Ask:** Which part performs the task, which checks it, what starts it, and how do improvements become approved changes? What evidence could confirm the result without simply trusting the model that produced it?
 
 ### Diagnose multi-step failures at the first bad step
 
 A final success or failure score can hide the real bug. Trace a long run back to the first wrong response or tool action, then separate that root cause from later steps that inherited it.
 
 **Product habit:** Fix the step where the failure starts, not the last place it becomes visible.
+
+### Design tool responses for the agent's next decision
+
+An agent needs more than a tool's success message. It needs enough information to decide what to do next. Tool responses should distinguish success, partial completion, and failure; state relevant errors and permission limits; and offer a way to retrieve more when results are large. An agent that searches a customer database and receives the first 100 matches may conclude its analysis is complete unless the response says more records exist and how to get them.
+
+Test what happens when responses are incomplete or truncated. Shortening output is fine; losing the evidence the next step depends on is not. Further reading: [Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents) (Anthropic Engineering, September 2025) and [Designing for Agents](https://latent.space/p/resend/) (Latent Space interview with Zeno Rocha of Resend, November 2026).
+
+**Ask:** Does this response give the agent enough information to choose its next step?
 
 ### Ground analysis in shared business definitions
 
@@ -70,7 +80,9 @@ AI can query the right data and still reach the wrong business conclusion if ter
 
 Persistent agents hold a role, keep context, use approved tools, and continue work across sessions. The implementation question is lifespan: how long memory, access, permissions, and authority persist; when they expire or require renewal; who can revoke them; and how long-running work checkpoints and stops. Permissions that make sense for a short task may be too broad for a worker that can keep acting indefinitely.
 
-**Ask:** What does this worker remember and for how long, when does its authority expire, and who can revoke it?
+Continuity means actionable context, not just conversation history: current responsibilities, open tasks, approved and pending decisions, handoffs, and facts that need revalidation. Remembered information also goes stale. Keep tentative options separate from approved decisions, mark which facts need revalidation and when, and preserve useful history when newer information supersedes older information. Expiration should trigger revalidation, not an invented replacement. Further reading: [What is agent memory?](https://read.technically.dev/p/what-is-agent-memory) (Technically, November 2026), which separates deleting a memory from recording when a fact stopped being true.
+
+**Ask:** What does this worker remember and for how long, when does its authority expire, and who can revoke it? For a remembered fact, what makes it stop being current, and how will the system learn that?
 
 ### Design proactive behavior around relevance, not activity
 
@@ -125,6 +137,12 @@ Define task success, unacceptable errors, and stop conditions before rollout. Ex
 
 **Ask:** Which specific failure would block release or require rollback?
 
+### Evaluate sensitive workflows with representative, privacy-safe tests
+
+When real customer documents or traces cannot be used for evaluation, build simulated tasks that keep what makes the real work hard: dependencies between steps, ambiguous information, exceptions, competing instructions, and the failures that would matter most. Check the simulations against real user needs using information the team can legally and appropriately access. Synthetic results can reveal real weaknesses, but they do not by themselves establish performance on actual customer work. Further reading: [Building AI for Lawyers](https://latent.space/p/building-ai-for-lawyers-jacob-lauritzen-cto-of-legora/) (Latent Space interview with Legora's CTO, November 2026), which describes building simulated environments modeled on customer tasks because confidential uploads cannot be inspected.
+
+**Ask:** How will we know our test environment represents the work users actually perform?
+
 ### Roll out with an owner and a feedback path
 
 Identify who receives user reports, who investigates an AI behavior issue, and who can pause the feature. Start with limited exposure and turn recurring failures into regression cases.
@@ -149,7 +167,7 @@ Much of the distance between a successful demo and a dependable business solutio
 
 ### Search production behavior by meaning
 
-Operational dashboards catch errors, latency, and outages. AI products also fail semantically: unsupported claims, user frustration, wrong-tool use, policy violations, sensitive-data exposure, incomplete work, or technically successful runs that solved the wrong problem. Observability tools increasingly let teams search, classify, or evaluate traces by these behaviors without predefining every failure mode as a structured field.
+Operational dashboards catch errors, latency, and outages. AI products also fail semantically: unsupported claims, user frustration, wrong-tool use, policy violations, sensitive-data exposure, incomplete work, or technically successful runs that solved the wrong problem. Observability tools increasingly let teams search, classify, or evaluate traces by these behaviors without predefining every failure mode as a structured field, as in [LangSmith AI Search](https://www.langchain.com/blog/agent-traces-ai-search-langsmith).
 
 **Product habit:** Turn recurring semantic failure patterns into saved searches, monitors, and regression evals.
 
@@ -196,14 +214,10 @@ Useful examples of how current AI products are solving recurring product and arc
 - [**TypeSafe AI · Jev**](https://typesafe.ai/blog/introducing-system-one-models-and-jev) — Specialized model for fast, typed decisions such as classification, routing, scoring, and escalation.
 - [**Astra for Law**](https://help.openai.com/en/articles/20001528-astra-for-law) — Vertical AI combining a general model with legal data, domain instructions, plugins, and cited-source review.
 
-### Evaluation and observability
-
-- [**LangSmith AI Search**](https://www.langchain.com/blog/agent-traces-ai-search-langsmith) — Searches production traces by described behavior, such as user frustration or sensitive-data leakage, that conventional filters and full-text search struggle to find.
-
 ### Memory, context, and business knowledge
 
 - [**Jev-Mem**](https://arxiv.org/abs/2609.23986) — Lightweight control layer that decides what memory to retrieve, how much, and when to stop.
-- [**V7 Context Graph**](https://openai.com/index/v7/) — Turns scattered documents into structured, source-linked facts, entities, relationships, and citations.
+- [**V7 Context Graph**](https://www.v7labs.com/context-graph) — Turns scattered documents into structured, source-linked facts, entities, relationships, and citations.
 
 ### Workflow discovery and improvement
 
@@ -215,13 +229,12 @@ Useful examples of how current AI products are solving recurring product and arc
 - [**Dataiku Agent Management**](https://www.dataiku.com/company/news/dataiku-agent-management-general-availability) — Tracks agents across platforms, including ownership, value, performance, and risk.
 - [**Okta Agentic Enterprise Blueprint**](https://www.okta.com/solutions/secure-ai/agentic-enterprise-blueprint/) — Reference architecture for agent identity, scoped access, delegation, monitoring, and containment.
 - [**AWS AgentCore + MCP multi-account pattern**](https://aws.amazon.com/blogs/machine-learning/build-a-multi-account-ai-agent-with-agentcore-gateway-and-mcp/) — Federated pattern for controlled agent access while teams retain data ownership.
-- [**ServiceNow AI Passport**](https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/default.aspx) — Signed credentials that define an agent's authorized scope and are checked at runtime across first- and third-party agents, with scoped delegation, revocation, and graduated restriction when an agent drifts outside its boundary. Expected Q4 2026.
+- [**ServiceNow AI Passport**](https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/default.aspx) — Signed credentials that define an agent's authorized scope and are checked at runtime across first- and third-party agents, with scoped delegation, revocation, and graduated restriction when an agent drifts outside its boundary. Announced in 2026; ServiceNow said availability was expected in Q4 2026.
 
 ### Agent tooling and deployment patterns
 
 - [**Vercel Plugin for Coding Agents**](https://vercel.com/changelog/introducing-vercel-plugin-for-coding-agents) — Loads current platform knowledge and specialized skills dynamically instead of stuffing everything into one prompt.
 - [**Anthropic Managed Agents · dynamic workflows**](https://platform.claude.com/docs/en/managed-agents/multiagent-orchestration) — Runtime orchestration where the lead agent writes a program that splits work across sub-agents and coordinates the results. A useful reference for adaptive multi-agent systems, and a reminder to set budgets and weigh orchestration cost.
-- [**Vercel AI SDK 7**](https://vercel.com/blog/ai-sdk-7) — Reference for approvals, durable execution, sandboxes, telemetry, provider flexibility, and realtime voice.
 - [**Tenable CyberAgents Exchange AI Inspector**](https://www.tenable.com/blog/ai-agent-security-openai-tenable-cyberagents-exchange-inspector) — Evaluates community-built agents, skills, MCP servers, and playbooks before deployment.
 - [**SoundHound OASYS Edge**](https://www.soundhound.com/resource/introducing-oasys-edge) — Example of local, cloud, or hybrid voice deployment based on latency, privacy, connectivity, and cost.
 
@@ -229,7 +242,7 @@ Useful examples of how current AI products are solving recurring product and arc
 
 ## Watching
 
-- **AI Discovery & AEO:** Can AI systems find and correctly understand the facts that matter when they research a product for a customer?
+- **AI Discovery & AEO:** Can AI systems find and correctly understand the facts that matter when they research a product for a customer? Businesses can now supply information directly to some assistants, for example through OpenAI's [Businesses in ChatGPT](https://openai.com/index/introducing-businesses-chatgpt/) (beta, November 2026). That makes it important to distinguish verified business identity and company-provided product claims from the assistant's independent recommendations. Can users tell whether they're reading a business's own information or an independent AI assessment?
 - **Memory routing and context budgets:** Which information deserves to enter context for this step, and when does more context stop being worth the cost?
 - **Voice and local or hybrid agents:** When do latency, privacy, connectivity, or environment justify local or hybrid execution?
 
@@ -237,7 +250,6 @@ Useful examples of how current AI products are solving recurring product and arc
 
 ## Working Vocabulary
 
-- **Bot:** Broad term for AI set up to do a job. Some only respond; others are persistent and more capable.
 - **Agent:** AI that can choose steps or tools to pursue a goal within defined permissions and stopping rules.
 - **Agent harness:** The layer around a model that manages context, tools, state, and multi-step execution.
 - **Agent skill:** A reusable procedure for doing one kind of job, including method, tools, checks, and expected output.
@@ -254,18 +266,15 @@ Useful examples of how current AI products are solving recurring product and arc
 - **Headless architecture:** Data, rules, permissions, and actions are accessible independently of the original UI while the source system still owns the rules.
 - **Behavioral canary:** A small set of critical eval cases run regularly to detect meaningful behavior drift.
 - **Blast radius:** How much harm a failure could cause before someone notices and stops it.
-- **Reversible autonomy:** AI is allowed to take a bounded action, keep evaluating whether the action remains justified, and automatically reverse or compensate when defined evidence shows it should no longer stand.
-- **Compensating action:** A new action that neutralizes or reverses the effect of an earlier action while preserving the audit trail.
+- **Reversible autonomy:** Bounded action that is automatically reversed or compensated when defined evidence shows it should no longer stand.
 
 ---
 
 ## Questions to ask
 
 1. Where does this workflow actually break, and is the cause missing facts, the wrong procedure, or the process itself?
-2. What does orchestration improve enough to justify its extra cost and failure surface?
-3. Which meaningful failures could happen while the software still reports healthy, and how would we trace one back to its first bad step?
-4. Which business definitions must be fixed before AI analyzes the data?
-5. Can the model or provider change without rebuilding the authoritative workflow, and how will we know if behavior changes underneath us?
-6. If this were a standing AI worker, what would it own, remember, and access, how long should its authority last, and what should trigger reversal or revocation?
-7. What should remain predictable in the interface even when AI-generated content changes?
-8. What evidence would we need before moving this from pilot to a standard workflow?
+2. How would we trace a failure back to its first bad step?
+3. Which business definitions must be fixed before AI analyzes the data?
+4. Can the model or provider change without rebuilding the authoritative workflow, and which canaries would tell us behavior changed underneath us?
+5. If this were a standing AI worker, what would it own, remember, and access, how long should its authority last, and what should trigger reversal or revocation?
+6. What evidence would we need before moving this from pilot to a standard workflow?
