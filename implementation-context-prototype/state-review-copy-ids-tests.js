@@ -21,7 +21,8 @@ check('hyphenated words are not treated as ids', d==='Check-in with co-op partne
 const src=fs.readFileSync(path.join(dir,'context-open-items-view.js'),'utf8');
 check('the Establishes line goes through the cleaner', /esc\(cleanReviewCopy\(r\.establishes\)\)/.test(src));
 
-// The streaming draft (context-ask.js renderStream) scrubs the prompt's record format too.
+// The streaming view (context-ask.js renderStream) never draws the model's raw text since #567 (Nov 10): the server
+// sends only checked, scrubbed claims and sections, so raw prompt format can't flash on screen.
 const askCtx={window:{},document,console,setTimeout,location:{protocol:'file:',search:''},fetch(){}};
 vm.createContext(askCtx);
 vm.runInContext(fs.readFileSync(path.join(dir,'context-ask.js'),'utf8'),askCtx);
@@ -30,7 +31,7 @@ const html=askCtx.window.STATE_ASK.renderStream(raw,null);
 check('draft hides key=value pairs', !/blocking=true/.test(html), html);
 check('draft hides field names', !/decision_question/.test(html), html);
 check('draft hides record ids', !/q-retention/.test(html), html);
-check('draft spells out review types', /open question/.test(html) && !/open_question/.test(html), html);
+check('a raw draft is never drawn (loading state instead)', html.includes('ask-live-loading') && !/open.question/.test(html), html);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);

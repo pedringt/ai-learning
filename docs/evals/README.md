@@ -156,6 +156,12 @@ Targeted model-sensitive regressions also live alongside the State test suite wh
 
 When a real failure reveals a missing behavior case, add it to the cheapest layer that can reliably catch it. Not every AI-facing bug needs a paid real-model eval; deterministic and fake-provider regression tests are preferable when they can express the invariant.
 
+### Claims and displayed-answer scoring (#567, Nov 10)
+
+- **The Ask scorers read the displayed answer** (`ask_display.displayed_text`): the headline, the claims with their chips (or the summary, for an older answer), the withheld line, the cards with their chips, the refinement chips and the suggested Question. Before, they read every string in the JSON, so a record type such as `answered_question` or a selection id could satisfy a required fact. Headline checks (#640) read the answer's lead: the first displayed claim once the headline is fixed by software. This scorer change landed first (`e004e47`) so the before and after #567 runs use the same scorer; it is a scorer change for Paige to accept before the paid comparison.
+- **Before/after plan (DEC-020).** The before side is the commit with only the scorer change; the after side is the full branch. Haiku 5.5: `ask` ×20 (260 calls), `adversarial` ×10 (210), `graded` ×3 (39 Ask + 39 Opus grades), the Ask quality suite (13) and the #640 diagnostic set ×20 (60) per side, then `qa-release` on the after side. Report withheld-claim, withheld-card and record-text-replacement rates beside the error rates.
+- **Human review** (`eval/review_sample_567.py`): builds a packet of 12 after and 6 before saved answers covering the known failure types, shown as displayed beside the records, under neutral codes with the key in a separate file. Only the graded suite and the #640 diagnostic save full answers, so adversarial-only categories are not in the packet.
+
 ## Minimum behavior families to retain
 
 - clear state-changing evidence;
