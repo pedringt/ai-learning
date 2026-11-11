@@ -101,9 +101,10 @@ def test_plan_accepts_sonnet_and_opus_5_5():
 
 def test_shards_cover_every_repeat_and_caps_never_exceed_max_calls():
     max_calls = 20_000
-    p = matrix.plan(list(matrix.SUITES), "claude-haiku-5-5", 120, max_calls)
+    suites = [s for s in matrix.SUITES if matrix.calls_per_repeat(s)]  # a saved set not yet filled has nothing to plan
+    p = matrix.plan(suites, "claude-haiku-5-5", 120, max_calls)
     assert p["refusal"] is None
-    for suite in matrix.SUITES:
+    for suite in suites:
         shards = [s for s in p["shards"] if s["suite"] == suite]
         covered = [r for s in shards for r in range(s["repeat_start"], s["repeat_start"] + s["repeat_count"])]
         assert covered == list(range(120))
@@ -546,6 +547,13 @@ def test_calibration_suite_keeps_whole_answers_for_the_641_scenarios_and_recalib
     items = matrix.calibration_items(matrix.CALIBRATION_641_ANSWERS)
     assert {i.scenario.id for i in items} <= set(matrix.CALIBRATION_641_SCENARIOS)
     assert matrix.calls_per_repeat("recalibrate") == len(items)
+
+
+def test_holdout_suite_uses_fresh_scenarios_the_rubric_was_not_tuned_on():
+    assert [s.id for s in matrix._scenarios("holdout")] == list(matrix.HOLDOUT_641_SCENARIOS)
+    assert not set(matrix.HOLDOUT_641_SCENARIOS) & set(matrix.CALIBRATION_641_SCENARIOS)
+    assert "ask_question_answer_no_state_mutation" not in matrix.HOLDOUT_641_SCENARIOS
+    assert matrix.plan(["holdout"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
 
 
 def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
