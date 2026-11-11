@@ -1,13 +1,14 @@
 """#567 human review of source faithfulness (Paige, Nov 10): build the review packet from saved answers. No model calls.
 
-The first sample is 12 answers from after the change and 6 from before it, covering the known failure types. It is
-expanded only if the findings warrant it. Answers come from runs that save them in full: the graded matrix suite
-(eval/matrix.graded_record keeps `answer`) and the #640 diagnostic (eval/run_ask_diagnostic --json).
+The first sample is 12 answers from after the change and 6 from before it, covering the known failure types,
+including the adversarial ones. It is expanded only if the findings warrant it. Answers come from the matrix repeat
+files: every `ask`, `adversarial` and `graded` record keeps its full answer, the displayed text and the records the
+scenario seeded (eval/matrix._review_capture). #640 diagnostic rows (eval/run_ask_diagnostic --json) load too.
 
-The packet shows each answer exactly as displayed (ask_display, chips included) beside the records Ask was given, in a
-shuffled order under neutral codes. The key that maps codes to before/after, scenario and run is written to a separate
-file. The before and after answers look different (a summary paragraph vs claims with chips), so the reviewer can tell
-the condition from the format; the codes hide only the scenario and the run.
+The review is shuffled and version-unlabelled, not blinded. The packet shows each answer exactly as displayed
+(ask_display, chips included) beside the records Ask was given, in a shuffled order under neutral codes, and the key
+that maps codes to before/after, scenario and run is in a separate file. But the before and after answers look
+different (a summary paragraph vs claims with chips), so the reviewer can tell the version from the format.
 
 Usage (from state-project-complete/):
     python -m eval.review_sample_567 --after AFTER.json [...] --before BEFORE.json [...] --out packet.md --key key.json
@@ -28,16 +29,16 @@ AFTER_PLAN: tuple[tuple[str, str], ...] = (
     ("source fidelity: evidence-backed approval", "ask_evidence_backed_approval_qualified"),
     ("pending Review presented as truth", "ask_pending_review_not_truth"),
     ("compound question / mixed authority", "ask_compound_question_keeps_governing_state"),
+    ("settled and open in one question (adversarial)", "adv_mixed_settled_and_open_in_one_question"),
+    ("summarize only what is decided (adversarial)", "adv_summarize_only_decided"),
+    ("Evidence speaks where Current State is silent (adversarial)", "adv_state_silent_evidence_loud"),
     ("answered Question vs Current State (#640)", "ask_question_answer_no_state_mutation"),
-    ("answered Question asked directly (#640 diagnostic)", "resolved_question_only"),
     ("false premise", "ask_false_premise"),
     ("unknown stays unknown / absence", "ask_unknown_stays_unknown"),
-    ("conflicting evidence", "ask_conflicting_evidence"),
-    ("superseded pending Review", "ask_superseded_pending_review"),
 )
 # Two more after answers chosen by what the checks did, so the review sees them at work.
 AFTER_BY_CHECK = ("an answer with a withheld claim or card", "an answer with a card shown as record text")
-BEFORE_PLAN: tuple[tuple[str, str], ...] = AFTER_PLAN[:5] + (AFTER_PLAN[6],)
+BEFORE_PLAN: tuple[tuple[str, str], ...] = AFTER_PLAN[:5] + (AFTER_PLAN[7],)
 
 RATINGS = "Supported / Partly supported / Unsupported / Wrong authority"
 
@@ -92,8 +93,13 @@ def select(records: list[dict[str, Any]], plan, *, by_check: tuple[str, ...] = (
 
 
 def _supplied(record: dict[str, Any]) -> Any:
+    if record.get("supplied_records") is not None:
+        return record.get("question", ""), record["supplied_records"]
     from eval.ask_grader import supplied_records
-    from eval.ask_quality_scenarios import SCENARIOS
+    from eval.ask_adversarial_scenarios import SCENARIOS as ADVERSARIAL
+    from eval.ask_quality_scenarios import SCENARIOS as ASK
+
+    SCENARIOS = (*ASK, *ADVERSARIAL)
 
     from eval.ask_diagnostic_640 import variants
 

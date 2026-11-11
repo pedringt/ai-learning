@@ -6,9 +6,11 @@ separate from model output and score outcomes rather than exact wording.
 """
 from __future__ import annotations
 
+import os
 import re
 import sqlite3
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from typing import Any
 
 from database_migration_backed import get_test_db
@@ -16,7 +18,7 @@ from interpretation_trace import TracePolicy, run_traced_interpretation
 from question_review_service import matching_open_question
 from ask_provider import LiveAskProvider
 from ask_display import answer_lead, displayed_text
-from ask_service import run_ask
+from ask_service import run_ask, stream_ask_events
 from eval.review_interpretation_scenarios import ReviewInterpretationScenario
 from eval.ask_quality_scenarios import AskQualityScenario
 
@@ -305,6 +307,9 @@ class AskQualityResult:
     unsupported_numbers: tuple[str, ...] = ()
     headline_opening: str = ""
     headline_missing: tuple[str, ...] = ()
+    # #567: with ASK_EVAL_TRANSPORT=stream, how long a person waits: until the first content the browser would draw
+    # (a raw text delta on the older code, a checked claim or section after #567) and until the finished answer.
+    latency: dict[str, Any] = field(default_factory=dict)
 
     @property
     def number_ok(self) -> bool:
@@ -589,10 +594,33 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
     )
 
 
+def _streamed_ask(connection, provider, question: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    """The same one-call Ask through the streaming path the browser uses, timed at the first event the browser
+    would draw and at the finished answer."""
+    started = time.perf_counter()
+    first_content_ms = None
+    final = None
+    for name, payload in stream_ask_events(connection, provider, question):
+        drawable = name == "delta" or (name == "claim" and payload.get("status") == "shown") or name == "section"
+        if drawable and first_content_ms is None:
+            first_content_ms = round((time.perf_counter() - started) * 1000)
+        if name == "final":
+            final = payload
+    if final is None:
+        raise ValueError("the stream ended without a final answer")
+    return final, {"transport": "stream", "first_content_ms": first_content_ms,
+                   "total_ms": round((time.perf_counter() - started) * 1000)}
+
+
 def run_ask_quality_scenario(scenario: AskQualityScenario, provider) -> AskQualityResult:
     connection = _new_test_connection()
     try:
         _seed_ask_scenario(connection, scenario)
+        if os.getenv("ASK_EVAL_TRANSPORT") == "stream":
+            answer, latency = _streamed_ask(connection, LiveAskProvider(provider), scenario.question)
+            result = score_ask_answer(scenario, answer)
+            result.latency = latency
+            return result
         answer = run_ask(connection, LiveAskProvider(provider), scenario.question)
         return score_ask_answer(scenario, answer)
     except Exception as exc:

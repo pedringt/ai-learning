@@ -300,3 +300,18 @@ def test_cache_key_names_the_answer_shape():
     """An answer cached in the older shape (headline + summary) must never be served after #567."""
     import inspect
     assert '"answer_shape": "claims-v1"' in inspect.getsource(ask_cache_key)
+
+
+def test_streamed_eval_transport_times_the_first_checked_content(tmp_path):
+    from eval.quality_harness import _streamed_ask
+
+    conn = _seeded(tmp_path)
+    try:
+        final, latency = _streamed_ask(conn, _FakeAsk(_answer([_claim("The pilot stays read-only.", "current_state", "k-data")])),
+                                       "Is the pilot read-only?")
+        assert latency["transport"] == "stream" and latency["first_content_ms"] is not None
+        assert latency["first_content_ms"] <= latency["total_ms"]
+        assert final["timing"]["first_validated_ms"] <= final["timing"]["total_ms"]
+        assert [c["text"] for c in final["answer"]["claims"]] == ["The pilot stays read-only."]
+    finally:
+        conn.close()

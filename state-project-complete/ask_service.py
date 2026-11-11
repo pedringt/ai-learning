@@ -852,6 +852,7 @@ def _finalize_ask_result(
     trim_ms: int | None = None,
     first_token_ms: int | None = None,
     today: date | None = None,
+    first_validated_ms: int | None = None,
 ) -> dict[str, Any]:
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
@@ -885,6 +886,10 @@ def _finalize_ask_result(
         timing["trim_ms"] = trim_ms
     if first_token_ms is not None:
         timing["first_token_ms"] = first_token_ms
+    if first_validated_ms is not None:
+        # #567: when the first checked claim or section was sent, from the start of the request: what a person
+        # waits for now that raw model text is no longer shown.
+        timing["first_validated_ms"] = first_validated_ms
     return {
         "answer": answer.model_dump(),
         "selection": selection.model_dump(),
@@ -1082,6 +1087,7 @@ def stream_ask_events(
     scanner = _StreamedAnswerScanner()
     stream_checks: _StreamChecks | None = None
     selection_failed = False
+    first_validated_ms: int | None = None
     for text in provider.stream(_one_call_prompt(query, candidates, previous_answer, today=today)):
         if not text:
             continue
@@ -1099,6 +1105,8 @@ def stream_ask_events(
                     break
             event = stream_checks.claim_event(raw) if kind == "claim" else stream_checks.section_event(raw)
             if event is not None:
+                if first_validated_ms is None and (event.get("status") == "shown" or event.get("section")):
+                    first_validated_ms = round((time.perf_counter() - total_started) * 1000)
                 yield kind, event
     provider_ms = round((time.perf_counter() - provider_started) * 1000)
     _persist_model_call_metrics(connection, provider)
@@ -1109,7 +1117,7 @@ def stream_ask_events(
         candidates, selection_raw, answer_raw, pipeline="one_call_stream",
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
         query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, first_token_ms=first_token_ms,
-        today=today,
+        today=today, first_validated_ms=first_validated_ms,
     )
     yield "final", result
 
