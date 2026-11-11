@@ -548,6 +548,28 @@ def test_calibration_suite_keeps_whole_answers_for_the_641_scenarios_and_recalib
     assert matrix.calls_per_repeat("recalibrate") == len(items)
 
 
+def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
+    ids = {i.id for i in matrix.calibration_items(matrix.CALIBRATION_641_ANSWERS)}
+    assert {aid for aid, *_ in matrix.CALIBRATION_641_REGRESSIONS} <= ids
+    good = [{"scenario_id": aid, "grades": {}} for aid in ids]
+    for r in good:
+        for aid, dim, low, _high in matrix.CALIBRATION_641_REGRESSIONS:
+            if aid == r["scenario_id"]:
+                r["grades"][dim] = {"score": low}
+    assert matrix.calibration_641_regressions(good) == []
+    r5 = next(r for r in good if r["scenario_id"] == "r5")
+    r5["grades"]["faithfulness"] = {"score": 3}
+    assert matrix.calibration_641_regressions(good) == ["r5 faithfulness: expected 1-2, got 3"]
+
+
+def test_grader_rubric_carries_the_nov_11_rules():
+    from eval.ask_grader import GRADER_VERSION, RUBRIC
+    assert GRADER_VERSION.startswith("ask-grader-v9")
+    assert "Absence of a record is not a negative fact" in RUBRIC
+    assert "not whether the answer is right" in RUBRIC
+    assert "Do not apply a uniform deduction" in RUBRIC
+
+
 def test_grader_is_told_todays_date():
     from datetime import date as _date
     from eval.ask_grader import user_message

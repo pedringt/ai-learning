@@ -1,5 +1,6 @@
 """LLM grader for Ask answer quality (Oct 16; rubric approved by Paige with every suggested default; the authority_calibration
-wording for attributed source reports approved Nov 7, #641).
+wording for attributed source reports approved Nov 7, #641; v9 wording for unsupported negatives, directness and
+concision approved Nov 11, #641).
 
 Observed only, never a release gate (DEC-008), until Paige's blind calibration passes: within-1
 agreement of at least 90% per dimension, exact agreement of at least 65%, and no answer Paige scored 1
@@ -20,7 +21,7 @@ from typing import Any
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
-GRADER_VERSION = "ask-grader-v8 (2026-11-07: attributed source reports allowed (Paige, #641); records include Evidence and resolved Questions)"
+GRADER_VERSION = "ask-grader-v9 (2026-11-11: unsupported negatives, directness independent of correctness, concision repetition vs record cards (Paige, #641))"
 GRADER_MAX_TOKENS = 1_500
 
 DIMENSIONS = (
@@ -34,11 +35,11 @@ GATED_ON_HIGH_SEVERITY = ("consequential_completeness",)
 
 RUBRIC = """Scale for every dimension: 4 = what a careful PM would want, 3 = acceptable with a minor flaw, 2 = a material flaw a reader could act on wrongly or would have to work around, 1 = trust-breaking or fails the job.
 
-faithfulness (D1). Every claim in the headline, summary, section titles, items and details is supported by a supplied record, and each item's record_type/record_id actually supports that item's text.
+faithfulness (D1). Every claim in the headline, summary, section titles, items and details is supported by a supplied record, and each item's record_type/record_id actually supports that item's text. Absence of a record is not a negative fact. "No approval is recorded in Current State" is supported; "not approved", "not yet approved" or "leadership has not approved" is unsupported unless a record says so. Changing a source's or Review's own wording to its opposite (for example "approved" to "not yet approved") contradicts a supplied record.
 - 4: every claim traces to a supplied record; citations match; nothing added beyond reasonable paraphrase.
 - 3: all substantive claims supported; one minor loose paraphrase or a slightly off citation that does not change meaning.
-- 2: one unsupported specific (a date, number, owner, reason) or a citation pointing to a record that does not support the item.
-- 1: a fabricated decision, cause, approval or adjustment story, or a claim that contradicts a supplied record.
+- 2: one unsupported specific (a date, number, owner, reason) or a citation pointing to a record that does not support the item, or a negative stated as fact when the records only show nothing recorded.
+- 1: a fabricated decision, cause, approval or adjustment story, or a claim that contradicts a supplied record, including reversing a record's own wording (approved → not approved).
 
 authority_calibration (D2). Current State is presented as what is true now; open Reviews as proposed and awaiting human review; Questions as unknown; Evidence as what a source reported; History as past; superseded proposals as superseded. "Confirmed", "resolved", "approved", "established" describe Current State or closed Questions when the answer asserts a fact as established, including in titles and headlines. An answer may report a source's own words when it attributes them to that source and keeps them apart from Current State: an answer meaning "The source reports X as approved; recording X in Current State is still pending" is correct. That sentence is an example of acceptable meaning, not required wording; any correct attributed paraphrase scores the same. Presenting a source's report as governing Current State is still a 1.
 - 4: every item's authority level is unambiguous and correct; pending content is explicitly pending; Current State is stated as the governing answer.
@@ -52,22 +53,22 @@ consequential_completeness (D3). The answer includes the records that would chan
 - 2: one consequential non-blocking item omitted, or a blocker mentioned only in passing at the end.
 - 1: a blocking Question, a conflicting Review, or a correction of a false premise is missing.
 
-directness (D4). The headline and opening sentence answer the question actually asked before context; a false premise is corrected first; a plain fact question is not turned into a meeting brief.
+directness (D4). The headline and opening sentence answer the question actually asked before context; a false premise is corrected first; a plain fact question is not turned into a meeting brief. Score only whether and how quickly the opening answers the question, not whether the answer is right. A wrong answer delivered first can score 4 here; faithfulness and authority_calibration catch the error.
 - 4: the first sentence answers the exact question; supporting context follows.
 - 3: the answer is in the summary but preceded by one sentence of setup, or the headline is generic.
 - 2: the answer must be assembled from sections, or a false premise is corrected only after answering as if it were true.
 - 1: the question is not answered, or the false premise is adopted.
 
-hedging_calibration (D5). Certainty matches the record in both directions: settled Current State stated plainly; unknowns and pending items hedged clearly and once.
+hedging_calibration (D5). Certainty matches the record in both directions: settled Current State stated plainly; unknowns and pending items hedged clearly and once. This applies in both directions: an unknown stated as a definite "no" is as wrong as one stated as a definite "yes".
 - 4: settled facts plain, unknowns explicit, each caveat attached to the item it applies to.
 - 3: one unnecessary qualifier on a settled fact, or one vague hedge.
 - 2: Current State undermined by blanket hedging, or an unknown given a soft implied value.
-- 1: an unknown stated as a definite value, or the whole answer so hedged the reader cannot tell what is true.
+- 1: an unknown stated as a definite value or a definite negative, or the whole answer so hedged the reader cannot tell what is true.
 
-concision (D6). Judge padding, not structure. Ask always shows a short summary above record cards; a summary that briefly names what the cards show, with its status (for example "One Review is pending"), is the expected shape and is NOT a concision flaw (Paige's calibration, Oct 20: she scored such answers 4). Penalize only real padding: filler or boilerplate sentences, the same point made three or more times, sections that add nothing, generic advice, or an answer much longer than the question needs.
-- 4: no padding. Mild redundancy is still a 4: the main point appearing in the headline, the summary and one card, or a short closing restatement of the pending status, is how Ask answers read and does not lower the score.
-- 3: one clear filler sentence (generic, adds no fact or status) or one whole section that adds nothing.
-- 2: several filler sentences, the same point made three or more times, or several sections that add nothing.
+concision (D6). Judge padding, not structure. Ask always shows a short summary above record cards; a summary that briefly names what the cards show, with its status (for example "One Review is pending"), is the expected shape and is NOT a concision flaw (Paige's calibration, Oct 20: she scored such answers 4). Penalize only real padding: filler or boilerplate sentences, the same point made three or more times, sections that add nothing, generic advice, or an answer much longer than the question needs. Supporting record cards that show the evidence for the summary are useful structure, not repetition. Repetition is a flaw only when the same point is restated in prose with nothing added: a second sentence or section that repeats the headline's claim, repeated qualifiers on the same item, or context unrelated to the question. Judge each answer on its own. Do not apply a uniform deduction.
+- 4: no padding; headline, summary and cards each add something. Mild redundancy is still a 4: the main point appearing in the headline, the summary and one card, or a short closing restatement of the pending status, is how Ask answers read and does not lower the score.
+- 3: one prose restatement that adds nothing, one irrelevant context item, one clear filler sentence (generic, adds no fact or status), or one whole section that adds nothing.
+- 2: several restatements or qualifiers repeated across sections, several filler sentences, the same point made three or more times, or several sections that add nothing.
 - 1: the useful content is buried in boilerplate, or the answer is too long to work as a quick read."""
 
 SYSTEM_PROMPT = """You are grading one answer from "Ask", a read-only question-answering feature in State, a project-truth tool for PMs. State's authority model: Current State is what a human has authorized as true now. An open Review is a proposal awaiting human decision and is NOT true yet. A Question is an open unknown; a blocking Question blocks something. Evidence is what a source reported, not an accepted fact. History records past authorized changes. Ask must never present a pending Review, Evidence, or open Question as Current State, must keep unknowns unknown, and must not invent reasons, numbers, dates, or decisions.

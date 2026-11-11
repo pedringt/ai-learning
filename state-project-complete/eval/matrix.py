@@ -166,11 +166,42 @@ def calibration_items(path: Path = CALIBRATION_ANSWERS) -> list[CalibrationItem]
 
 
 # #641 blind calibration (Nov 9, set approved by Paige): two real answers per scenario, plus one hand-written answer
-# each, graded blind by Paige and then by the grader. ask_question_answer_no_state_mutation is left out because
+# each, graded blind by a reference reviewer and then by the grader. The Nov 11 reference grades came from ChatGPT,
+# not Paige: human calibration is still pending. ask_question_answer_no_state_mutation is left out because
 # production Ask does not see resolved Questions yet (#640) while the grader does.
 CALIBRATION_641_SCENARIOS = ("ask_evidence_backed_approval_qualified", "ask_source_words_not_demoted",
                              "ask_compound_question_keeps_governing_state", "ask_pending_review_not_truth")
 CALIBRATION_641_ANSWERS = Path(__file__).resolve().parent / "calibration" / "ask_calibration_641.json"
+
+
+# Regression examples from the Nov 11 AI-reviewer check (#641): what grader v9 must do on the saved 641 answers.
+# Each entry is (answer_id, dimension, lowest allowed score, highest allowed score).
+CALIBRATION_641_REGRESSIONS = (
+    ("r5", "faithfulness", 1, 2),          # reverses the Review's "approved" to "not yet approved"
+    ("r5", "hedging_calibration", 1, 2),   # an unknown stated as a definite "no"
+    ("r8", "faithfulness", 1, 2),          # "leadership has not approved" when only no decision is recorded
+    ("r8", "hedging_calibration", 1, 2),
+    ("h2", "authority_calibration", 1, 1), # wrong on purpose: source treated as governing Current State
+    ("h2", "directness", 3, 4),            # ...but it answers first: directness ignores correctness
+    ("h3", "authority_calibration", 1, 1), # wrong on purpose: the pending Review gates planning
+    ("h3", "directness", 3, 4),
+    ("h1", "faithfulness", 3, 4),          # correct attributed paraphrase
+    ("h1", "authority_calibration", 3, 4),
+    ("h4", "faithfulness", 3, 4),          # correct, differently worded
+    ("h4", "authority_calibration", 3, 4),
+)
+
+
+def calibration_641_regressions(results: list[dict[str, Any]]) -> list[str]:
+    """The regression examples a recalibrate run missed, as readable lines (empty when all hold)."""
+    by_id = {r["scenario_id"]: r for r in results}
+    missed = []
+    for answer_id, dim, low, high in CALIBRATION_641_REGRESSIONS:
+        grade = (by_id.get(answer_id, {}).get("grades") or {}).get(dim)
+        score = grade["score"] if grade else None
+        if score is None or not low <= score <= high:
+            missed.append(f"{answer_id} {dim}: expected {low}-{high}, got {score}")
+    return missed
 
 
 def calibration_scenarios() -> list[Any]:
