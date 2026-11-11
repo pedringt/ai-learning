@@ -4,7 +4,7 @@
 
 Durable principles live in Durable AI Knowledge. Day-to-day efficiency habits live in the Efficient AI Use for Product Work cheat sheet. This page stays closer to current patterns, tools, vocabulary, and techniques that may change.
 
-<!-- edge-review: 2026-10-16 -->
+<!-- edge-review: 2026-11-11 -->
 
 ---
 
@@ -167,7 +167,7 @@ Much of the distance between a successful demo and a dependable business solutio
 
 ### Search production behavior by meaning
 
-Operational dashboards catch errors, latency, and outages. AI products also fail semantically: unsupported claims, user frustration, wrong-tool use, policy violations, sensitive-data exposure, incomplete work, or technically successful runs that solved the wrong problem. Observability tools increasingly let teams search, classify, or evaluate traces by these behaviors without predefining every failure mode as a structured field.
+Operational dashboards catch errors, latency, and outages. AI products also fail semantically: unsupported claims, user frustration, wrong-tool use, policy violations, sensitive-data exposure, incomplete work, or technically successful runs that solved the wrong problem. Observability tools increasingly let teams search, classify, or evaluate traces by these behaviors without predefining every failure mode as a structured field, as in [LangSmith AI Search](https://www.langchain.com/blog/agent-traces-ai-search-langsmith).
 
 **Product habit:** Turn recurring semantic failure patterns into saved searches, monitors, and regression evals.
 
@@ -214,14 +214,10 @@ Useful examples of how current AI products are solving recurring product and arc
 - [**TypeSafe AI · Jev**](https://typesafe.ai/blog/introducing-system-one-models-and-jev) — Specialized model for fast, typed decisions such as classification, routing, scoring, and escalation.
 - [**Astra for Law**](https://help.openai.com/en/articles/20001528-astra-for-law) — Vertical AI combining a general model with legal data, domain instructions, plugins, and cited-source review.
 
-### Evaluation and observability
-
-- [**LangSmith AI Search**](https://www.langchain.com/blog/agent-traces-ai-search-langsmith) — Searches production traces by described behavior, such as user frustration or sensitive-data leakage, that conventional filters and full-text search struggle to find.
-
 ### Memory, context, and business knowledge
 
 - [**Jev-Mem**](https://arxiv.org/abs/2609.23986) — Lightweight control layer that decides what memory to retrieve, how much, and when to stop.
-- [**V7 Context Graph**](https://openai.com/index/v7/) — Turns scattered documents into structured, source-linked facts, entities, relationships, and citations.
+- [**V7 Context Graph**](https://www.v7labs.com/context-graph) — Turns scattered documents into structured, source-linked facts, entities, relationships, and citations.
 
 ### Workflow discovery and improvement
 
@@ -233,13 +229,12 @@ Useful examples of how current AI products are solving recurring product and arc
 - [**Dataiku Agent Management**](https://www.dataiku.com/company/news/dataiku-agent-management-general-availability) — Tracks agents across platforms, including ownership, value, performance, and risk.
 - [**Okta Agentic Enterprise Blueprint**](https://www.okta.com/solutions/secure-ai/agentic-enterprise-blueprint/) — Reference architecture for agent identity, scoped access, delegation, monitoring, and containment.
 - [**AWS AgentCore + MCP multi-account pattern**](https://aws.amazon.com/blogs/machine-learning/build-a-multi-account-ai-agent-with-agentcore-gateway-and-mcp/) — Federated pattern for controlled agent access while teams retain data ownership.
-- [**ServiceNow AI Passport**](https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/default.aspx) — Signed credentials that define an agent's authorized scope and are checked at runtime across first- and third-party agents, with scoped delegation, revocation, and graduated restriction when an agent drifts outside its boundary. Expected Q4 2026.
+- [**ServiceNow AI Passport**](https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-advances-its-operational-harness-for-enterprise-AI-with-AI-Passport-and-expanded-governance-capabilities/default.aspx) — Signed credentials that define an agent's authorized scope and are checked at runtime across first- and third-party agents, with scoped delegation, revocation, and graduated restriction when an agent drifts outside its boundary. Announced in 2026; ServiceNow said availability was expected in Q4 2026.
 
 ### Agent tooling and deployment patterns
 
 - [**Vercel Plugin for Coding Agents**](https://vercel.com/changelog/introducing-vercel-plugin-for-coding-agents) — Loads current platform knowledge and specialized skills dynamically instead of stuffing everything into one prompt.
 - [**Anthropic Managed Agents · dynamic workflows**](https://platform.claude.com/docs/en/managed-agents/multiagent-orchestration) — Runtime orchestration where the lead agent writes a program that splits work across sub-agents and coordinates the results. A useful reference for adaptive multi-agent systems, and a reminder to set budgets and weigh orchestration cost.
-- [**Vercel AI SDK 7**](https://vercel.com/blog/ai-sdk-7) — Reference for approvals, durable execution, sandboxes, telemetry, provider flexibility, and realtime voice.
 - [**Tenable CyberAgents Exchange AI Inspector**](https://www.tenable.com/blog/ai-agent-security-openai-tenable-cyberagents-exchange-inspector) — Evaluates community-built agents, skills, MCP servers, and playbooks before deployment.
 - [**SoundHound OASYS Edge**](https://www.soundhound.com/resource/introducing-oasys-edge) — Example of local, cloud, or hybrid voice deployment based on latency, privacy, connectivity, and cost.
 
@@ -255,7 +250,6 @@ Useful examples of how current AI products are solving recurring product and arc
 
 ## Working Vocabulary
 
-- **Bot:** Broad term for AI set up to do a job. Some only respond; others are persistent and more capable.
 - **Agent:** AI that can choose steps or tools to pursue a goal within defined permissions and stopping rules.
 - **Agent harness:** The layer around a model that manages context, tools, state, and multi-step execution.
 - **Agent skill:** A reusable procedure for doing one kind of job, including method, tools, checks, and expected output.
@@ -272,18 +266,15 @@ Useful examples of how current AI products are solving recurring product and arc
 - **Headless architecture:** Data, rules, permissions, and actions are accessible independently of the original UI while the source system still owns the rules.
 - **Behavioral canary:** A small set of critical eval cases run regularly to detect meaningful behavior drift.
 - **Blast radius:** How much harm a failure could cause before someone notices and stops it.
-- **Reversible autonomy:** AI is allowed to take a bounded action, keep evaluating whether the action remains justified, and automatically reverse or compensate when defined evidence shows it should no longer stand.
-- **Compensating action:** A new action that neutralizes or reverses the effect of an earlier action while preserving the audit trail.
+- **Reversible autonomy:** Bounded action that is automatically reversed or compensated when defined evidence shows it should no longer stand.
 
 ---
 
 ## Questions to ask
 
 1. Where does this workflow actually break, and is the cause missing facts, the wrong procedure, or the process itself?
-2. What does orchestration improve enough to justify its extra cost and failure surface?
-3. Which meaningful failures could happen while the software still reports healthy, and how would we trace one back to its first bad step?
-4. Which business definitions must be fixed before AI analyzes the data?
-5. Can the model or provider change without rebuilding the authoritative workflow, and how will we know if behavior changes underneath us?
-6. If this were a standing AI worker, what would it own, remember, and access, how long should its authority last, and what should trigger reversal or revocation?
-7. What should remain predictable in the interface even when AI-generated content changes?
-8. What evidence would we need before moving this from pilot to a standard workflow?
+2. How would we trace a failure back to its first bad step?
+3. Which business definitions must be fixed before AI analyzes the data?
+4. Can the model or provider change without rebuilding the authoritative workflow, and which canaries would tell us behavior changed underneath us?
+5. If this were a standing AI worker, what would it own, remember, and access, how long should its authority last, and what should trigger reversal or revocation?
+6. What evidence would we need before moving this from pilot to a standard workflow?
