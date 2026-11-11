@@ -32,7 +32,11 @@ def _scenarios(suite: str) -> tuple:
 
 
 def harness_source() -> str:
-    return ast.unparse(_strip_docstrings(ast.parse(inspect.getsource(quality_harness))))
+    # #567 (Nov 10): the Ask scorer reads the answer through ask_display, so its source is part of the version too.
+    import ask_display
+
+    return "\n".join(ast.unparse(_strip_docstrings(ast.parse(inspect.getsource(module))))
+                     for module in (quality_harness, ask_display))
 
 
 def scoring_version(suite: str, scenarios: tuple | None = None) -> str:

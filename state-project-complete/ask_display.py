@@ -35,9 +35,9 @@ def _labelled(label: str | None, text: str) -> str:
     return f"[{label}] {text}" if label else text
 
 
-def claim_lines(answer: Any) -> list[str]:
-    """The claims as displayed, one per line, each with its chip."""
-    return [_labelled(c.get("label"), str(c.get("text") or "").strip())
+def claim_lines(answer: Any, *, labels: bool = True) -> list[str]:
+    """The claims as displayed, one per line, each with its chip (unless labels=False)."""
+    return [_labelled(c.get("label") if labels else None, str(c.get("text") or "").strip())
             for c in inner_answer(answer).get("claims") or [] if isinstance(c, Mapping) and c.get("text")]
 
 
@@ -46,18 +46,23 @@ def has_withheld(answer: Any) -> bool:
     return bool(a.get("withheld_claims")) or bool(a.get("withheld_items"))
 
 
-def displayed_lines(answer: Any, *, include_footer: bool = False) -> list[str]:
+def displayed_lines(answer: Any, *, include_footer: bool = False, labels: bool = True) -> list[str]:
     """Every line a person sees, in order. Claims replace the summary when present; an answer without claims
-    (the older shape, or a software-written starter answer) shows its summary."""
+    (the older shape, or a software-written starter answer) shows its summary.
+
+    labels=False keeps only the answer's words: no chips, no fixed (software) headline, no withheld line and no
+    software status prefix on a card ("Answered:", "Blocks:"). The eval keyword checks read this form, so a label
+    can never stand in for a fact the answer has to state (#567, Paige Nov 10)."""
     a = inner_answer(answer)
+    has_claims = isinstance(a.get("claims"), list)
     lines: list[str] = []
-    if a.get("headline"):
+    if a.get("headline") and (labels or not has_claims):
         lines.append(str(a["headline"]).strip())
-    if isinstance(a.get("claims"), list):
-        lines.extend(claim_lines(a))
+    if has_claims:
+        lines.extend(claim_lines(a, labels=labels))
     elif a.get("summary"):
         lines.append(str(a["summary"]).strip())
-    if has_withheld(a):
+    if has_withheld(a) and labels:
         lines.append(WITHHELD_LINE)
     for section in a.get("sections") or []:
         if not isinstance(section, Mapping):
@@ -68,12 +73,15 @@ def displayed_lines(answer: Any, *, include_footer: bool = False) -> list[str]:
         lines.append(str(section.get("title") or "").strip())
         for item in items:
             record_type = item.get("record_type")
-            lines.append("- " + _labelled(RECORD_LABELS.get(record_type), str(item.get("text") or "").strip()))
+            label = RECORD_LABELS.get(record_type) if labels else None
+            lines.append("- " + _labelled(label, str(item.get("text") or "").strip()))
             detail = str(item.get("detail") or "").strip()
             if record_type == "blocking_question" and detail.lower().startswith("blocks:"):
                 detail = detail.split(":", 1)[1].strip()
+            if record_type == "answered_question" and not labels and detail.lower().startswith("answered"):
+                detail = detail.split(":", 1)[1].strip() if ":" in detail else ""
             if detail:
-                lines.append(f"  {'Blocks: ' if record_type == 'blocking_question' else ''}{detail}")
+                lines.append(f"  {'Blocks: ' if record_type == 'blocking_question' and labels else ''}{detail}")
     # The UI shows the first three refinement chips and, when set, the suggested Question card.
     lines.extend(str(x).strip() for x in (a.get("suggested_refinements") or [])[:3] if str(x).strip())
     if a.get("suggested_question"):
@@ -83,8 +91,8 @@ def displayed_lines(answer: Any, *, include_footer: bool = False) -> list[str]:
     return [line for line in lines if line]
 
 
-def displayed_text(answer: Any, *, include_footer: bool = False) -> str:
-    return "\n".join(displayed_lines(answer, include_footer=include_footer))
+def displayed_text(answer: Any, *, include_footer: bool = False, labels: bool = True) -> str:
+    return "\n".join(displayed_lines(answer, include_footer=include_footer, labels=labels))
 
 
 def answer_lead(answer: Any) -> str:

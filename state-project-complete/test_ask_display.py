@@ -70,3 +70,22 @@ def test_scorer_reads_displayed_text_not_json_fields():
               "sections": [], "suggested_refinements": [], "source_ids": ["answered", "resolved"]}
     result = score_ask_answer(scenario, {"answer": answer, "selection": {"job": "current_fact", "answered_question_ids": ["resolved"]}})
     assert "answered / resolved" in result.missing_facts
+
+
+def test_a_chip_alone_cannot_satisfy_a_required_fact():
+    """#567 (Paige, Nov 10): "[Answered question]" names a record type; it does not state that the Question was
+    answered. Counting chips would have satisfied "answered / resolved" for an answer that never says so."""
+    from eval.scorer_checks import ASK_MUST_FAIL
+
+    case = next(c for c in ASK_MUST_FAIL if c.why.startswith("label only"))
+    scenario = next(s for s in ASK_QUALITY_SCENARIOS if s.id == case.scenario_id)
+    assert "answered" in displayed_text(case.answer).lower()                    # it is on screen, as chips
+    assert "answered" not in displayed_text(case.answer, labels=False).lower()  # but not in the answer's words
+    assert "answered / resolved" in score_ask_answer(scenario, case.answer).missing_facts
+
+
+def test_the_scoring_version_covers_the_display_formatter():
+    """The Ask scorer reads answers through ask_display, so a change there must change the scoring version."""
+    from eval.scoring_version import harness_source
+
+    assert "def displayed_lines" in harness_source()

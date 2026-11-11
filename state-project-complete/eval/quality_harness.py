@@ -558,7 +558,9 @@ def _headline_missing(answer: Any, facts) -> tuple[str, ...]:
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
     # #567 (Nov 10, Paige): score what the answer displays (ask_display), not every string in the JSON. The JSON also
     # holds record types, the job and selection ids, which a person never reads and which could satisfy a check.
-    text = _normalize(displayed_text(answer))
+    # The keyword checks read the answer's words only: a chip ("Answered question"), the fixed headline or the
+    # withheld line must never stand in for a fact the answer has to state.
+    text = _normalize(displayed_text(answer, labels=False))
     missing = tuple(
         fact if isinstance(fact, str) else " / ".join(fact)
         for fact in scenario.required_facts
