@@ -557,3 +557,28 @@ def test_graded_subset_limits_the_graded_suite_and_refuses_unknown_ids(monkeypat
     monkeypatch.setenv("MATRIX_GRADED_SCENARIOS", "ask_false_premise,not_a_scenario")
     with pytest.raises(matrix.PlanError):
         matrix.scenario_ids("graded")
+
+
+def test_call_counter_records_usage_for_streamed_calls(monkeypatch):
+    """#567 (Nov 11): streamed Ask calls were counted but their tokens never recorded, so batch spend was unknown."""
+    from types import SimpleNamespace
+
+    from anthropic.resources.messages import Messages
+
+    class _Stream:
+        current_message_snapshot = SimpleNamespace(usage=SimpleNamespace(input_tokens=4800, output_tokens=700))
+
+    class _Manager:
+        def __enter__(self):
+            return _Stream()
+
+        def __exit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(Messages, "stream", lambda self, **kwargs: _Manager())
+    with matrix.CallCounter(5) as counter:
+        with Messages.stream(object(), model="claude-haiku-5-5") as stream:
+            assert isinstance(stream, _Stream)
+    assert counter.calls == 1
+    assert counter.usage[0]["model"] == "claude-haiku-5-5"
+    assert (counter.usage[0]["input_tokens"], counter.usage[0]["output_tokens"]) == (4800, 700)

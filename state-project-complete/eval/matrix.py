@@ -315,6 +315,31 @@ def dry_run_summary(suites: Iterable[str], model: str | None = None) -> str:
 
 # ---------------------------------------------------------------- call counting and usage
 
+class _CountedStream:
+    """Wraps an SDK stream manager so CallCounter records the call's usage (or its error) when the stream closes."""
+
+    def __init__(self, manager: Any, counter: "CallCounter", started: float, model: str | None):
+        self._manager, self._counter, self._started, self._model = manager, counter, started, model
+        self._stream: Any = None
+
+    def __enter__(self) -> Any:
+        self._stream = self._manager.__enter__()
+        return self._stream
+
+    def __exit__(self, exc_type, exc, tb) -> Any:
+        try:
+            message = getattr(self._stream, "current_message_snapshot", None)
+        except Exception:  # broad on purpose: no snapshot yet (the stream failed early); record the call without usage
+            message = None
+        self._counter._record(message, self._started, exc, self._model)
+        # The raw output too (synthetic eval scenarios only, kept in the repeat files), so a claim the checks withheld
+        # can be read afterwards: the finished answer keeps only the claims that passed.
+        text = "".join(getattr(block, "text", "") or "" for block in getattr(message, "content", None) or [])
+        if text and self._counter.usage:
+            self._counter.usage[-1]["raw_text"] = text[:6000]
+        return self._manager.__exit__(exc_type, exc, tb)
+
+
 class CallCounter:
     """Counts every Messages.create/stream call made in-process and keeps each call's token usage.
 
@@ -372,8 +397,16 @@ class CallCounter:
             return message
 
         def stream(self, *args, **kwargs):
+            # #567 (Nov 11): a streamed call's usage is recorded when its stream closes, as create's is when it
+            # returns. Before this, streamed calls were counted but their tokens and cost were never recorded.
             counter._admit()
-            return original_stream(self, *args, **kwargs)
+            started = time.perf_counter()
+            try:
+                manager = original_stream(self, *args, **kwargs)
+            except Exception as exc:
+                counter._record(None, started, exc, kwargs.get("model"))
+                raise
+            return _CountedStream(manager, counter, started, kwargs.get("model"))
 
         self._saved = (original_create, original_stream)
         Messages.create, Messages.stream = create, stream
