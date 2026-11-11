@@ -15,6 +15,7 @@ from database_migration_backed import get_test_db
 from interpretation_trace import TracePolicy, run_traced_interpretation
 from question_review_service import matching_open_question
 from ask_provider import LiveAskProvider
+from ask_display import answer_lead, displayed_text
 from ask_service import run_ask
 from eval.review_interpretation_scenarios import ReviewInterpretationScenario
 from eval.ask_quality_scenarios import AskQualityScenario
@@ -516,8 +517,7 @@ def unsupported_numbers(text: str, supplied: str) -> list[str]:
 def answer_excerpt(answer: Any, needles: list[str] | tuple[str, ...] = (), limit: int = 240) -> str:
     """A short excerpt of what the answer said (#643): the sentence holding the first failed item when there is one,
     otherwise the headline (or the start of the answer). Recorded text only; nothing is reworded."""
-    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
-    flat = " ".join(_flatten_strings(inner).split())
+    flat = " ".join(displayed_text(answer).split())
     if not flat:
         return ""
     lowered = flat.lower()
@@ -528,16 +528,15 @@ def answer_excerpt(answer: Any, needles: list[str] | tuple[str, ...] = (), limit
             end = flat.find(". ", at)
             sentence = flat[start:(end + 1) if end != -1 else len(flat)]
             return sentence if len(sentence) <= limit else sentence[:limit - 1].rstrip() + "…"
-    headline = inner.get("headline") if isinstance(inner, dict) else None
-    lead = " ".join(str(headline).split()) if isinstance(headline, str) and headline.strip() else flat
+    lead = " ".join(answer_lead(answer).split()) or flat
     return lead if len(lead) <= limit else lead[:limit - 1].rstrip() + "…"
 
 
 def headline_opening(answer: Any, openings: tuple[str, ...]) -> str:
-    """The forbidden opening the headline starts with, if any (#640): "No: ..." answers a yes question with a denial
-    even when the body is right. Longest match first, so "not yet confirmed" is reported rather than "not yet"."""
-    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
-    headline = _normalize(str(inner.get("headline") or "")) if isinstance(inner, dict) else ""
+    """The forbidden opening the answer's lead starts with, if any (#640): "No: ..." answers a yes question with a
+    denial even when the body is right. Longest match first, so "not yet confirmed" is reported rather than "not yet".
+    The lead is the headline, or the first displayed claim when the headline is fixed by software (#567)."""
+    headline = _normalize(answer_lead(answer))
     words = re.sub(r"[^\w\s]", " ", headline).split()
     for opening in sorted(openings, key=len, reverse=True):
         target = _normalize(opening).split()
@@ -547,8 +546,7 @@ def headline_opening(answer: Any, openings: tuple[str, ...]) -> str:
 
 
 def _headline_missing(answer: Any, facts) -> tuple[str, ...]:
-    inner = answer.get("answer") if isinstance(answer, dict) and isinstance(answer.get("answer"), dict) else answer
-    headline = _normalize(str(inner.get("headline") or "")) if isinstance(inner, dict) else ""
+    headline = _normalize(answer_lead(answer))
     words = set(re.sub(r"[^\w\s]", " ", headline).split())
     def present(phrase: str) -> bool:
         norm = _normalize(phrase)
@@ -558,7 +556,9 @@ def _headline_missing(answer: Any, facts) -> tuple[str, ...]:
 
 
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
-    text = _normalize(_flatten_strings(answer))
+    # #567 (Nov 10, Paige): score what the answer displays (ask_display), not every string in the JSON. The JSON also
+    # holds record types, the job and selection ids, which a person never reads and which could satisfy a check.
+    text = _normalize(displayed_text(answer))
     missing = tuple(
         fact if isinstance(fact, str) else " / ".join(fact)
         for fact in scenario.required_facts

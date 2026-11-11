@@ -446,8 +446,8 @@ def _summary_repetition(answer: Any) -> dict[str, Any]:
 
 
 def _answer_text(answer: Any) -> str:
-    from eval.quality_harness import _flatten_strings
-    return _flatten_strings(answer)
+    from ask_display import displayed_text
+    return displayed_text(answer)
 
 
 _ASK_CHECKS = ("grounding", "required_facts", "forbidden_claims", "uncertainty", "open_item", "authority")
