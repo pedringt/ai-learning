@@ -115,6 +115,20 @@ def parse_suites(text: str) -> list[str]:
     return list(dict.fromkeys(suites))
 
 
+def graded_subset(scenarios: list[Any]) -> list[Any]:
+    """#567 (Nov 11): MATRIX_GRADED_SCENARIOS (comma-separated ids) limits the graded suite to those scenarios, so a
+    run can be held to a dollar ceiling: each grade is an Opus call. Unset, every scenario runs. An unknown id is a
+    plan error, never silently dropped."""
+    wanted = [x.strip() for x in os.getenv("MATRIX_GRADED_SCENARIOS", "").split(",") if x.strip()]
+    if not wanted:
+        return scenarios
+    by_id = {s.id: s for s in scenarios}
+    unknown = [x for x in wanted if x not in by_id]
+    if unknown:
+        raise PlanError(f"MATRIX_GRADED_SCENARIOS names unknown graded scenarios: {unknown}")
+    return [by_id[x] for x in wanted]
+
+
 def scenario_ids(suite: str) -> list[str]:
     if suite == "review":
         from eval.review_interpretation_scenarios import SCENARIOS
@@ -132,7 +146,7 @@ def scenario_ids(suite: str) -> list[str]:
         from eval.baseline_decomposition import SCENARIOS
     else:
         raise PlanError(f"Unknown suite {suite!r}")
-    return [s.id for s in SCENARIOS]
+    return [s.id for s in (graded_subset(list(SCENARIOS)) if suite == "graded" else SCENARIOS)]
 
 
 def calls_per_repeat(suite: str) -> int:
@@ -611,7 +625,7 @@ def _scenarios(suite: str) -> list[Any]:
         from eval.scenarios import SCENARIOS
     else:
         from eval.baseline_decomposition import SCENARIOS
-    return list(SCENARIOS)
+    return graded_subset(list(SCENARIOS)) if suite == "graded" else list(SCENARIOS)
 
 
 def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: float) -> Callable[[Any], dict[str, Any]]:
