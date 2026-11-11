@@ -250,7 +250,6 @@ def test_r83_notes_date_filters_use_calendar_day_distance_not_timestamp_midnight
     assert "if(filter==='7')return age<=6;" in NOTES_VIEW_JS
     assert "if(filter==='30')return age<=29;" in NOTES_VIEW_JS
     assert "new Date().toISOString().slice(0,10)" not in NOTES_VIEW_JS
-    assert "notes-result-count" in app
 
 
 def test_r82_authoritative_review_counts_do_not_flash_fixture_values_before_hydration():
