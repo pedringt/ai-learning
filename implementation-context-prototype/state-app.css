@@ -129,7 +129,7 @@
         .state-reviewer-guide-start{min-height:44px}
         .state-reviewer-guide-dismiss{position:absolute;right:8px;top:8px;min-width:44px;min-height:44px}
         .state-reviewer-guide-copy{padding-right:38px}
-        #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link,#askStateDrawer .ask-copy-answer{min-height:44px;padding-top:8px;padding-bottom:8px}
+        #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link{min-height:44px;padding-top:8px;padding-bottom:8px}
       }
 
 /* ==== section release-finish: History, Open Items, Settings, Notes. Added by context-history.js. ==== */
@@ -453,7 +453,6 @@
       #askStateDrawer .ask-item-text{font-size:13px;line-height:1.48}
       body #askStateDrawer .ask-item-detail{font-size:11.5px;line-height:1.4}
       #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link{font-size:10.5px;font-weight:700;white-space:nowrap}
-      body #askStateDrawer .ask-copy-answer{min-height:28px!important;height:28px!important;padding:0 8px!important;border-radius:7px!important;font-size:10.5px!important;line-height:1!important}
 
       /* Secondary/meta typography sweep: keep utility text visually subordinate. */
       body .review-source-meta,body .open-question-meta,body .quiet-meta,body .blocking-detail{font-size:11.5px!important;line-height:1.4!important;color:#6b7280!important}
@@ -588,7 +587,6 @@
       #askStateDrawer.has-answer .ask-state-starters,#askStateDrawer.is-generating .ask-state-starters{display:none}
       #askStateDrawer .ask-state-starters{grid-template-columns:minmax(0,1fr);width:100%}
       #askStateDrawer .ask-state-starters button{width:100%;min-width:0;max-width:100%;white-space:normal;text-align:left}
-      html body #askStateDrawer .ask-copy-answer{min-height:27px!important;height:27px!important;padding:0 7px!important;}
       html body #askStateDrawer .ask-live-answer>h2,html body #askStateDrawer .ask-live-answer .ask-answer-head h2{font-size:19px;line-height:1.22}
       #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link{font-weight:700}
 
@@ -923,7 +921,6 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
       /* Current State: keep the maintained document readable without exposing
          the underlying atomic fact list as a second competing surface. */
       .project-page .project-maintained-facts,.project-page .project-provenance,.project-page .project-fact-provenance,.project-page [class*="provenance"]{display:none}
-      .project-page .project-wiki-topic{padding:15px 0 17px!important}
       .project-page .project-wiki-prose{display:block!important;max-width:940px!important}
       .project-page .project-wiki-prose p{font-size:14px!important;line-height:1.65!important;color:#3f4b61!important;margin:8px 0 0!important}
 
@@ -1154,8 +1151,7 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
       #askStateDrawer .ask-live-answer .result-lede,#askStateDrawer .ask-item-text{font-size:13px;line-height:1.5}
       html body #askStateDrawer .ask-item-detail,
       html body #askStateDrawer .ask-item-action,
-      html body #askStateDrawer .ask-item-link,
-      html body #askStateDrawer .ask-copy-answer{font-size:11.5px}
+      html body #askStateDrawer .ask-item-link{font-size:11.5px}
 
       /* Evidence intake uses the same neutral + blue action language as State. */
       html body .dialog:has(#addInfoText){background:#fff!important;border:1px solid #dfe5ed!important;box-shadow:0 22px 70px rgba(24,43,70,.16)!important}
@@ -1211,7 +1207,6 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
         html body .settings-page .settings-actions .btn,
         html body .settings-page .slack-preview-row button{min-height:42px;height:42px}
         html body .notes-page .note-index-row .text-button{min-height:38px!important;padding:7px 8px!important;display:inline-flex!important;align-items:center!important}
-        #askStateDrawer .ask-copy-answer,
         #askStateDrawer .ask-item-action,
         #askStateDrawer .ask-item-link{min-height:34px;display:inline-flex;align-items:center;padding:5px 6px}
         .state-mobile-help{display:block!important;margin:30px 0 72px!important;padding:18px 2px 0!important;border-top:1px solid #e1e6ed!important}
