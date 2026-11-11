@@ -446,8 +446,8 @@ def _summary_repetition(answer: Any) -> dict[str, Any]:
 
 
 def _answer_text(answer: Any) -> str:
-    from eval.quality_harness import _flatten_strings
-    return _flatten_strings(answer)
+    from ask_display import displayed_text
+    return displayed_text(answer)
 
 
 _ASK_CHECKS = ("grounding", "required_facts", "forbidden_claims", "uncertainty", "open_item", "authority")
@@ -471,7 +471,20 @@ def ask_record(r) -> dict[str, Any]:
             "failed_checks": failed if outcome == "fail" else [], "checks": checks,
             "expected": None, "observed": None, "error": r.error or None,
             **({"model_output_excerpt": _excerpt(_answer_text(r.answer))} if outcome == "fail" else {}),
-            **({"summary_repetition": _summary_repetition(r.answer)} if r.answer else {})}
+            **({"summary_repetition": _summary_repetition(r.answer)} if r.answer else {}),
+            **(_review_capture(r) if r.answer else {}),
+            **({"ask_latency": r.latency} if getattr(r, "latency", None) else {})}
+
+
+def _review_capture(r) -> dict[str, Any]:
+    """#567 (Paige, Nov 10): every Ask and adversarial answer, in full and as displayed, with the records the scenario
+    seeded, for the human source-faithfulness review (eval/review_sample_567.py). Synthetic scenarios only. It stays
+    in the repeat files (the run's artifacts); aggregate_matrix reads none of these fields, so nothing leaves them."""
+    from ask_display import displayed_text
+    from eval.ask_grader import supplied_records
+
+    return {"answer": r.answer, "displayed_answer": displayed_text(r.answer, include_footer=True),
+            "question": r.scenario.question, "supplied_records": supplied_records(r.scenario)}
 
 
 def graded_record(r, grade) -> dict[str, Any]:

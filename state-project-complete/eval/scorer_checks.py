@@ -18,6 +18,18 @@ from eval.quality_harness import ReviewQualityResult, score_ask_answer
 from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 
 
+def _claims_answer(claims, *, withheld: int = 0, cards=()) -> dict[str, Any]:
+    """An answer in the #567 claims shape, as the finished Ask payload carries it."""
+    return {"answer": {
+        "job": "current_fact", "headline": "What State has on record",
+        "claims": [{"text": text, "label": label, "basis": "none"} for label, text in claims],
+        "withheld_claims": withheld, "withheld_items": 0,
+        "sections": [{"kind": "other", "title": "Records", "items": [
+            {"text": text, "record_type": record_type, "record_id": "r", "detail": detail, "wording": "record"}
+            for record_type, text, detail in cards]}] if cards else [],
+        "suggested_refinements": [], "suggested_question": None}}
+
+
 @dataclass(frozen=True)
 class AskCase:
     scenario_id: str
@@ -72,6 +84,20 @@ ASK_MUST_FAIL = (
             {"headline": "Yes, password-reset automation is currently approved.",
              "summary": "History shows it was approved; it was paused after an incident on 2026-09-10."},
             "presents stale History as current truth"),
+    # #567 (Nov 10, Paige): answers in the claims shape. A chip is a label, not a stated fact: the keyword checks read
+    # the answer's words without chips, the fixed headline or the withheld line (ask_display, labels=False).
+    AskCase("ask_question_answer_no_state_mutation",
+            _claims_answer([("Answered question", "The vendor contract review is complete and the contract is approved."),
+                            ("Current State", "Retention is 30 days.")]),
+            "correctly labelled but wrong: the chips name the right records, the words close the contract review"),
+    AskCase("ask_question_answer_no_state_mutation",
+            _claims_answer([("Answered question", "See the recorded answer."), ("Current State", "See Current State.")],
+                           cards=[("answered_question", "How long does the vendor keep customer content?",
+                                   "Answered: the vendor deletes customer content within 30 days of contract end.")]),
+            "label only: the chips and the record card's status prefix carry the resolution; the answer never states it"),
+    AskCase("ask_question_answer_no_state_mutation",
+            _claims_answer([], withheld=3),
+            "every claim withheld: nothing answers the question"),
 )
 
 ASK_MUST_PASS = (
@@ -106,6 +132,11 @@ ASK_MUST_PASS = (
              "summary": "Current State says it was paused after a security incident, so it is not currently "
                         "approved. It was approved before 2026-09-10."},
             "correct; mentions the old approval as History"),
+    AskCase("ask_question_answer_no_state_mutation",
+            _claims_answer([("Answered question", "Yes, the vendor-retention question was answered: the vendor deletes "
+                                                  "customer content within 30 days of contract end."),
+                            ("Current State", "The vendor contract remains under review.")]),
+            "correct, claims shape: the words state the resolution and the unchanged contract"),
 )
 
 REVIEW_MUST_FAIL = (
