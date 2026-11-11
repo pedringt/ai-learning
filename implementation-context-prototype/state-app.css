@@ -796,7 +796,7 @@
 /* ==== section design-pass: Navigation, Ask drawer, Workspace. Added by context-design-pass.js (since removed). ==== */
 :root{--state-blue:#1769e8;--state-blue-soft:#eaf2ff;--state-green:#20a875;--state-green-soft:#e8f8f2;--state-purple:#7657e8;--state-purple-soft:#f0ebff;--state-red:#e84b5d;--state-red-soft:#fff1f2;--state-line:#e0e7f1;--state-ink:#101a31;--state-muted:#64718a}
 body:not(.v88-dark) .prototype-productbar{background:#f7faff;border-color:#dfe7f2;color:#334766}body:not(.v88-dark) .prototype-productbar .product-mark{color:var(--state-blue)}body:not(.v88-dark) .prototype-productbar .product-name{color:#12213d}body:not(.v88-dark) .prototype-productbar .product-tagline{color:#687791}
-.sidebar-nav .nav-item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;column-gap:12px;align-items:center;justify-items:start;text-align:left;padding-left:18px;padding-right:18px}.sidebar-nav .nav-item>.nav-icon{grid-column:1;margin:0}.sidebar-nav .nav-item>.nav-label{grid-column:2;margin:0}.sidebar-nav .nav-item>.nav-count{grid-column:3;justify-self:end}.sidebar-nav .nav-item>svg:not(.nav-icon),.sidebar-nav .nav-item>.icon:not(.nav-icon){display:none!important}.project-nav-group>.nav-item{width:100%}.sidebar-nav .nav-item:not(.active):not([aria-current="page"]){background:transparent!important}
+.sidebar-nav .nav-item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;column-gap:12px;align-items:center;justify-items:start;text-align:left;padding-left:18px;padding-right:18px}.sidebar-nav .nav-item>.nav-icon{grid-column:1;margin:0}.sidebar-nav .nav-item>.nav-label{grid-column:2;margin:0}.sidebar-nav .nav-item>.nav-count{grid-column:3;justify-self:end}.sidebar-nav .nav-item>svg:not(.nav-icon){display:none!important}.project-nav-group>.nav-item{width:100%}.sidebar-nav .nav-item:not(.active):not([aria-current="page"]){background:transparent!important}
 body:not(.v88-dark) .project-subnav button.active,body:not(.v88-dark) .project-subnav button[aria-current="true"]{background:var(--state-blue-soft);color:#145cc4!important}body:not(.v88-dark) .project-subnav button:hover{background:#f1f5fb!important}
 .demo-help-button.state-help-card{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;text-align:left;padding:12px 13px;border:1px solid #e2e8f1;border-radius:11px;background:#f7f9fc;color:var(--state-ink);box-shadow:none}.state-help-icon{width:25px;height:25px;color:#52688f}.state-help-icon svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.state-help-copy{display:flex;flex-direction:column;gap:2px}.state-help-copy strong{font-size:12px}.state-help-copy span{font-size:10.5px;color:#758198;font-weight:500}
 .attention-item{gap:14px!important;text-align:left!important}.attention-kind{grid-row:1!important;margin:0!important;align-self:center!important}.attention-arrow{grid-row:1;align-self:center}.attention-item-copy .attention-kind{position:absolute!important;left:-9999px!important}
@@ -939,7 +939,6 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
       .evidence-answer-callout::before{content:'✓';position:absolute;left:12px;top:10px;color:#1769e8;font-weight:800}
 
       /* Notes: blue object language + compact statuses on phone. */
-      .notes-page .notes-result-count{display:none!important}
       .notes-page .notes-toolbar{gap:6px!important;margin-bottom:10px!important;padding-bottom:8px!important}
       .notes-page .notes-filter-row{gap:7px!important;align-items:center!important}
       .notes-page .notes-filter-summary{margin:0!important;padding:0!important;min-height:0!important}
@@ -1167,15 +1166,15 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
       /* Evidence analysis uses the same neutral/blue language as the rest of State. */
       html body .dialog:has(.analysis-state){background:#fff!important;border:1px solid #dfe5ed!important;box-shadow:0 22px 70px rgba(24,43,70,.16)!important}
       html body .analysis-state{padding:14px 8px 8px!important}
-      html body .analysis-state .eyebrow{color:#64748b!important}
-      html body .analysis-state h2{font-family:Inter,ui-sans-serif,system-ui,sans-serif!important;font-size:21px!important;letter-spacing:-.01em!important;color:#18253a!important}
+      html body .analysis-state .eyebrow{color:#64748b}
+      html body .analysis-state h2{font-family:Inter,ui-sans-serif,system-ui,sans-serif;font-size:21px;letter-spacing:-.01em;color:#18253a}
       html body .analysis-state p{color:#647084!important}
-      html body .analysis-orbit{width:48px!important;height:48px!important;margin-bottom:16px!important;border-color:#cbd9ea!important;background:#f7faff!important}
-      html body .analysis-orbit::before{inset:10px!important;border-color:#9eb9db!important}
-      html body .analysis-orbit span{width:7px!important;height:7px!important;background:#4b82bd!important;box-shadow:0 0 0 4px #e8f1fb!important}
-      html body .analysis-orbit span:nth-child(1){top:-3px!important;left:20px!important}
-      html body .analysis-progress{border-color:#d8e2ee!important;background:#f7f9fc!important;color:#596579!important}
-      html body .analysis-pulse{background:#4b82bd!important}
+      html body .analysis-orbit{width:48px;height:48px;margin-bottom:16px;border-color:#cbd9ea;background:#f7faff}
+      html body .analysis-orbit::before{inset:10px;border-color:#9eb9db}
+      html body .analysis-orbit span{width:7px;height:7px;background:#4b82bd;box-shadow:0 0 0 4px #e8f1fb}
+      html body .analysis-orbit span:nth-child(1){top:-3px;left:20px}
+      html body .analysis-progress{border-color:#d8e2ee;background:#f7f9fc;color:#596579}
+      html body .analysis-pulse{background:#4b82bd}
 
       @media(max-width:760px){
         html body .mobile-subnav.is-pinned{position:fixed!important;top:0!important;left:0!important;right:0!important;margin:0!important;width:auto!important;z-index:9!important;background:var(--bg,#fff)!important;padding:8px 12px 10px!important;border-bottom:1px solid var(--line)!important;box-shadow:0 2px 8px rgba(24,20,48,.08)!important}
