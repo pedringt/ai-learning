@@ -48,17 +48,27 @@ Multi-step AI work may time out, fail halfway through, receive the same request 
 
 ### Separate execution, checking, triggering, and improvement
 
-Long-running agents often involve several distinct loops, though they need not be separate services. The execution loop chooses steps, calls tools, and observes results. A verification loop checks the result against explicit criteria, using software checks, human review, or model-based assessment, and can request another attempt. A model checking another model's work does not guarantee correctness. An event-driven loop starts work when an approved signal occurs. An improvement loop examines past runs to propose changes to the instructions, tools, or workflow around the model.
+Long-running agents often involve several distinct loops, though they need not be separate services. The execution loop chooses steps, calls tools, and observes results. A verification loop checks the result against explicit criteria, using software checks, human review, or model-based assessment, and can request another attempt. An event-driven loop starts work when an approved signal occurs. An improvement loop examines past runs to propose changes to the instructions, tools, or workflow around the model.
 
 These loops need different controls. Bound retries by attempts, time, or cost, and define when to stop or escalate. Changes proposed from past runs are proposals: they should pass evaluation and the applicable approval process before release. Further reading: [Loop Engineering with LangChain Deep Agents](https://www.deeplearning.ai/courses/loop-engineering-with-langchain-deep-agents) (DeepLearning.AI course with LangChain, October 2026).
 
-**Ask:** Which part performs the task, which checks it, what starts it, and how do improvements become approved changes?
+A model checking another model's answer is not necessarily independent verification. For consequential work, check whether the result can be confirmed against trusted records, deterministic software rules, expert review, or, where a property can be stated precisely, a mathematical proof checker. Be clear about which properties that evidence actually establishes, and match the strength of the evidence to the cost of being wrong. For example, Google DeepMind's [AlphaProof Code](https://deepmind.google/blog/introducing-alphaproof-code/) (November 2026) describes formally verifying key security properties of Signal's core cryptographic code, using specifications reviewed by human experts. That is strong evidence for those stated properties. It is not a claim that the whole Signal app is secure.
+
+**Ask:** Which part performs the task, which checks it, what starts it, and how do improvements become approved changes? What evidence could confirm the result without simply trusting the model that produced it?
 
 ### Diagnose multi-step failures at the first bad step
 
 A final success or failure score can hide the real bug. Trace a long run back to the first wrong response or tool action, then separate that root cause from later steps that inherited it.
 
 **Product habit:** Fix the step where the failure starts, not the last place it becomes visible.
+
+### Design tool responses for the agent's next decision
+
+An agent needs more than a tool's success message. It needs enough information to decide what to do next. Tool responses should distinguish success, partial completion, and failure; state relevant errors and permission limits; and offer a way to retrieve more when results are large. An agent that searches a customer database and receives the first 100 matches may conclude its analysis is complete unless the response says more records exist and how to get them.
+
+Test what happens when responses are incomplete or truncated. Shortening output is fine; losing the evidence the next step depends on is not. Further reading: [Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents) (Anthropic Engineering, September 2025) and [Designing for Agents](https://latent.space/p/resend/) (Latent Space interview with Zeno Rocha of Resend, November 2026).
+
+**Ask:** Does this response give the agent enough information to choose its next step?
 
 ### Ground analysis in shared business definitions
 
@@ -70,7 +80,9 @@ AI can query the right data and still reach the wrong business conclusion if ter
 
 Persistent agents hold a role, keep context, use approved tools, and continue work across sessions. The implementation question is lifespan: how long memory, access, permissions, and authority persist; when they expire or require renewal; who can revoke them; and how long-running work checkpoints and stops. Permissions that make sense for a short task may be too broad for a worker that can keep acting indefinitely.
 
-**Ask:** What does this worker remember and for how long, when does its authority expire, and who can revoke it?
+Continuity means actionable context, not just conversation history: current responsibilities, open tasks, approved and pending decisions, handoffs, and facts that need revalidation. Remembered information also goes stale. Keep tentative options separate from approved decisions, mark which facts need revalidation and when, and preserve useful history when newer information supersedes older information. Expiration should trigger revalidation, not an invented replacement. Further reading: [What is agent memory?](https://read.technically.dev/p/what-is-agent-memory) (Technically, November 2026), which separates deleting a memory from recording when a fact stopped being true.
+
+**Ask:** What does this worker remember and for how long, when does its authority expire, and who can revoke it? For a remembered fact, what makes it stop being current, and how will the system learn that?
 
 ### Design proactive behavior around relevance, not activity
 
@@ -124,6 +136,12 @@ Practical ways to test, launch, support, and improve an AI feature.
 Define task success, unacceptable errors, and stop conditions before rollout. Examine severe edge cases separately from the overall pass rate, and retest changed behaviors before increasing exposure.
 
 **Ask:** Which specific failure would block release or require rollback?
+
+### Evaluate sensitive workflows with representative, privacy-safe tests
+
+When real customer documents or traces cannot be used for evaluation, build simulated tasks that keep what makes the real work hard: dependencies between steps, ambiguous information, exceptions, competing instructions, and the failures that would matter most. Check the simulations against real user needs using information the team can legally and appropriately access. Synthetic results can reveal real weaknesses, but they do not by themselves establish performance on actual customer work. Further reading: [Building AI for Lawyers](https://latent.space/p/building-ai-for-lawyers-jacob-lauritzen-cto-of-legora/) (Latent Space interview with Legora's CTO, November 2026), which describes building simulated environments modeled on customer tasks because confidential uploads cannot be inspected.
+
+**Ask:** How will we know our test environment represents the work users actually perform?
 
 ### Roll out with an owner and a feedback path
 
@@ -229,7 +247,7 @@ Useful examples of how current AI products are solving recurring product and arc
 
 ## Watching
 
-- **AI Discovery & AEO:** Can AI systems find and correctly understand the facts that matter when they research a product for a customer?
+- **AI Discovery & AEO:** Can AI systems find and correctly understand the facts that matter when they research a product for a customer? Businesses can now supply information directly to some assistants, for example through OpenAI's [Businesses in ChatGPT](https://openai.com/index/introducing-businesses-chatgpt/) (beta, November 2026). That makes it important to distinguish verified business identity and company-provided product claims from the assistant's independent recommendations. Can users tell whether they're reading a business's own information or an independent AI assessment?
 - **Memory routing and context budgets:** Which information deserves to enter context for this step, and when does more context stop being worth the cost?
 - **Voice and local or hybrid agents:** When do latency, privacy, connectivity, or environment justify local or hybrid execution?
 
