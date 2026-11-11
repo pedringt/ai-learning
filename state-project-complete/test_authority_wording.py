@@ -54,3 +54,13 @@ def test_older_answer_shape_checks_each_summary_sentence_alone():
     older = {"answer": {"headline": "Retention", "summary": "Recording the terms is pending. Retention is confirmed at 30 days.", "sections": []}}
     assert _bad(older)
     assert "pending" in visible_words(older, STATE)
+
+
+def test_flagged_units_returns_the_whole_failing_unit_not_just_the_window():
+    """#567 (Nov 11): a failure must show the whole unit; batch E logged only "Confirmed retention terms are"."""
+    from eval.ask_retention_capture import flagged_units
+
+    text = "Confirmed retention terms are 30 days for pilot prompts and outputs, with deletion on request."
+    payload = {"answer": {"claims": [{"text": text}, {"text": "Retention is not yet confirmed in Current State."}]}}
+    assert [u["unit"] for u in flagged_units(payload, {})] == [text]
+    assert unsupported_settled_words(payload, {}) == [u["spans"][0] for u in flagged_units(payload, {})]
