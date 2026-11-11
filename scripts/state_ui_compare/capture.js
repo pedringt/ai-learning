@@ -135,7 +135,36 @@
     await go('workspace');
     tap('[data-action="add-info"]'); await settle();
     if (await record('add-evidence-dialog')) return out.__detail;
+    // Analysis in progress, then its failure (Nov 10). The evidence POST is held in the page and then rejected, so
+    // nothing reaches the backend: both builds share one, and a saved note would change the other build's states.
+    const realFetch = window.fetch;
+    let failEvidence;
+    window.fetch = (url, opts) => (/\/api\/evidence$/.test(String(url)) && opts?.method === 'POST'
+      ? new Promise((resolve, reject) => { failEvidence = () => reject(new Error('Analysis failed.')); })
+      : realFetch(url, opts));
+    const evidenceText = document.getElementById('addInfoText');
+    if (evidenceText) { evidenceText.value = 'Security asked for named-agent access in the pilot.'; evidenceText.dispatchEvent(new Event('input', { bubbles: true })); }
+    tap('#overlay [data-action="save-info"]');
+    await waitFor(() => document.querySelector('#overlay .analysis-state'), 5000);
+    await settle();
+    if (await record('analysis-running-dialog')) return out.__detail;
+    failEvidence?.(); await settle();
+    window.fetch = realFetch;
+    if (await record('analysis-failed-dialog')) return out.__detail;
     tap('#overlay [data-action="close-dialog"]'); await settle();
+    // Pending Review dialog: the dialog Ask's "Review →" link and Project overview's pending button open. The demo
+    // seed has neither link, so this clicks a stand-in with the same data-action for two seeded Reviews.
+    await go('open-items');
+    const reviewIds = [...document.querySelectorAll('[data-review-card]')].map(el => el.dataset.reviewCard);
+    for (const [n, id] of [reviewIds[0], reviewIds[reviewIds.length - 1]].entries()) {
+      const opener = Object.assign(document.createElement('button'), { hidden: true });
+      opener.dataset.action = 'open-related-review'; opener.dataset.reviewId = id;
+      document.querySelector('main').append(opener); opener.click(); opener.remove();
+      await settle();
+      if (await record(`pending-review-dialog-${n + 1}`)) return out.__detail;
+      tap('#overlay [data-action="close-dialog"]'); await settle();
+    }
+    await go('workspace');
     await go('notes');
     tap('[data-action="toggle-note"]'); await settle();
     if (await record('notes-expanded')) return out.__detail;
@@ -143,6 +172,38 @@
     tap('[data-action="new-note"]'); await settle();
     if (await record('notes-new')) return out.__detail;
     tap('[data-action="cancel-new-note"]'); await settle();
+    // More opened-up states (Nov 9), found by clicking every control in every view: UI that only these reach.
+    tap('[data-date-filter="today"]'); await settle();
+    if (await record('notes-filtered')) return out.__detail;
+    tap('[data-action="clear-note-filters"]'); await settle();
+    const leadershipNote = [...document.querySelectorAll('[data-action="toggle-note"]')].find(b => /Leadership/.test(b.textContent));
+    leadershipNote?.click(); await settle();
+    if (await record('notes-project-note-expanded')) return out.__detail;
+    leadershipNote?.click(); await settle();
+    await go('open-items');
+    const budgetReview = [...document.querySelectorAll('[data-action="toggle-review-card"]')].find(b => /approved pilot budget/.test(b.textContent));
+    budgetReview?.click(); await settle();
+    if (await record('open-items-budget-review-expanded')) return out.__detail;
+    budgetReview?.click(); await settle();
+    tap('[data-action="toggle-open-item-section"][data-section="questions"]'); await settle();
+    if (await record('open-items-questions-open')) return out.__detail;
+    tap('[data-action="toggle-open-item-section"][data-section="questions"]'); await settle();
+    await go('project-overview');
+    window.scrollTo(0, document.body.scrollHeight); await settle();
+    if (await record('project-overview-scrolled')) return out.__detail;
+    window.scrollTo(0, 0); await settle();
+    tap('[data-action="open-copy-context"]'); await settle();
+    if (await record('copy-context-dialog')) return out.__detail;
+    tap('#overlay [data-action="close-dialog"]'); await settle();
+    await go('workspace');
+    tap('[data-action="show-demo-help"]'); await settle();
+    if (await record('demo-help-dialog')) return out.__detail;
+    // Reset confirmation, and its Cancel, which is the only way into Project settings (Rules).
+    tap('#overlay [data-action="confirm-demo-reset"]'); await settle();
+    if (await record('reset-confirm-dialog')) return out.__detail;
+    tap('#overlay [data-action="project-settings"]'); await settle();
+    if (await record('project-settings-dialog')) return out.__detail;
+    tap('#overlay [data-action="close-dialog"]'); await settle();
     await go('workspace');
     document.getElementById('askStateLauncher')?.click();
     await settle();

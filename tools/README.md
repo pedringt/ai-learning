@@ -61,25 +61,6 @@ amount can shift glyph antialiasing far down a long page. Text content and
 element positions identical while pixels differ means antialiasing, not a
 regression — check positions before believing the picture.
 
-## The Ask flow
-
-`ask_flow_capture.py` drives a full Ask cycle — answer, refinement in flight,
-appended follow-up — and captures each state in both themes, plus the rendered
-button labels, the DOM order inside `.answer-content`, and whether the rotating
-wait copy actually rotates.
-
-```bash
-python tools/ask_flow_capture.py . /tmp/shots/ask
-```
-
-It stubs `window.fetch` after page load rather than mocking `window.STATE_API`,
-because `context-api.js` overwrites that global when it loads. Stubbing at the
-fetch layer leaves the real client code in play.
-
-**It never calls a model.** If you want a smoke test against the deployed site,
-write one deliberately, with a budget, and know that each run costs real
-provider time.
-
 ## Requirements
 
 ```bash

@@ -27,38 +27,8 @@
   --shell-brand-size:18px;
 }
 
-.nav{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:8px!important;
-  flex-wrap:wrap!important;
-  margin-left:auto!important;
-}
-.nav button,.nav a{
-  appearance:none!important;
-  border:0!important;
-  background:transparent!important;
-  color:inherit!important;
-  padding:9px 10px!important;
-  border-radius:9px!important;
-  cursor:pointer!important;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important;
-  font-size:var(--shell-nav-size)!important;
-  line-height:1.2!important;
-  font-weight:700!important;
-  letter-spacing:0!important;
-  text-decoration:none!important;
-  white-space:nowrap!important;
-}
-.nav button:hover,.nav button.active,.nav a:hover{
-  background:var(--softp)!important;color:var(--purple)!important;
-}
 
-@media(max-width:860px){
-  .nav{display:none!important}
 
-}
 @media(max-width:560px){
   :root{--shell-x:14px;--shell-brand-size:15px}
 
@@ -96,12 +66,6 @@ html{
 /* Equal left/right header anchors keep the center navigation stationary. */
 
 /* v95.47 — safe interaction hardening */
-.nav a[aria-current="page"],
-.nav a.active,
-.nav button.active{
-  background:var(--softp)!important;
-  color:var(--purple)!important;
-}
 a:focus-visible,
 button:focus-visible,
 summary:focus-visible,
