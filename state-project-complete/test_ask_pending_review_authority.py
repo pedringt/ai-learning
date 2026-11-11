@@ -46,6 +46,7 @@ import re
 
 import pytest
 
+from eval.authority_wording import unsupported_settled_words, visible_words
 from ask_contract import AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis
 from ask_provider import LiveAskProvider
 from ask_service import (
@@ -366,14 +367,10 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
     WITHOUT any nearby hedge ("not", "pending", "awaiting", "n't", "yet",
     "open", "before").
 
-    Only checks Ask's own generated prose (headline, summary, section
-    titles, and free-text items) -- not item text/detail for record_type
-    review/question/blocking_question/evidence, which _validate_synthesis
-    overwrites with the record's own stored fields or the Evidence's own
-    quoted content (a decision_question or a source quote is allowed to
-    contain "confirmed"; that wording comes from evidence intake's own
-    prompt in anthropic_provider.py, a separate subsystem this fix does
-    not touch).
+    Only checks what Ask itself worded, each unit on its own with chips stripped: claims (or, in the older
+    shape, the headline and each summary sentence), section titles, free-text cards and cards still in the
+    model's wording (eval/authority_wording.py, Nov 11). Review and Question cards show their record's own
+    text and are not checked. "Confirmed" passes when an authorized Current State record supports it.
     """
     provider = AnthropicProvider()
     ask_provider = LiveAskProvider(provider)
@@ -392,56 +389,19 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
         assert intake.processing_status == "succeeded", "Evidence intake setup failed (a separate, already-flaky pipeline path unrelated to this fix) even after retries."
         assert intake.review_ids, "Evidence intake itself should still create the linked Review (already covered elsewhere); nothing to check Ask against otherwise."
 
-        hedges = ("not ", "n't ", "pending", "awaiting", "yet", "open", "before", "hasn't", "has not")
-        # Also safe (Paige, Nov 8): attributing the word to a source, which is the phrasing Ask's grounding rules
-        # ask for ("Evidence reports Legal said X", "Legal is reported to have said X"), and a plain negation
-        # ("No confirmed retention terms are in Current State"). The first live runs (Nov 8, after #624 put this
-        # test in qa-release) failed only on those two shapes.
-        safe_patterns = (r"\bno\b", r"\breport(s|ed)\b", r"\baccording to\b", r"\b(says|said)\b")
-
-        def _unhedged_claims(text, word):
-            hits = []
-            lowered = text.lower()
-            start = 0
-            while True:
-                idx = lowered.find(word, start)
-                if idx == -1:
-                    break
-                # "unconfirmed"/"unresolved" are themselves the correct, safe
-                # word (the "un-" prefix already IS the hedge) -- not a claim
-                # that needs a nearby hedge phrase to be safe.
-                if idx >= 2 and lowered[idx - 2:idx] == "un":
-                    start = idx + len(word)
-                    continue
-                window = lowered[max(0, idx - 40):idx + len(word) + 20]
-                if not any(h in window for h in hedges) and not any(re.search(p, window) for p in safe_patterns):
-                    hits.append(text[max(0, idx - 40):idx + len(word) + 20])
-                start = idx + len(word)
-            return hits
-
-        def _flat_text(payload):
-            answer = payload.get("answer", {})
-            parts = [answer.get("headline", ""), answer.get("summary", "")]
-            for section in answer.get("sections", []):
-                parts.append(section.get("title", ""))
-                for item in section.get("items", []):
-                    if item.get("record_type") not in (None, "none"):
-                        continue
-                    parts.append(item.get("text", ""))
-                    parts.append(item.get("detail", "") or "")
-            return " ".join(parts)
+        # Nov 11 (Paige, #567): each claim, title and model-worded card is checked on its own with chips stripped,
+        # and "confirmed" passes when an authorized Current State record supports the sentence (eval/authority_wording).
+        current_state = {row["id"]: row["statement"] for row in conn.execute(
+            "SELECT id, statement FROM current_state_items WHERE status='active'").fetchall()}
 
         confirmed_payload = run_ask(conn, ask_provider, "What are the confirmed retention terms?")
-        confirmed_text = _flat_text(confirmed_payload)
-        for word in ("confirmed", "resolved"):
-            bad = _unhedged_claims(confirmed_text, word)
-            assert not bad, f"Unhedged '{word}' claim(s) about pending retention evidence: {bad}"
+        bad = unsupported_settled_words(confirmed_payload, current_state)
+        assert not bad, f"Unhedged settled word(s) about pending retention evidence: {bad}"
 
         premise_payload = run_ask(conn, ask_provider, "Since retention is resolved, what can move forward?")
-        premise_text = _flat_text(premise_payload)
+        premise_text = visible_words(premise_payload, current_state)
         assert re.search(r"not\s+(yet\s+)?resolved|isn.t resolved|hasn.t been resolved", premise_text, re.I), (
             f"Expected the false premise ('retention is resolved') to be corrected explicitly; got: {premise_text[:400]}"
         )
-        for word in ("confirmed", "resolved"):
-            bad = _unhedged_claims(premise_text, word)
-            assert not bad, f"Unhedged '{word}' claim(s) after a false-premise question: {bad}"
+        bad = unsupported_settled_words(premise_payload, current_state)
+        assert not bad, f"Unhedged settled word(s) after a false-premise question: {bad}"

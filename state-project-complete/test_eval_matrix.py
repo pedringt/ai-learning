@@ -547,3 +547,13 @@ def test_grader_records_carry_question_blocking_status_like_the_ask_seed():
     scenario = next(s for s in ASK if s.id == "ask_blocker_not_omitted")
     q = supplied_records(scenario)["open_questions"][0]
     assert q["blocking"] is True and q["blocks"] == "Launch readiness" and not q["text"].upper().startswith("BLOCKING")
+
+
+def test_graded_subset_limits_the_graded_suite_and_refuses_unknown_ids(monkeypatch):
+    """#567 (Nov 11): MATRIX_GRADED_SCENARIOS keeps an Opus-graded run inside a dollar ceiling."""
+    monkeypatch.setenv("MATRIX_GRADED_SCENARIOS", "ask_false_premise,ask_unknown_stays_unknown")
+    assert matrix.scenario_ids("graded") == ["ask_false_premise", "ask_unknown_stays_unknown"]
+    assert matrix.calls_per_repeat("graded") == 4 and matrix.calls_per_repeat("ask") == 13
+    monkeypatch.setenv("MATRIX_GRADED_SCENARIOS", "ask_false_premise,not_a_scenario")
+    with pytest.raises(matrix.PlanError):
+        matrix.scenario_ids("graded")
