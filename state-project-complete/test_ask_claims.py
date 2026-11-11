@@ -111,6 +111,36 @@ def test_an_unlabelled_claim_may_use_any_selected_record_the_request_or_today():
     assert checker.check_claim(_claim("The budget is $60,000.")) is None
 
 
+def test_a_labelled_claim_may_restate_the_requests_figure_but_not_invent_one():
+    """Batch B (Nov 11): "...so a $75 credit requires manager approval" was withheld for naming the request's $75."""
+    checker = ClaimChecker(CONTEXT, query="Can we raise the budget to $50,000?")
+    assert checker.check_claim(_claim("Current State has the budget at $40,000, not $50,000.", "current_state", "k-budget")) == "Current State"
+    assert checker.check_claim(_claim("The budget is $60,000.", "current_state", "k-budget")) is None
+    assert checker.check_claim(_claim("No $50,000 budget is recorded.", "none", None, ["k-budget"])) == ""
+
+
+def test_a_contrast_with_another_record_passes_only_when_that_record_is_cited():
+    """Batch B (Nov 11): 53 of 65 withheld claims contrasted their record with another record's figure without citing
+    it. The check stays strict; the prompt asks for the citation."""
+    checker = ClaimChecker(CONTEXT)
+    claim = "A Review proposes $45,000; Current State still says $40,000."
+    assert checker.check_claim(_claim(claim, "pending_review", "r-1")) is None
+    assert checker.check_claim(_claim(claim, "pending_review", "r-1", ["k-budget"])) == "Needs review"
+
+
+def test_an_answered_questions_resolving_review_or_evidence_counts_as_citing_the_question():
+    context = deepcopy(CONTEXT)
+    context["answered_questions"][0].update(answered_by_review_id="r-resolved", answer_evidence_id="e-answer")
+    checker = ClaimChecker(context)
+    for linked in ("r-resolved", "e-answer"):
+        assert checker.check_claim(_claim("Retention is 30 days.", "answered_question", "aq-1", [linked])) == "Answered question"
+    # a linked id supports; it is never a primary record, and an unlinked id is still withheld
+    assert checker.check_claim(_claim("Retention is 30 days.", "pending_review", "r-resolved")) is None
+    assert checker.check_claim(_claim("Retention is 30 days.", "answered_question", "aq-1", ["r-other"])) is None
+    # the link adds no figures the Question does not have
+    assert checker.check_claim(_claim("Retention is 45 days.", "answered_question", "aq-1", ["r-resolved"])) is None
+
+
 def test_structure_cannot_detect_a_sentence_that_mixes_authority_levels():
     """Pinned limit (Paige, Nov 10): the primary record is valid and every figure is in a cited record, so this
     passes, although it states a pending $45,000 as if it were Current State. Prompts, evals and human review own this."""

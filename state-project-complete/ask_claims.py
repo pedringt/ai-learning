@@ -7,8 +7,10 @@ anyone sees it:
 - Reference check (structural). The primary record must be among the records Ask selected for this request, of the
   type its basis names. The selected records come from project-scoped queries filtered by status (active Current
   State, open Reviews, open or resolved Questions), so a passing id is in this project, selected, the right type, and
-  in the right status. Supporting references must also be selected records; they never change the label.
-- Anchor check (a limited safeguard). Every number and month a claim names must appear in its records. It catches an
+  in the right status. Supporting references must also be selected records, or the Review or Evidence a selected
+  answered Question names as its answer (its own text stands in for them); they never change the label.
+- Anchor check (a limited safeguard). Every number and month a claim names must appear in its records or in the
+  user's request (a claim may restate or correct the request's own figure). It catches an
   invented figure or date. It does NOT check meaning: a figure attached to the wrong subject, swapped figures, a
   reversed negation, a wrong attribution or an added qualifier all pass. Counts written as words ("two Reviews") are
   not checked.
@@ -205,9 +207,17 @@ class ClaimChecker:
     def __init__(self, context: Mapping[str, Any], *, query: str = "", today: date | None = None):
         self.records = selected_records(context)
         self.by_id: dict[str, Mapping[str, Any]] = {rid: rec for bucket in self.records.values() for rid, rec in bucket.items()}
+        # An answered Question's resolving Review and answer Evidence are not selected records, but the Question
+        # carries the answer. Citing one as support counts as citing the Question (Paige, Nov 11).
+        self.linked: dict[str, Mapping[str, Any]] = {}
+        for answered in self.records["answered_question"].values():
+            for key in ("answered_by_review_id", "answer_evidence_id"):
+                if answered.get(key) and answered[key] not in self.by_id:
+                    self.linked[answered[key]] = answered
+        self.query = query or ""
         # A claim with no primary record may name numbers from any selected record, the request itself (to correct
         # a premise) or today's date.
-        self.open_sources = [record_text(r) for r in self.by_id.values()] + [query, today_text(today)]
+        self.open_sources = [record_text(r) for r in self.by_id.values()] + [self.query, today_text(today)]
 
     def primary(self, basis: str, record_id: str | None) -> tuple[str, Mapping[str, Any]] | None:
         for record_type in BASIS_RECORD_TYPES.get(basis, ()):
@@ -219,20 +229,20 @@ class ClaimChecker:
     def check_claim(self, claim: Mapping[str, Any]) -> str | None:
         """The claim's chip label ("" for an unlabelled `none` claim) when it may be shown, or None to withhold it."""
         basis = claim.get("basis") or "none"
-        supporting = [self.by_id.get(rid) for rid in claim.get("supporting_record_ids") or []]
+        supporting = [self.by_id.get(rid) or self.linked.get(rid) for rid in claim.get("supporting_record_ids") or []]
         if any(record is None for record in supporting):
             return None
         text = str(claim.get("text") or "")
         if basis == "none":
             if claim.get("primary_record_id"):
                 return None
-            sources = [record_text(r) for r in supporting] if supporting else self.open_sources
+            sources = [record_text(r) for r in supporting] + [self.query] if supporting else self.open_sources
             return "" if anchors_supported(text, sources) else None
         found = self.primary(basis, claim.get("primary_record_id"))
         if found is None:
             return None
         record_type, record = found
-        if not anchors_supported(text, [record_text(record), *(record_text(r) for r in supporting)]):
+        if not anchors_supported(text, [record_text(record), *(record_text(r) for r in supporting), self.query]):
             return None
         return RECORD_LABELS[record_type]
 
