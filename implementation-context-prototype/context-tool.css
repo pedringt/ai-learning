@@ -94,7 +94,6 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 .prototype-productbar .product-case-study{margin-left:auto;font-size:12.5px;font-weight:700;color:#334766;text-decoration:none;white-space:nowrap;border-bottom:1px solid transparent}
 .prototype-productbar .product-case-study:hover,.prototype-productbar .product-case-study:focus-visible{border-bottom-color:currentColor}
 
-
 .overview-heading{padding-top:8px!important;max-width:none!important;width:100%!important}
 .overview-heading>p{max-width:980px!important}
 .overview-heading-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:24px!important;width:100%!important}
@@ -147,22 +146,6 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 
 /* Full prototype dark mode. The shared shell toggles body.v88-dark. */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* Project context: make the persistent project switcher easy to verify at a glance. */
 .sidebar-project .project-switcher{min-height:42px!important;padding:9px 11px!important;font-size:14px!important;font-weight:700!important;border-radius:9px!important;gap:8px!important}
 .sidebar-project .project-switcher::before{content:'◆';font-size:9px;color:var(--accent);flex:0 0 auto}
@@ -175,7 +158,6 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 .project-subnav{display:grid;gap:2px;margin:0 0 8px 14px;padding-left:11px;border-left:1px solid var(--line)}.project-subnav button{border:0;background:none;text-align:left;color:var(--muted);font-size:11.5px;font-weight:720;padding:7px 9px;border-radius:7px;cursor:pointer}.project-subnav button:hover{background:var(--surface2);color:var(--ink)}.project-subnav button.active{background:var(--accent-soft);color:var(--accent)}
 .project-page{max-width:900px}.project-page-head{align-items:flex-start;margin-bottom:20px}.project-page-head p{max-width:760px;line-height:1.6}.project-orientation{display:grid;grid-template-columns:1.2fr .8fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:30px}.project-orientation>div{padding:15px 16px;border-right:1px solid var(--line);background:var(--surface)}.project-orientation>div:last-child{border-right:0}.project-orientation span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:5px}.project-orientation strong{font-size:12.5px;line-height:1.45}.project-section-heading{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:12px}.project-section-heading h3{margin:0;font-size:15px}.project-section-heading p{margin:4px 0 0;color:var(--muted);font-size:12px;max-width:680px}.project-area-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.project-area-card{border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:16px;text-align:left;cursor:pointer;color:var(--ink)}.project-area-card:hover{border-color:#b7adce;background:var(--surface2)}.project-area-card span{display:block;font-size:14px;font-weight:820}.project-area-card strong{display:block;margin-top:4px;color:var(--accent);font-size:10.5px}.project-area-card p{margin:9px 0 0;color:var(--muted);font-size:12px;line-height:1.5}.project-hidden-link{margin-top:16px;font-size:11.5px}.project-area-top{display:flex;justify-content:space-between;align-items:center}.project-facts{border-top:1px solid var(--line)}.project-fact{padding:20px 2px;border-bottom:1px solid var(--line);max-width:820px}.project-fact-head{display:flex;align-items:center;gap:16px}.project-fact h3{margin:0;font-size:14px}.project-fact p{margin:7px 0 0;color:#4c4841;font-size:13.5px;line-height:1.65;max-width:760px}.project-pending{border:0;background:none;padding:0;margin-top:9px;color:var(--warm);font-size:10.5px;font-weight:800;cursor:pointer}.project-pending .status-dot{width:6px;height:6px;margin-right:5px}
 
-
 /* State Project handoff refinement: grouped sidebar navigation, contextual history, consistent note filters. */
 .sidebar-nav-group{display:grid;gap:2px}
 
@@ -187,9 +169,6 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 .notes-filters .filter{min-height:31px;display:inline-flex;align-items:center;gap:6px;padding:6px 10px}
 .notes-filters .filter .count-badge{margin:0;min-width:18px;height:18px;padding:0 5px;background:var(--surface2);color:var(--muted)}
 .notes-filters .filter.active .count-badge{background:var(--accent-soft);color:var(--accent)}
-
-
-
 
 /* Review count belongs with the Review workload, not the navigation hierarchy. */
 .review-title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -237,9 +216,6 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 @keyframes analysis-spin{to{transform:rotate(360deg)}}
 @keyframes analysis-spin-reverse{to{transform:rotate(-360deg)}}
 
-
-
-
 .analysis-progress{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);color:var(--muted);font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
 .analysis-pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:analysis-pulse 1.3s ease-in-out infinite}
 .analysis-patience{font-size:11px!important;margin-top:10px!important;opacity:.8}
@@ -257,8 +233,6 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 .project-page.project-document{background:transparent!important;border:0!important;border-radius:0!important;padding:0!important}.current-state-page-head{align-items:flex-start}.current-state-page-head h2{font-family:Inter,ui-sans-serif,system-ui,sans-serif;line-height:1.15}.current-state-page-head>div:first-child{min-width:0}.current-state-page-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto}.project-document-summary{color:var(--muted);}.project-document-meta div{display:grid;gap:3px}.project-document-meta dt{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}.project-document-meta dd{margin:0}.project-outline-section{border-bottom:1px solid var(--line)}.project-outline-section:last-child{border-bottom:0}.project-outline-section>h3{font-family:Georgia,"Times New Roman",serif;font-size:22px;margin:0}.project-outline-description{color:var(--muted);line-height:1.6}.project-outline-list{list-style:none;margin:0;padding:0}.project-outline-list--standalone{max-width:800px}.project-outline-actions{display:flex;gap:10px;align-items:flex-start;white-space:nowrap}.project-outline-actions .project-pending,.project-outline-actions .project-history-link{margin-top:0;font-size:10.5px}.project-area-top{margin-bottom:20px}
 
 .history-page{max-width:920px!important}.history-page .page-head p{max-width:760px;line-height:1.65}.history-list{max-width:880px!important;position:relative}.history-list::before{content:"";position:absolute;left:86px;top:12px;bottom:12px;width:1px;background:var(--line)}.history-list article.history-entry{display:grid;grid-template-columns:72px minmax(0,1fr);gap:28px;border:0!important;padding:0 0 28px!important;margin:0!important;background:transparent!important;position:relative}.history-entry-date{font-size:11px;color:var(--muted);font-weight:750;text-align:right;padding-top:3px}.history-entry-body{position:relative;padding-left:0}.history-entry-body::before{content:"";position:absolute;left:-18px;top:6px;width:7px;height:7px;border-radius:50%;border:2px solid var(--accent)}.history-entry-body h3{font-size:15px!important;margin:0 0 10px!important}.history-change{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:9px 0}.history-change p{margin:0;padding:12px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:12.5px;line-height:1.55}.history-change p>span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:var(--muted);margin-bottom:5px}.history-sources{margin-top:10px}.history-sources>summary{cursor:pointer;font-size:11px;font-weight:750;color:var(--accent)}.history-source-list{display:grid;gap:8px;margin-top:9px}.history-source-list article{display:block;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0;background:var(--surface2)}.history-source-list article span{font-size:10px;color:var(--muted)}.history-source-list article p{margin:4px 0 0;font-size:12px;line-height:1.55}
-
-
 
 /* R6: quieter Notes controls, unified Open Items, document-style Project outline nav */
 .notes-toolbar--stacked{grid-template-columns:minmax(0,1fr) minmax(220px,340px)!important;align-items:center!important}
@@ -283,7 +257,6 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 
 .open-questions-more{margin-top:12px;border:0;background:transparent;color:var(--accent);font:inherit;font-size:12px;font-weight:800;padding:7px 4px;cursor:pointer}
 .open-questions-more:hover{text-decoration:underline}
-
 
 /* R8.1 QA fixes: scalable review accordion */
 
@@ -345,12 +318,15 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 
 .related-review-list{display:grid;gap:8px;margin:18px 0}.related-review-choice{width:100%;text-align:left;border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:12px 13px;cursor:pointer;color:var(--ink)}.related-review-choice:hover{border-color:var(--accent)}.related-review-choice strong{display:block;font-size:13px}.related-review-choice span{display:block;margin-top:4px;color:var(--muted);font-size:11.5px;line-height:1.5}
 
-
 /* R9 Ask vertical slice: structured, grounded meeting-prep output. */
 .ask-live-loading,.ask-live-error{padding:22px 0}
 .ask-live-loading{grid-template-columns:auto 1fr;column-gap:10px}
 .ask-live-loading p{grid-column:2}
 .ask-live-answer>.result-lede{max-width:900px;margin:8px 0 22px}
+/* #567: the answer's opening claims with their authority chips, and the withheld-claims line */
+.ask-claims{max-width:900px;margin:8px 0 18px;padding:0;list-style:none;display:grid;gap:8px}.ask-claim .ask-record-badge{margin-right:6px}.ask-withheld-note{margin:-6px 0 18px;color:var(--muted);font-size:12px}
+/* #567 (Nov 11): a hypothetical draft's assumption line, set by the server, kept with the draft. */
+.ask-hypothetical-line{margin:0 0 10px;padding:8px 10px;border-left:3px solid var(--muted);background:rgba(127,127,127,.08);font-size:13px}.ask-answer-section .ask-withheld-note{margin:0 0 10px}
 .ask-answer-section{margin:20px 0;padding-top:18px;border-top:1px solid var(--line)}
 .ask-answer-section h3{margin:0 0 10px;font-size:14px;letter-spacing:.01em}
 .ask-answer-section ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}
@@ -425,7 +401,6 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
 
 /* Responsive sanity: stack instead of squeeze. */
 
-
 .note-immutable-hint{display:inline-block;margin:12px 0 0!important;padding:7px 9px;border-radius:7px;background:var(--surface2);color:var(--muted)!important;font-size:10.5px!important}.note-immutable-hint strong{color:var(--ink)}
 
 /* R9.3.1: hierarchy, portable Ask artifacts, and viewport-safe dialogs */
@@ -474,8 +449,6 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
   .notes-page .simple-note{grid-template-columns:1fr auto!important}
 }
 
-
-
 /* R9.3.2 Project finishing pass: reduce repeated orientation copy and quiet secondary workflow actions. */
 .project-document-summary{max-width:650px!important;font-size:13px!important;line-height:1.55!important}
 
@@ -488,11 +461,7 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
 
 /* R9.6 true Ask streaming */
 .ask-streaming-draft{min-height:180px;max-width:820px;}
-.ask-streaming-draft .ask-stream-section-title{margin:24px 0 9px;padding-top:22px;border-top:1px solid color-mix(in srgb,var(--line) 72%,transparent);font-size:16px;line-height:1.35;letter-spacing:-.01em;}
-.ask-stream-item{position:relative;margin:0;padding:10px 0 10px 18px;border-bottom:1px solid color-mix(in srgb,var(--line) 62%,transparent);line-height:1.55;color:var(--text,#26233a);}
-.ask-stream-item::before{content:'•';position:absolute;left:3px;top:10px;color:var(--muted,#79758c);}
-.ask-stream-detail{margin:-6px 0 0;padding:0 0 10px 18px;border-bottom:1px solid color-mix(in srgb,var(--line) 62%,transparent);font-size:13px;line-height:1.45;color:var(--muted,#706c80);}
-.ask-stream-cursor{display:inline-block;width:2px;height:1em;margin-left:2px;vertical-align:-0.12em;background:currentColor;animation:ask-stream-blink .85s steps(1,end) infinite;}
+
 @keyframes ask-stream-blink{50%{opacity:0;}}
 
 /* R9.7 Workspace attention: stable, calm action layer beneath Ask. */
@@ -501,7 +470,6 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
 .attention-list{display:grid;gap:8px;margin-top:14px}.attention-item{width:100%;justify-content:space-between;border:1px solid var(--line);border-radius:9px;background:#fff;cursor:pointer}.attention-item:hover{border-color:color-mix(in srgb,var(--accent) 34%,var(--line));background:color-mix(in srgb,#fff 96%,var(--accent-soft))}.attention-item-copy{display:grid;gap:3px;min-width:0}.attention-item-copy strong{font-size:13px;line-height:1.35;color:var(--ink)}.attention-item-copy>span:last-child{font-size:11.5px;line-height:1.4;color:var(--muted)}.attention-kind{font-size:10px!important;line-height:1.2!important;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#8a5a08!important}.attention-item.blocker .attention-kind{color:#9b3c32!important}.attention-arrow{color:var(--accent);font-size:16px;flex:0 0 auto}
 
 .workspace-attention.is-clear{min-height:104px}.workspace-attention.is-loading{min-height:78px;display:flex;align-items:center}.workspace-attention.is-loading h3::after{content:"";display:inline-block;width:6px;height:6px;margin-left:9px;border-radius:50%;background:var(--accent);vertical-align:middle;animation:attention-pulse 1.2s ease-in-out infinite}@keyframes attention-pulse{50%{opacity:.35}}
-
 
 /* R9.8 QA consolidation — stable dialogs, action hierarchy, compact Project, calmer Ask. */
 .overlay{align-items:flex-start;justify-content:center;height:100dvh;overflow-y:auto;padding-bottom:max(18px,env(safe-area-inset-bottom))}
@@ -547,7 +515,6 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
 .project-wiki-section{padding-top:34px!important;padding-bottom:20px!important}
 
 .project-wiki-prose p{font-size:14px!important;line-height:1.75!important;margin:9px 0 14px!important}
-
 
 /* Review is a human decision/authorization state, not a lower-severity warning. */
 :root{--review:#5b4a91;--review-soft:#f1eef8}

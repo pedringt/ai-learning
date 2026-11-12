@@ -402,3 +402,28 @@ Ordinary intake, open item dropped: mixed spec 10/60 before, 0/20 after; the oth
 
 **Revisit when**  
 The rule produces Questions people routinely dismiss as noise, or a flagged-open item turns out to be settled elsewhere in the same source.
+
+### DEC-021 — Ask answers in checked claims under a fixed headline (#567)
+
+**Status:** Decided; on `staging` (Nov 12), not on `main`. Nov 11–12 additions, all Paige's decisions: software no longer rewrites answer wording (a claim, card or title is shown as written, withheld, or replaced by record text, by what it asserts and its records' authority: `ask_assertions.py`); explicitly requested hypothetical drafts show the user's assumption with the draft (`ask_drafts.py`); the fixed headline is a small label, not a heading. Fresh comparison Nov 12: no authority violations in 480 answers; the comparison packet awaits Paige's ratings. (Numbered DEC-020 on the feature branch; renumbered at the staging merge, where DEC-020 was taken.)  
+**Date:** 2026-11-10  
+**Related:** #567 (revised design, Nov 10 comment), #640, #642, #653; `ask_claims.py`, `ask_display.py`, `eval/review_sample_567.py`
+
+**Decision**  
+Paige approved the revised #567 design with two clarifications:
+- **Claims replace the summary.** 1-4 claims, one basis each. One primary record sets the claim's chip; up to two supporting references never raise it. A claim that fails its reference check or its anchor check is withheld, and one fixed line says part of the answer was left out.
+- **The headline is fixed per job and written by software** ("What State has on record", "Meeting brief", ...). No status-word list.
+- **Model-worded Current State, History and Evidence cards get the same checks.** The record's own text replaces the wording only after the card's reference passes (project, selection, type, status). An invalid or cross-project reference is withheld, never replaced from that record.
+- **What the checks cannot do is stated, not implied.** The anchor check (numbers and months must be in the cited records) is a limited safeguard, not proof of meaning: a figure on the wrong subject, a reversed negation or a wrong attribution passes. No structural check can tell that one sentence mixes authority levels; prompts, evals and human review own that.
+- **Copy and the compatibility `summary` keep the chips**, and the evals score the displayed answer (`ask_display`).
+- **Streaming shows a claim or section only after the same checks** as the finished answer.
+- **Measurement:** withholding and replacement rates are reported separately from error rates. Withholding above 5% is a provisional trigger to investigate, not a release rule; every fully withheld answer and any loss of required information gets inspected. The targeted #640 check aims at 0/20 observed contradictions, reported with its sample-size limit (0/20 still allows a true rate up to about 14%). The grader stays observe-only. The first human review covers 12 after and 6 before answers across the known failure types and grows only if findings warrant it. It is shuffled and version-unlabelled, not blinded: the two answer formats reveal the version. Labels never satisfy a scored fact; the keyword checks read the answer's words only.
+
+**Why**  
+Every production failure on #567 was model-written headline or summary prose that a word-rewriting backstop either missed or made false. Structure (ids, types, statuses) is what software can actually enforce.
+
+**Rejected / deferred**  
+A model-written headline checked against a status-word list; a badge-only fallback that keeps unsupported wording; joint promotion with #640's held retrieval (a later decision).
+
+**Revisit when**  
+The withheld rate stays high after investigation, answers lose required information, or human review finds unsupported text shown with a chip.

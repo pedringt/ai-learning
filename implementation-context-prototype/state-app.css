@@ -839,6 +839,11 @@ body:not(.v88-dark) .ask-state-drawer{background:#fbfdff}.ask-state-drawer-head 
       #askStateDrawer .ask-item-text{font-size:13px;line-height:1.5;color:#26344d}
       #askStateDrawer .ask-item-detail{font-size:11.5px;line-height:1.45;margin-top:4px;color:#687387}
       #askStateDrawer .ask-record-badge{font-size:9.5px;line-height:1.2;padding:3px 6px;margin-bottom:6px}
+      /* #567: the answer's opening claims, each with its authority chip, and the withheld-claims line */
+      #askStateDrawer .ask-claims{margin:0 0 16px;padding:0;list-style:none;display:grid;gap:8px}
+      #askStateDrawer .ask-claim{font-size:13px;line-height:1.55;color:#26344d}
+      #askStateDrawer .ask-claim .ask-record-badge{margin:0 6px 0 0;vertical-align:1px}
+      #askStateDrawer .ask-withheld-note{font-size:11.5px;line-height:1.45;margin:-6px 0 16px;color:#687387}
       #askStateDrawer .ask-item-action,#askStateDrawer .ask-item-link{font-size:11px;line-height:1.2;font-weight:700;padding:2px 0;white-space:nowrap}
       /* Notes: dense activity/feed list */
       .notes-page .note-results{border-top:1px solid #e1e8f1!important}

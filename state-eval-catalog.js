@@ -643,7 +643,8 @@
    "severity": "high",
    "rationale": "Ask must prefer maintained Current State over stale historical truth.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_pending_review_not_truth",
@@ -677,7 +678,8 @@
    "severity": "high",
    "rationale": "A pending Review must never be presented as established Current State.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_unknown_stays_unknown",
@@ -700,7 +702,10 @@
     [
      "not established",
      "not yet established",
-     "not been established"
+     "not been established",
+     "does not have an established",
+     "does not have a confirmed",
+     "does not have a safe autonomous-resolution percentage"
     ]
    ],
    "forbidden_claims": [
@@ -716,7 +721,8 @@
    "severity": "high",
    "rationale": "Unknown must not become zero, false, or an invented target.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_change_summary",
@@ -755,7 +761,8 @@
    "severity": "medium",
    "rationale": "Change summaries should use History and preserve old-versus-new direction.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_false_premise",
@@ -789,7 +796,8 @@
    "severity": "high",
    "rationale": "Ask should correct a false premise rather than accept it as project truth.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_blocker_not_omitted",
@@ -821,7 +829,8 @@
    "severity": "high",
    "rationale": "A broad readiness answer must not omit a consequential blocker.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_conflicting_evidence",
@@ -855,7 +864,8 @@
    "severity": "high",
    "rationale": "Ask should report maintained truth while surfacing a relevant unresolved conflict.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_question_answer_no_state_mutation",
@@ -915,7 +925,8 @@
    "severity": "medium",
    "rationale": "Ask should report that a Question was answered, with its answer, without presenting that answer as a change to Current State.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_superseded_pending_review",
@@ -953,7 +964,8 @@
    "severity": "high",
    "rationale": "Ask should keep approved Current State authoritative and surface the newest pending proposal without treating a superseded proposal as equally current.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_known_outcome_unknown_reason",
@@ -988,7 +1000,8 @@
    "severity": "high",
    "rationale": "Ask may know that an outcome happened without knowing why; it should not invent rationale or motivation.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_source_words_not_demoted",
@@ -1035,7 +1048,8 @@
    "severity": "high",
    "rationale": "Ask must report what a source said in the source's terms; the pending step is the Current State decision, not the source's approval.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_compound_question_keeps_governing_state",
@@ -1089,7 +1103,8 @@
    "severity": "high",
    "rationale": "Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   },
   {
    "id": "ask_evidence_backed_approval_qualified",
@@ -1121,7 +1136,9 @@
      "not yet accepted",
      "pending review",
      "awaiting review",
-     "has not changed current state"
+     "has not changed current state",
+     "not have the pilot budget recorded",
+     "not yet record"
     ],
     [
      "approved at",
@@ -1144,7 +1161,8 @@
    "severity": "high",
    "rationale": "Evidence that says approved is reported as approved, qualified as not in Current State; never denied.",
    "observe_only": false,
-   "known_unsupported": ""
+   "known_unsupported": "",
+   "hypothetical_draft": false
   }
  ]
 };

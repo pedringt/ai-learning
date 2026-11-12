@@ -45,6 +45,18 @@ on:
         type: boolean
         required: true
         default: true
+      ask_transport:
+        description: How Ask suites call the model (stream also records time to first visible content)
+        type: choice
+        required: false
+        default: run
+        options:
+          - run
+          - stream
+      graded_scenarios:
+        description: Graded suite only - comma list of scenario ids to grade (empty = all)
+        required: false
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -77,8 +89,10 @@ jobs:
           REPEATS: ${{ github.event_name == 'schedule' && '30' || inputs.repeats }}
           MAX_CALLS: ${{ github.event_name == 'schedule' && '1500' || inputs.max_calls }}
           DRY_RUN: ${{ github.event_name == 'schedule' && 'false' || inputs.dry_run }}
+          MATRIX_GRADED_SCENARIOS: ${{ inputs.graded_scenarios }}
         run: |
           [[ "$REPEATS" =~ ^[0-9]+$ && "$MAX_CALLS" =~ ^[0-9]+$ ]] || { echo "repeats and max_calls must be whole numbers"; exit 1; }
+          [[ "$MATRIX_GRADED_SCENARIOS" =~ ^[a-z0-9_,]*$ ]] || { echo "graded_scenarios must be a comma list of scenario ids"; exit 1; }
           [[ "$MODEL" =~ ^claude-[a-z0-9.-]+$ ]] || { echo "Refusing model id: it must match ^claude-[a-z0-9.-]+\$"; exit 1; }
           [[ "$SUITES" =~ ^[a-z,\ ]+$ ]] || { echo "suites must be a comma list of suite names"; exit 1; }
           set +e
@@ -134,6 +148,8 @@ jobs:
           REPEAT_START: ${{ matrix.repeat_start }}
           REPEAT_COUNT: ${{ matrix.repeat_count }}
           CALL_CAP: ${{ matrix.call_cap }}
+          MATRIX_GRADED_SCENARIOS: ${{ inputs.graded_scenarios }}
+          ASK_EVAL_TRANSPORT: ${{ inputs.ask_transport == 'stream' && 'stream' || '' }}
         run: |
           python -m eval.run_matrix --suite "$SUITE" --model "$CLAUDE_MODEL" \
             --repeat-start "$REPEAT_START" --repeat-count "$REPEAT_COUNT" --call-cap "$CALL_CAP" \

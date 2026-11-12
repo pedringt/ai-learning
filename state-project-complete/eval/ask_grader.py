@@ -17,6 +17,7 @@ import json
 from datetime import date
 from typing import Any
 
+from ask_display import WITHHELD_LINE
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
@@ -138,6 +139,14 @@ def visible_answer(answer: Any) -> Any:
     if not isinstance(answer, dict):
         return answer
     visible = {key: value for key, value in answer.items() if key not in _HIDDEN_ANSWER_FIELDS}
+    # #567: an answer with claims shows them, each with its chip, in place of a summary; its `summary` is only a
+    # plain-text copy of those lines for older consumers, and the withheld counts show as one fixed line.
+    if isinstance(visible.get("claims"), list):
+        visible.pop("summary", None)
+        visible["claims"] = [{"text": c.get("text"), "badge": c.get("label") or ""} for c in visible["claims"] if isinstance(c, dict)]
+    withheld = bool(visible.pop("withheld_claims", 0)) | bool(visible.pop("withheld_items", 0))
+    if withheld:
+        visible["withheld_note"] = WITHHELD_LINE
     # Oct 20: each card shows a status badge in the UI (context-ask.js labelFor); give the grader the same
     # label so it judges what a person sees.
     sections = []

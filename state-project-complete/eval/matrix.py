@@ -115,6 +115,20 @@ def parse_suites(text: str) -> list[str]:
     return list(dict.fromkeys(suites))
 
 
+def graded_subset(scenarios: list[Any]) -> list[Any]:
+    """#567 (Nov 11): MATRIX_GRADED_SCENARIOS (comma-separated ids) limits the graded suite to those scenarios, so a
+    run can be held to a dollar ceiling: each grade is an Opus call. Unset, every scenario runs. An unknown id is a
+    plan error, never silently dropped."""
+    wanted = [x.strip() for x in os.getenv("MATRIX_GRADED_SCENARIOS", "").split(",") if x.strip()]
+    if not wanted:
+        return scenarios
+    by_id = {s.id: s for s in scenarios}
+    unknown = [x for x in wanted if x not in by_id]
+    if unknown:
+        raise PlanError(f"MATRIX_GRADED_SCENARIOS names unknown graded scenarios: {unknown}")
+    return [by_id[x] for x in wanted]
+
+
 def scenario_ids(suite: str) -> list[str]:
     if suite == "review":
         from eval.review_interpretation_scenarios import SCENARIOS
@@ -132,7 +146,7 @@ def scenario_ids(suite: str) -> list[str]:
         from eval.baseline_decomposition import SCENARIOS
     else:
         raise PlanError(f"Unknown suite {suite!r}")
-    return [s.id for s in SCENARIOS]
+    return [s.id for s in (graded_subset(list(SCENARIOS)) if suite == "graded" else SCENARIOS)]
 
 
 def calls_per_repeat(suite: str) -> int:
@@ -301,6 +315,31 @@ def dry_run_summary(suites: Iterable[str], model: str | None = None) -> str:
 
 # ---------------------------------------------------------------- call counting and usage
 
+class _CountedStream:
+    """Wraps an SDK stream manager so CallCounter records the call's usage (or its error) when the stream closes."""
+
+    def __init__(self, manager: Any, counter: "CallCounter", started: float, model: str | None):
+        self._manager, self._counter, self._started, self._model = manager, counter, started, model
+        self._stream: Any = None
+
+    def __enter__(self) -> Any:
+        self._stream = self._manager.__enter__()
+        return self._stream
+
+    def __exit__(self, exc_type, exc, tb) -> Any:
+        try:
+            message = getattr(self._stream, "current_message_snapshot", None)
+        except Exception:  # broad on purpose: no snapshot yet (the stream failed early); record the call without usage
+            message = None
+        self._counter._record(message, self._started, exc, self._model)
+        # The raw output too (synthetic eval scenarios only, kept in the repeat files), so a claim the checks withheld
+        # can be read afterwards: the finished answer keeps only the claims that passed.
+        text = "".join(getattr(block, "text", "") or "" for block in getattr(message, "content", None) or [])
+        if text and self._counter.usage:
+            self._counter.usage[-1]["raw_text"] = text[:6000]
+        return self._manager.__exit__(exc_type, exc, tb)
+
+
 class CallCounter:
     """Counts every Messages.create/stream call made in-process and keeps each call's token usage.
 
@@ -358,8 +397,16 @@ class CallCounter:
             return message
 
         def stream(self, *args, **kwargs):
+            # #567 (Nov 11): a streamed call's usage is recorded when its stream closes, as create's is when it
+            # returns. Before this, streamed calls were counted but their tokens and cost were never recorded.
             counter._admit()
-            return original_stream(self, *args, **kwargs)
+            started = time.perf_counter()
+            try:
+                manager = original_stream(self, *args, **kwargs)
+            except Exception as exc:
+                counter._record(None, started, exc, kwargs.get("model"))
+                raise
+            return _CountedStream(manager, counter, started, kwargs.get("model"))
 
         self._saved = (original_create, original_stream)
         Messages.create, Messages.stream = create, stream
@@ -446,8 +493,8 @@ def _summary_repetition(answer: Any) -> dict[str, Any]:
 
 
 def _answer_text(answer: Any) -> str:
-    from eval.quality_harness import _flatten_strings
-    return _flatten_strings(answer)
+    from ask_display import displayed_text
+    return displayed_text(answer)
 
 
 _ASK_CHECKS = ("grounding", "required_facts", "forbidden_claims", "uncertainty", "open_item", "authority")
@@ -471,7 +518,20 @@ def ask_record(r) -> dict[str, Any]:
             "failed_checks": failed if outcome == "fail" else [], "checks": checks,
             "expected": None, "observed": None, "error": r.error or None,
             **({"model_output_excerpt": _excerpt(_answer_text(r.answer))} if outcome == "fail" else {}),
-            **({"summary_repetition": _summary_repetition(r.answer)} if r.answer else {})}
+            **({"summary_repetition": _summary_repetition(r.answer)} if r.answer else {}),
+            **(_review_capture(r) if r.answer else {}),
+            **({"ask_latency": r.latency} if getattr(r, "latency", None) else {})}
+
+
+def _review_capture(r) -> dict[str, Any]:
+    """#567 (Paige, Nov 10): every Ask and adversarial answer, in full and as displayed, with the records the scenario
+    seeded, for the human source-faithfulness review (eval/review_sample_567.py). Synthetic scenarios only. It stays
+    in the repeat files (the run's artifacts); aggregate_matrix reads none of these fields, so nothing leaves them."""
+    from ask_display import displayed_text
+    from eval.ask_grader import supplied_records
+
+    return {"answer": r.answer, "displayed_answer": displayed_text(r.answer, include_footer=True),
+            "question": r.scenario.question, "supplied_records": supplied_records(r.scenario)}
 
 
 def graded_record(r, grade) -> dict[str, Any]:
@@ -598,7 +658,7 @@ def _scenarios(suite: str) -> list[Any]:
         from eval.scenarios import SCENARIOS
     else:
         from eval.baseline_decomposition import SCENARIOS
-    return list(SCENARIOS)
+    return graded_subset(list(SCENARIOS)) if suite == "graded" else list(SCENARIOS)
 
 
 def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: float) -> Callable[[Any], dict[str, Any]]:
