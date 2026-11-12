@@ -87,7 +87,7 @@ SCENARIOS = (
         question="What percentage of tickets will be fully autonomous?",
         current_state=(("automation", "A safe autonomous-resolution percentage has not been established."),),
         open_questions=("What autonomous-resolution percentage is safe and achievable?",),
-        required_facts=(("not established", "not yet established", "not been established"),),
+        required_facts=(("not established", "not yet established", "not been established", "does not have an established", "does not have a confirmed", "does not have a safe autonomous-resolution percentage"),),
         forbidden_claims=("0%", "50%"),
         forbid_unsupported_numbers=True,
         should_express_uncertainty=True,
@@ -244,7 +244,7 @@ SCENARIOS = (
         pending_reviews=("Is the approved pilot budget of $40,000 ready to be recorded in Current State?",),
         required_facts=("$40,000", ("not in current state", "not yet in current state", "not been recorded",
                                     "not recorded", "not been accepted", "not yet accepted", "pending review",
-                                    "awaiting review", "has not changed current state"),
+                                    "awaiting review", "has not changed current state", "not have the pilot budget recorded", "not yet record"),
                         # Oct 28 (Paige, #579): the answer must say the source reports the approval.
                         ("approved at", "as approved", "approved budget", "budget is approved", "budget was approved")),
         # Oct 28 (Paige, #579): "$40,000 per Q3 planning notes, but it is not yet approved in Current State" is

@@ -416,6 +416,10 @@ def _has_uncertainty_language(text: str) -> bool:
 _ANSWER_UNCERTAINTY_SIGNALS = (
     "not confirmed", "cannot confirm", "can't confirm", "unable to confirm",
     "not been established", "still open", "does not have enough",
+    # Nov 12 (Paige, #567 fresh comparison): correct claim-shaped answers the list missed, e.g. "Security has not
+    # yet confirmed approval", "an open, blocking question", "an open, non-blocking question", "has not signed off".
+    "not yet confirmed", "not yet approved", "not yet established", "has not signed off", "not signed off",
+    "open, blocking question", "open, non-blocking question", "open blocking question", "open non-blocking question",
 )
 
 
@@ -424,12 +428,16 @@ def _expresses_uncertainty(text: str) -> bool:
 
 
 def _has_open_item_language(text: str) -> bool:
-    signals = ("review", "question", "blocking", "pending", "open", "unresolved", "awaiting")
+    # "blocked" since Nov 12 (#567): "Launch readiness is blocked: Security has not yet confirmed approval".
+    signals = ("review", "question", "blocking", "blocked", "pending", "open", "unresolved", "awaiting")
     return any(signal in text for signal in signals)
 
 
 def _distinguishes_proposal(text: str) -> bool:
-    signals = ("pending", "proposed", "awaiting review", "under review", "in review", "not decided", "not approved", "has not been accepted")
+    # "awaiting human review", "a proposal" since Nov 12 (#567): "Expanding the pilot to 40 users is a proposal
+    # awaiting human review".
+    signals = ("pending", "proposed", "awaiting review", "under review", "in review", "not decided", "not approved",
+               "has not been accepted", "awaiting human review", "a proposal")
     if any(signal in text for signal in signals):
         return True
     # A grounded answer can also distinguish maintained truth from a conflicting

@@ -702,7 +702,10 @@
     [
      "not established",
      "not yet established",
-     "not been established"
+     "not been established",
+     "does not have an established",
+     "does not have a confirmed",
+     "does not have a safe autonomous-resolution percentage"
     ]
    ],
    "forbidden_claims": [
@@ -1133,7 +1136,9 @@
      "not yet accepted",
      "pending review",
      "awaiting review",
-     "has not changed current state"
+     "has not changed current state",
+     "not have the pilot budget recorded",
+     "not yet record"
     ],
     [
      "approved at",
