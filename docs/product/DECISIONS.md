@@ -384,7 +384,7 @@ A known regression passes on rerun, or the same test needs its rerun in most run
 
 ### DEC-020 — An item the source explicitly marks as open becomes a Question, even when it is a detail
 
-**Status:** Decided; prompt change measured on `eval/649-mixed-spec`, not yet on `staging`  
+**Status:** Decided; on `staging` (13d90b2); released to `main` through a release PR with only the prompt rule, its size-cap test and this entry  
 **Date:** 2026-11-11  
 **Related:** #649, DEC-019; `question_review_prompt.py`, `eval/mixed_spec_intake.py`
 
