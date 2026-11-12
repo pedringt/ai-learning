@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 from eval.baseline_decomposition import MIXED_SPEC_SOURCE, SCENARIOS
-from eval.mixed_spec_intake import OPEN_ITEM, SOURCE, classify, summarize
+from eval.mixed_spec_intake import INTAKE_SOURCES, OPEN_ITEM, SOURCE, classify, summarize
 
 SERVICE = Path(__file__).resolve().parent
 FACT = "State supports a bootstrap/backfill workflow when a project is first adopted."
@@ -18,6 +18,14 @@ FACT = "State supports a bootstrap/backfill workflow when a project is first ado
 def test_the_intake_measurement_and_the_baseline_scenario_use_the_same_source():
     assert SOURCE == MIXED_SPEC_SOURCE == next(s for s in SCENARIOS if s.id == "mixed_spec").source
     assert "grouping UX" in SOURCE and OPEN_ITEM == (("group*",),)
+    assert {"mixed_spec", "decisions_and_open_questions", "hedged_change"} <= set(INTAKE_SOURCES)
+
+
+def test_a_source_s_own_open_item_keywords_are_used():
+    sso = INTAKE_SOURCES["decisions_and_open_questions"].unresolved
+    assert classify(["The beta is invite-only."], ["Should we support SSO at launch?"], [], sso)["outcome"] == "raised"
+    assert classify(["SSO is supported at launch."], [], [], sso)["outcome"] == "stated_as_fact"
+    assert classify(["The beta is invite-only."], [], [], sso)["outcome"] == "dropped"
 
 
 def test_each_outcome_is_classified_apart():
@@ -57,6 +65,9 @@ def _cli(*args):
 def test_cli_dry_run_states_the_number_of_paid_calls_and_makes_none():
     result = _cli("--dry-run", "--repeats", "7")
     assert result.returncode == 0 and "= 7 paid model call(s)" in result.stdout
+    three = _cli("--dry-run", "--repeats", "20", "--only", "mixed_spec", "hedged_change", "decisions_and_open_questions")
+    assert three.returncode == 0 and "= 60 paid model call(s)" in three.stdout
+    assert _cli("--dry-run", "--only", "nope").returncode == 2
 
 
 def test_cli_skips_without_a_key():
