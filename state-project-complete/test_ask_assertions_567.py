@@ -124,6 +124,19 @@ def test_a_permission_on_a_non_current_state_basis_is_withheld(basis, primary):
     assert not _validated([_claim("Work not dependent on retention can proceed.", basis, primary)]).claims
 
 
+def test_a_pending_review_claim_may_contrast_with_a_current_state_record_it_cites_as_support():
+    """The Nov 11 contrast rule: the Current State record is cited as support; the chip stays Needs review."""
+    text = "A pending Review proposes changing the planning scope; until it is accepted, implementation planning is approved for the bounded use case."
+    assert not _validated([_claim(text, "pending_review", "r-ret")]).claims
+    shown = _validated([_claim(text, "pending_review", "r-ret", supporting=["k-launch"])]).claims
+    assert shown and shown[0].label == "Needs review" and shown[0].text == text
+
+
+def test_a_denied_status_is_not_an_assertion_but_a_denied_quality_still_is():
+    assert check("The approved pilot budget is not yet recorded in Current State.", "pending_review", {}).ok
+    assert not check("The approved pilot budget is not enough for Phase 2.", "pending_review", {}).ok
+
+
 # --- compound question: both parts survive when each is cited correctly -----------------------------------------
 
 def test_a_compound_answer_keeps_the_blocker_and_what_can_proceed():

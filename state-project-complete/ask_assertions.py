@@ -11,10 +11,12 @@ Everything else (a report of what a source said, a pending proposal, an open que
 past status the sentence says was undone, a condition still to be met) is not checked here: those are the claim's
 basis, which the chip shows and the reference check already verified.
 
-Authority, by basis (the claim's primary record sets it; supporting records never raise it):
+Authority, by basis (the claim's primary record sets it; supporting records never raise it, but a Current State record
+cited as support may carry a status in the clause that contrasts with it, as in "…, so the approved size remains 10"):
 - current_state: a status must share most of its content words with a cited Current State record, and a permission
   needs a cited Current State record that itself grants one ("can proceed", "can begin", "approved for").
-- answered_question: may say the Question was answered or resolved, and state its recorded answer; no permission.
+- answered_question: may say the Question was answered or resolved, state its recorded answer, and report who gave
+  it; no permission.
 - history: may state a past status ("was approved on Oct 3"); not a present status or a permission.
 - evidence_says: may report what a source said or did ("Legal confirmed 30 days", "Legal reportedly confirmed…"); not
   a status in its own voice or a permission.
@@ -47,26 +49,33 @@ _PERMISSION = re.compile(
     re.I,
 )
 # A clause is the unit a negation or an attribution covers.
-_CLAUSE_BREAK = re.compile(r"[;:]|,|\s[—–]\s|\b(?:but|so|while|although|though|whereas|because|therefore|thus|"
+_CLAUSE_BREAK = re.compile(r"[;:]|(?<!\d),(?!\d)|\s[—–]\s|\b(?:but|so|while|although|though|whereas|because|therefore|thus|"
                            r"which\s+means|meaning)\b", re.I)
 _NEGATION = re.compile(r"\b(?:not|no|never|nothing|none|neither|nor|without|cannot)\b|n['’]t\b", re.I)
 # A status the clause makes conditional, proposed or required rather than asserting it.
 _NOT_ASSERTED = re.compile(
     r"\b(?:whether|if|once|unless|until|would|pending|propos(?:e|es|ed|al)|awaiting|await|requires?|required|needs?|"
-    r"needed|before|expected|planned|suggests?|appears?|might|asks?|asking|if\s+accepted|to\s+be)\b", re.I)
+    r"needed|before|expected|planned|suggests?|appears?|might|asks?|asking|if\s+accepted|to\s+be|assuming|"
+    r"(?:should|must|will|could|may|might|can)(?:\s+only)?\s+be)\b", re.I)
 _REPORTING = re.compile(
-    r"\b(?:says|said|reports?|reported|reportedly|states?|stated|claims?|claimed|describes?|described|writes|wrote|"
+    r"\b(?:says|say|said|reports?|reported|reportedly|states?|stated|claims?|claimed|describes?|described|writes|wrote|"
     r"mentions?|mentioned|notes?\s+that|noted|according\s+to|per)\b", re.I)
 _POSSESSIVE_SOURCE = re.compile(r"\b[A-Z][\w-]*['’]s\s+(?:\w+\s+){0,2}$")
 _BE = re.compile(r"\b(?:is|are|was|were|be|been|being|has\s+been|have\s+been|had\s+been|remains?|stays?|looks?|"
                  r"seems?|becomes?|became)\s+(?:\w+ly\s+)?$", re.I)
 _DETERMINER = re.compile(r"\b(?:the|a|an|this|that|these|those|its|their|our|your|any|all)\s+(?:\w+ly\s+)?$", re.I)
-_PAST_STATUS = re.compile(r"\b(?:was|were|had\s+been)\s+(?:\w+ly\s+)?$", re.I)
+# "was approved", "was previously marked approved": a past status, at most two words between.
+_PAST_STATUS = re.compile(r"\b(?:was|were|had\s+been)\s+(?:[\w-]+\s+){0,2}$", re.I)
 _REVERSAL = re.compile(r"\b(?:re-?opened|reversed|revoked|withdrawn|rescinded|superseded|replaced|rolled\s+back|"
-                       r"no\s+longer|later\s+changed|since\s+changed)\b", re.I)
+                       r"no\s+longer|later\s+changed|since\s+changed|was\s+changed|has\s+changed)\b", re.I)
+# The clause denies the subject's status or record: "Confirmed retention terms are not recorded", "The approved pilot
+# budget is not yet recorded in Current State". Only a status or record predicate counts: "The approved budget is not
+# enough" still asserts approval.
 _DENIED_AFTER = re.compile(
-    r"^(?:\s+[\w'’-]+){0,5}?\s+(?:(?:is|are|was|were|has|have)\s+(?:not|never)|isn['’]t|aren['’]t|wasn['’]t|weren['’]t|"
-    r"hasn['’]t|haven['’]t)\s+(?!only\b)(?:yet\s+)?(?:been\s+)?(?:yet\s+)?\w+", re.I)
+    r"^(?:\s+[\w'’$,.-]+){0,6}?\s+(?:(?:is|are|was|were|has|have)\s+(?:not|never)|isn['’]t|aren['’]t|wasn['’]t|"
+    r"weren['’]t|hasn['’]t|haven['’]t)\s+(?!only\b)(?:yet\s+)?(?:been\s+)?(?:yet\s+)?(?:correct|accurate|true|right|valid|"
+    r"established|recorded|confirmed|accepted|approved|resolved|settled|final|known|decided|in\s+current\s+state|"
+    r"on\s+record|in\s+place|part\s+of\s+current\s+state)\b", re.I)
 _PERMISSION_NEGATED = re.compile(
     r"\b(?:cannot|can\s+not|can['’]t|may\s+not|should\s+not|shouldn['’]t|is\s+not|isn['’]t|are\s+not|aren['’]t)\s+"
     r"(?:yet\s+)?(?:now\s+)?$|\b(?:nothing|no\s+\w+|none)\s+(?:\w+\s+){0,3}$", re.I)
@@ -114,11 +123,10 @@ def _status_assertions(clause: str, sentence: str = "") -> Iterable[Assertion]:
         if _NEGATION.search(before) or _NOT_ASSERTED.search(before) or "?" in clause:
             continue
         lead = before.strip()
-        bare_or_that = not lead or re.search(r"\bthat\s+[\w\s'’-]*$", before) or _DETERMINER.search(before)
-        if bare_or_that and _DENIED_AFTER.match(after) and not _DETERMINER.search(before):
-            continue                                        # "Confirmed retention terms are not recorded"
-        if re.search(r"\bthat\b", before) and _DENIED_AFTER.match(after):
-            continue                                        # "the premise that retention is resolved is not correct"
+        if _DENIED_AFTER.match(after):
+            continue          # "Confirmed retention terms are not recorded"; "the premise that … is resolved is not correct"
+        if re.search(r"\bmay\b", before, re.I):
+            continue          # "new legal evidence may contradict the approved terms"
         if _PAST_STATUS.search(before) and _REVERSAL.search(sentence or clause):
             continue                                        # "was resolved previously, then reopened"
         attributed = bool(_REPORTING.search(before) or _POSSESSIVE_SOURCE.search(before)
@@ -164,7 +172,12 @@ def check(text: str, basis: str, records: Mapping[str, Iterable[Mapping[str, Any
     found = tuple(assertions(text))
     current_state = [str(r.get("statement") or "") for r in records.get("current_state", ())]
     answered = list(records.get("answered_question", ()))
+    # A claim that contrasts its record with Current State cites that record as support (Paige, Nov 11): the contrast
+    # clause may state Current State's status. It never changes the basis or the chip.
+    supporting_state = [str(r.get("statement") or "") for r in records.get("supporting_current_state", ())]
     for a in found:
+        if a.kind == "status" and basis != "current_state" and any(_covers(a.clause, a.phrase, s) for s in supporting_state):
+            continue
         if a.kind == "permission":
             if basis == "current_state" and any(_PERMISSION_GRANT.search(s) for s in current_state):
                 continue
@@ -177,7 +190,7 @@ def check(text: str, basis: str, records: Mapping[str, Iterable[Mapping[str, Any
                 continue
         if basis == "history" and a.historical:
             continue
-        if basis in ("evidence_says", "history", "pending_review") and a.attributed:
+        if basis in ("evidence_says", "history", "pending_review", "answered_question") and a.attributed:
             continue
         return Verdict(False, f"status ({a.phrase!r}) not carried by a {basis.replace('_', ' ')} basis", found)
     return Verdict(True, None, found)

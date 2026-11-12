@@ -686,13 +686,16 @@ class _AnswerChecks:
     def _authority_records(self, claim: AskClaim) -> dict[str, list[Mapping[str, Any]]]:
         """The cited records that can carry authority for the claim's basis: Current State records (primary, then
         supporting) for a current_state claim; the answered Question for an answered_question claim."""
+        state = self.checker.records["state"]
         cited = [claim.primary_record_id, *claim.supporting_record_ids]
         if claim.basis == "current_state":
-            return {"current_state": [self.checker.records["state"][r] for r in cited if r in self.checker.records["state"]]}
+            return {"current_state": [state[r] for r in cited if r in state]}
+        out: dict[str, list[Mapping[str, Any]]] = {
+            "supporting_current_state": [state[r] for r in claim.supporting_record_ids if r in state]}
         if claim.basis == "answered_question":
             record = self.checker.records["answered_question"].get(claim.primary_record_id or "")
-            return {"answered_question": [record] if record else []}
-        return {}
+            out["answered_question"] = [record] if record else []
+        return out
 
     def section(self, section: AskAnswerSection) -> tuple[AskAnswerSection, int]:
         """The section with its cards checked, and how many cards were withheld."""
