@@ -175,7 +175,10 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # unscheduled detail that gates access (review_new_fact_with_downstream_question failed 4/4 on 5.5).
     # 11600 -> 11800 (2026-10-10): a positively worded #480 rule (an agreed later change is a decision,
     # proposed as planned); Haiku 5.5 otherwise raised no Review for it (3/3).
-    assert len(prompt) < 11800
+    # 11800 -> 12100 (2026-11-11): DEC-020's explicitly-open rule (#649). Ordinary intake named a spec's
+    # "Open question:" in its own summary but raised no Question in 10/60 runs (Haiku 5.5); measured
+    # before/after with eval.run_mixed_spec_intake.
+    assert len(prompt) < 12100
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():
