@@ -28,12 +28,15 @@ def main() -> int:
     parser.add_argument("--max-calls", type=int, required=True)
     parser.add_argument("--json", metavar="PATH")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--set", choices=("640", "step1", "one", "retention"), default="640",
+    parser.add_argument("--set", choices=("640", "step1", "one", "retention", "withheld"), default="640",
                         help="640: the Nov 7 cause diagnostic; step1: the headline rule check; one: the #640 scenario alone, to capture one answer; "
-                             "retention: the #567 live authority repro's two questions, every answer saved whole")
+                             "retention: the #567 live authority repro's two questions, every answer saved whole; "
+                             "withheld: batch B2's scenarios that withheld a claim, with raw output and decisions")
     args = parser.parse_args()
     if args.set == "retention":
         return retention(args)
+    if args.set == "withheld":
+        return withheld(args)
     cases = step1_cases() if args.set == "step1" else step1_cases()[:1] if args.set == "one" else variants()
 
     model = os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5"
@@ -76,7 +79,7 @@ def main() -> int:
 
 def retention(args: argparse.Namespace) -> int:
     """#567 (Nov 11): the live authority repro's setup once, then each of its two questions `--repeats` times."""
-    from eval.ask_retention_capture import QUESTIONS, check, records, setup
+    from eval.ask_retention_capture import QUESTIONS, check, diagnostics, records, setup
 
     model = os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5"
     planned = len(QUESTIONS) * args.repeats
@@ -109,7 +112,9 @@ def retention(args: argparse.Namespace) -> int:
             for kind, question in QUESTIONS:
                 for repeat in range(args.repeats):
                     try:
-                        row = check(kind, run_ask(conn, ask_provider, question), current_state)
+                        with diagnostics() as diag:
+                            payload = run_ask(conn, ask_provider, question)
+                        row = {**check(kind, payload, current_state), **diag}
                     except Exception as exc:  # a failed call is recorded, not retried
                         row = {"question_kind": kind, "error": f"{type(exc).__name__}: {exc}"[:300], "passed": False}
                     rows.append({**row, "question": question, "repeat": repeat})
@@ -126,6 +131,52 @@ def retention(args: argparse.Namespace) -> int:
             "build": os.getenv("GITHUB_SHA", "local")[:40], "started_at": datetime.now(timezone.utc).isoformat(),
             "spend": {"calls": counter.calls, "call_cap": args.max_calls, "estimated_cost_usd": cost},
             "intake": intake, "records": given, "current_state_used_by_check": current_state, "runs": rows,
+        }, indent=2, default=str))
+    return 0
+
+
+def withheld(args: argparse.Namespace) -> int:
+    """#567 (Nov 11): batch B2's scenarios that withheld a claim, `--repeats` times each, with raw output and decisions."""
+    from eval.ask_adversarial_scenarios import SCENARIOS as ADVERSARIAL
+    from eval.ask_quality_scenarios import SCENARIOS
+    from eval.ask_retention_capture import WITHHELD_SCENARIOS, run_scenario
+
+    model = os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5"
+    cases = [s for s in (*SCENARIOS, *ADVERSARIAL) if s.id in WITHHELD_SCENARIOS]
+    planned = len(cases) * args.repeats
+    print(f"Plan: {len(cases)} scenarios x {args.repeats} repeats = {planned} Ask calls (cap {args.max_calls}); "
+          f"about ${planned * estimated_call_cost('ask', model):.4f}, "
+          f"ceiling ${args.max_calls * estimated_call_cost('ask', model, 'max_output'):.4f} on {model}")
+    for case in cases:
+        print(f"  {case.id}: {case.question}")
+    if args.dry_run:
+        return 0
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        print("SKIPPED: ANTHROPIC_API_KEY is required.")
+        return 0
+
+    from anthropic_provider import AnthropicProvider
+
+    provider = AnthropicProvider()
+    rows: list[dict] = []
+    with CallCounter(args.max_calls) as counter:
+        for case in cases:
+            for repeat in range(args.repeats):
+                rows.append({**run_scenario(case, provider), "repeat": repeat})
+                decided = rows[-1].get("decisions") or []
+                print(f"{case.id} #{repeat}: passed={rows[-1]['passed']} withheld="
+                      f"{[d['reason'] for d in decided if d['decision'] != 'shown']}")
+    model_id = getattr(provider, "model_identifier", model)
+    try:
+        cost = round(sum(call_cost(u.get("model") or model_id, u.get("input_tokens"), u.get("output_tokens")) for u in counter.usage), 4)
+    except KeyError:
+        cost = None
+    print(f"\nModel calls: {counter.calls} of cap {args.max_calls}; estimated cost {cost} (usage x list price)")
+    if args.json:
+        Path(args.json).write_text(json.dumps({
+            "diagnostic": "#567 withheld scenarios", "synthetic_fixtures_only": True, "model": model_id,
+            "build": os.getenv("GITHUB_SHA", "local")[:40], "started_at": datetime.now(timezone.utc).isoformat(),
+            "spend": {"calls": counter.calls, "call_cap": args.max_calls, "estimated_cost_usd": cost}, "runs": rows,
         }, indent=2, default=str))
     return 0
 

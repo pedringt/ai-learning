@@ -47,7 +47,7 @@ import re
 import pytest
 
 from eval.ask_retention_capture import flagged_units
-from eval.authority_wording import unsupported_settled_words, visible_words
+from eval.authority_wording import PREMISE_CORRECTED, unsupported_conclusions, unsupported_settled_words, visible_words
 from ask_contract import AskAnswerItem, AskAnswerSection, AskSelection, AskSynthesis
 from ask_provider import LiveAskProvider
 from ask_service import (
@@ -406,9 +406,11 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
 
         premise_payload = run_ask(conn, ask_provider, "Since retention is resolved, what can move forward?")
         premise_text = visible_words(premise_payload, current_state)
-        assert re.search(r"not\s+(yet\s+)?resolved|isn.t resolved|hasn.t been resolved", premise_text, re.I), (
+        assert PREMISE_CORRECTED.search(premise_text), (
             f"Expected the false premise ('retention is resolved') to be corrected explicitly; got: {premise_text}"
         )
+        concluded = unsupported_conclusions(premise_payload, current_state)
+        assert not concluded, f"A go-ahead drawn from unaccepted material after a false-premise question: {concluded}"
         bad = unsupported_settled_words(premise_payload, current_state)
         assert not bad, (f"Unhedged settled word(s) after a false-premise question: {bad}; "
                          f"whole units: {flagged_units(premise_payload, current_state)}")
