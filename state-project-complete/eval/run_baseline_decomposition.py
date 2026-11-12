@@ -4,7 +4,7 @@
 Measures how the real model turns a source into a Starting State: failures, expected-fact recall,
 number of sections, use of the "General" last-resort area, unresolved items recorded as facts (hedged
 mentions are counted apart), years/amounts the source never states, and open items raised. Model output varies, so each source is run several times and the report gives
-rates. This is PAID: it makes one real model call per source per repeat (5 sources x --repeats).
+rates. This is PAID: it makes one real model call per source per repeat (6 sources x --repeats).
 It is not part of the release gate; the Deep QA gate only records how a single sample splits.
 
     python -m eval.run_baseline_decomposition --dry-run                 # shows the plan; makes NO model calls
@@ -43,7 +43,7 @@ def print_report(report: dict) -> None:
         print(f"    failed {_fmt(s['failed_rate'])} | facts {s['facts_mean']} | sections {s['areas_mean']} "
               f"(enough {_fmt(s['enough_areas_rate'])}, 'General' used {_fmt(s['general_used_rate'])})")
         print(f"    expected-fact recall {_fmt(s['recall_mean'])} | unresolved-as-fact {_fmt(s['suspect_rate'])} "
-              f"(hedged mention {_fmt(s['hedged_mention_rate'])}) | invented year/amount {_fmt(s['invented_rate'])} "
+              f"(hedged mention {_fmt(s['hedged_mention_rate'])}, dropped {_fmt(s['dropped_rate'])}, raised as open item {_fmt(s['raised_rate'])}) | invented year/amount {_fmt(s['invented_rate'])} "
               f"(in routine draft {_fmt(s['invented_in_draft_rate'])}, sent to own Review {_fmt(s['flagged_rate'])}) "
               f"| open items {s['open_items_mean']} (blocked Confirm {_fmt(s['blocked_confirm_rate'])}, as expected {_fmt(s['open_items_as_expected_rate'])})")
         for r in entry["runs"]:

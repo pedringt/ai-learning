@@ -104,6 +104,38 @@ def test_a_hedged_mention_of_an_unresolved_item_is_not_suspect_but_an_unhedged_o
     assert mixed["suspect"] == 1 and mixed["hedged_mentions"] == 1      # one hedged, one asserted: still flagged
 
 
+MIXED = next(s for s in SCENARIOS if s.id == "mixed_spec")
+
+
+def test_a_star_keyword_matches_any_word_that_starts_with_it():
+    assert _has_all("Proposals should be grouped by product area.", ("group*",))
+    assert _has_all("What grouping UX should we use?", ("group*",))
+    assert not _has_all("A subgroup owns it.", ("group*",))
+
+
+def test_an_unresolved_item_is_raised_dropped_or_stated_as_fact_and_each_is_scored_apart():
+    # #649: dropped (named nowhere) and stated as fact (suspect) are different failures.
+    facts = [("Setup", "Bootstrap", "State supports a bootstrap workflow when a project is first adopted.")]
+    raised = score_run(MIXED, _draft(facts, questions=["How should large bootstrap proposals be grouped?"]))
+    assert raised["unresolved_raised"] == 1 and raised["unresolved_dropped"] == 0 and raised["suspect"] == 0
+
+    dropped = score_run(MIXED, _draft(facts))
+    assert dropped["unresolved_dropped"] == 1 and dropped["unresolved_raised"] == 0 and dropped["suspect"] == 0
+    assert dropped["dropped_groups"] == ["group*"]
+
+    stated = score_run(MIXED, _draft([*facts, ("Setup", "Grouping", "Large bootstrap proposals are grouped by product area.")]))
+    assert stated["suspect"] == 1 and stated["unresolved_dropped"] == 0 and stated["unresolved_raised"] == 0
+
+    hedged = score_run(MIXED, _draft([*facts, ("Setup", "Grouping", "Whether to group proposals by area is not yet decided.")]))
+    assert hedged["suspect"] == 0 and hedged["hedged_mentions"] == 1 and hedged["unresolved_dropped"] == 0
+
+    no_items = score_run(SCENARIOS[0], _draft([("General", "", "Atlas replaces the spreadsheet.")]))
+    assert no_items["unresolved_dropped"] is None and no_items["unresolved_raised"] is None
+
+    summary = summarize([raised, dropped, stated, hedged, no_items])
+    assert summary["dropped_rate"] == 0.25 and summary["raised_rate"] == 0.25 and summary["suspect_rate"] == 0.2
+
+
 def test_a_year_or_amount_that_the_source_never_states_is_flagged_as_invented():
     # The first paid run wrote "September 30, 2024" for a source that gives no year.
     invented = score_run(KESTREL, _draft([("Schedule", "Migration", "The migration is scheduled for September 30, 2024.")]))
