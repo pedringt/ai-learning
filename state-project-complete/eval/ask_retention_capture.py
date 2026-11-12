@@ -32,6 +32,13 @@ WITHHELD_SCENARIOS = (
     "adv_conflicting_pending_proposals", "adv_hedged_pending_item", "adv_hypothetical_draft_from_pending",
     "adv_hypothetical_draft_from_pending_v2",
 )
+# Nov 12 (Paige's packet review, findings 1-4): the scenarios A+D's wording targets, for the before/after (Q1).
+PACKET_FINDING_SCENARIOS = (
+    "ask_pending_review_not_truth", "adv_mixed_settled_and_open_in_one_question", "adv_pending_scope_qualifier_kept",
+    "ask_blocker_not_omitted", "ask_question_answer_no_state_mutation", "ask_compound_question_keeps_governing_state",
+    "adv_state_silent_evidence_loud", "adv_authoritative_pending_wording", "ask_superseded_pending_review",
+    "adv_superseded_proposal_closed",
+)
 # Nov 12: the scenarios where the fresh comparison's over-withholding showed (fixed in 8152820), re-measured.
 REMEASURE_SCENARIOS = (
     "adv_authoritative_pending_wording", "ask_evidence_backed_approval_qualified", "ask_current_over_stale",
