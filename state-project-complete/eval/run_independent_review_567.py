@@ -26,10 +26,14 @@ def main() -> int:
     parser.add_argument("--max-calls", type=int, required=True)
     parser.add_argument("--json", metavar="PATH")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--answers", default=None, help="another answers file (Q3); skips the comparison with Paige's review")
     args = parser.parse_args()
     from eval.ask_grader import GRADER_MODEL, GRADER_VERSION, grade_answer
 
-    planned = len(items())
+    from pathlib import Path as _P
+    from eval.independent_review_567 import ANSWERS
+    path = _P(args.answers) if args.answers else ANSWERS
+    planned = len(items(path))
     print(f"Plan: {planned} grades on {GRADER_MODEL} ({GRADER_VERSION}); cap {args.max_calls}")
     if args.dry_run:
         return 0
@@ -37,15 +41,16 @@ def main() -> int:
         print("SKIPPED: ANTHROPIC_API_KEY is required.")
         return 0
     with CallCounter(args.max_calls) as counter:
-        graded = grade_all(grade_answer)
+        graded = grade_all(grade_answer, path)
     try:
         cost = round(sum(call_cost(u.get("model") or GRADER_MODEL, u.get("input_tokens"), u.get("output_tokens"))
                          for u in counter.usage), 4)
     except KeyError:
         cost = None
-    report = compare(graded)
+    report = compare(graded) if not args.answers else None
     print(f"Model calls: {counter.calls} of cap {args.max_calls}; estimated cost {cost}")
-    print(f"Agree on {report['agree']}/{report['answers']}; Paige only: {report['paige_only']}; grader only: {report['grader_only']}")
+    if report:
+        print(f"Agree on {report['agree']}/{report['answers']}; Paige only: {report['paige_only']}; grader only: {report['grader_only']}")
     if args.json:
         Path(args.json).write_text(json.dumps({"grader": GRADER_VERSION, "spend": {"calls": counter.calls, "cost": cost},
                                                "graded": graded, "comparison": report}, indent=2, default=str))

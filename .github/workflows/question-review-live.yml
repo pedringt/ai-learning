@@ -26,6 +26,7 @@ on:
           - ask-diagnostic-remeasure
           - ask-independent-review-567
           - ask-diagnostic-packet
+          - ask-independent-review-ad
       max_calls:
         description: Hard cap on model calls (30 keeps an Ask-only run under $0.05 on Haiku 5.5)
         required: false
@@ -70,7 +71,7 @@ jobs:
             RECORD_URL="https://state-api-6waw.onrender.com"
           fi
           # Nov 7: the #640 diagnostic (eval/ask_diagnostic_640.py): 3 variants x 5, one Ask call each, nothing recorded.
-          if [ "${{ inputs.suite }}" = "ask-diagnostic-640" ] || [ "${{ inputs.suite }}" = "ask-headline-step1" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-one" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-retention" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-withheld" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-remeasure" ] || [ "${{ inputs.suite }}" = "ask-independent-review-567" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-packet" ]; then
+          if [ "${{ inputs.suite }}" = "ask-diagnostic-640" ] || [ "${{ inputs.suite }}" = "ask-headline-step1" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-one" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-retention" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-withheld" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-remeasure" ] || [ "${{ inputs.suite }}" = "ask-independent-review-567" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-packet" ] || [ "${{ inputs.suite }}" = "ask-independent-review-ad" ]; then
             SET=640; REPEATS=5; [ "${{ inputs.suite }}" = "ask-headline-step1" ] && SET=step1
             # Nov 7: one captured call of the #640 scenario (raw output vs final headline).
             [ "${{ inputs.suite }}" = "ask-diagnostic-one" ] && SET=one && REPEATS=1
@@ -82,6 +83,12 @@ jobs:
             [ "${{ inputs.suite }}" = "ask-diagnostic-remeasure" ] && SET=remeasure && REPEATS=10
             # Nov 12 (#567): the 10 scenarios Paige's packet findings point at, x8, with decisions and diagnostic flags.
             [ "${{ inputs.suite }}" = "ask-diagnostic-packet" ] && SET=packet && REPEATS=8
+            if [ "${{ inputs.suite }}" = "ask-independent-review-ad" ]; then
+              # Nov 12 (#567 Q3): grade 2 answers per scenario per side from the A+D before/after; versions hidden.
+              python state-project-complete/eval/run_independent_review_567.py --max-calls "${{ inputs.max_calls || '45' }}" \
+                --answers state-project-complete/eval/calibration/567_ad_answers.json --json diagnostic-report.json
+              exit 0
+            fi
             if [ "${{ inputs.suite }}" = "ask-independent-review-567" ]; then
               # Nov 12 (#567): grade the 28 packet answers (grader sees no ratings), then compare with Paige's review.
               python state-project-complete/eval/run_independent_review_567.py --max-calls "${{ inputs.max_calls || '30' }}" \

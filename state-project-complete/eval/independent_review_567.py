@@ -24,8 +24,8 @@ _SEVERITY = {"wrong authority": 3, "unsupported": 3, "misleading structure": 2, 
              "wrong authority in headline": 3}
 
 
-def items() -> list[dict[str, Any]]:
-    return json.loads(ANSWERS.read_text())["items"]
+def items(path: Path = ANSWERS) -> list[dict[str, Any]]:
+    return json.loads(Path(path).read_text())["items"]
 
 
 def scenario_for(scenario_id: str):
@@ -35,10 +35,10 @@ def scenario_for(scenario_id: str):
     return next(s for s in (*ASK, *ADVERSARIAL) if s.id == scenario_id)
 
 
-def grade_all(grade: Callable[[Any, Any], dict[str, dict[str, Any]]]) -> list[dict[str, Any]]:
+def grade_all(grade: Callable[[Any, Any], dict[str, dict[str, Any]]], path: Path = ANSWERS) -> list[dict[str, Any]]:
     """`grade(scenario, answer)` is eval.ask_grader.grade_answer in a paid run, or a fake in tests."""
-    return [{"item_id": item["item_id"], "grade": grade(scenario_for(item["scenario_id"]), item["answer"])}
-            for item in items()]
+    return [{"item_id": item["item_id"], "scenario_id": item["scenario_id"],
+             "grade": grade(scenario_for(item["scenario_id"]), item["answer"])} for item in items(path)]
 
 
 def paige_verdicts() -> dict[str, dict[str, Any]]:
