@@ -30,6 +30,7 @@ QUESTIONS = (("confirmed", CONFIRMED_QUESTION), ("premise", PREMISE_QUESTION))
 WITHHELD_SCENARIOS = (
     "ask_compound_question_keeps_governing_state", "ask_change_summary", "adv_authoritative_pending_wording",
     "adv_conflicting_pending_proposals", "adv_hedged_pending_item", "adv_hypothetical_draft_from_pending",
+    "adv_hypothetical_draft_from_pending_v2",
 )
 
 
