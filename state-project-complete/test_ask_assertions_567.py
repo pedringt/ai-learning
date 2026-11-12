@@ -239,3 +239,41 @@ def test_the_eval_capture_collects_decisions_and_resets_after():
         _validated([_claim("Retention is resolved.", "none")])
     assert [d["decision"] for d in diag["decisions"] if d["unit"] == "claim"] == ["withheld"]
     assert diag["model_calls"] == [] and UNIT_DECISIONS.get() is None
+
+
+# --- Nov 11 fixes from the steps 1-2 capture ----------------------------------------------------------------------
+
+def test_a_report_of_a_source_cited_as_support_is_shown_on_any_basis():
+    """Capture run 1: the premise correction was withheld because the Evidence was cited as support, not as the basis."""
+    text = ("Retention is not resolved yet: Legal reportedly confirmed a 30-day vendor retention term, but the Review "
+            "proposing it is still open and the retention question remains open.")
+    shown = _validated([_claim(text, "open_question", "q-ret", supporting=["r-ret", "e-legal"])]).claims
+    assert [c.text for c in shown] == [text] and shown[0].label == "Blocking"
+
+
+@pytest.mark.parametrize("text", [
+    "Retention terms are confirmed at 30 days.",                              # State's own voice, not a report
+    "Legal reportedly confirmed 30 days, so Security approval can proceed.",  # a go-ahead drawn from the report
+])
+def test_citing_a_source_as_support_does_not_carry_a_status_or_a_go_ahead(text):
+    assert not _validated([_claim(text, "open_question", "q-ret", supporting=["e-legal"])]).claims
+
+
+@pytest.mark.parametrize("text,basis", [
+    ("A proposed 25% increase is pending review and has not been decided, so the email is contingent on that Review "
+     "being accepted.", "none"),
+    ("I can draft the email conditionally on the increase being approved, but it must not be presented as decided.", "none"),
+    ("Hello, we expect to move to the new price, subject to final approval.", "none"),
+    ("Draft customer email (assumes the increase is approved)", "none"),
+])
+def test_a_condition_still_to_be_met_is_not_a_status(text, basis):
+    assert check(text, basis, {}).ok
+
+
+@pytest.mark.parametrize("text", [
+    "The increase is being finalized and the price is final.",
+    "Being approved, the price is final.",
+    "The price increase is approved.",
+])
+def test_a_status_stated_alongside_condition_words_still_counts(text):
+    assert not check(text, "none", {}).ok

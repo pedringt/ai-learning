@@ -19,7 +19,8 @@ cited as support may carry a status in the clause that contrasts with it, as in 
   it; no permission.
 - history: may state a past status ("was approved on Oct 3"); not a present status or a permission.
 - evidence_says: may report what a source said or did ("Legal confirmed 30 days", "Legal reportedly confirmed…"); not
-  a status in its own voice or a permission.
+  a status in its own voice or a permission. Any basis may report a source it cites as support (Evidence or a Review):
+  "Retention is not resolved yet: Legal reportedly confirmed 30 days…" on an open Question, citing the Evidence.
 - pending_review, open_question, none: neither.
 
 What software verifies, and what it does not:
@@ -55,7 +56,10 @@ _NEGATION = re.compile(r"\b(?:not|no|never|nothing|none|neither|nor|without|cann
 # A status the clause makes conditional, proposed or required rather than asserting it.
 _NOT_ASSERTED = re.compile(
     r"\b(?:whether|if|once|unless|until|would|pending|propos(?:e|es|ed|al)|awaiting|await|requires?|required|needs?|"
-    r"needed|before|expected|planned|suggests?|appears?|might|asks?|asking|if\s+accepted|to\s+be|assuming|"
+    r"needed|before|expected|planned|suggests?|appears?|might|asks?|asking|if\s+accepted|to\s+be|"
+    # Nov 11 (steps 1-2 capture): a condition still to be met, not a status. "contingent on that Review being
+    # accepted", "conditionally on the increase being approved", "subject to final approval", "assumes it is approved".
+    r"contingent|conditional(?:ly)?|subject\s+to|provided\s+that|on\s+condition|assum(?:e|es|ed|ing)|"
     r"(?:should|must|will|could|may|might|can)(?:\s+only)?\s+be)\b", re.I)
 _REPORTING = re.compile(
     r"\b(?:says|say|said|reports?|reported|reportedly|states?|stated|claims?|claimed|describes?|described|writes|wrote|"
@@ -122,6 +126,8 @@ def _status_assertions(clause: str, sentence: str = "") -> Iterable[Assertion]:
             continue
         if _NEGATION.search(before) or _NOT_ASSERTED.search(before) or "?" in clause:
             continue
+        if re.search(r"\bbeing\s+(?:\w+ly\s+)?$", before, re.I):
+            continue          # "the Review being accepted": only directly before the word, not anywhere in the clause
         lead = before.strip()
         if _DENIED_AFTER.match(after):
             continue          # "Confirmed retention terms are not recorded"; "the premise that … is resolved is not correct"
@@ -190,7 +196,8 @@ def check(text: str, basis: str, records: Mapping[str, Iterable[Mapping[str, Any
                 continue
         if basis == "history" and a.historical:
             continue
-        if basis in ("evidence_says", "history", "pending_review", "answered_question") and a.attributed:
-            continue
+        if a.attributed and (basis in ("evidence_says", "history", "pending_review", "answered_question")
+                             or records.get("cited_sources")):
+            continue    # a report of what a cited source said, whatever the claim's basis (Nov 11 capture, run 1)
         return Verdict(False, f"status ({a.phrase!r}) not carried by a {basis.replace('_', ' ')} basis", found)
     return Verdict(True, None, found)

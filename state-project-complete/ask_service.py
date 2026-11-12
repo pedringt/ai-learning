@@ -690,8 +690,11 @@ class _AnswerChecks:
         cited = [claim.primary_record_id, *claim.supporting_record_ids]
         if claim.basis == "current_state":
             return {"current_state": [state[r] for r in cited if r in state]}
+        sources = {**self.checker.records["evidence"], **self.checker.records["review"], **self.checker.linked}
         out: dict[str, list[Mapping[str, Any]]] = {
-            "supporting_current_state": [state[r] for r in claim.supporting_record_ids if r in state]}
+            "supporting_current_state": [state[r] for r in claim.supporting_record_ids if r in state],
+            # Evidence or a Review cited as support: the claim may report what it says (Nov 11).
+            "cited_sources": [sources[r] for r in claim.supporting_record_ids if r in sources]}
         if claim.basis == "answered_question":
             record = self.checker.records["answered_question"].get(claim.primary_record_id or "")
             out["answered_question"] = [record] if record else []
