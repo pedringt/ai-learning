@@ -1,0 +1,212 @@
+{
+ "description": "#567 comparison packet review (Paige, Nov 12; prepared with ChatGPT's help). Exact displayed sentences from the Nov 12 packet with Paige's rating, the priority finding they illustrate (1 categorical denial / proposal called false, 2 transition claim without transition evidence, 3 superseded proposal shown as actionable, 4 compound answer without the governing permission stated directly, 'instruction-following' kept apart from authority, null for other) and her calibrated wording where she gave one. For deterministic regression examples and for an independent meaning review (the acceptance criterion); keyword overlap is not the criterion.",
+ "packet": "scratchpad runs/F2/comparison-packet-567.md (key comparison-key-567.json); builds: candidate b5ab923 (matrix pairs) / a2c6b37 (re-measure pairs), baseline 8eb4b27 / c1c6a34",
+ "findings": {
+  "1": "Missing accepted confirmation must not become a categorical denial or a declaration that a proposal is false.",
+  "2": "Citing Current State does not support claims about what caused it to change or remain unchanged; those require transition evidence.",
+  "3": "Superseded proposals must not appear as current decisions requiring review.",
+  "4": "Compound answers must state the governing permission directly and distinguish conflicting or additional dependencies found only in pending material."
+ },
+ "items": [
+  {
+   "pair": "P01",
+   "version": "candidate",
+   "scenario": "ask_pending_review_not_truth",
+   "sentence": "Leadership has not approved removing human review. The decision is still open.",
+   "rating": "partly supported",
+   "finding": 1,
+   "calibrated": "No approval is recorded; the open Review concerns whether low-risk cases can skip human review.",
+   "note": "Categorical denial, and broadens the Review's scope from low-risk exceptions to removing all human review."
+  },
+  {
+   "pair": "P01",
+   "version": "baseline",
+   "scenario": "ask_pending_review_not_truth",
+   "sentence": "No, leadership has not approved removing human review.",
+   "rating": "partly supported",
+   "finding": 1,
+   "calibrated": "No approval is recorded.",
+   "note": "Same categorical denial; the headline also broadens the scope."
+  },
+  {
+   "pair": "P02",
+   "version": "candidate",
+   "scenario": "adv_authoritative_pending_wording",
+   "sentence": "The Review's proposal is not yet true, so until it is accepted the agent-review requirement stands.",
+   "rating": "unsupported",
+   "finding": 1,
+   "calibrated": "The Review's proposal is not accepted, so the agent-review requirement in Current State stands.",
+   "note": "Unaccepted is not false. The wording copies ask_service's grounding rules (\"is not yet true\")."
+  },
+  {
+   "pair": "P03",
+   "version": "candidate",
+   "scenario": "ask_superseded_pending_review",
+   "sentence": "Needs your review\n- [Needs review] OLDER SUPERSEDED proposal: increase the pilot to 50 users.",
+   "rating": "misleading structure",
+   "finding": 3,
+   "calibrated": "25 users is pending review; the 50-user proposal is superseded and needs no decision.",
+   "note": "Software lists every selected open Review. The fixture seeds the superseded proposal as an open Review."
+  },
+  {
+   "pair": "P03",
+   "version": "baseline",
+   "scenario": "ask_superseded_pending_review",
+   "sentence": "Approved pilot size is 10 users; a 25-user increase is pending review, not approved.",
+   "rating": "partly supported",
+   "finding": 3,
+   "calibrated": "The pilot size is 10 users; a proposal to increase it to 25 users is pending review.",
+   "note": "\"a 25-user increase\" can mean adding 25; the superseded proposal is grouped under \"Pending change\"."
+  },
+  {
+   "pair": "P04",
+   "version": "baseline",
+   "scenario": "ask_evidence_backed_approval_qualified",
+   "sentence": "The pilot budget is proposed at $40,000, but that approval is not yet recorded in Current State.",
+   "rating": "partly supported",
+   "finding": null,
+   "calibrated": "The Q3 planning note reports the budget as approved at $40,000; that approval is not recorded in Current State.",
+   "note": "Demotes the source's reported approval to \"proposed\"."
+  },
+  {
+   "pair": "P05",
+   "version": "baseline",
+   "scenario": "adv_hypothetical_draft_from_pending_v2",
+   "sentence": "The current price is $49/month, and that is the only reported (pending Review) pricing fact.",
+   "rating": "wrong authority",
+   "finding": null,
+   "calibrated": "The current price in Current State is $49/month.",
+   "note": "#656 backstop rewrite: the accepted $49 price called \"reported (pending Review)\"."
+  },
+  {
+   "pair": "P05",
+   "version": "baseline",
+   "scenario": "adv_hypothetical_draft_from_pending_v2",
+   "sentence": "Placeholders in brackets need the proposed (not yet approved) effective date and sender details.",
+   "rating": "unsupported",
+   "finding": null,
+   "calibrated": "Placeholders in brackets need an effective date and sender details.",
+   "note": "Invents a proposed effective date (#656 rewrite of \"approved\")."
+  },
+  {
+   "pair": "P05",
+   "version": "candidate",
+   "scenario": "adv_hypothetical_draft_from_pending_v2",
+   "sentence": "Draft only. The increase is not yet approved or in effect; the effective date is a placeholder to fill in once decided.",
+   "rating": "supported (prefer calibrated wording)",
+   "finding": 1,
+   "calibrated": "Draft only. No accepted approval of the increase is recorded; the effective date is a placeholder.",
+   "note": "Supported within the hypothetical framing; \"not yet approved\" is better stated as no recorded approval."
+  },
+  {
+   "pair": "P07",
+   "version": "baseline",
+   "scenario": "ask_false_premise",
+   "sentence": "What decision or evidence led to the proposal to fully automate support?",
+   "rating": "unsupported",
+   "finding": null,
+   "calibrated": null,
+   "note": "Suggested follow-up invents a full-automation proposal."
+  },
+  {
+   "pair": "P08",
+   "version": "candidate",
+   "scenario": "ask_question_answer_no_state_mutation",
+   "sentence": "[Current State] Answering this question did not change Current State: the vendor contract still remains under review.",
+   "rating": "unsupported",
+   "finding": 2,
+   "calibrated": "[Current State] Current State says the vendor contract remains under review.",
+   "note": "Asserts a transition history the records don't supply; \"remains under review\" alone is supported."
+  },
+  {
+   "pair": "P08",
+   "version": "baseline",
+   "scenario": "ask_question_answer_no_state_mutation",
+   "sentence": "No: the vendor-retention question was answered, but Current State still says the vendor contract remains under review.",
+   "rating": "unsupported",
+   "finding": null,
+   "calibrated": null,
+   "note": "The headline says \"No\" though the answer is yes (#640). It also invents an accepted Evidence Review and asserts transition history."
+  },
+  {
+   "pair": "P11",
+   "version": "candidate",
+   "scenario": "adv_summarize_only_decided",
+   "sentence": "[Current State] The budget cap is $40,000. (repeated as claims and again as Current State cards)",
+   "rating": "supported, duplicated",
+   "finding": "instruction-following",
+   "calibrated": null,
+   "note": "Duplicates the entire list. Not an authority failure."
+  },
+  {
+   "pair": "P11",
+   "version": "baseline",
+   "scenario": "adv_summarize_only_decided",
+   "sentence": "A proposal to raise the budget cap to $60,000 is pending review and has not changed the $40,000 cap. Whether a fourth team joins the pilot remains an open question.",
+   "rating": "supported, out of scope",
+   "finding": "instruction-following",
+   "calibrated": null,
+   "note": "Violates \"Nothing else\". Not an authority failure."
+  },
+  {
+   "pair": "P12",
+   "version": "baseline",
+   "scenario": "adv_state_silent_evidence_loud",
+   "sentence": "SSO is not on the Q1 roadmap in Current State; it is only proposed in pending evidence",
+   "rating": "partly supported",
+   "finding": 1,
+   "calibrated": "SSO is not established as a Q1 commitment in the supplied Current State.",
+   "note": "The record says the roadmap \"includes\" two features; it is not an exhaustive list."
+  },
+  {
+   "pair": "P12",
+   "version": "candidate",
+   "scenario": "adv_state_silent_evidence_loud",
+   "sentence": "[Current State] The accepted Q1 roadmap includes the reporting dashboard and audit-log export; SSO is not listed in it.",
+   "rating": "partly supported",
+   "finding": 1,
+   "calibrated": "SSO is not established as a Q1 commitment in the supplied Current State.",
+   "note": "Should say \"the supplied Current State record\"."
+  },
+  {
+   "pair": "P13",
+   "version": "candidate",
+   "scenario": "ask_compound_question_keeps_governing_state",
+   "sentence": "(no claim states the planning decision; it appears only in a context card) - [Current State] Implementation planning can proceed with the bounded use case; pilot launch still requires agreed thresholds for high-risk failures.",
+   "rating": "supported, indirect",
+   "finding": 4,
+   "calibrated": "Implementation planning can proceed under Current State; the budget dependency appears only in the pending Review.",
+   "note": "The compound answer doesn't give the planning decision directly."
+  },
+  {
+   "pair": "P13",
+   "version": "baseline",
+   "scenario": "ask_compound_question_keeps_governing_state",
+   "sentence": "Pilot budget is not yet recorded; implementation planning can proceed on the bounded use case but needs a budget ceiling",
+   "rating": "wrong authority",
+   "finding": 4,
+   "calibrated": "Implementation planning can proceed under Current State; a pending Review says planning depends on a budget ceiling.",
+   "note": "Makes a dependency found only in the pending Review governing."
+  },
+  {
+   "pair": "P14",
+   "version": "baseline",
+   "scenario": "adv_mixed_settled_and_open_in_one_question",
+   "sentence": "Pilot size is 12 users; Security has not signed off on the data path",
+   "rating": "unsupported",
+   "finding": 1,
+   "calibrated": "Security sign-off is not established in State.",
+   "note": "Categorical denial in the headline; the body (\"is not established\") is calibrated."
+  },
+  {
+   "pair": "P14",
+   "version": "candidate",
+   "scenario": "adv_mixed_settled_and_open_in_one_question",
+   "sentence": "[Blocking] Security has not signed off on the data path: the approval question is still open and is a blocking question for launch readiness.",
+   "rating": "unsupported",
+   "finding": 1,
+   "calibrated": "[Blocking] Security sign-off is not established in State: the approval question is open and blocks launch readiness.",
+   "note": "An open approval Question establishes missing confirmation, not that approval never happened."
+  }
+ ]
+}
