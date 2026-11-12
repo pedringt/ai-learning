@@ -80,6 +80,20 @@ def test_the_recording_provider_keeps_the_model_output_and_the_run_carries_it():
     assert "raw" not in run_once(BaselineFixtureProvider())
 
 
+def test_the_recording_provider_still_hands_the_connection_to_a_provider_that_takes_one():
+    # The real provider takes `connection`; process_evidence passes it only when the signature names it.
+    from test_baseline_setup_lifecycle import BaselineFixtureProvider
+    seen = {}
+
+    class NeedsConnection(BaselineFixtureProvider):
+        def interpret(self, *, context, evidence, connection=None):
+            seen["connection"] = connection
+            return super().interpret(context=context, evidence=evidence)
+
+    run = run_once(NeedsConnection(), keep_raw=True)
+    assert not run["failed"] and seen["connection"] is not None
+
+
 def _cli(*args):
     # The key is set to EMPTY, not removed, so state-project-complete/.env cannot supply one.
     env = {**os.environ, "ANTHROPIC_API_KEY": "", "OPENAI_API_KEY": ""}

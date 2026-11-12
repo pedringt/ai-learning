@@ -26,6 +26,7 @@ No model calls happen here unless `run` is given a real provider. The paid entry
 from __future__ import annotations
 
 import copy
+import inspect
 import json
 import sqlite3
 import time
@@ -100,7 +101,12 @@ class RecordingProvider:
         self._inner = inner
         self.raw: Any = None
 
-    def interpret(self, **kwargs):
+    # process_evidence reads this signature to decide whether to pass the connection, so it names the
+    # parameter explicitly and forwards it only to a provider that takes it.
+    def interpret(self, *, context, evidence, connection=None):
+        kwargs = {"context": context, "evidence": evidence}
+        if "connection" in inspect.signature(self._inner.interpret).parameters:
+            kwargs["connection"] = connection
         payload = self._inner.interpret(**kwargs)
         self.raw = copy.deepcopy(payload)
         return payload
