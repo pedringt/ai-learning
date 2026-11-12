@@ -427,7 +427,7 @@
    "answer_id": "h6",
    "scenario_id": "ask_false_premise",
    "source": "hand-written by Claude (Nov 11), not a model answer",
-   "intent": "correct and short: corrects the false premise first",
+   "intent": "written as correct, but 'We didn't decide that' is an unsupported negative (Paige, Nov 11): the supported wording is 'No decision to fully automate support is recorded; the first implementation remains human-reviewed.'",
    "answer": {
     "job": "current_fact",
     "headline": "We didn't decide that: the first implementation stays human-reviewed.",
