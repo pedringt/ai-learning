@@ -59,11 +59,20 @@ def _clause(text: str, idx: int, end: int) -> tuple[str, int]:
     return text[start:nxt.start() if nxt else len(text)], idx - start
 
 
+_HEADING_DENIED = re.compile(r"^[^:.;]{0,60}:\s*(?:none|no|not|nothing)\b", re.I)
+
+
 def negated_by_grammar(text: str, idx: int, word: str) -> bool:
     """1. "[The|No] confirmed <≤4 words> is/are… not|never" ("not only" doesn't count); 2. "does not record/treat/list…
     as confirmed"; 3. "until … is/are/be confirmed" (a condition still to be met; the word must be the predicate)."""
     clause, at = _clause(text, idx, idx + len(word))
     before, after = clause[:at].lower(), clause[at + len(word):].lower()
+    # 4. A heading answered by a denial (Nov 11 capture): "Confirmed retention terms: none are confirmed; …".
+    if re.fullmatch(r"\W*(?:the\s+)?", before) and _HEADING_DENIED.match(text[idx + len(word):]):
+        return True
+    # 5. A negated subject: "none are confirmed", "nothing is resolved".
+    if re.search(r"\b(?:none|nothing|neither)\b(?:\s+[\w-]+){0,4}?\s+(?:is|are|was|were|has\s+been|have\s+been)\s+(?:yet\s+)?$", before):
+        return True
     if re.fullmatch(r"\W*(?:the\s+|no\s+)?", before) and re.match(
             r"(?:\s+[\w-]+){0,4}?\s+(?:is|are|was|were|has|have)\s+(?:not|never)\b(?!\s+only)", after):
         return True
@@ -84,9 +93,21 @@ _GO_AHEAD = re.compile(
     r"|\b(?:is|are)\s+(?:now\s+)?(?:approved|cleared|unblocked|settled|final)\b", re.I)
 
 
+# Nov 11 (steps 1-2 capture): "Retention is not resolved yet, so the pilot cannot move forward on data flow, and only some
+# work can proceed" draws its go-ahead from a denied status, which is the correct direction. Only a premise that denies
+# a status counts ("not resolved", "unresolved"); "Legal says it is not an issue, so approval can proceed" still fails.
+_DENIED_STATUS_PREMISE = re.compile(
+    r"\b(?:not|never|no)\b[^,;]*\b(?:resolved|confirmed|approved|accepted|settled|established|decided|cleared)\b"
+    r"|n't\s+(?:been\s+)?(?:resolved|confirmed|approved|accepted|settled|established|decided|cleared)\b"
+    r"|\bun(?:resolved|confirmed|approved|accepted|settled)\b", re.I)
+
+
 def conclusions(text: str) -> list[str]:
     out = []
     for m in _CONCLUSION.finditer(text):
+        premise = re.split(r"[.;:!?]", text[:m.start()])[-1]
+        if _DENIED_STATUS_PREMISE.search(premise):
+            continue
         rest = m.group("rest")
         go = _GO_AHEAD.search(rest)
         if not go:
@@ -178,11 +199,13 @@ def unsupported_conclusions(payload: Any, current_state: Mapping[str, str]) -> l
 
 
 # The repro's false-premise question must be corrected explicitly. Nov 11: "The premise that retention is resolved is
-# not correct/accurate/incorrect" is an explicit correction too (batch E attempt 1; capture candidate premise #1-#3).
+# not correct/accurate/incorrect" is an explicit correction too (batch E attempt 1; capture candidate premise #1-#3), and
+# so is "The retention premise is not settled" (steps 1-2 capture). "…is not the main issue" is not a correction.
 PREMISE_CORRECTED = re.compile(
     r"not\s+(yet\s+)?resolved|isn.t resolved|hasn.t been resolved"
-    r"|\bpremise\b[^.;:]{0,60}?\bresolved\b[^.;:]{0,15}?\b(?:is|was)\s+"
-    r"(?:not\s+(?:correct|accurate|true|right)|incorrect|inaccurate|false|wrong)\b", re.I)
+    r"|\bpremise\b[^.;:]{0,60}?\b(?:is|was)\s+"
+    r"(?:not\s+(?:correct|accurate|true|right|settled|valid|supported)|incorrect|inaccurate|false|wrong|unsupported)\b",
+    re.I)
 
 
 def visible_words(payload: Any, current_state: Mapping[str, str]) -> str:
