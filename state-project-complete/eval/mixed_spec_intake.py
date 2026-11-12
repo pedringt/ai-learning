@@ -25,6 +25,8 @@ No model calls happen here unless `run` is given a real provider. The paid entry
 """
 from __future__ import annotations
 
+import copy
+import json
 import sqlite3
 import time
 from typing import Any, Iterable
@@ -86,8 +88,48 @@ def read_proposals(connection, review_ids: Iterable[str]) -> tuple[list[str], li
     return facts, questions, reviews
 
 
-def run_once(provider, source: str = SOURCE, groups: Iterable[tuple[str, ...]] = OPEN_ITEM) -> dict[str, Any]:
-    """One intake of `source` into a fresh empty database, classified."""
+class RecordingProvider:
+    """Passes everything to `inner` and keeps a copy of what `interpret` returned.
+
+    That copy is the model's output before software touches it. process_evidence then normalizes it and drops
+    any missing_understanding recommendation left with no proposed change (#104), so the stored
+    Interpretation Record cannot show whether the model raised an open item that software then removed.
+    """
+
+    def __init__(self, inner):
+        self._inner = inner
+        self.raw: Any = None
+
+    def interpret(self, **kwargs):
+        payload = self._inner.interpret(**kwargs)
+        self.raw = copy.deepcopy(payload)
+        return payload
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+def raw_view(raw: Any, groups: Iterable[tuple[str, ...]] = OPEN_ITEM) -> dict[str, Any]:
+    """Where the model's own output mentions the open item, before any software filtering."""
+    if not isinstance(raw, dict):
+        return {"raw_mentions": None}
+    groups = tuple(groups)
+    recs = raw.get("review_recommendations") or []
+    return {
+        "raw_mentions": _mentions(json.dumps(raw), groups),
+        "raw_summary_mentions": _mentions(str(raw.get("summary") or ""), groups),
+        "raw_open_item_recs": [
+            {"review_type": r.get("review_type"), "proposed_changes": len(r.get("proposed_changes") or []),
+             "decision_question": r.get("decision_question"), "why_consequential": r.get("why_consequential")}
+            for r in recs if _mentions(json.dumps(r), groups)],
+        "raw_review_types": [r.get("review_type") for r in recs],
+    }
+
+
+def run_once(provider, source: str = SOURCE, groups: Iterable[tuple[str, ...]] = OPEN_ITEM,
+             keep_raw: bool = False) -> dict[str, Any]:
+    """One intake of `source` into a fresh empty database, classified. With keep_raw, the run also carries
+    the model's output from before software filtering, and where in it the open item appears."""
     from database_migration_backed import get_test_db
     from interpretation_pipeline_integrated import process_evidence
 
@@ -97,12 +139,14 @@ def run_once(provider, source: str = SOURCE, groups: Iterable[tuple[str, ...]] =
     try:
         connection.execute("INSERT INTO evidence(id, content) VALUES (?, ?)", ("e-mixed-bootstrap-spec", source))
         connection.commit()
-        result = process_evidence(connection, evidence_id="e-mixed-bootstrap-spec", provider=provider)
+        recorder = RecordingProvider(provider) if keep_raw else provider
+        result = process_evidence(connection, evidence_id="e-mixed-bootstrap-spec", provider=recorder)
+        raw = {"raw": recorder.raw, **raw_view(recorder.raw, groups)} if keep_raw else {}
         if result.processing_status != "succeeded":
-            return {"failed": True, "processing_status": result.processing_status, "outcome": None}
+            return {"failed": True, "processing_status": result.processing_status, "outcome": None, **raw}
         facts, questions, reviews = read_proposals(connection, result.review_ids)
         return {"failed": False, "facts": facts, "questions": questions, "review_questions": reviews,
-                **classify(facts, questions, reviews, groups)}
+                **classify(facts, questions, reviews, groups), **raw}
     finally:
         db_context.__exit__(None, None, None)
 
@@ -118,13 +162,13 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def run(provider, repeats: int, source_ids: Iterable[str] = ("mixed_spec",)) -> dict[str, Any]:
+def run(provider, repeats: int, source_ids: Iterable[str] = ("mixed_spec",), keep_raw: bool = False) -> dict[str, Any]:
     """`repeats` intakes of each source, classified; one summary per source."""
     started = time.time()
     per_source: dict[str, dict[str, Any]] = {}
     for sid in source_ids:
         scenario = INTAKE_SOURCES[sid]
-        runs = [run_once(provider, scenario.source, scenario.unresolved) for _ in range(repeats)]
+        runs = [run_once(provider, scenario.source, scenario.unresolved, keep_raw) for _ in range(repeats)]
         per_source[sid] = {"title": scenario.title, "summary": summarize(runs), "runs": runs}
     return {"suite": "mixed_spec_intake", "repeats": repeats, "elapsed_seconds": round(time.time() - started, 2),
             "sources": per_source}

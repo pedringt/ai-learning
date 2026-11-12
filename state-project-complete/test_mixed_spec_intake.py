@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 from eval.baseline_decomposition import MIXED_SPEC_SOURCE, SCENARIOS
-from eval.mixed_spec_intake import INTAKE_SOURCES, OPEN_ITEM, SOURCE, classify, summarize
+from eval.mixed_spec_intake import INTAKE_SOURCES, OPEN_ITEM, SOURCE, RecordingProvider, classify, raw_view, run_once, summarize
 
 SERVICE = Path(__file__).resolve().parent
 FACT = "State supports a bootstrap/backfill workflow when a project is first adopted."
@@ -53,6 +53,31 @@ def test_summarize_counts_outcomes_and_keeps_failed_runs_out():
     assert s["runs"] == 4 and s["failed"] == 1
     assert s["outcomes"] == {"stated_as_fact": 0, "dropped": 1, "raised": 2, "hedged_in_fact": 0}
     assert s["no_settled_fact"] == 1 and s["legacy_test_fail"] == 2
+
+
+def test_raw_view_shows_an_open_item_the_model_raised_but_software_removed():
+    # A missing_understanding recommendation with no proposed change is dropped by software (#104); the
+    # raw view is how a run tells that apart from the model never mentioning the item.
+    raw = {"summary": "Decisions on bootstrap; grouping UX is undecided.",
+           "review_recommendations": [
+               {"review_type": "missing_understanding", "decision_question": "How should proposals be grouped?",
+                "why_consequential": "x", "proposed_changes": []},
+               {"review_type": "missing_understanding", "decision_question": "Record bootstrap?",
+                "why_consequential": "y", "proposed_changes": [{"proposed_statement": "State supports bootstrap."}]}]}
+    view = raw_view(raw)
+    assert view["raw_mentions"] and view["raw_summary_mentions"]
+    assert view["raw_open_item_recs"] == [{"review_type": "missing_understanding", "proposed_changes": 0,
+                                           "decision_question": "How should proposals be grouped?", "why_consequential": "x"}]
+    assert view["raw_review_types"] == ["missing_understanding", "missing_understanding"]
+    assert raw_view(None) == {"raw_mentions": None}
+
+
+def test_the_recording_provider_keeps_the_model_output_and_the_run_carries_it():
+    from test_baseline_setup_lifecycle import BaselineFixtureProvider
+    run = run_once(BaselineFixtureProvider(), keep_raw=True)
+    assert not run["failed"] and isinstance(run["raw"], dict) and "review_recommendations" in run["raw"]
+    assert run["raw_mentions"] is False                     # the fixture output never mentions grouping
+    assert "raw" not in run_once(BaselineFixtureProvider())
 
 
 def _cli(*args):

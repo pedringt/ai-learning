@@ -100,7 +100,7 @@ jobs:
           set -o pipefail
           only_args=(); [ -n "$ONLY" ] && only_args=(--only $ONLY)
           if [ "$SUITE" = mixed_spec_intake ]; then
-            python -m eval.run_mixed_spec_intake --repeats "$REPEATS" "${only_args[@]}" --json out-mixed-spec-intake.json | tee summary-mixed-spec-intake.txt
+            python -m eval.run_mixed_spec_intake --repeats "$REPEATS" "${only_args[@]}" --keep-raw --json out-mixed-spec-intake.json | tee summary-mixed-spec-intake.txt
             { echo "### Mixed spec through ordinary intake"; echo '```'; cat summary-mixed-spec-intake.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi

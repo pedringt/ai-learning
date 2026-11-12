@@ -35,6 +35,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--repeats", type=int, default=20, help="runs (default 20)")
     parser.add_argument("--only", nargs="*", default=["mixed_spec"], help=f"source ids (default: mixed_spec; available: {sorted(INTAKE_SOURCES)})")
+    parser.add_argument("--keep-raw", action="store_true", help="also keep the model's output from before software filtering, per run")
     parser.add_argument("--json", metavar="PATH", help="write the detailed report (includes the proposed text)")
     parser.add_argument("--dry-run", action="store_true", help="print the plan and the number of paid model calls, then exit without calling the model")
     args = parser.parse_args()
@@ -56,7 +57,7 @@ def main() -> int:
 
     provider = AnthropicProvider()
     print(f"Running {args.only} through ordinary intake {args.repeats} time(s) each on {provider.model_identifier} ({calls} call(s))...")
-    report = run(provider, args.repeats, args.only)
+    report = run(provider, args.repeats, args.only, keep_raw=args.keep_raw)
     print(f"\nmixed_spec_intake ({args.repeats} run(s) per source, {report['elapsed_seconds']}s)")
     for sid, entry in report["sources"].items():
         s = entry["summary"]
@@ -69,6 +70,9 @@ def main() -> int:
                 print(f"    run {i}: FAILED ({r['processing_status']})")
             elif r["outcome"] not in ("raised", "hedged_in_fact"):
                 print(f"    run {i}: {r['outcome']}: {r['stated_as_fact_texts'] or r['facts']}")
+                if args.keep_raw:
+                    print(f"      model output mentions it: {r['raw_mentions']} (in summary {r['raw_summary_mentions']}); "
+                          f"review types {r['raw_review_types']}; recommendations naming it: {r['raw_open_item_recs']}")
     if args.json:
         Path(args.json).write_text(json.dumps(report, indent=2))
         print(f"\nWrote detailed report to {args.json}")
