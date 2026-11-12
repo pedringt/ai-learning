@@ -32,6 +32,11 @@ WITHHELD_SCENARIOS = (
     "adv_conflicting_pending_proposals", "adv_hedged_pending_item", "adv_hypothetical_draft_from_pending",
     "adv_hypothetical_draft_from_pending_v2",
 )
+# Nov 12: the scenarios where the fresh comparison's over-withholding showed (fixed in 8152820), re-measured.
+REMEASURE_SCENARIOS = (
+    "adv_authoritative_pending_wording", "ask_evidence_backed_approval_qualified", "ask_current_over_stale",
+    "adv_pending_agrees_with_stale_history", "adv_hypothetical_draft_from_pending_v2", "adv_control_paraphrase_not_demoted",
+)
 
 
 def flagged_units(payload: Any, current_state: dict[str, str]) -> list[dict[str, Any]]:
