@@ -60,17 +60,23 @@ _NOT_ASSERTED = re.compile(
     # Nov 11 (steps 1-2 capture): a condition still to be met, not a status. "contingent on that Review being
     # accepted", "conditionally on the increase being approved", "subject to final approval", "assumes it is approved",
     # "send only after the increase is approved" (fresh comparison: a draft's cautionary detail line).
-    r"contingent|conditional(?:ly)?|subject\s+to|after|provided\s+that|on\s+condition|assum(?:e|es|ed|ing)|"
+    r"contingent|conditional(?:ly)?|subject\s+to|after|provided\s+that|on\s+condition|assum(?:e|es|ed|ing|ption)|"
     r"(?:should|must|will|could|may|might|can)(?:\s+only)?\s+be)\b", re.I)
 _REPORTING = re.compile(
     r"\b(?:says|say|said|reports?|reported|reportedly|states?|stated|claims?|claimed|describes?|described|writes|wrote|"
-    r"mentions?|mentioned|notes?\s+that|noted|according\s+to|per)\b", re.I)
+    r"mentions?|mentioned|notes?\s+that|noted|according\s+to|per|"
+    # Fresh comparison (Nov 12): quoting a record's own label, "labeled as a final VP Operations decision".
+    r"label+ed\s+as|described\s+as|framed\s+as|titled|called)\b", re.I)
+_STATE_ITSELF = re.compile(r"^\s+(?:current\s+state|state|record|records|current\s+state\s+(?:record|records|entry|entries))\b"
+                          r"(?!\s+(?:that|of|for)\b)", re.I)
 _POSSESSIVE_SOURCE = re.compile(r"\b[A-Z][\w-]*['’]s\s+(?:\w+\s+){0,2}$")
 _BE = re.compile(r"\b(?:is|are|was|were|be|been|being|has\s+been|have\s+been|had\s+been|remains?|stays?|looks?|"
                  r"seems?|becomes?|became)\s+(?:\w+ly\s+)?$", re.I)
 _DETERMINER = re.compile(r"\b(?:the|a|an|this|that|these|those|its|their|our|your|any|all)\s+(?:\w+ly\s+)?$", re.I)
-# "was approved", "was previously marked approved": a past status, at most two words between.
-_PAST_STATUS = re.compile(r"\b(?:was|were|had\s+been)\s+(?:[\w-]+\s+){0,2}$", re.I)
+# "was approved", "was previously marked as approved": a past status, at most three words between.
+_PAST_STATUS = re.compile(r"\b(?:was|were|had\s+been)\s+(?:[\w-]+\s+){0,3}$", re.I)
+# "…was changed to 30 days through an accepted past change": the word names a past change, in a past-tense sentence.
+_PAST_CHANGE = re.compile(r"^\s+(?:past|earlier|previous|prior)?\s*(?:change|transition|update|edit|decision)s?\b", re.I)
 _REVERSAL = re.compile(r"\b(?:re-?opened|reversed|revoked|withdrawn|rescinded|superseded|replaced|rolled\s+back|"
                        r"no\s+longer|later\s+changed|since\s+changed|was\s+changed|has\s+changed)\b", re.I)
 # The clause denies the subject's status or record: "Confirmed retention terms are not recorded", "The approved pilot
@@ -134,13 +140,16 @@ def _status_assertions(clause: str, sentence: str = "") -> Iterable[Assertion]:
             continue          # "Confirmed retention terms are not recorded"; "the premise that … is resolved is not correct"
         if re.search(r"\bmay\b", before, re.I):
             continue          # "new legal evidence may contradict the approved terms"
+        if _STATE_ITSELF.match(after):
+            continue          # "as of the current accepted State": State's own authority, not a status claim (Nov 12)
         if _PAST_STATUS.search(before) and _REVERSAL.search(sentence or clause):
             continue                                        # "was resolved previously, then reopened"
         attributed = bool(_REPORTING.search(before) or _POSSESSIVE_SOURCE.search(before)
                           or (lead and not _BE.search(before) and not _DETERMINER.search(before)
                               and re.match(r"\s+\w", after)))   # active voice: "Legal confirmed vendor retention"
-        yield Assertion("status", clause.strip(), m.group(0), historical=bool(_PAST_STATUS.search(before)),
-                        attributed=attributed)
+        historical = bool(_PAST_STATUS.search(before)) or bool(
+            _PAST_CHANGE.match(after) and re.search(r"\b(?:was|were|had)\b", (sentence or clause)[:max(0, (sentence or clause).find(clause))] + before, re.I))
+        yield Assertion("status", clause.strip(), m.group(0), historical=historical, attributed=attributed)
 
 
 def _permission_assertions(clause: str) -> Iterable[Assertion]:
@@ -157,9 +166,24 @@ def assertions(text: str) -> list[Assertion]:
     """The status and permission assertions a sentence makes in its own voice, clause by clause."""
     out: list[Assertion] = []
     for sentence in re.split(r"(?<=[.!?])\s+", text or ""):
+        negated, in_list, prev = False, False, ""
         for clause in _clauses(sentence):
-            out.extend(_status_assertions(clause, sentence))
-            out.extend(_permission_assertions(clause))
+            # Fresh comparison (Nov 12): a negation covers a list it heads. "does not have a confirmed, accepted budget"
+            # (an adjective list: the previous clause ends in "a/an/the/any/no <word>") and "no History, Review, or
+            # Evidence record that shows who approved…" (short list items, then an "or/and/nor" item).
+            short = len(clause.split()) <= 3 and not _STATUS.search(clause)
+            inherits = negated and (
+                (re.search(r"\b(?:a|an|the|any|no)\s+(?:" + _STATUS.pattern[5:-3] + r")\s*$", prev, re.I)
+                 and _STATUS.match(clause.strip()))
+                or short
+                or (in_list and re.match(r"\s*(?:or|and|nor)\b", clause, re.I)
+                    and not re.search(r"\b(?:is|are|was|were|has\s+been|have\s+been)\b", clause, re.I)))
+            if not inherits:
+                out.extend(_status_assertions(clause, sentence))
+                out.extend(_permission_assertions(clause))
+            negated = bool(inherits or _NEGATION.search(clause))
+            in_list = bool(inherits and short)
+            prev = clause
     return out
 
 

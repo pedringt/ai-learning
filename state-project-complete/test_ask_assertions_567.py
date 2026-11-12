@@ -280,3 +280,44 @@ def test_a_condition_still_to_be_met_is_not_a_status(text, basis):
 ])
 def test_a_status_stated_alongside_condition_words_still_counts(text):
     assert not check(text, "none", {}).ok
+
+
+# --- Fresh comparison (Nov 12): five over-withholding patterns, each with a same-shape control ---------------------
+
+REFUNDS = {"current_state": [{"statement": "All refunds require agent review before they are issued."}]}
+
+
+@pytest.mark.parametrize("text,basis,records", [
+    # 1. State's own authority ("accepted State") is not a status claim.
+    ("Yes, as of the current accepted State, all refunds require agent review before they are issued.", "current_state", REFUNDS),
+    ("Yes, as far as State's accepted Current State records show: all refunds require agent review.", "current_state", REFUNDS),
+    # 2. A negation covers the list it heads.
+    ("State does not have a confirmed, accepted budget figure on record yet.", "none", {}),
+    ("State does not have a confirmed, accepted Current State record establishing the pilot budget or its approval.", "none", {}),
+    ("State has no supplied History, Review, or Evidence record that shows who approved the March 3 launch date or when.", "none", {}),
+    # 3. History: a past status, and a past change.
+    ("It was previously marked as approved, but that status was changed on 2026-09-10.", "history", {}),
+    ("The 90-day period was changed to 30 days through an accepted past change.", "history", {}),
+    # 4. An assumption.
+    ("I can draft the email on your assumption that the increase is approved, but it should be marked as a draft "
+     "until the Review is accepted.", "none", {}),
+    # 5. Quoting a record's own label.
+    ("A pending Review proposes that refunds under $200 be auto-approved without agent review, labeled as a final VP "
+     "Operations decision, but it is awaiting review.", "pending_review", {}),
+])
+def test_matrix_false_positives_are_shown(text, basis, records):
+    assert check(text, basis, records).ok
+
+
+@pytest.mark.parametrize("text,basis", [
+    ("The accepted record shows refunds are approved without review.", "none"),         # 1: a status after the reference
+    ("The accepted record of the budget is final.", "none"),                             # 1: "record of …" is a thing
+    ("Retention is not resolved, approved terms are 30 days.", "none"),                  # 2: not an adjective list
+    ("Retention is not resolved, and the terms are approved.", "none"),                  # 2: a new clause
+    ("State has no History, Review, and the budget is approved.", "none"),               # 2: a list item with a verb
+    ("State has no History, Review, or approval record; the budget is approved.", "none"),
+    ("The 90-day period is approved.", "history"),                                       # 3: present status
+    ("The refunds rule is final.", "pending_review"),                                    # 5: no label quoted
+])
+def test_same_shape_assertions_are_still_withheld(text, basis):
+    assert not check(text, basis, {}).ok
