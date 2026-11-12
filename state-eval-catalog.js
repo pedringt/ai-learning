@@ -1036,8 +1036,7 @@
      "not been accepted",
      "not yet accepted",
      "pending review",
-     "awaiting review",
-     "has not changed current state"
+     "awaiting review"
     ]
    ],
    "forbidden_claims": [
@@ -1142,7 +1141,6 @@
      "not yet accepted",
      "pending review",
      "awaiting review",
-     "has not changed current state",
      "not have the pilot budget recorded",
      "not yet record"
     ],

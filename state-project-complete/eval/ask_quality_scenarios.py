@@ -210,7 +210,7 @@ SCENARIOS = (
         ),
         required_facts=("$40,000", ("not in current state", "not yet in current state", "not been recorded",
                                     "not recorded", "not been accepted", "not yet accepted", "pending review",
-                                    "awaiting review", "has not changed current state")),
+                                    "awaiting review")),
         forbidden_claims=("proposed for approval", "not yet approved", "has not been approved"),
         should_distinguish_proposal_from_truth=True,
         severity="high",
@@ -248,7 +248,7 @@ SCENARIOS = (
         pending_reviews=("Is the approved pilot budget of $40,000 ready to be recorded in Current State?",),
         required_facts=("$40,000", ("not in current state", "not yet in current state", "not been recorded",
                                     "not recorded", "not been accepted", "not yet accepted", "pending review",
-                                    "awaiting review", "has not changed current state", "not have the pilot budget recorded", "not yet record"),
+                                    "awaiting review", "not have the pilot budget recorded", "not yet record"),
                         # Oct 28 (Paige, #579): the answer must say the source reports the approval.
                         ("approved at", "as approved", "approved budget", "budget is approved", "budget was approved")),
         # Oct 28 (Paige, #579): "$40,000 per Q3 planning notes, but it is not yet approved in Current State" is
