@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 
-from ask_display import RECORD_LABELS, SCOPE_NOTE, WITHHELD_LINE, answer_lead, displayed_text
+from ask_display import ALL_WITHHELD_LINE, RECORD_LABELS, SCOPE_NOTE, WITHHELD_LINE, answer_lead, displayed_text
 from eval.ask_quality_scenarios import SCENARIOS as ASK_QUALITY_SCENARIOS
 from eval.quality_harness import score_ask_answer
 
@@ -60,7 +60,7 @@ def test_labels_match_the_ui_chips():
     assert match, "labelFor not found in context-ask.js"
     js_labels = json.loads(re.sub(r"(\w+):", r'"\1":', match.group(1)).replace("'", '"'))
     assert js_labels == RECORD_LABELS
-    assert SCOPE_NOTE in source and WITHHELD_LINE in source
+    assert SCOPE_NOTE in source and WITHHELD_LINE in source and ALL_WITHHELD_LINE in source
 
 
 def test_scorer_reads_displayed_text_not_json_fields():

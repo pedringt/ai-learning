@@ -14,7 +14,7 @@ from datetime import date
 from ask_claims import (
     DEFAULT_HEADLINE, FIXED_HEADLINES, ClaimChecker, anchors, anchors_supported, fixed_headline, prepare_answer_raw,
 )
-from ask_display import WITHHELD_LINE
+from ask_display import ALL_WITHHELD_LINE, WITHHELD_LINE
 from ask_service import _StreamedAnswerScanner, ask_cache_key, run_ask, stream_ask_events
 from db import connect
 from database_migration_backed import initialize_db
@@ -259,7 +259,7 @@ def test_a_claim_citing_another_projects_record_is_withheld(tmp_path):
         answer = run_ask(conn, _FakeAsk(_answer([_claim("The pilot stays read-only.", "current_state", "k-data")]), selection),
                          "Is the pilot read-only?")["answer"]
         assert answer["claims"] == [] and answer["withheld_claims"] == 1
-        assert answer["summary"] == WITHHELD_LINE
+        assert answer["summary"] == ALL_WITHHELD_LINE
     finally:
         conn.close()
 

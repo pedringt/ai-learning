@@ -14,8 +14,10 @@ from ask_contract import (
     MEETING_PREP_ITEM_CAPS, MEETING_PREP_MAX_REFINEMENTS, MEETING_PREP_MAX_SECTIONS, MEETING_PREP_SECTION_ORDER,
     MEETING_PREP_SECTION_TITLES, AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis,
 )
+import ask_assertions
+from contextvars import ContextVar
 from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_card, fixed_headline, prepare_answer_raw, record_text
-from ask_display import claim_lines, has_withheld, WITHHELD_LINE
+from ask_display import claim_lines, has_withheld, withheld_line
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from db import project_id_of
 from ask_authority_text import (  # noqa: F401  (re-exported: tests and callers import these from ask_service)
@@ -604,6 +606,31 @@ Selected validated context:
 Use record IDs on items whenever they correspond to a source record. Suggested refinements should be short actions."""
 
 
+# Per-unit decisions for eval diagnostics (#567, Nov 11): when an eval sets this to a list, every claim, card and
+# title the checks see is appended with its raw text, basis, cited records, decision and reason. Production never
+# sets it, so nothing is collected and nothing withheld is ever sent to the browser.
+UNIT_DECISIONS: ContextVar[list | None] = ContextVar("ask_unit_decisions", default=None)
+
+
+def _log_decision(unit: str, raw_text: str | None, basis: str | None, primary: str | None, supporting: list[str],
+                  decision: str, reason: str | None, found: tuple = ()) -> None:
+    log = UNIT_DECISIONS.get()
+    if log is None:
+        return
+    log.append({"unit": unit, "raw_text": raw_text, "basis": basis, "primary_record_id": primary,
+                "supporting_record_ids": list(supporting), "decision": decision, "reason": reason,
+                "assertions": [{"kind": a.kind, "phrase": a.phrase, "clause": a.clause, "historical": a.historical,
+                                "attributed": a.attributed} for a in found]})
+
+
+# The title a section shows when the model's title asserts a status or a go-ahead (#567, Nov 11).
+SECTION_FALLBACK_TITLES = {
+    "needs_review": "Needs your review", "questions": "Get these answered", "established": "Current State",
+    "recent_context": "Recent context", "changes": "What changed", "open_attention": "Needs your attention",
+    "draft": "Draft", "other": "Project context",
+}
+
+
 class _AnswerChecks:
     """The application-side checks on an answer's visible parts, built from the records Ask selected for this request.
     _validate_synthesis runs them on the finished answer; streaming runs the same object on each claim and section as
@@ -628,63 +655,72 @@ class _AnswerChecks:
         self.canonical_questions = {x["id"]: x for x in context.get("questions", [])}
         self.canonical_answered = {x["id"]: x for x in context.get("answered_questions", [])}
 
-        # Bug fix (2026-09-14, live QA): this used to check `context` -- the
-        # *selected* reviews/questions for this run -- so whether the hedging
-        # backstop below fired depended on the selector model's non-deterministic
-        # choice of what to include, not on whether pending material actually
-        # exists. Two runs of the identical question could select the same
-        # underlying Review differently and get a hedged vs. unhedged answer
-        # about the same fact (e.g. pilot budget "approved" vs. "not yet
-        # approved"). `candidates` is the deterministic, pre-selection pool for
-        # this query, so checking it instead removes that source of
-        # inconsistency while preserving the original intent: a genuinely
-        # fully-settled project (no pending Reviews/Questions at all) still never
-        # gets its answer touched by this backstop.
-        pending_pool = candidates if candidates is not None else context
-        self.has_pending_material = bool(pending_pool.get("reviews")) or bool(pending_pool.get("questions"))
-        # Governing Current State wording the backstop must not rewrite (#227). Uses the
-        # candidate pool as well as the selected context, for the same reason as above:
-        # what the selector happened to choose must not change how the answer is worded.
-        self.governing_ngrams = _governing_state_ngrams(
-            x.get("statement", "") for x in [*context.get("state", []), *((candidates or {}).get("state", []))]
-        )
-        # Evidence the answer may be quoting (#567): a settled word it uses about the same thing is
-        # qualified rather than denied. Candidate pool too, for the same reason as above.
-        self.evidence_backing = _evidence_backing(
-            x.get("content", "") for x in [*context.get("evidence", []), *((candidates or {}).get("evidence", []))]
-        )
+        # #567 (Nov 11): the word backstop (_soften_unearned_settled_*) no longer runs on answers. Claims, cards and
+        # titles are shown as written, withheld, or replaced by record text (ask_assertions), never reworded.
         self.checker = ClaimChecker(context, query=query, today=today)
 
     def clean(self, value: str | None) -> str | None:
         return _clean_visible_ask_text(value, self.all_internal_ids, self.labels)
 
     def claim(self, claim: AskClaim) -> AskClaim | None:
-        """#567: the claim with its chip label, or None to withhold it. Its text is never shown otherwise. Only an
-        unlabelled `none` claim still goes through the word backstop ("qualify, don't deny")."""
+        """#567: the claim with its chip label, or None to withhold it. Software never edits a claim's words (Paige,
+        Nov 11): it passes the reference and anchor checks (ask_claims) and the authority check (ask_assertions:
+        what it asserts, and whether its cited records carry that), or it is withheld."""
+        raw_text = claim.text
         claim.text = self.clean(claim.text) or ""
         label = self.checker.check_claim(claim.model_dump()) if claim.text else None
         if label is None:
+            _log_decision("claim", raw_text, claim.basis, claim.primary_record_id, claim.supporting_record_ids,
+                          "withheld", "reference or anchor check failed")
             return None
-        if claim.basis == "none" and self.has_pending_material:
-            claim.text = _soften_unearned_settled_prose(claim.text, self.governing_ngrams, self.evidence_backing)
+        verdict = ask_assertions.check(claim.text, claim.basis, self._authority_records(claim))
+        if not verdict.ok:
+            _log_decision("claim", raw_text, claim.basis, claim.primary_record_id, claim.supporting_record_ids,
+                          "withheld", verdict.reason, verdict.assertions)
+            return None
         claim.label = label or None
+        _log_decision("claim", raw_text, claim.basis, claim.primary_record_id, claim.supporting_record_ids, "shown",
+                      None, verdict.assertions)
         return claim
+
+    def _authority_records(self, claim: AskClaim) -> dict[str, list[Mapping[str, Any]]]:
+        """The cited records that can carry authority for the claim's basis: Current State records (primary, then
+        supporting) for a current_state claim; the answered Question for an answered_question claim."""
+        cited = [claim.primary_record_id, *claim.supporting_record_ids]
+        if claim.basis == "current_state":
+            return {"current_state": [self.checker.records["state"][r] for r in cited if r in self.checker.records["state"]]}
+        if claim.basis == "answered_question":
+            record = self.checker.records["answered_question"].get(claim.primary_record_id or "")
+            return {"answered_question": [record] if record else []}
+        return {}
 
     def section(self, section: AskAnswerSection) -> tuple[AskAnswerSection, int]:
         """The section with its cards checked, and how many cards were withheld."""
         withheld = 0
+        raw_title = section.title
         section.title = self.clean(section.title) or "Project context"
-        if self.has_pending_material:
-            section.title = _soften_unearned_settled_words(section.title, self.evidence_backing)
+        # A title asserts nothing on a record's authority, so one that states a status or a go-ahead is replaced by the
+        # section kind's fixed title, never reworded (#567, Nov 11).
+        title_check = ask_assertions.check(section.title, "none", {})
+        if not title_check.ok:
+            section.title = SECTION_FALLBACK_TITLES.get(section.kind, "Project context")
+        _log_decision("title", raw_title, "none", None, [], "shown" if title_check.ok else "fallback",
+                      title_check.reason, title_check.assertions)
         clean_items = []
         for item in section.items:
             item.wording = "model"
             if item.record_type == "none":
+                raw_text = item.text
                 item.text = self.clean(item.text) or "Project context"
                 item.detail = self.clean(item.detail)
-                if self.has_pending_material:
-                    item.text = _soften_unearned_settled_prose(item.text, self.governing_ngrams, self.evidence_backing)
-                    item.detail = _soften_unearned_settled_prose(item.detail, self.governing_ngrams, self.evidence_backing)
+                # A free-text card cites no record, so it may not assert a status or a go-ahead: shown as written or
+                # withheld (#567, Nov 11).
+                verdict = ask_assertions.check(f"{item.text} {item.detail or ''}", "none", {})
+                _log_decision("card", raw_text, "none", None, [], "shown" if verdict.ok else "withheld", verdict.reason,
+                              verdict.assertions)
+                if not verdict.ok:
+                    withheld += 1
+                    continue
                 clean_items.append(item)
                 continue
             if not (item.record_id and item.record_id in self.allowed.get(item.record_type, set())):
@@ -719,9 +755,21 @@ class _AnswerChecks:
                 if record is None:
                     withheld += 1
                     continue
+                raw_text = item.text
+                reason = None
                 if not item.text or not anchors_supported(f"{item.text} {item.detail or ''}", [record_text(record)]):
+                    reason = "anchor check failed"
+                else:
+                    # The model's wording of a record card is checked like a claim on that record (#567, Nov 11).
+                    basis = {"state": "current_state", "history": "history", "evidence": "evidence_says"}[item.record_type]
+                    verdict = ask_assertions.check(f"{item.text} {item.detail or ''}", basis,
+                                                   {"current_state": [record]} if basis == "current_state" else {})
+                    reason = verdict.reason
+                if reason:
                     item.text, item.detail = canonical_card(item.record_type, record, self.labels)
                     item.wording = "record_fallback"
+                _log_decision("card", raw_text, item.record_type, item.record_id, [],
+                              "fallback" if reason else "shown", reason)
             clean_items.append(item)
         section.items = clean_items
         return section, withheld
@@ -833,7 +881,7 @@ def _finish_display_fields(answer: AskSynthesis, previous_answer: Mapping[str, A
         answer.headline = fixed_headline(answer.job, previous_answer)
     lines = claim_lines(answer.model_dump())
     if has_withheld(answer.model_dump()):
-        lines.append(WITHHELD_LINE)
+        lines.append(withheld_line(answer.model_dump()))
     answer.summary = "\n".join(lines)
 
 

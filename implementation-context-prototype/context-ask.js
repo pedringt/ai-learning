@@ -120,17 +120,20 @@
   const SCOPE_NOTE="Based on what's recorded in State. There may be things it doesn't know about.";
   // #567: one fixed line when a claim or card failed the server's checks and was left out (WITHHELD_LINE in ask_display.py).
   const WITHHELD_LINE="Part of this answer couldn't be checked against State's records and was left out.";
+  // #567 (Nov 11): every claim withheld (ALL_WITHHELD_LINE in ask_display.py). Draft copy.
+  const ALL_WITHHELD_LINE="None of this answer could be checked against State's records, so none of it is shown. That doesn't mean it was wrong, or that State has nothing on this.";
   const hasWithheld=a=>!!(a?.withheld_claims||a?.withheld_items);
+  const withheldLine=a=>!a?.streaming&&Array.isArray(a?.claims)&&a.withheld_claims&&!a.claims.some(c=>c?.text)?ALL_WITHHELD_LINE:WITHHELD_LINE;
   const labelled=(label,text)=>label?`[${label}] ${text}`:text;
   // #567: claims replace the summary; each keeps its chip, on screen and in copied text. An answer without claims
   // (a software-written starter answer) still shows its summary.
   function leadHtml(a){
     if(!Array.isArray(a.claims))return `<p class="result-lede">${esc(a.summary||'')}</p>`;
     const claims=a.claims.map(c=>`<li class="ask-claim">${c.label?`<span class="ask-record-badge ask-claim-${esc(c.basis||'none')}">${esc(c.label)}</span>`:''}<span class="ask-claim-text">${esc(c.text)}</span></li>`).join('');
-    return `${claims?`<ul class="ask-claims">${claims}</ul>`:''}${hasWithheld(a)?`<p class="ask-withheld-note">${esc(WITHHELD_LINE)}</p>`:''}`;
+    return `${claims?`<ul class="ask-claims">${claims}</ul>`:''}${hasWithheld(a)?`<p class="ask-withheld-note">${esc(withheldLine(a))}</p>`:''}`;
   }
   // Copy, in the same form as ask_display.displayed_lines: chips stay with the text they label.
-  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,''];if(Array.isArray(a.claims)){for(const c of a.claims)lines.push(labelled(c.label,c.text));if(hasWithheld(a))lines.push(WITHHELD_LINE);}else lines.push(a.summary);for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length)continue;lines.push('',s.title);for(const i of items){lines.push(`- ${labelled(labelFor(i.record_type),i.text)}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
+  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,''];if(Array.isArray(a.claims)){for(const c of a.claims)lines.push(labelled(c.label,c.text));if(hasWithheld(a))lines.push(withheldLine(a));}else lines.push(a.summary);for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length)continue;lines.push('',s.title);for(const i of items){lines.push(`- ${labelled(labelFor(i.record_type),i.text)}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
 
   // #567: the browser never draws the model's raw text. The server sends each claim and each section only after it
   // has passed the same checks as the finished answer ({claims:[claim events], sections:[section events]}); the
@@ -152,7 +155,7 @@
     // Sections stream as they pass the checks (#246: the prompt asks for the final shape, so they rarely move when
     // the answer finishes).
     const sectionHtml=sections.map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3><ul>${s.items.map(i=>itemHtml(i,null)).join('')}</ul></section>`).join('');
-    return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Checking</div>${leadHtml({claims:shown,withheld_claims:withheld?1:0})}${sectionHtml}</div>`;
+    return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Checking</div>${leadHtml({claims:shown,withheld_claims:withheld?1:0,streaming:true})}${sectionHtml}</div>`;
   }
 
   function render(payload,liveStatus){
