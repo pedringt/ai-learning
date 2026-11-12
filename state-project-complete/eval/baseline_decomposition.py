@@ -21,6 +21,8 @@ run to run, so every source is run several times and the report gives RATES, not
   #240 software sends such a fact to its own Review, so this should always be zero; a non-zero value is an
   app bug, not model variance
 - open items raised, and how often that blocked Confirm (a Review the person must resolve)
+- dropped (#649): an unresolved item that appears nowhere, neither in an open item nor in any fact. Scored
+  apart from suspect, which is the item stated as settled
 
 The provider is injectable so the harness itself is tested without a model (see
 test_baseline_decomposition_eval.py). Running it against the real model is paid: use
@@ -35,6 +37,25 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+# A planning spec with settled decisions and one open item (#649). Also used, unchanged, by the
+# ordinary-intake measurement in eval.mixed_spec_intake and its live test.
+MIXED_SPEC_SOURCE = """
+        We decided State should support a bootstrap/backfill workflow when a
+        project is first adopted. During bootstrap, coverage should matter
+        more than it does during normal ongoing interpretation. Once a
+        baseline exists, normal interpretation should become more selective.
+
+        Users should also be able to explicitly propose missed Evidence for
+        Current State. That action must still go through Review and human
+        authorization; it must never write Current State directly.
+
+        One idea we have not decided is whether large bootstrap proposals
+        should be grouped by product area or by source document.
+
+        Open question: what exact grouping UX should we use for a large
+        backfill import?
+        """
+
 
 @dataclass(frozen=True)
 class DecompositionScenario:
@@ -45,6 +66,7 @@ class DecompositionScenario:
     expected_facts: tuple[tuple[str, ...], ...]
     min_areas: int = 2
     # Keyword groups that describe something unresolved; a fact containing all of a group's words is "suspect".
+    # A keyword ending in "*" matches any word starting with it ("group*" finds "grouped" and "grouping").
     unresolved: tuple[tuple[str, ...], ...] = ()
     # Whether a person would expect the source to leave open items (Questions or Reviews). None = don't care.
     expects_open_items: bool | None = None
@@ -138,6 +160,19 @@ SCENARIOS: tuple[DecompositionScenario, ...] = (
             "one is an app bug, because software must send it to its own Review."
         ),
     ),
+    DecompositionScenario(
+        id="mixed_spec",
+        title="Planning spec: settled decisions and one open grouping question (#649)",
+        source=MIXED_SPEC_SOURCE,
+        expected_facts=(("bootstrap",), ("coverage",), ("missed",)),
+        min_areas=1,
+        unresolved=(("group*",),),
+        expects_open_items=True,
+        notes=(
+            "The same text as the ordinary-intake measurement (eval.mixed_spec_intake), where the open grouping "
+            "item was not raised as a Question in 1 of 7 live runs. Here it goes through Baseline Setup instead."
+        ),
+    ),
 )
 
 
@@ -147,12 +182,16 @@ def _norm(text: str) -> str:
 
 def _has_all(statement: str, words: Iterable[str]) -> bool:
     """True if every keyword appears in `statement`: whole words/phrases, except tokens with digits or
-    currency (dates, amounts), which match as substrings so "180,000" is found in "$180,000"."""
+    currency (dates, amounts), which match as substrings so "180,000" is found in "$180,000". A keyword ending
+    in "*" matches any word that starts with it."""
     haystack = _norm(statement)
     padded = f" {haystack} "
     for word in words:
         needle = _norm(word)
-        if re.search(r"[\d$]", needle):
+        if word.endswith("*"):
+            if f" {needle}" not in padded:
+                return False
+        elif re.search(r"[\d$]", needle):
             if needle not in haystack:
                 return False
         elif f" {needle} " not in padded:
@@ -231,6 +270,11 @@ def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[st
     unhedged = [(group, s) for group, s in mentions if not _is_hedged(s)]
     hedged = [(group, s) for group, s in mentions if _is_hedged(s)]
     suspect = sorted({group for group, _ in unhedged})
+    open_item_texts = [str(q.get("text", "")) for q in questions] + [str(r.get("decision_question", "")) for r in needs_review]
+    # #649: an unresolved item is raised when an open item names it, and dropped when nothing names it at all.
+    raised = [group for group in scenario.unresolved if any(_has_all(q, group) for q in open_item_texts)]
+    dropped = [group for group in scenario.unresolved
+               if group not in raised and not any(_has_all(s, group) for s in statements)]
     grounded = _specifics(scenario.source)
     invented = sorted({tok for st in statements for tok in _specifics(st)} - grounded)
     invented_in_draft = sorted({tok for st in draft_statements for tok in _specifics(st)} - grounded)
@@ -255,6 +299,9 @@ def score_run(scenario: DecompositionScenario, draft: dict[str, Any]) -> dict[st
         "suspect_groups": [" + ".join(group) for group in suspect],
         "suspect_statements": sorted({st for _, st in unhedged}),
         "hedged_mentions": len({st for _, st in hedged}),
+        "unresolved_raised": len(raised) if scenario.unresolved else None,
+        "unresolved_dropped": len(dropped) if scenario.unresolved else None,
+        "dropped_groups": [" + ".join(group) for group in dropped],
         "hedged_statements": sorted({st for _, st in hedged}),
         "invented": invented,
         "invented_in_draft": invented_in_draft,
@@ -276,6 +323,7 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
         return round(sum(1 for r in pool if pred(r)) / len(pool), 2) if pool else None
 
     checked = [r for r in ok if r["expected_open_items_ok"] is not None]
+    with_unresolved = [r for r in ok if r.get("unresolved_dropped") is not None]
     return {
         "runs": n,
         "failed_rate": rate(lambda r: r["failed"], runs),
@@ -288,6 +336,8 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
         "recall_mean": mean("recall"),
         "suspect_rate": rate(lambda r: r["suspect"] > 0, ok),
         "hedged_mention_rate": rate(lambda r: r["hedged_mentions"] > 0, ok),
+        "dropped_rate": rate(lambda r: r["unresolved_dropped"] > 0, with_unresolved),
+        "raised_rate": rate(lambda r: r["unresolved_raised"] > 0, with_unresolved),
         "invented_rate": rate(lambda r: bool(r["invented"]), ok),
         "invented_in_draft_rate": rate(lambda r: bool(r.get("invented_in_draft")), ok),
         "flagged_rate": rate(lambda r: r.get("flagged_facts", 0) > 0, ok),
