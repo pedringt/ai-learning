@@ -304,6 +304,9 @@ REFUNDS = {"current_state": [{"statement": "All refunds require agent review bef
     # 5. Quoting a record's own label.
     ("A pending Review proposes that refunds under $200 be auto-approved without agent review, labeled as a final VP "
      "Operations decision, but it is awaiting review.", "pending_review", {}),
+    # Re-measure variants (Nov 12).
+    ("State does not have a recorded, accepted decision that changes the under-$200 rule, so agent review still applies.", "none", {}),
+    ("Its statement is labeled a final decision by VP Operations, but it is not yet accepted.", "pending_review", {}),
 ])
 def test_matrix_false_positives_are_shown(text, basis, records):
     assert check(text, basis, records).ok
@@ -318,6 +321,7 @@ def test_matrix_false_positives_are_shown(text, basis, records):
     ("State has no History, Review, or approval record; the budget is approved.", "none"),
     ("The 90-day period is approved.", "history"),                                       # 3: present status
     ("The refunds rule is final.", "pending_review"),                                    # 5: no label quoted
+    ("Retention is not recorded, accepted terms are 30 days.", "none"),                  # 2: not "a/the recorded"
 ])
 def test_same_shape_assertions_are_still_withheld(text, basis):
     assert not check(text, basis, {}).ok

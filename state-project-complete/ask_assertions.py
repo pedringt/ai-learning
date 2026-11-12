@@ -66,7 +66,7 @@ _REPORTING = re.compile(
     r"\b(?:says|say|said|reports?|reported|reportedly|states?|stated|claims?|claimed|describes?|described|writes|wrote|"
     r"mentions?|mentioned|notes?\s+that|noted|according\s+to|per|"
     # Fresh comparison (Nov 12): quoting a record's own label, "labeled as a final VP Operations decision".
-    r"label+ed\s+as|described\s+as|framed\s+as|titled|called)\b", re.I)
+    r"label+ed(?:\s+as)?|described\s+as|framed\s+as|titled|called)\b", re.I)
 _STATE_ITSELF = re.compile(r"^\s+(?:current\s+state|state|record|records|current\s+state\s+(?:record|records|entry|entries))\b"
                           r"(?!\s+(?:that|of|for)\b)", re.I)
 _POSSESSIVE_SOURCE = re.compile(r"\b[A-Z][\w-]*['’]s\s+(?:\w+\s+){0,2}$")
@@ -173,7 +173,8 @@ def assertions(text: str) -> list[Assertion]:
             # Evidence record that shows who approved…" (short list items, then an "or/and/nor" item).
             short = len(clause.split()) <= 3 and not _STATUS.search(clause)
             inherits = negated and (
-                (re.search(r"\b(?:a|an|the|any|no)\s+(?:" + _STATUS.pattern[5:-3] + r")\s*$", prev, re.I)
+                (re.search(r"\b(?:a|an|the|any|no)\s+(?:recorded|documented|written|formal|" + _STATUS.pattern[5:-3] + r")\s*$",
+                           prev, re.I)
                  and _STATUS.match(clause.strip()))
                 or short
                 or (in_list and re.match(r"\s*(?:or|and|nor)\b", clause, re.I)
