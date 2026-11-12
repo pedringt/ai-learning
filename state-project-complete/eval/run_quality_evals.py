@@ -35,7 +35,8 @@ from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 from eval.authority_lab_export import build_envelope
 from eval.scoring_version import scoring_version
 from eval.quality_report import analytics_payload as _analytics_payload, failure_details as _failure_details
-from eval.release_gate import ASK_SUITE, REVIEW_SUITE, fetch_analytics, gate, not_counted, previous_failed_ids
+from eval.release_gate import (ASK_SUITE, REVIEW_SUITE, accepted_scenarios, ask_not_counted, fetch_analytics, gate,
+                               load_risk_acceptances, not_counted, previous_failed_ids)
 
 
 def _record(url: str, key: str, payload: dict) -> None:
@@ -107,6 +108,8 @@ def _ask_report(provider) -> dict:
                 "uncertainty_ok": r.uncertainty_ok,
                 "open_item_ok": r.open_item_ok,
                 "authority_ok": r.authority_ok,
+                # DEC-022: an invented number is a trust failure, so the gate needs it apart from grounding.
+                "number_ok": r.number_ok,
                 "failed_items": r.failed_items,
                 # #643: the sentence holding the first asserted claim or invented number, else the headline.
                 "answer_excerpt": answer_excerpt(r.answer, [*r.asserted_claims, *r.unsupported_numbers]) if r.answer else "",
@@ -240,9 +243,14 @@ def main() -> int:
             print(f"\nWrote Authority Lab evidence {envelope['id']} to {args.authority_lab_envelope}")
 
     # RELEASE.md's reading rules decide the exit code, not "any miss" (Oct 19).
-    reasons = gate(reports, {REVIEW_SUITE: REVIEW_SCENARIOS, ASK_SUITE: ASK_SCENARIOS}, previous)
+    accepted = accepted_scenarios(load_risk_acceptances())
+    reasons = gate(reports, {REVIEW_SUITE: REVIEW_SCENARIOS, ASK_SUITE: ASK_SCENARIOS}, previous, accepted)
     for line in not_counted(reports, {REVIEW_SUITE: REVIEW_SCENARIOS, ASK_SUITE: ASK_SCENARIOS}):
         print("  " + line)
+    for report in reports:
+        if report["suite"] == ASK_SUITE:
+            for line in ask_not_counted(report["results"], accepted):
+                print("  " + line)
     print("\nRelease reading (RELEASE.md):")
     for suite, why in reasons.items():
         note = "" if previous.get(suite) is not None else " (previous run unknown, consecutive check skipped)"
