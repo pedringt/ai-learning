@@ -893,7 +893,7 @@ def _validate_synthesis(
         moved, withheld = checks.section(AskAnswerSection(kind="other", title="Project context", items=checks.moved_items))
         answer.withheld_items += withheld
         clean_sections.append(moved)
-    answer.sections = clean_sections
+    answer.sections = _without_redundant_cards(answer.claims, clean_sections)
     _finish_hypothetical(answer, checks)
     allowed = checks.allowed
     uncertainty_allowed = allowed["review"] | allowed["blocking_question"] | allowed["question"]
@@ -918,6 +918,38 @@ def _validate_synthesis(
             answer.sections.append(AskAnswerSection(kind="questions", title="Get these answered", items=items))
     return answer
 
+
+
+_CARD_WORD = re.compile(r"[a-z0-9$.,%]+")
+
+
+def _card_words(text: str) -> set[str]:
+    return {w.strip(".,") for w in _CARD_WORD.findall((text or "").lower()) if len(w.strip(".,")) > 2}
+
+
+def _without_redundant_cards(claims: list[AskClaim], sections: list[AskAnswerSection]) -> list[AskAnswerSection]:
+    """Paige, Nov 12 (P11): a Current State card repeating a shown claim that cites the same record is hidden, but only
+    when the card adds no information: every word and figure in it (text and detail) is already in that claim. A
+    claim may summarize part of a record (P13), so a card that adds anything stays. Not counted as withheld."""
+    cited: dict[str, set[str]] = {}
+    for claim in claims:
+        if claim.basis == "current_state" and claim.primary_record_id:
+            cited.setdefault(claim.primary_record_id, set()).update(_card_words(claim.text))
+    if not cited:
+        return sections
+    kept_sections = []
+    for section in sections:
+        items = []
+        for item in section.items:
+            words = _card_words(f"{item.text} {item.detail or ''}")
+            if item.record_type == "state" and item.record_id in cited and words and words <= cited[item.record_id]:
+                _log_decision("card", item.text, "state", item.record_id, [], "hidden", "repeats a shown claim on the same record")
+                continue
+            items.append(item)
+        if items or not section.items or section.hypothetical:
+            section.items = items
+            kept_sections.append(section)
+    return kept_sections
 
 
 def _finish_hypothetical(answer: AskSynthesis, checks: "_AnswerChecks") -> None:
@@ -1081,6 +1113,25 @@ def _selection_raw_from_answer(answer: Mapping[str, Any]) -> dict[str, Any]:
             record_id = item.get("record_id")
             if record_id and record_type in ids:
                 ids[record_type].append(record_id)
+    # #567 (Nov 12): the records the claims cite too. A Current State card that only repeated a claim is hidden
+    # (_without_redundant_cards), so the cards alone no longer list every record the answer rests on. A supporting id's
+    # type isn't stored; it is offered under each type, and _validate_selection drops it wherever it doesn't exist.
+    basis_types = {"current_state": "state", "pending_review": "review", "evidence_says": "evidence", "history": "history",
+                   "answered_question": "answered_question"}
+    for claim in answer.get("claims") or []:
+        if not isinstance(claim, Mapping):
+            continue
+        primary, basis = claim.get("primary_record_id"), claim.get("basis")
+        if primary and basis in basis_types:
+            ids[basis_types[basis]].append(primary)
+        elif primary and basis == "open_question":
+            ids["blocking_question"].append(primary)
+            ids["question"].append(primary)
+        for supporting in claim.get("supporting_record_ids") or []:
+            if isinstance(supporting, str):
+                for bucket in ids.values():
+                    bucket.append(supporting)
+    ids = {key: list(dict.fromkeys(values)) for key, values in ids.items()}
     return {
         "job": answer.get("job", "refinement"),
         "state_ids": ids["state"],
