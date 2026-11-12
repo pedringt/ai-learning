@@ -9,12 +9,17 @@ Each test goes through `_validate_synthesis`, the step that produces what the us
 records (a pending retention Review, Legal's Evidence, and the demo's Current State), and checks the whole displayed
 text. Correct sentences must come out unchanged. For an unsupported assertion the requirement is the outcome, not
 the mechanism: it must not reach the user as established fact. No model calls.
+
+On staging since #567 (Nov 12), answers no longer go through the backstop: a claim or card is shown as written or
+withheld (ask_assertions). So the meaning tests call the backstop function directly (what `main` runs until #567
+ships), and the outcome tests run through #567's path, where an unsupported assertion or go-ahead is withheld.
 """
 import re
 
 import pytest
 
-from ask_contract import AskAnswerItem, AskAnswerSection, AskSelection, AskSynthesis
+from ask_authority_text import _evidence_backing, _governing_state_ngrams, _soften_unearned_settled_prose
+from ask_contract import AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis
 from ask_service import _validate_synthesis
 
 STATE = {
@@ -74,14 +79,20 @@ UNCHANGED = [
 
 
 @pytest.mark.parametrize("sentence", UNCHANGED)
-def test_a_correct_sentence_is_displayed_unchanged(sentence):
-    assert _validate(summary=sentence).summary == sentence
+def test_the_backstop_keeps_a_correct_sentence_unchanged(sentence):
+    governing = _governing_state_ngrams(STATE.values())
+    assert _soften_unearned_settled_prose(sentence, governing, _evidence_backing([LEGAL])) == sentence
+
+
+# #567: a free-text card cites no record, so one that grants a go-ahead is withheld (Paige, Nov 11: keep withholding a
+# permission its records don't support); every other correct card is shown exactly as written.
+_GRANTS_A_GO_AHEAD = {UNCHANGED[5], UNCHANGED[8]}
 
 
 @pytest.mark.parametrize("sentence", UNCHANGED)
-def test_a_correct_free_text_card_is_displayed_unchanged(sentence):
+def test_a_correct_free_text_card_is_shown_unchanged_or_withheld_never_reworded(sentence):
     cards = [i.text for s in _validate(item=sentence).sections for i in s.items if i.record_type == "none"]
-    assert cards == [sentence]
+    assert cards == ([] if sentence in _GRANTS_A_GO_AHEAD else [sentence])
 
 
 @pytest.mark.parametrize("headline", [
@@ -113,15 +124,24 @@ def _not_established(shown: str, words=("resolved", "confirmed", "approved")) ->
     return True
 
 
+def _shown_as_claim(sentence: str) -> str:
+    """The sentence as an uncited claim through #567's checks: what a person sees of it."""
+    selection = AskSelection(job="current_fact", state_ids=list(STATE), review_ids=[], evidence_ids=["e-legal"])
+    context = {"state": [{"id": k, "statement": v} for k, v in STATE.items()], "reviews": [], "questions": [],
+               "history": [], "evidence": [{"id": "e-legal", "content": LEGAL}], "rules": []}
+    answer = _validate_synthesis(AskSynthesis(job="current_fact", claims=[AskClaim(text=sentence)]), selection, context, context)
+    return " ".join(c.text for c in answer.claims)
+
+
 @pytest.mark.parametrize("sentence", [
     "Retention is resolved, so Security approval can proceed.",
     "Legal reportedly confirmed 30 days, so Security approval can proceed.",
     "Evidence reports 30-day retention, so the pilot data flow can move forward.",
 ])
 def test_an_unsupported_go_ahead_does_not_reach_the_user(sentence):
-    """Outcome: whatever the mechanism, the displayed text grants no go-ahead from an unsupported premise, and
-    presents nothing pending as settled."""
-    shown = _validate(summary=sentence).summary
+    """Outcome: the displayed text grants no go-ahead from an unsupported premise and presents nothing pending as
+    settled. On #567 the claim is withheld."""
+    shown = _shown_as_claim(sentence)
     assert not _GO_AHEAD.search(shown), shown
     assert _not_established(shown), shown
 
@@ -132,9 +152,10 @@ def test_an_unsupported_go_ahead_does_not_reach_the_user(sentence):
     "The approved Support Slack retrieval source is available.",
 ])
 def test_an_unsupported_assertion_is_not_displayed_as_established(sentence):
-    shown = _validate(summary=sentence).summary
-    assert _not_established(shown), shown
+    assert _not_established(_shown_as_claim(sentence)), _shown_as_claim(sentence)
 
 
-def test_a_settled_title_about_pending_material_is_still_softened():
-    assert "Confirmed" not in _validate(title="Confirmed Retention Terms").sections[0].title
+def test_a_settled_title_about_pending_material_is_not_shown():
+    titles = [s.title for s in _validate(title="Confirmed Retention Terms", item="Retention terms are under review.").sections
+              if s.kind == "other"]
+    assert titles and all("Confirmed" not in t for t in titles)
