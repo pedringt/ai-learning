@@ -197,11 +197,29 @@ def test_a_detail_line_in_the_draft_is_checked_as_usual():
 
 def test_a_record_card_inside_the_draft_moves_out_and_is_checked_as_usual():
     section = AskAnswerSection(kind="draft", title="Draft", items=[
-        AskAnswerItem(text=BODY), AskAnswerItem(text="x", record_type="review", record_id="r-price")])
+        AskAnswerItem(text=BODY), AskAnswerItem(text=PROPOSAL, record_type="review", record_id="r-price")])
     cleaned = _validated([GROUNDING], [section])
     assert [i.record_type for i in _draft_section(cleaned).items] == ["none"]
     moved = [i for s in cleaned.sections if not s.hypothetical for i in s.items if i.record_id == "r-price"]
     assert moved and moved[0].text == PROPOSAL
+
+
+def test_a_draft_the_model_labels_with_its_source_record_stays_the_draft():
+    """Fresh comparison (Nov 11): the candidate's model tagged its email as a card on the Review it drafts from, and
+    the email was replaced by the Review's text. New prose is draft body; only the record's own text is a record card."""
+    email = AskAnswerItem(text=BODY, record_type="review", record_id="r-price", detail=None)
+    card = AskAnswerItem(text=PROPOSAL, record_type="review", record_id="r-price")
+    cleaned = _validated([GROUNDING], [AskAnswerSection(kind="draft", title="Draft", items=[email, card])])
+    draft = _draft_section(cleaned)
+    assert [(i.text, i.record_type, i.record_id) for i in draft.items] == [(BODY, "none", None)]
+    assert any(i.record_id == "r-price" for s in cleaned.sections if not s.hypothetical for i in s.items)
+    assert f"- {BODY}" in displayed_lines(cleaned.model_dump())
+
+
+def test_a_relabelled_draft_body_is_still_checked_as_draft_body():
+    item = AskAnswerItem(text="Legal has approved the increase.", record_type="review", record_id="r-price")
+    cleaned = _validated([GROUNDING], [AskAnswerSection(kind="draft", title="Draft", items=[item])])
+    assert _draft_section(cleaned).items == [] and cleaned.withheld_items == 1
 
 
 # --- containment: the assumption never becomes current fact outside the draft -----------------------------------------

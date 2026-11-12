@@ -728,6 +728,16 @@ class _AnswerChecks:
             out["answered_question"] = [record] if record else []
         return out
 
+    def _is_record_text(self, item: AskAnswerItem) -> bool:
+        """Whether a card's text is its record's own text (a genuine record card), not new prose citing it."""
+        record = (self.canonical_reviews.get(item.record_id or "") or self.canonical_questions.get(item.record_id or "")
+                  or self.checker.card_record(item.record_type, item.record_id))
+        if not record:
+            return False
+        own = " ".join(str(record.get(k) or "") for k in ("decision_question", "text", "statement", "content", "new_statement"))
+        words = set(re.findall(r"[a-z0-9]+", (item.text or "").lower()))
+        return bool(words) and len(words & set(re.findall(r"[a-z0-9]+", own.lower()))) * 10 >= len(words) * 8
+
     def _checked_draft(self, section: AskAnswerSection) -> tuple[AskAnswerSection, int]:
         """The hypothetical draft: software title and assumption line; the body may write as though the assumption
         holds (ask_drafts.check_body), detail lines are checked as usual, record cards move out of the draft."""
@@ -740,8 +750,14 @@ class _AnswerChecks:
         kept, withheld = [], 0
         for item in section.items:
             if item.record_type != "none":
-                self.moved_items.append(item)
-                continue
+                # Fresh comparison, Nov 11: the model labels its draft with the record it drafts from (a Review), and
+                # moving it out showed the Review's text in its place, so the requested draft vanished. An item is a
+                # record card only when its text is that record's own text; otherwise it is draft body and the record
+                # id was its source.
+                if self._is_record_text(item):
+                    self.moved_items.append(item)
+                    continue
+                item.record_type, item.record_id = "none", None
             raw_text = item.text
             item.wording = "model"
             item.text = self.clean(item.text) or ""
