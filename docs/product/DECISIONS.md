@@ -245,7 +245,7 @@ Spend from these endpoints shows up unexpectedly, or the dashboard gets traffic 
 
 ### DEC-013 — The Ask quality suite is read like the review suite (trial)
 
-**Status:** Revisit if condition changes  
+**Status:** Superseded by DEC-022 (Nov 12); its reading still applies to quality misses  
 **Date:** 2026-10-19  
 **Related:** `state-project-complete/eval/release_gate.py`; RELEASE.md "Reading the review interpretation suite"; DEC-012
 
@@ -427,3 +427,28 @@ A model-written headline checked against a status-word list; a badge-only fallba
 
 **Revisit when**  
 The withheld rate stays high after investigation, answers lose required information, or human review finds unsupported text shown with a chip.
+
+### DEC-022 — What blocks an Ask release: trust failures, quality misses, operational failures
+
+**Status:** Decided (Paige, Nov 12); supersedes DEC-013 for the Ask suite
+**Date:** 2026-11-12
+**Related:** #642, #656, DEC-013, DEC-017, `eval/release_gate.py`, `eval/ask_risk_acceptances.json`
+
+**Decision**
+Each failed Ask scenario is classed by the check it failed.
+- **Trust failure:** Ask said something false about the project. This covers pending or Evidence material presented as governing (`authority`), a reversed or invented claim (`forbidden_claims`), a number in no record, and an unknown stated as definite (`uncertainty`). One trust failure fails the run unless `eval/ask_risk_acceptances.json` holds an unexpired acceptance for that scenario. Each acceptance names the scenario, the release, the reason, who accepted it, the date and an expiry, and each needs Paige's explicit OK.
+- **Quality miss:** the answer is true but incomplete (`required_facts`, `open_item`). DEC-013's reading still applies: at most one quality miss per run, and the same scenario does not miss in two consecutive runs.
+- **Operational failure:** an error or timeout. It is reported in the log and not counted as quality.
+
+Observe-only (DEC-017) and known-unsupported (#640) scenarios stay out of the gate.
+
+**Why**
+Under DEC-013 every miss counted the same. A deterministic defect that reversed a source's wording (#656) never blocked a release, because it missed in different runs of different scenarios. A false statement about the project can mislead someone acting on it even once. A thinner answer cannot.
+
+**Rejected / deferred**
+- Counting a missing blocker (`open_item`) as a trust failure. It stays a quality miss and is the known variable case behind DEC-013.
+- Category-level repeat checks.
+
+**Revisit when**
+Risk acceptances become routine, or a check's class proves wrong in practice.
+
