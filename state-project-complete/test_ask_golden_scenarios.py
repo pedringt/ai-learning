@@ -47,8 +47,7 @@ def test_golden_question_copy_is_canonical_and_internal_ids_do_not_leak(tmp_path
         }
         raw = AskSynthesis.model_validate({
             "job": "meeting_prep",
-            "headline": "Security prep question_4a63aa40d2b5",
-            "summary": "Use q-thresholds and ask-evidence-vendor-retention.",
+            "claims": [{"text": "Security prep question_4a63aa40d2b5: use q-thresholds and ask-evidence-vendor-retention."}],
             "sections": [{
                 "kind": "questions", "title": "Blocking question\\_97efc593a697", "items": [
                     {"text": "Evaluation thresholds question\\_4a63aa40d2b5 / q-thresholds. Blocks: Pilot launch criteria", "record_type": "blocking_question", "record_id": "q-thresholds", "detail": "Blocks: Pilot launch criteria"},
@@ -58,7 +57,7 @@ def test_golden_question_copy_is_canonical_and_internal_ids_do_not_leak(tmp_path
             "source_ids": [], "uncertainty_ids": ["q-thresholds", "q-retention"], "suggested_refinements": []
         })
         clean = _validate_synthesis(raw, selection, context)
-        visible = " ".join([clean.headline, clean.summary] + [s.title for s in clean.sections] + [i.text + " " + (i.detail or "") for s in clean.sections for i in s.items])
+        visible = " ".join([c.text for c in clean.claims] + [s.title for s in clean.sections] + [i.text + " " + (i.detail or "") for s in clean.sections for i in s.items])
         for forbidden in ["question_", "q-thresholds", "q-retention", "ask-evidence-"]:
             assert forbidden not in visible
         threshold = next(i for s in clean.sections for i in s.items if i.record_id == "q-thresholds")
@@ -118,8 +117,12 @@ class FactSynthesisProvider:
         self.prompts.append(prompt)
         return {
             "job": "current_fact",
-            "headline": "Jane Smith",
-            "summary": "A recent project update says Jane Smith is the billing contact; it is still awaiting Review.",
+            "claims": [
+                {"text": "A recent project note says Jane Smith is the billing contact.", "basis": "evidence_says",
+                 "primary_record_id": "e-billing-contact", "supporting_record_ids": []},
+                {"text": "Adding her as the billing contact is awaiting review.", "basis": "pending_review",
+                 "primary_record_id": "r-billing", "supporting_record_ids": []},
+            ],
             "sections": [{
                 "kind": "recent_context", "title": "Recent project evidence", "items": [
                     {"text": "My billing contact is Jane Smith", "record_type": "evidence", "record_id": "e-billing-contact", "detail": None}
@@ -140,7 +143,8 @@ def test_golden_direct_fact_lookup_uses_specific_deterministic_fast_path_and_pre
         provider = FactSynthesisProvider()
         result = run_ask(conn, provider, "Who is my billing contact?")
         assert result["timing"]["pipeline"] == "deterministic_fact_one_call"
-        assert result["answer"]["headline"] == "Jane Smith"
+        assert result["answer"]["headline"] == "What State has on record"
+        assert [c["label"] for c in result["answer"]["claims"]] == ["Project evidence", "Needs review"]
         assert "e-billing-contact" in result["selection"]["evidence_ids"]
         assert "r-billing" in result["selection"]["review_ids"]
         review_items = [i for s in result["answer"]["sections"] for i in s["items"] if i["record_type"] == "review"]
