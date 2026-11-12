@@ -164,3 +164,28 @@ def test_the_eval_check_never_imports_the_products_check():
     imported = {n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)} | {
         a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names}
     assert "ask_assertions" not in imported and "ask_service" not in imported
+
+
+# --- Nov 11: three false positives from the steps 1-2 capture -----------------------------------------------------
+
+def test_a_go_ahead_from_a_denied_status_is_not_a_conclusion_from_unaccepted_material():
+    assert not conclusions("Retention is not resolved yet, so the pilot cannot move forward on data flow, and only some "
+                           "work can proceed.")
+    assert not conclusions("Retention is unresolved, so only work that does not depend on it can proceed.")
+    # A negation that denies something other than a status does not excuse the go-ahead.
+    assert conclusions("Legal says retention is not an issue, so Security approval can proceed.")
+    assert conclusions("Retention is resolved and not open for debate, so Security approval can proceed.")
+
+
+def test_a_heading_answered_by_a_denial_passes_and_an_assertive_heading_fails():
+    assert not unhedged("Confirmed retention terms: none are confirmed; 30-day vendor retention is reported but not yet "
+                        "accepted", "confirmed")
+    assert unhedged("Confirmed retention terms: 30 days for pilot prompts and outputs", "confirmed")
+    assert not unhedged("Of the vendor's terms, none are confirmed.", "confirmed")
+    assert unhedged("Of the vendor's terms, all are confirmed.", "confirmed")
+
+
+def test_the_premise_check_accepts_not_settled_but_not_a_change_of_subject():
+    assert PREMISE_CORRECTED.search("The retention premise is not settled: retention terms are not yet confirmed.")
+    assert not PREMISE_CORRECTED.search("The premise that retention is resolved is not the main issue.")
+    assert not PREMISE_CORRECTED.search("The premise is correct, so Security approval can proceed.")

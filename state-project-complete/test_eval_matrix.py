@@ -431,7 +431,8 @@ def test_dry_run_summary_for_the_single_run_scripts(monkeypatch):
 def test_adversarial_suite_plans_one_call_per_scenario_and_runs_as_ask():
     from eval.ask_adversarial_scenarios import SCENARIOS as ADVERSARIAL
 
-    assert matrix.calls_per_repeat("adversarial") == len(ADVERSARIAL) == 21
+    # 22 since Nov 11: adv_hypothetical_draft_from_pending_v2 (the v1 expectation is kept and reported separately).
+    assert matrix.calls_per_repeat("adversarial") == len(ADVERSARIAL) == 22
     assert all(s.id.startswith("adv_") for s in ADVERSARIAL)
     assert matrix.parse_suites("adversarial") == ["adversarial"]
 

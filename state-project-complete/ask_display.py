@@ -17,6 +17,10 @@ RECORD_LABELS = {
     "answered_question": "Answered question", "history": "History", "evidence": "Project evidence",
 }
 WITHHELD_LINE = "Part of this answer couldn't be checked against State's records and was left out."
+# #567 (Nov 11, draft copy for Paige's review): when every claim was withheld, the line says so without implying the
+# answer was wrong or that State has nothing on the question.
+ALL_WITHHELD_LINE = ("None of this answer could be checked against State's records, so none of it is shown. "
+                     "That doesn't mean it was wrong, or that State has nothing on this.")
 # #544 (Oct 20, Paige): every answer says it covers only what State has on record.
 SCOPE_NOTE = "Based on what's recorded in State. There may be things it doesn't know about."
 
@@ -46,6 +50,15 @@ def has_withheld(answer: Any) -> bool:
     return bool(a.get("withheld_claims")) or bool(a.get("withheld_items"))
 
 
+def withheld_line(answer: Any) -> str | None:
+    """The line shown when something was withheld: the fully-withheld line when no claim is left, else the partial."""
+    a = inner_answer(answer)
+    if not has_withheld(a):
+        return None
+    shown = [c for c in a.get("claims") or [] if isinstance(c, Mapping) and c.get("text")]
+    return ALL_WITHHELD_LINE if isinstance(a.get("claims"), list) and a.get("withheld_claims") and not shown else WITHHELD_LINE
+
+
 def displayed_lines(answer: Any, *, include_footer: bool = False, labels: bool = True) -> list[str]:
     """Every line a person sees, in order. Claims replace the summary when present; an answer without claims
     (the older shape, or a software-written starter answer) shows its summary.
@@ -63,14 +76,20 @@ def displayed_lines(answer: Any, *, include_footer: bool = False, labels: bool =
     elif a.get("summary"):
         lines.append(str(a["summary"]).strip())
     if has_withheld(a) and labels:
-        lines.append(WITHHELD_LINE)
+        lines.append(withheld_line(a))
     for section in a.get("sections") or []:
         if not isinstance(section, Mapping):
             continue
         items = [i for i in section.get("items") or [] if isinstance(i, Mapping)]
-        if not items:
+        hypothetical = section.get("hypothetical") if isinstance(section.get("hypothetical"), Mapping) else None
+        if not items and not hypothetical:
             continue
         lines.append(str(section.get("title") or "").strip())
+        # #567 (Nov 11): a hypothetical draft's assumption line (and any notes) is shown with the draft, always.
+        # Software text, so the eval's model-words form (labels=False) leaves it out.
+        if hypothetical and labels:
+            lines.append(str(hypothetical.get("line") or "").strip())
+            lines.extend(str(n).strip() for n in hypothetical.get("notes") or [])
         for item in items:
             record_type = item.get("record_type")
             label = RECORD_LABELS.get(record_type) if labels else None

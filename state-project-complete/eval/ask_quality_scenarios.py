@@ -51,6 +51,10 @@ class AskQualityScenario:
     # failure, never as passed), but left out of the Ask gate's checks. The text says why and when it comes off;
     # remove it when the capability ships.
     known_unsupported: str = ""
+    # Nov 11 (Paige, #567): v2 of a hypothetical-draft scenario. The answer must mark its draft (software assumption
+    # line, ask_drafts.py); natural wording is then allowed inside the marked draft, and every factual and authority
+    # check reads only the text outside it. The v1 scenario keeps its original expectation and is reported separately.
+    hypothetical_draft: bool = False
 
 
 SCENARIOS = (
