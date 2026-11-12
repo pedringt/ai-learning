@@ -70,14 +70,14 @@ _CANDIDATES = {"state": [], "reviews": [], "questions": [], "history": [], "evid
 
 def test_grounding_rules_forbid_describing_a_pending_review_as_confirmed():
     rules = _grounding_rules()
-    assert "not accepted" in rules and "not yet true" not in rules
+    assert "not yet true" in rules
     assert "confirmed" in rules.lower() and "never" in rules.lower()
     assert "linked Question" in rules and "open" in rules
 
 
 def test_one_call_prompt_forbids_confirmed_language_for_open_reviews():
     prompt = _one_call_prompt("What are the confirmed retention terms?", _CANDIDATES, None)
-    assert "not accepted" in prompt and "not yet true" not in prompt
+    assert "not yet true" in prompt
     assert '"confirmed"' in prompt
     assert "resolving its linked Question" in prompt or "resolves it" not in prompt.lower()
 
@@ -89,7 +89,7 @@ def test_synthesis_prompt_forbids_confirmed_language_for_open_reviews():
     )
     context = {"state": [], "reviews": [], "questions": [], "history": [], "evidence": [], "rules": []}
     prompt = _synthesis_prompt("What are the confirmed retention terms?", selection, context, None)
-    assert "not accepted" in prompt and "not yet true" not in prompt
+    assert "not yet true" in prompt
     assert '"confirmed"' in prompt
 
 
