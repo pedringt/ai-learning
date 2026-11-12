@@ -381,3 +381,21 @@ Report-only (a real regression on the fragile pending-vs-confirmed boundary woul
 
 **Revisit when**  
 A known regression passes on rerun, or the same test needs its rerun in most runs (then it needs a fix or a rate measurement, as #649 asks for the Baseline case).
+
+### DEC-020 — An item the source explicitly marks as open becomes a Question, even when it is a detail
+
+**Status:** Decided; prompt change being measured  
+**Date:** 2026-11-11  
+**Related:** #649, DEC-019; `question_review_prompt.py`, `eval/mixed_spec_intake.py`
+
+**Decision**  
+Paige decided (Nov 11) that when a source itself marks something as open or undecided ("Open question:", "we have not decided", "TBD"), State raises it as a Question, even when it is an implementation or UX detail, in all intake (not only on an empty project). The interpretation guidance's routine-detail rule covers details the source does not flag as open.
+
+**Why**  
+On a planning spec, ordinary intake dropped the explicit open question ("what exact grouping UX should we use for a large backfill import?") in 10 of 60 runs (Haiku 5.5, Nov 11), while two other mixed sources were raised 40 of 40 and Baseline Setup 12 of 12. In every captured drop the model's own summary and topics named the open question, but it emitted no open_question recommendation; software removed nothing. The prompt held competing rules: preserve unresolved items as Questions, versus leave implementation detail and non-consequential uncertainty unmodeled. Dropping an item the author flagged as open hides that something is undecided.
+
+**How it is measured**  
+`eval.run_mixed_spec_intake` classifies each run as stated as fact, raised, hedged in a fact, or dropped (scored apart, Paige's choice). Before/after on the three intake sources, the Baseline mixed-spec source, and the consequentiality eval. Stated as fact must stay at 0. The Ask-quality eval is run with the eval session before promotion.
+
+**Revisit when**  
+The rule produces Questions people routinely dismiss as noise, or a flagged-open item turns out to be settled elsewhere in the same source.
