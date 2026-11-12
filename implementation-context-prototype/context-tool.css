@@ -329,6 +329,8 @@ body,.context-shell,.workspace,.overview,.ask-panel,.project-bar,.prompt,.review
 .ask-live-answer>.result-lede{max-width:900px;margin:8px 0 22px}
 /* #567: the answer's opening claims with their authority chips, and the withheld-claims line */
 .ask-claims{max-width:900px;margin:8px 0 18px;padding:0;list-style:none;display:grid;gap:8px}.ask-claim .ask-record-badge{margin-right:6px}.ask-withheld-note{margin:-6px 0 18px;color:var(--muted);font-size:12px}
+/* #567 (Nov 11): a hypothetical draft's assumption line, set by the server, kept with the draft. */
+.ask-hypothetical-line{margin:0 0 10px;padding:8px 10px;border-left:3px solid var(--muted);background:rgba(127,127,127,.08);font-size:13px}.ask-answer-section .ask-withheld-note{margin:0 0 10px}
 .ask-answer-section{margin:20px 0;padding-top:18px;border-top:1px solid var(--line)}
 .ask-answer-section h3{margin:0 0 10px;font-size:14px;letter-spacing:.01em}
 .ask-answer-section ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}

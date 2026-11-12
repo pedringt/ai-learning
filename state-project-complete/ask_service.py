@@ -10,11 +10,13 @@ import uuid
 from datetime import date
 from typing import Any, Iterator, Mapping, Protocol
 
-from ask_contract import (
+from ask_contract import (  # noqa: I001
+    AskHypothetical,
     MEETING_PREP_ITEM_CAPS, MEETING_PREP_MAX_REFINEMENTS, MEETING_PREP_MAX_SECTIONS, MEETING_PREP_SECTION_ORDER,
     MEETING_PREP_SECTION_TITLES, AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis,
 )
 import ask_assertions
+import ask_drafts
 from contextvars import ContextVar
 from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_card, fixed_headline, prepare_answer_raw, record_text
 from ask_display import claim_lines, has_withheld, withheld_line
@@ -637,8 +639,13 @@ class _AnswerChecks:
     it completes (#567), so nothing is shown while streaming that the finished answer would not show."""
 
     def __init__(self, context: Mapping[str, Any], candidates: Mapping[str, list[dict]] | None = None, *,
-                 query: str = "", today: date | None = None):
+                 query: str = "", today: date | None = None, previous_answer: Mapping[str, Any] | None = None):
         self.context = context
+        # #567 (Nov 11): an explicitly requested hypothetical draft (ask_drafts.py), or a refinement of one.
+        self.draft = ask_drafts.draft_request(query, previous_answer)
+        self.draft_used = False
+        self.moved_items: list[AskAnswerItem] = []
+        self.pool = candidates if candidates is not None else context
         self.allowed: dict[str, set[str]] = {
             "state": {x["id"] for x in context.get("state", [])},
             "review": {x["id"] for x in context.get("reviews", [])},
@@ -674,6 +681,8 @@ class _AnswerChecks:
                           "withheld", "reference or anchor check failed")
             return None
         verdict = ask_assertions.check(claim.text, claim.basis, self._authority_records(claim))
+        if verdict.ok and self._restates_assumption(claim.text):
+            verdict = ask_assertions.Verdict(False, "restates the draft's assumption as fact", verdict.assertions)
         if not verdict.ok:
             _log_decision("claim", raw_text, claim.basis, claim.primary_record_id, claim.supporting_record_ids,
                           "withheld", verdict.reason, verdict.assertions)
@@ -682,6 +691,25 @@ class _AnswerChecks:
         _log_decision("claim", raw_text, claim.basis, claim.primary_record_id, claim.supporting_record_ids, "shown",
                       None, verdict.assertions)
         return claim
+
+    def _restates_assumption(self, text: str) -> bool:
+        """Outside the draft, a unit that states the draft's assumption as fact (most of its content words, with no
+        negation, condition or attribution) is withheld: the assumption never becomes current fact (Nov 11)."""
+        if not self.draft or self.draft.ambiguous:
+            return False
+        words = ask_drafts._content(self.draft.assumption)
+        if not words or len(words & ask_drafts._content(text)) * 3 < len(words) * 2:
+            return False
+        return not (ask_assertions._NEGATION.search(text) or ask_assertions._NOT_ASSERTED.search(text)
+                    or ask_assertions._REPORTING.search(text))
+
+    def _draft_section(self, section: AskAnswerSection) -> bool:
+        """The one section that gets the hypothetical-draft treatment: the first draft section (or the first whose
+        title names a draft) in an answer to a request that qualifies."""
+        if not self.draft or self.draft_used:
+            return False
+        title = (section.title or "").lower()
+        return section.kind == "draft" or "draft" in title or self.draft.artifact in title
 
     def _authority_records(self, claim: AskClaim) -> dict[str, list[Mapping[str, Any]]]:
         """The cited records that can carry authority for the claim's basis: Current State records (primary, then
@@ -700,8 +728,47 @@ class _AnswerChecks:
             out["answered_question"] = [record] if record else []
         return out
 
+    def _checked_draft(self, section: AskAnswerSection) -> tuple[AskAnswerSection, int]:
+        """The hypothetical draft: software title and assumption line; the body may write as though the assumption
+        holds (ask_drafts.check_body), detail lines are checked as usual, record cards move out of the draft."""
+        req = self.draft
+        self.draft_used = True
+        section.kind = "draft"
+        section.title = ask_drafts.title(req)
+        hyp = AskHypothetical(artifact=req.artifact, assumption=req.assumption,
+                              line=ask_drafts.assumption_line(req, self.pool))
+        kept, withheld = [], 0
+        for item in section.items:
+            if item.record_type != "none":
+                self.moved_items.append(item)
+                continue
+            raw_text = item.text
+            item.wording = "model"
+            item.text = self.clean(item.text) or ""
+            item.detail = self.clean(item.detail)
+            verdict = ask_drafts.check_body(item.text, req, self.checker.open_sources) if item.text else \
+                ask_assertions.Verdict(False, "empty")
+            if verdict.ok and item.detail:
+                detail = ask_assertions.check(item.detail, "none", {})
+                if not detail.ok:
+                    verdict = ask_assertions.Verdict(False, f"detail line: {detail.reason}", detail.assertions)
+            _log_decision("draft", raw_text, "hypothetical", None, [], "shown" if verdict.ok else "withheld",
+                          verdict.reason, verdict.assertions)
+            if verdict.ok:
+                kept.append(item)
+            else:
+                withheld += 1
+        if withheld:
+            hyp.notes.append(ask_drafts.ALL_WITHHELD_NOTE if not kept else ask_drafts.PART_WITHHELD_NOTE)
+        section.items = kept
+        section.hypothetical = hyp
+        return section, withheld
+
     def section(self, section: AskAnswerSection) -> tuple[AskAnswerSection, int]:
         """The section with its cards checked, and how many cards were withheld."""
+        section.hypothetical = None        # software-only: a model or browser value is never kept
+        if self._draft_section(section):
+            return self._checked_draft(section)
         withheld = 0
         raw_title = section.title
         section.title = self.clean(section.title) or "Project context"
@@ -722,6 +789,8 @@ class _AnswerChecks:
                 # A free-text card cites no record, so it may not assert a status or a go-ahead: shown as written or
                 # withheld (#567, Nov 11).
                 verdict = ask_assertions.check(f"{item.text} {item.detail or ''}", "none", {})
+                if verdict.ok and self._restates_assumption(f"{item.text} {item.detail or ''}"):
+                    verdict = ask_assertions.Verdict(False, "restates the draft's assumption as fact", verdict.assertions)
                 _log_decision("card", raw_text, "none", None, [], "shown" if verdict.ok else "withheld", verdict.reason,
                               verdict.assertions)
                 if not verdict.ok:
@@ -784,8 +853,9 @@ class _AnswerChecks:
 def _validate_synthesis(
     answer: AskSynthesis, selection: AskSelection, context: Mapping[str, Any],
     candidates: Mapping[str, list[dict]] | None = None, *, query: str = "", today: date | None = None,
+    previous_answer: Mapping[str, Any] | None = None,
 ) -> AskSynthesis:
-    checks = _AnswerChecks(context, candidates, query=query, today=today)
+    checks = _AnswerChecks(context, candidates, query=query, today=today, previous_answer=previous_answer)
     shown_claims = []
     for claim in answer.claims:
         checked = checks.claim(claim)
@@ -803,7 +873,12 @@ def _validate_synthesis(
         section, withheld = checks.section(section)
         answer.withheld_items += withheld
         clean_sections.append(section)
+    if checks.moved_items:      # record cards the model put inside the draft, checked as usual outside it
+        moved, withheld = checks.section(AskAnswerSection(kind="other", title="Project context", items=checks.moved_items))
+        answer.withheld_items += withheld
+        clean_sections.append(moved)
     answer.sections = clean_sections
+    _finish_hypothetical(answer, checks)
     allowed = checks.allowed
     uncertainty_allowed = allowed["review"] | allowed["blocking_question"] | allowed["question"]
     answer.source_ids = list(dict.fromkeys(x for x in answer.source_ids if x in checks.all_internal_ids))
@@ -827,6 +902,29 @@ def _validate_synthesis(
             answer.sections.append(AskAnswerSection(kind="questions", title="Get these answered", items=items))
     return answer
 
+
+
+def _finish_hypothetical(answer: AskSynthesis, checks: "_AnswerChecks") -> None:
+    """#567 (Nov 11): after everything is checked, say so when no checked context about the draft's assumption is
+    shown (never manufacture one), and offer to clarify an assumption State couldn't extract."""
+    draft = next((s for s in answer.sections if s.hypothetical), None)
+    if not draft or not checks.draft:
+        return
+    shown = [c.text for c in answer.claims] + [i.text for s in answer.sections if s is not draft for i in s.items]
+    if not ask_drafts.relevant(checks.draft, shown) and ask_drafts.NO_CONTEXT_NOTE not in draft.hypothetical.notes:
+        draft.hypothetical.notes.append(ask_drafts.NO_CONTEXT_NOTE)
+    if checks.draft.ambiguous and ask_drafts.CLARIFY_REFINEMENT not in answer.suggested_refinements:
+        answer.suggested_refinements.insert(0, ask_drafts.CLARIFY_REFINEMENT)
+
+
+def _transform_keeping_drafts(query: str, answer: AskSynthesis) -> AskSynthesis:
+    """Refinement transforms rebuild sections ("make this 3 bullets" merges them), which would separate a
+    hypothetical draft from its assumption line. The draft section is set aside and put back as it was (Nov 11)."""
+    drafts = [s for s in answer.sections if s.hypothetical]
+    answer.sections = [s for s in answer.sections if not s.hypothetical]
+    answer = apply_refinement_transform(query, answer)
+    answer.sections = [*answer.sections, *drafts]
+    return answer
 
 
 def _normalize_meeting_prep(answer: AskSynthesis) -> AskSynthesis:
@@ -914,8 +1012,9 @@ def _finalize_ask_result(
     prepared, withheld_before = prepare_answer_raw(answer_raw)
     answer = AskSynthesis.model_validate(prepared)
     answer.withheld_claims = withheld_before
-    answer = _validate_synthesis(answer, selection, context, candidates, query=query, today=today)
-    answer = apply_refinement_transform(query, _normalize_meeting_prep(answer))
+    answer = _validate_synthesis(answer, selection, context, candidates, query=query, today=today,
+                                 previous_answer=previous_answer)
+    answer = _transform_keeping_drafts(query, _normalize_meeting_prep(answer))
     _finish_display_fields(answer, previous_answer)
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
 
@@ -1068,9 +1167,11 @@ class _StreamedAnswerScanner:
 class _StreamChecks:
     """Checks streamed claims and sections with the same _AnswerChecks the finished answer uses."""
 
-    def __init__(self, selection_raw: Any, candidates: Mapping[str, list[dict]], query: str, today: date | None):
+    def __init__(self, selection_raw: Any, candidates: Mapping[str, list[dict]], query: str, today: date | None,
+                 previous_answer: Mapping[str, Any] | None = None):
         selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
-        self.checks = _AnswerChecks(_selected_context(selection, candidates), candidates, query=query, today=today)
+        self.checks = _AnswerChecks(_selected_context(selection, candidates), candidates, query=query, today=today,
+                                    previous_answer=previous_answer)
         self.claims_kept = 0        # prepare_answer_raw keeps the first MAX_CLAIMS claims that pass its bounds
         self.claim_index = 0
         self.section_index = 0
@@ -1108,7 +1209,8 @@ def stream_ask_events(
     """Yield grounded-context status, real provider deltas, then a validated final Ask payload."""
     total_started = time.perf_counter()
 
-    if previous_answer and detect_refinement_type(query):
+    # A hypothetical draft is refined by the model (keeping its assumption), not by the deterministic transforms.
+    if previous_answer and detect_refinement_type(query) and not ask_drafts.previous_draft(previous_answer):
         yield "final", _refinement_shortcut_result(connection, query, previous_answer, total_started, today)
         return
 
@@ -1153,7 +1255,7 @@ def stream_ask_events(
                 break
             if stream_checks is None:
                 try:
-                    stream_checks = _StreamChecks(scanner.selection, candidates, query, today)
+                    stream_checks = _StreamChecks(scanner.selection, candidates, query, today, previous_answer)
                 except ValueError:
                     selection_failed = True     # it fails the finished answer too; nothing is shown
                     break
@@ -1179,7 +1281,8 @@ def stream_ask_events(
 def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None, today: date | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
 
-    if previous_answer and detect_refinement_type(query):
+    # A hypothetical draft is refined by the model (keeping its assumption), not by the deterministic transforms.
+    if previous_answer and detect_refinement_type(query) and not ask_drafts.previous_draft(previous_answer):
         return _refinement_shortcut_result(connection, query, previous_answer, total_started, today)
 
     db_started = time.perf_counter()

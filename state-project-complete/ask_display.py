@@ -81,9 +81,15 @@ def displayed_lines(answer: Any, *, include_footer: bool = False, labels: bool =
         if not isinstance(section, Mapping):
             continue
         items = [i for i in section.get("items") or [] if isinstance(i, Mapping)]
-        if not items:
+        hypothetical = section.get("hypothetical") if isinstance(section.get("hypothetical"), Mapping) else None
+        if not items and not hypothetical:
             continue
         lines.append(str(section.get("title") or "").strip())
+        # #567 (Nov 11): a hypothetical draft's assumption line (and any notes) is shown with the draft, always.
+        # Software text, so the eval's model-words form (labels=False) leaves it out.
+        if hypothetical and labels:
+            lines.append(str(hypothetical.get("line") or "").strip())
+            lines.extend(str(n).strip() for n in hypothetical.get("notes") or [])
         for item in items:
             record_type = item.get("record_type")
             label = RECORD_LABELS.get(record_type) if labels else None

@@ -56,11 +56,22 @@ class AskClaim(BaseModel):
     supporting_record_ids: list[str] = Field(default_factory=list, max_length=2)
     label: str | None = None
 
+class AskHypothetical(BaseModel):
+    """#567 (Paige, Nov 11): set by software, never by the model, on the one draft section of an explicitly requested
+    hypothetical draft (ask_drafts.py). `line` is shown with the draft wherever the draft is shown."""
+    model_config = ConfigDict(extra="forbid")
+    artifact: str = Field(max_length=40)
+    assumption: str | None = Field(default=None, max_length=160)
+    line: str = Field(max_length=400)
+    notes: list[str] = Field(default_factory=list, max_length=3)
+
+
 class AskAnswerSection(BaseModel):
     model_config = ConfigDict(extra="forbid")
     kind: Literal["needs_review", "questions", "established", "recent_context", "changes", "open_attention", "draft", "other"]
     title: str = Field(min_length=1, max_length=160)
     items: list[AskAnswerItem] = Field(default_factory=list, max_length=8)
+    hypothetical: AskHypothetical | None = None
 
 # The final shape of a meeting-prep answer (#246). `_normalize_meeting_prep` in ask_service.py enforces these
 # after the model answers, and the prompt states them (the text is generated from these same values), so the

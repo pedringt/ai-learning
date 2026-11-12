@@ -123,6 +123,9 @@
   // #567 (Nov 11): every claim withheld (ALL_WITHHELD_LINE in ask_display.py). Draft copy.
   const ALL_WITHHELD_LINE="None of this answer could be checked against State's records, so none of it is shown. That doesn't mean it was wrong, or that State has nothing on this.";
   const hasWithheld=a=>!!(a?.withheld_claims||a?.withheld_items);
+  // #567 (Nov 11): a hypothetical draft's assumption line and notes, set by the server, shown with the draft always.
+  const hypotheticalLines=s=>s?.hypothetical?[s.hypothetical.line,...(s.hypothetical.notes||[])].filter(Boolean):[];
+  const hypotheticalHtml=s=>hypotheticalLines(s).map((l,n)=>`<p class="${n?'ask-withheld-note':'ask-hypothetical-line'}">${esc(l)}</p>`).join('');
   const withheldLine=a=>!a?.streaming&&Array.isArray(a?.claims)&&a.withheld_claims&&!a.claims.some(c=>c?.text)?ALL_WITHHELD_LINE:WITHHELD_LINE;
   const labelled=(label,text)=>label?`[${label}] ${text}`:text;
   // #567: claims replace the summary; each keeps its chip, on screen and in copied text. An answer without claims
@@ -133,7 +136,7 @@
     return `${claims?`<ul class="ask-claims">${claims}</ul>`:''}${hasWithheld(a)?`<p class="ask-withheld-note">${esc(withheldLine(a))}</p>`:''}`;
   }
   // Copy, in the same form as ask_display.displayed_lines: chips stay with the text they label.
-  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,''];if(Array.isArray(a.claims)){for(const c of a.claims)lines.push(labelled(c.label,c.text));if(hasWithheld(a))lines.push(withheldLine(a));}else lines.push(a.summary);for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length)continue;lines.push('',s.title);for(const i of items){lines.push(`- ${labelled(labelFor(i.record_type),i.text)}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
+  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,''];if(Array.isArray(a.claims)){for(const c of a.claims)lines.push(labelled(c.label,c.text));if(hasWithheld(a))lines.push(withheldLine(a));}else lines.push(a.summary);for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length&&!s.hypothetical)continue;lines.push('',s.title,...hypotheticalLines(s));for(const i of items){lines.push(`- ${labelled(labelFor(i.record_type),i.text)}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
 
   // #567: the browser never draws the model's raw text. The server sends each claim and each section only after it
   // has passed the same checks as the finished answer ({claims:[claim events], sections:[section events]}); the
@@ -143,7 +146,7 @@
     const sectionEvents=Array.isArray(stream?.sections)?stream.sections:[];
     const shown=claimEvents.filter(e=>e?.status==='shown'&&e.claim).map(e=>e.claim);
     const withheld=claimEvents.some(e=>e?.status==='withheld')||sectionEvents.some(e=>e?.withheld_items);
-    const sections=sectionEvents.map(e=>e?.section).filter(s=>s&&(s.items||[]).length);
+    const sections=sectionEvents.map(e=>e?.section).filter(s=>s&&((s.items||[]).length||s.hypothetical));
     if(!shown.length&&!sections.length&&!withheld){
       const counts=preview?.counts||{};const bits=[];
       if(counts.reviews)bits.push(`${counts.reviews} ${counts.reviews===1?'Review':'Reviews'}`);
@@ -154,7 +157,7 @@
     }
     // Sections stream as they pass the checks (#246: the prompt asks for the final shape, so they rarely move when
     // the answer finishes).
-    const sectionHtml=sections.map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3><ul>${s.items.map(i=>itemHtml(i,null)).join('')}</ul></section>`).join('');
+    const sectionHtml=sections.map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3>${hypotheticalHtml(s)}<ul>${(s.items||[]).map(i=>itemHtml(i,null)).join('')}</ul></section>`).join('');
     return `<div class="ask-live-answer ask-streaming-draft" aria-busy="true"><div class="result-label">State Ask · Checking</div>${leadHtml({claims:shown,withheld_claims:withheld?1:0,streaming:true})}${sectionHtml}</div>`;
   }
 
@@ -172,7 +175,7 @@
         return !resolved;
       });
       return {...s,items};
-    }).filter(s=>(s.items||[]).length).map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3><ul>${s.items.map(i=>itemHtml(i,liveStatus)).join('')}</ul></section>`).join('');
+    }).filter(s=>(s.items||[]).length||s.hypothetical).map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3>${hypotheticalHtml(s)}<ul>${(s.items||[]).map(i=>itemHtml(i,liveStatus)).join('')}</ul></section>`).join('');
     const refinements=(a.suggested_refinements||[]).slice(0,3).map(x=>`<button data-prompt="${esc(x)}">${esc(x)}</button>`).join('');
     const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';
     // The item list, footer, and Copy all reflect resolutions live, but the
