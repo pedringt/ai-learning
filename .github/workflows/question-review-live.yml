@@ -22,6 +22,7 @@ on:
           - ask-headline-step1
           - ask-diagnostic-one
           - ask-diagnostic-retention
+          - ask-diagnostic-withheld
       max_calls:
         description: Hard cap on model calls (30 keeps an Ask-only run under $0.05 on Haiku 5.5)
         required: false
@@ -66,12 +67,14 @@ jobs:
             RECORD_URL="https://state-api-6waw.onrender.com"
           fi
           # Nov 7: the #640 diagnostic (eval/ask_diagnostic_640.py): 3 variants x 5, one Ask call each, nothing recorded.
-          if [ "${{ inputs.suite }}" = "ask-diagnostic-640" ] || [ "${{ inputs.suite }}" = "ask-headline-step1" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-one" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-retention" ]; then
+          if [ "${{ inputs.suite }}" = "ask-diagnostic-640" ] || [ "${{ inputs.suite }}" = "ask-headline-step1" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-one" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-retention" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-withheld" ]; then
             SET=640; REPEATS=5; [ "${{ inputs.suite }}" = "ask-headline-step1" ] && SET=step1
             # Nov 7: one captured call of the #640 scenario (raw output vs final headline).
             [ "${{ inputs.suite }}" = "ask-diagnostic-one" ] && SET=one && REPEATS=1
             # Nov 11 (#567): the live authority repro's two questions x10, every answer saved whole.
             [ "${{ inputs.suite }}" = "ask-diagnostic-retention" ] && SET=retention && REPEATS=10
+            # Nov 11 (#567): batch B2's scenarios that withheld a claim x5, with raw output and unit decisions.
+            [ "${{ inputs.suite }}" = "ask-diagnostic-withheld" ] && SET=withheld && REPEATS=5
             python state-project-complete/eval/run_ask_diagnostic.py --set "$SET" --repeats "$REPEATS" \
               --max-calls "${{ inputs.max_calls || '20' }}" --json diagnostic-report.json
             exit 0

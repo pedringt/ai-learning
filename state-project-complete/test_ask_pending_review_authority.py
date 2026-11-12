@@ -47,7 +47,7 @@ import re
 import pytest
 
 from eval.ask_retention_capture import flagged_units
-from eval.authority_wording import unsupported_settled_words, visible_words
+from eval.authority_wording import PREMISE_CORRECTED, unsupported_conclusions, unsupported_settled_words, visible_words
 from ask_contract import AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis
 from ask_provider import LiveAskProvider
 from ask_service import (
@@ -207,34 +207,29 @@ def _selection_and_context_with_open_review():
     return selection, context
 
 
-def test_validate_synthesis_softens_titles_and_the_headline_is_fixed_when_context_has_an_open_review():
-    """#567: the model no longer writes the headline; software sets a fixed one per job, so it can't claim a
-    status. Section titles still go through the backstop. An already-hedged unlabelled claim is left as written."""
+def test_validate_synthesis_titles_fall_back_and_the_headline_is_fixed_when_context_has_an_open_review():
+    """#567: software sets the headline per job, so it can't claim a status. A section title that asserts a status is
+    replaced by its kind's fixed title (never reworded). An uncited report of what Legal said is withheld: a report
+    of a source needs that source cited (basis evidence_says)."""
     selection, context = _selection_and_context_with_open_review()
     answer = AskSynthesis(
         job="current_fact",
         claims=[AskClaim(text="Legal confirmed the terms, but the Review is still open and the Question remains unresolved.")],
         sections=[AskAnswerSection(kind="other", title="Confirmed Retention and Deletion", items=[
-            AskAnswerItem(text="Some free-text detail that says confirmed too", record_type="none"),
+            AskAnswerItem(text="The retention terms are still awaiting a decision.", record_type="none"),
         ])],
     )
     cleaned = _validate_synthesis(answer, selection, context)
     _finish_display_fields(cleaned, None)
     assert cleaned.headline == "What State has on record"
-    assert "Confirmed" not in cleaned.sections[0].title and "confirmed" not in cleaned.sections[0].title
-    assert "confirmed" in cleaned.claims[0].text.lower()
+    assert [s.title for s in cleaned.sections if s.kind == "other"] == ["Project context"]
+    assert cleaned.claims == [] and cleaned.withheld_claims == 1
 
 
-def test_validate_synthesis_softens_headline_when_review_exists_but_was_not_selected():
-    """Live-QA bug (2026-09-14): the selector LLM call is non-deterministic, so
-    the same question run twice could select a pending Review into `context`
-    on one run and omit it on another -- meaning the hedging backstop only
-    fired sometimes for an identical underlying fact (pilot budget "approved"
-    vs. "not yet approved" across two runs of the same prompt). The backstop
-    must key off the deterministic candidate pool for this query, not off
-    what the selector happened to choose, so this case -- an open Review the
-    selector skipped over -- still gets hedged.
-    """
+def test_validate_synthesis_withholds_an_unsupported_status_whether_or_not_the_review_was_selected():
+    """Live-QA bug (2026-09-14): the selector is non-deterministic, so a pending Review may or may not be selected.
+    Since #567 (Nov 11) the outcome no longer depends on it: a status claim that no cited Current State record carries
+    is withheld either way."""
     selection = AskSelection(
         job="current_fact", state_ids=["k-1"], review_ids=[], blocking_question_ids=[],
         question_ids=[], history_ids=[], evidence_ids=[],
@@ -245,14 +240,10 @@ def test_validate_synthesis_softens_headline_when_review_exists_but_was_not_sele
         "reviews": [{"id": "r-1", "review_type": "proposed_update", "decision_question": "Is the budget approved?", "why_consequential": "x", "affected_state_ids": [], "evidence_ids": []}],
         "questions": [],
     }
-    # #567: the unlabelled claim stands in for the old summary. (No figure: a figure in no selected record is withheld.)
-    answer = AskSynthesis(job="current_fact", claims=[AskClaim(text="The pilot budget is approved.")], sections=[])
-    cleaned = _validate_synthesis(answer, selection, context, candidates)
-    assert cleaned.claims and "budget is approved." not in cleaned.claims[0].text, (
-        "The pending Review in the candidate pool was skipped by the selector, but the claim "
-        "must still be hedged -- otherwise the same question can answer 'approved' on one run "
-        "and 'not yet approved' on another depending on non-deterministic selection."
-    )
+    for pool in (candidates, None):
+        answer = AskSynthesis(job="current_fact", claims=[AskClaim(text="The pilot budget is approved.")], sections=[])
+        cleaned = _validate_synthesis(answer, selection, context, pool)
+        assert cleaned.claims == [] and cleaned.withheld_claims == 1
 
 
 def test_validate_synthesis_leaves_headline_alone_when_nothing_is_pending():
@@ -339,7 +330,7 @@ def test_soften_unearned_settled_prose_handles_none_and_empty():
     assert _soften_unearned_settled_prose("") == ""
 
 
-def test_validate_synthesis_softens_unlabelled_claims_and_free_text_items_when_pending():
+def test_validate_synthesis_withholds_unsupported_claims_and_cards_and_keeps_hedged_ones_unchanged():
     selection, context = _selection_and_context_with_open_review()
     answer = AskSynthesis(
         job="current_fact",
@@ -350,9 +341,9 @@ def test_validate_synthesis_softens_unlabelled_claims_and_free_text_items_when_p
         ])],
     )
     cleaned = _validate_synthesis(answer, selection, context)
-    assert "Legal has confirmed" not in cleaned.claims[0].text
-    assert cleaned.claims[1].text == "This is still pending Security approval.", "The already-hedged claim must survive unchanged."
-    assert "This resolves" not in cleaned.sections[0].items[0].text
+    assert [c.text for c in cleaned.claims] == ["This is still pending Security approval."]
+    assert cleaned.withheld_claims == 1 and cleaned.withheld_items == 1
+    assert not [i for s in cleaned.sections for i in s.items if i.record_type == "none"]
 
 
 @requires_anthropic_key
@@ -402,9 +393,11 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
 
         premise_payload = run_ask(conn, ask_provider, "Since retention is resolved, what can move forward?")
         premise_text = visible_words(premise_payload, current_state)
-        assert re.search(r"not\s+(yet\s+)?resolved|isn.t resolved|hasn.t been resolved", premise_text, re.I), (
+        assert PREMISE_CORRECTED.search(premise_text), (
             f"Expected the false premise ('retention is resolved') to be corrected explicitly; got: {premise_text}"
         )
+        concluded = unsupported_conclusions(premise_payload, current_state)
+        assert not concluded, f"A go-ahead drawn from unaccepted material after a false-premise question: {concluded}"
         bad = unsupported_settled_words(premise_payload, current_state)
         assert not bad, (f"Unhedged settled word(s) after a false-premise question: {bad}; "
                          f"whole units: {flagged_units(premise_payload, current_state)}")
