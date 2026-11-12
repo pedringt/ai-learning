@@ -560,17 +560,47 @@ def _headline_missing(answer: Any, facts) -> tuple[str, ...]:
                  if not any(present(p) for p in ((fact,) if isinstance(fact, str) else fact)))
 
 
+HYPOTHETICAL_DRAFT_UNMARKED = "a hypothetical draft marked with its assumption line"
+
+
+def _sections(answer: Any) -> list:
+    inner = answer.get("answer", answer) if isinstance(answer, dict) else {}
+    inner = inner if isinstance(inner, dict) else {}
+    return [s for s in inner.get("sections") or [] if isinstance(s, dict)]
+
+
+def marked_draft(answer: Any) -> bool:
+    return any(isinstance(s.get("hypothetical"), dict) and s["hypothetical"].get("line") for s in _sections(answer))
+
+
+def outside_marked_draft(answer: Any) -> Any:
+    """The answer with a marked draft's body removed, for checks that apply only outside it."""
+    import copy
+
+    out = copy.deepcopy(answer)
+    for section in _sections(out):
+        if isinstance(section.get("hypothetical"), dict):
+            section["items"] = []
+            section["hypothetical"] = None
+    return out
+
+
 def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> AskQualityResult:
     # #567 (Nov 10, Paige): score what the answer displays (ask_display), not every string in the JSON. The JSON also
     # holds record types, the job and selection ids, which a person never reads and which could satisfy a check.
     # The keyword checks read the answer's words only: a chip ("Answered question"), the fixed headline or the
     # withheld line must never stand in for a fact the answer has to state.
-    text = _normalize(displayed_text(answer, labels=False))
+    # Nov 11 (v2 hypothetical-draft scenarios): every check reads only the text outside a marked draft, and the draft
+    # must be marked (ask_drafts.py's assumption line).
+    scored = outside_marked_draft(answer) if scenario.hypothetical_draft else answer
+    text = _normalize(displayed_text(scored, labels=False))
     missing = tuple(
         fact if isinstance(fact, str) else " / ".join(fact)
         for fact in scenario.required_facts
         if not any(_normalize(phrase) in text for phrase in ((fact,) if isinstance(fact, str) else fact))
     )
+    if scenario.hypothetical_draft and not marked_draft(answer):
+        missing += (HYPOTHETICAL_DRAFT_UNMARKED,)
     asserted = tuple(claim for claim in scenario.forbidden_claims if _asserts(text, _normalize(claim)))
     numbers = tuple(unsupported_numbers(text, _normalize(scenario_record_text(scenario)))) if scenario.forbid_unsupported_numbers else ()
     required_ok = not missing
