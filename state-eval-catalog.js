@@ -948,7 +948,13 @@
    "closed_questions": [],
    "required_facts": [
     "10 users",
-    "25 users"
+    "25 users",
+    [
+     "superseded",
+     "older",
+     "replaced",
+     "replaces"
+    ]
    ],
    "forbidden_claims": [
     "50 users is pending",
@@ -962,7 +968,7 @@
    "should_reference_open_item": false,
    "should_distinguish_proposal_from_truth": true,
    "severity": "high",
-   "rationale": "Ask should keep approved Current State authoritative and surface the newest pending proposal without treating a superseded proposal as equally current.",
+   "rationale": "Ask should keep approved Current State authoritative and surface the newest pending proposal without treating a superseded proposal as equally current. When records conflict (open status, superseded text), the answer qualifies the older proposal instead of presenting it as a current decision.",
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false
