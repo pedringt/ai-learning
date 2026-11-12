@@ -139,7 +139,7 @@ def ask_cache_key(
         "candidates": _compact_candidates(connection),
         "as_of_date": (today or date.today()).isoformat(),
         # #567: answers changed shape (claims, fixed headlines); never serve one cached in the older shape.
-        "answer_shape": "claims-v1",
+        "answer_shape": "claims-v2-citation-nudge",
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
@@ -391,7 +391,7 @@ def claims_guidance() -> str:
 - answered_question: a Question a human closed, with its recorded answer. primary_record_id is that answered Question.
 - history: an accepted past change. primary_record_id is that History record.
 - none: anything that does not rest on one record, such as what State does not have on record, or a corrected premise. primary_record_id is null.
-Never put two bases in one claim. If a sentence would combine an accepted fact with a proposal, a source report or an unknown, write two claims. supporting_record_ids (at most 2) lists records that back a claim up without setting its authority, such as the History entry behind a Current State fact. Every number, amount and date in a claim must appear in its records or in the user's request. When a claim contrasts its record with another record (for example a pending Review's 25 users against Current State's 10), list that other record in supporting_record_ids; it does not change the basis. A claim that cites a record it does not rest on, or names a number or date that neither its records nor the request contain, is not shown."""
+Never put two bases in one claim. If a sentence would combine an accepted fact with a proposal, a source report or an unknown, write two claims. supporting_record_ids (at most 2) lists records that back a claim up without setting its authority, such as the History entry behind a Current State fact. Every number, amount and date in a claim must appear in its records or in the user's request. When a claim contrasts its record with another record (for example a pending Review's 25 users against Current State's 10), list that other record in supporting_record_ids; it does not change the basis. A claim that cites a record it does not rest on, or names a number or date that neither its records nor the request contain, is not shown. Cite the record that actually says it: a figure or label (such as "Tier 1") belongs to the record that names it, and a claim that something can proceed or begin rests on the Current State record that says so."""
 
 
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None, today: date | None = None) -> str:
