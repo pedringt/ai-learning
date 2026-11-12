@@ -296,6 +296,34 @@ def test_a_reporting_verb_attributes_the_settled_word_to_its_source():
     assert _soften_unearned_settled_prose(sentence) == sentence
 
 
+# Nov 12 (#656, run 43148088605): a participle or an "According to X," lead credits the word to its source.
+def test_a_participle_attributes_the_settled_word_to_its_source():
+    sentence = ("The only relevant record is an open Review that proposes recording a Q3 planning session note saying "
+                "the pilot budget is approved at $40,000 for discovery and the first implementation phase.")
+    assert _soften_unearned_settled_prose(sentence) == sentence
+
+
+def test_an_according_to_lead_attributes_the_settled_word_to_its_source():
+    sentence = "According to the Q3 planning session, the pilot budget was approved at $40,000."
+    assert _soften_unearned_settled_prose(sentence) == sentence
+
+
+def test_according_to_current_state_is_still_softened():
+    fixed = _soften_unearned_settled_prose("According to Current State, the retention terms are approved.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
+def test_a_claim_after_an_according_to_attribution_ends_is_still_softened():
+    fixed = _soften_unearned_settled_prose(
+        "According to the vendor, the terms are fine, and the retention terms are approved.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
+def test_a_participle_after_state_is_still_softened():
+    fixed = _soften_unearned_settled_prose("Current State, saying the retention terms are approved, governs.")
+    assert "proposed for approval (not yet approved)" in fixed
+
+
 def test_a_quoted_review_title_is_left_alone():
     sentence = "An open Review asks “Is the approved pilot budget ready to be recorded?” before anything changes."
     assert _soften_unearned_settled_prose(sentence) == sentence

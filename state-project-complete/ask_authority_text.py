@@ -322,11 +322,17 @@ _WHETHER_RE = re.compile(r"\bwhether\b", re.I)
 # verb earlier in the same clause attributes it to a source, with no comma or conjunction in between
 # ("the note says the budget was approved"), or when it sits inside quotation marks. Attribution to State's
 # own record is not spared: "Current State says the terms are approved" is the claim the backstop guards.
+# Nov 12 (#656): participles attribute too: "a Q3 planning session note saying the pilot budget is approved"
+# became "...saying the pilot budget is proposed for approval (not yet approved)".
 _REPORTING_VERB_RE = re.compile(
-    r"\b(?:says|said|reports|reported|states|stated|claims|claimed|describes|described|writes|wrote|"
-    r"mentions|mentioned|notes\s+that|noted\s+that|according\s+to)\b",
+    r"\b(?:says|said|saying|reports|reported|reporting|states|stated|stating|claims|claimed|claiming|describes|"
+    r"described|describing|writes|wrote|writing|mentions|mentioned|mentioning|notes\s+that|noted\s+that|"
+    r"noting\s+that|according\s+to)\b",
     re.I,
 )
+# Nov 12 (#656): "According to the Q3 planning session, the pilot budget was approved" names its source before
+# a comma, so that one comma ends the source's name rather than the attribution.
+_ACCORDING_TO_RE = re.compile(r"\baccording\s+to\b", re.I)
 _ATTRIBUTION_BREAK_RE = re.compile(r",|;|\b(?:and|but|so|while|although|though|because)\b", re.I)
 # Only the few words right before the verb name who is speaking: "The only relevant record is an open Review
 # noting that the Q3 note says..." is attributed to the note, not to a record (Oct 27 eval matrix, #566).
@@ -353,11 +359,24 @@ _NUMBER_WITH_COMMAS_RE = re.compile(r"\d(?:[\d,.]*\d)?")
 _QUOTED_SPAN_RE = re.compile(r"[“\"][^”\"]+[”\"]|(?<![\w’'])['‘][^'’]+['’](?![\w])")
 
 
+def _according_to_a_source(after: str) -> bool:
+    """True if `after`, the text following "according to", is "<a source>, <the claim>" with no further break,
+    and the source is not State's own record ("According to Current State, ..." is still a claim)."""
+    after = _NUMBER_WITH_COMMAS_RE.sub("0", after)
+    source, comma, rest = after.partition(",")
+    if not comma or _ATTRIBUTION_BREAK_RE.search(source) or _ATTRIBUTION_BREAK_RE.search(rest):
+        return False
+    names_state_record = _RECORD_RE.search(source) and not _SOURCE_RECORD_RE.search(source)
+    return not _STATE_RECORD_SUBJECT_RE.search(source) and not names_state_record
+
+
 def _attributed_to_a_source(prefix: str) -> bool:
     """True if `prefix`, the sentence text before a settled word (back to the last ";"), credits it to a source."""
     verb = None
     for verb in _REPORTING_VERB_RE.finditer(prefix):
         pass
+    if verb and _ACCORDING_TO_RE.fullmatch(verb.group(0)) and _according_to_a_source(prefix[verb.end():]):
+        return True
     # A comma inside "$40,000" is not a clause break (#569 diagnosis, Oct 27).
     if verb and not _ATTRIBUTION_BREAK_RE.search(_NUMBER_WITH_COMMAS_RE.sub("0", prefix[verb.end():])):
         subject = " ".join(_words(prefix[:verb.start()])[-_SUBJECT_WORDS:])
