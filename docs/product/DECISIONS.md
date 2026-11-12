@@ -384,7 +384,7 @@ A known regression passes on rerun, or the same test needs its rerun in most run
 
 ### DEC-020 — An item the source explicitly marks as open becomes a Question, even when it is a detail
 
-**Status:** Decided; prompt change measured on `eval/649-mixed-spec`, not yet on `staging`  
+**Status:** Decided; on `staging` since Nov 11 (13d90b2); released to `main` Nov 12  
 **Date:** 2026-11-11  
 **Related:** #649, DEC-019; `question_review_prompt.py`, `eval/mixed_spec_intake.py`
 
@@ -398,7 +398,7 @@ On a planning spec, ordinary intake dropped the explicit open question ("what ex
 `eval.run_mixed_spec_intake` classifies each run as stated as fact, raised, hedged in a fact, or dropped (scored apart, Paige's choice). Before/after on the three intake sources, the Baseline mixed-spec source, and the consequentiality eval. Stated as fact must stay at 0. The Ask-quality eval is run with the eval session before promotion.
 
 **Measured (Nov 11, Haiku 5.5)**  
-Ordinary intake, open item dropped: mixed spec 10/60 before, 0/20 after; the other two mixed sources 0/40 before and after. Stated as fact: 0 in every run before and after. No Questions about anything other than the sources' own open items appeared. Baseline Setup mixed spec: raised 12/12 before and after. Consequentiality eval: 100% precision and recall after (as before). `qa-release` model-key tests: 72 passed with no rerun. Spend for #649 about 270 Haiku calls, roughly $1.20–1.60.
+Ordinary intake, open item dropped: mixed spec 10/60 before, 0/20 after; the other two mixed sources 0/40 before and after. Stated as fact: 0 in every run before and after. No Questions about anything other than the sources' own open items appeared. Baseline Setup mixed spec: raised 12/12 before and after. Consequentiality eval: 100% precision and recall after (as before). `qa-release` model-key tests: 72 passed with no rerun. Review-interpretation suite (run by the eval session, Nov 12, 16 cases x 3): 44/48 on main, 46/48 with the rule, and no case changed to raising an extra Question. Spend for #649 about 270 Haiku calls, roughly $1.20–1.60.
 
 **Revisit when**  
 The rule produces Questions people routinely dismiss as noise, or a flagged-open item turns out to be settled elsewhere in the same source.
