@@ -16,7 +16,7 @@ import re
 from typing import Any, Iterator
 
 from eval.authority_wording import (
-    MANUAL_REVIEW_NOTE, PREMISE_CORRECTED, SETTLED_WORDS, supported_by, unhedged, units, unsupported_conclusions,
+    MANUAL_REVIEW_NOTE, diagnostic_flags, PREMISE_CORRECTED, SETTLED_WORDS, supported_by, unhedged, units, unsupported_conclusions,
     unsupported_settled_words, visible_words,
 )
 
@@ -62,6 +62,7 @@ def check(kind: str, payload: Any, current_state: dict[str, str]) -> dict[str, A
         "flagged_units": flagged_units(payload, current_state),
         "manual_review": MANUAL_REVIEW_NOTE if bad else None,
         "unsupported_conclusions": concluded,
+        "diagnostic_flags": diagnostic_flags(payload, current_state),   # for reading, never pass/fail (Nov 12)
         "payload": payload,
     }
     if kind == "premise":
@@ -108,6 +109,7 @@ def run_scenario(scenario: Any, provider: Any) -> dict[str, Any]:
                           ("forbidden_claims", result.forbidden_claims_ok), ("uncertainty", result.uncertainty_ok),
                           ("open_item", result.open_item_ok), ("authority", result.authority_ok)) if not ok],
         "error": result.error, "displayed": displayed_lines(answer, include_footer=True) if answer else [],
+        "diagnostic_flags": diagnostic_flags(answer, {}) if answer else {},
         "payload": answer, **diag,
     }
 
