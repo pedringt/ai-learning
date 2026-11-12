@@ -58,8 +58,9 @@ _NOT_ASSERTED = re.compile(
     r"\b(?:whether|if|once|unless|until|would|pending|propos(?:e|es|ed|al)|awaiting|await|requires?|required|needs?|"
     r"needed|before|expected|planned|suggests?|appears?|might|asks?|asking|if\s+accepted|to\s+be|"
     # Nov 11 (steps 1-2 capture): a condition still to be met, not a status. "contingent on that Review being
-    # accepted", "conditionally on the increase being approved", "subject to final approval", "assumes it is approved".
-    r"contingent|conditional(?:ly)?|subject\s+to|provided\s+that|on\s+condition|assum(?:e|es|ed|ing)|"
+    # accepted", "conditionally on the increase being approved", "subject to final approval", "assumes it is approved",
+    # "send only after the increase is approved" (fresh comparison: a draft's cautionary detail line).
+    r"contingent|conditional(?:ly)?|subject\s+to|after|provided\s+that|on\s+condition|assum(?:e|es|ed|ing)|"
     r"(?:should|must|will|could|may|might|can)(?:\s+only)?\s+be)\b", re.I)
 _REPORTING = re.compile(
     r"\b(?:says|say|said|reports?|reported|reportedly|states?|stated|claims?|claimed|describes?|described|writes|wrote|"

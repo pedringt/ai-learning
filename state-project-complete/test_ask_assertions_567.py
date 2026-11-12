@@ -265,6 +265,8 @@ def test_citing_a_source_as_support_does_not_carry_a_status_or_a_go_ahead(text):
     ("I can draft the email conditionally on the increase being approved, but it must not be presented as decided.", "none"),
     ("Hello, we expect to move to the new price, subject to final approval.", "none"),
     ("Draft customer email (assumes the increase is approved)", "none"),
+    ("Placeholders in brackets need to be filled in; send only after the increase is approved.", "none"),
+    ("Use only after the price increase is accepted and effective date is set.", "none"),
 ])
 def test_a_condition_still_to_be_met_is_not_a_status(text, basis):
     assert check(text, basis, {}).ok
@@ -274,6 +276,7 @@ def test_a_condition_still_to_be_met_is_not_a_status(text, basis):
     "The increase is being finalized and the price is final.",
     "Being approved, the price is final.",
     "The price increase is approved.",
+    "After review, the terms are approved.",
 ])
 def test_a_status_stated_alongside_condition_words_still_counts(text):
     assert not check(text, "none", {}).ok

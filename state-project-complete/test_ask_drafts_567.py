@@ -195,6 +195,13 @@ def test_a_detail_line_in_the_draft_is_checked_as_usual():
     assert _draft_section(cleaned).items == [] and cleaned.withheld_items == 1
 
 
+def test_a_cautionary_detail_line_keeps_the_draft():
+    """Fresh comparison (Nov 12): "send only after the increase is approved" withheld the whole requested draft."""
+    item = AskAnswerItem(text=BODY, detail="Draft only; fill in the date and send only after the Review is accepted.")
+    cleaned = _validated([GROUNDING], [AskAnswerSection(kind="draft", title="Draft", items=[item])])
+    assert [i.text for i in _draft_section(cleaned).items] == [BODY]
+
+
 def test_a_record_card_inside_the_draft_moves_out_and_is_checked_as_usual():
     section = AskAnswerSection(kind="draft", title="Draft", items=[
         AskAnswerItem(text=BODY), AskAnswerItem(text=PROPOSAL, record_type="review", record_id="r-price")])
