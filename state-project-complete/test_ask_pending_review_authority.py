@@ -409,4 +409,5 @@ def test_claims_guidance_opens_a_denial_with_what_the_records_show():
 
     guidance = claims_guidance()
     assert "Open such a sentence with what State's records show" in guidance
-    assert "is not recorded in State" in guidance and "not \"Security has not signed off" in guidance
+    assert "This holds for every person, team and decision" in guidance
+    assert "State has no recorded leadership decision" in guidance and "not \"Security has not signed off" in guidance
