@@ -393,13 +393,30 @@
    },
    "reference_adjudicated": {
     "faithfulness": 2,
-    "authority_calibration": 2,
+    "authority_calibration": 4,
     "consequential_completeness": 4,
     "directness": 2,
-    "hedging_calibration": 2,
+    "hedging_calibration": 4,
     "concision": 3
    },
-   "corrections": [],
+   "corrections": [
+    {
+     "dimension": "authority_calibration",
+     "from": 2,
+     "to": 4,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "The defect is an unsupported event implication and a misleading opening (faithfulness, directness). It does not promote pending material into governing authority."
+    },
+    {
+     "dimension": "hedging_calibration",
+     "from": 2,
+     "to": 4,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "The same opening does not mishandle an explicit uncertainty claim; no distinct hedging reason is established."
+    }
+   ],
    "adjudication_note": "Reassessed after the sheet fix, unchanged: faithfulness 2 still stands on the headline implying an automation decision the body says is unestablished; authority/directness/hedging deductions rest on that headline too. The 'not blocking is unsupported' reason no longer applies. Concision 3 was for unnecessary context, not unsupported content.",
    "grader_v10": {
     "faithfulness": 2,
@@ -416,6 +433,14 @@
     "directness": "The headline \"no record explains why automation was decided\" restates the premise as background. Only the summary corrects it.",
     "hedging_calibration": "The Current State fact is stated plainly. Whether a decision was made is left unknown: \"cannot confirm that such a decision was made\". There is no definite denial.",
     "concision": "The answer is short. The summary names the cards with their status and contains no filler."
+   },
+   "reference_adjudicated_nov11": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 2,
+    "concision": 3
    }
   },
   {
@@ -619,13 +644,30 @@
    },
    "reference_adjudicated": {
     "faithfulness": 2,
-    "authority_calibration": 2,
+    "authority_calibration": 4,
     "consequential_completeness": 4,
     "directness": 2,
-    "hedging_calibration": 2,
+    "hedging_calibration": 4,
     "concision": 2
    },
-   "corrections": [],
+   "corrections": [
+    {
+     "dimension": "authority_calibration",
+     "from": 2,
+     "to": 4,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "The defect is an unsupported event implication and a misleading opening (faithfulness, directness). It does not promote pending material into governing authority."
+    },
+    {
+     "dimension": "hedging_calibration",
+     "from": 2,
+     "to": 4,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "The same opening does not mishandle an explicit uncertainty claim; no distinct hedging reason is established."
+    }
+   ],
    "adjudication_note": "Reassessed after the sheet fix, unchanged: the opening presupposes a full-automation decision (faithfulness, authority, directness, hedging 2); 'non-blocking is unsupported' no longer applies but is not the only reason. Concision 2 is for repeated prose statements.",
    "grader_v10": {
     "faithfulness": 3,
@@ -642,6 +684,14 @@
     "directness": "The headline, \"State does not record why support was decided to be fully automated\", restates the premise as background. Only the summary's first sentence corrects it.",
     "hedging_calibration": "The Current State fact is stated plainly. The unknown about post-pilot automation is hedged once, on that item. The answer makes no definite denial beyond what the records cover.",
     "concision": "The summary makes the 'no decision recorded' point twice. \"No Review or History record supports a full-automation decision...\" largely restates the opening sentence."
+   },
+   "reference_adjudicated_nov11": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 2,
+    "concision": 2
    }
   },
   {
@@ -785,7 +835,7 @@
   "missed_fails": [],
   "passes": false
  },
- "label": "Adjudicated AI-reviewer comparison. Human calibration still pending.",
+ "label": "Calibration material (Nov 12): this set informed v10 and v11 rubric development, so it is not held-out validation. AI-reviewer comparison; human calibration still pending.",
  "grader_v10_run": 43343516922,
  "grader_v10_report": {
   "dimensions": {
@@ -832,5 +882,48 @@
  "grader_v10_regression_misses": [
   "r3 faithfulness: expected 1-2, got 3"
  ],
- "grader_v10_note": "Nov 12: v06, v07 and v11 became v10 regression examples, so this set is calibration material from v10 on, not held-out evidence. Earlier scores are kept unchanged."
+ "grader_v10_note": "Nov 12: v06, v07 and v11 became v10 regression examples, so this set is calibration material from v10 on, not held-out evidence. Earlier scores are kept unchanged.",
+ "reference_note_nov12": "Nov 12: v07 and v11 authority and hedging revised 2 → 4 (one flaw belongs in faithfulness and directness). `reference_original` keeps ChatGPT's first grades, `reference_adjudicated_nov11` the Nov 11 adjudication for changed rows; v09's authority disagreement stays open.",
+ "grader_v10_report_vs_nov12_reference": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.9166666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.9166666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.4166666666666667,
+    "within_one": 1.0,
+    "passes": false
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ }
 }

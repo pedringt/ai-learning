@@ -573,7 +573,7 @@ def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
 
 def test_grader_rubric_carries_the_nov_11_rules():
     from eval.ask_grader import GRADER_VERSION, RUBRIC
-    assert GRADER_VERSION.startswith("ask-grader-v10")
+    assert GRADER_VERSION.startswith("ask-grader-v11")
     assert "Absence of a record is not a negative fact" in RUBRIC
     assert "not whether the answer is right" in RUBRIC
     assert "Do not apply a uniform deduction" in RUBRIC
@@ -587,6 +587,7 @@ def test_grader_rubric_carries_the_nov_12_v10_rules():
     assert "Multiple claims alone are not a directness flaw" in RUBRIC
     assert "establishes the denial at the same scope" in RUBRIC
     assert "restates the premise as background" in RUBRIC
+    assert "even when the body corrects it later: the correction creates a contradiction" in RUBRIC
 
 
 def test_grader_sees_the_all_withheld_line_when_no_claim_is_left():

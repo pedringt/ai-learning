@@ -1,7 +1,8 @@
 """LLM grader for Ask answer quality (Oct 16; rubric approved by Paige with every suggested default; the authority_calibration
 wording for attributed source reports approved Nov 7, #641; v9 wording for unsupported negatives, directness and
 concision approved Nov 11, #641; v10 wording for the claims shape (#567), premise-echo openings and same-scope
-denials approved Nov 12, #641).
+denials approved Nov 12, #641; v11 clarification that a later correction does not lift that faithfulness 2,
+approved Nov 12, #641).
 
 Observed only, never a release gate (DEC-008), until Paige's blind calibration passes: within-1
 agreement of at least 90% per dimension, exact agreement of at least 65%, and no answer Paige scored 1
@@ -23,7 +24,7 @@ from ask_display import withheld_line
 from model_request_options import request_options
 
 GRADER_MODEL = "claude-opus-5-5"
-GRADER_VERSION = "ask-grader-v10 (2026-11-12: claims shape, premise-echo openings, same-scope denials, badge wording vs source authority (Paige, #641))"
+GRADER_VERSION = "ask-grader-v11 (2026-11-12: v10 claims shape plus faithfulness score 2 holds for an implied unrecorded event even when the body corrects it (Paige, #641))"
 GRADER_MAX_TOKENS = 1_500
 
 DIMENSIONS = (
@@ -42,7 +43,7 @@ Answer shapes. Ask answers come in two shapes. A claims answer shows a headline 
 faithfulness (D1). Every claim in the claims (or headline and summary), section titles, items and details is supported by a supplied record, and each item's record_type/record_id actually supports that item's text. Absence of a record is not a negative fact. "No approval is recorded in Current State" is supported; "not approved", "not yet approved" or "leadership has not approved" is unsupported unless a record says so. Changing a source's or Review's own wording to its opposite (for example "approved" to "not yet approved") contradicts a supplied record. A definite denial ("we didn't decide that", "X was never approved", "that isn't happening") needs a record that establishes the denial at the same scope. A record about a narrower or nearer scope does not deny a broader or later one: "the first implementation remains human-reviewed" does not establish that nobody decided on broader or future automation. The supported correction is "No decision to fully automate support is recorded; the first implementation remains human-reviewed."
 - 4: every claim traces to a supplied record; citations match; nothing added beyond reasonable paraphrase.
 - 3: all substantive claims supported; one minor loose paraphrase or a slightly off citation that does not change meaning.
-- 2: one unsupported specific (a date, number, owner, reason) or a citation pointing to a record that does not support the item, or a negative stated as fact when the records only show nothing recorded, or an opening that implies an event or decision (for example "why X was decided") when no record shows that event.
+- 2: one unsupported specific (a date, number, owner, reason) or a citation pointing to a record that does not support the item, or a negative stated as fact when the records only show nothing recorded, or an opening that implies an event or decision (for example "why X was decided") when no record shows that event, even when the body corrects it later: the correction creates a contradiction, it does not erase the unsupported implication.
 - 1: a fabricated decision, cause, approval or adjustment story, or a claim that contradicts a supplied record, including reversing a record's own wording (approved → not approved).
 
 authority_calibration (D2). Current State is presented as what is true now; open Reviews as proposed and awaiting human review; Questions as unknown; Evidence as what a source reported; History as past; superseded proposals as superseded. "Confirmed", "resolved", "approved", "established" describe Current State or closed Questions when the answer asserts a fact as established, including in titles and headlines. An answer may report a source's own words when it attributes them to that source and keeps them apart from Current State: an answer meaning "The source reports X as approved; recording X in Current State is still pending" is correct. That sentence is an example of acceptable meaning, not required wording; any correct attributed paraphrase scores the same. Presenting a source's report as governing Current State is still a 1. For a claim with a badge, judge whether the wording accurately represents what the cited source establishes and its authority. "A pending Review reports that Legal approved X" does not itself present X as an accepted project fact. A badge never cures wording that improperly promotes a source's assertion into governing Current State.

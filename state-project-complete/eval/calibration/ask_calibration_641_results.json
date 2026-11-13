@@ -64,7 +64,16 @@
     "directness": "The headline answers both parts of the question immediately, though both answers are wrong. Directness grades only how quickly the opening answers.",
     "hedging_calibration": "The headline states the pending budget as a definite \"is $40,000.\" It also adds a hedge, \"safer to hold off,\" that undermines what Current State settles.",
     "concision": "The answer is short and contains no real padding."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 1,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "corrections": []
   },
   {
    "blind_id": "c02",
@@ -126,7 +135,16 @@
     "directness": "The headline gives the amount ($40,000) and the approval status, with the source qualification, right at the start.",
     "hedging_calibration": "The approval is reported plainly as the source's statement, and the pending recording is caveated once, on the item it applies to.",
     "concision": "The summary's first sentence nearly repeats the headline and the evidence item, adding only \"for discovery and first implementation\". The pending status also appears in the headline, the summary and the Review section. This is one mild restatement."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "corrections": []
   },
   {
    "blind_id": "c03",
@@ -188,7 +206,16 @@
     "directness": "The headline answers both parts at once: the budget is not recorded as settled, and planning can proceed.",
     "hedging_calibration": "Planning permission is stated plainly. The budget is hedged once, as pending. There are no extra qualifiers.",
     "concision": "The data-minimization item (ask-state-2) is irrelevant to both budget and planning, which counts as one irrelevant context item. The rest is the expected shape."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "corrections": []
   },
   {
    "blind_id": "c04",
@@ -250,7 +277,25 @@
     "directness": "The headline directly answers both parts: the budget is not in Current State and is only a pending Review.",
     "hedging_calibration": "Pending status is stated clearly, once per item. The absence from Current State is stated plainly.",
     "concision": "The summary says 'pending and unresolved' and then 'not yet confirmed', restating the headline's point an extra time with nothing added."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "corrections": [
+    {
+     "dimension": "directness",
+     "from": 2,
+     "to": 3,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "c04 leaves a consequential part, the session's reported approval, inside the supporting card, so the reader must extract it."
+    }
+   ]
   },
   {
    "blind_id": "c05",
@@ -312,7 +357,16 @@
     "directness": "The headline answers both parts immediately: the budget is not yet recorded, and planning can proceed.",
     "hedging_calibration": "The final line implies a soft gate, 'budget question is relevant to planning', on a settled Current State permission. The budget status is also hedged repeatedly ('pending', 'not been accepted', 'not yet a Current State fact').",
     "concision": "The budget's pending status is restated several times in the summary. The data-scope card adds little to the question."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "corrections": []
   },
   {
    "blind_id": "c06",
@@ -374,7 +428,16 @@
     "directness": "The headline answers both the amount and the approval status immediately.",
     "hedging_calibration": "The repeated parenthetical \"(per Evidence, not in Current State)\" over-qualifies, but the uncertainty is attached to the right items.",
     "concision": "The parenthetical qualifier is repeated twice, and the Current State scope item is marginal context."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 2
+   },
+   "corrections": []
   },
   {
    "blind_id": "c07",
@@ -436,7 +499,16 @@
     "directness": "The headline answers immediately: 'Not as far as the record shows', and it corrects the implied premise first.",
     "hedging_calibration": "The settled fact is stated plainly. The unknown is hedged once as 'as far as the record shows' / 'undecided', with no definite denial.",
     "concision": "The headline, summary and sections restate the same two points three times. The summary largely repeats the headline without adding anything."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "corrections": []
   },
   {
    "blind_id": "c08",
@@ -498,7 +570,16 @@
     "directness": "The headline opens with 'Not yet' and answers the question directly.",
     "hedging_calibration": "'Not yet' gives a slightly definite negative to what is unrecorded. The summary does correctly say 'no decision is recorded'.",
     "concision": "The summary and cards are brief with no real padding."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "corrections": []
   },
   {
    "blind_id": "c09",
@@ -560,7 +641,16 @@
     "directness": "The headline immediately answers both parts: the amount and the approval status.",
     "hedging_calibration": "The headline's 'not yet approved' leans toward a negative, but the summary clarifies the status. 'State does not have a confirmed, recorded approval status' is reasonable. This is one vague or slightly off hedge.",
     "concision": "The summary restates the not-recorded point several times. The irrelevant scope item in the Current State section adds nothing to the question."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 3,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 2
+   },
+   "corrections": []
   },
   {
    "blind_id": "c10",
@@ -622,7 +712,16 @@
     "directness": "The headline directly answers both parts of the question: what the budget is and whether it is current. It is wrong on status, but that is graded elsewhere.",
     "hedging_calibration": "The budget's Current State status is still pending, yet the answer states it as definite (\"part of the current plan\", \"budget of record\").",
     "concision": "The $40,000 figure is restated in the headline, the summary and an item with nothing added. Otherwise the answer is short."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 1,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "corrections": []
   },
   {
    "blind_id": "c11",
@@ -684,7 +783,25 @@
     "directness": "The headline answers the Current State part directly, and the summary gives what the session said. Both parts of the compound question are answered at the top.",
     "hedging_calibration": "The source's statement is reported plainly and the pending status is stated clearly. \"Remains unconfirmed in State\" is accurate and does not deny that the source approved the budget.",
     "concision": "The pending status is restated several times: \"not an accepted fact\", \"Current State has not changed\" and \"until a human accepts it ... remains unconfirmed\". This is one restatement more than needed."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 2
+   },
+   "corrections": [
+    {
+     "dimension": "directness",
+     "from": 2,
+     "to": 4,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "Answering either requested part first is direct when the other follows promptly; c11's next sentence gives what the session said."
+    }
+   ]
   },
   {
    "blind_id": "c12",
@@ -746,7 +863,16 @@
     "directness": "The headline answers the question immediately: \"Not decided yet... not an approved change.\"",
     "hedging_calibration": "The headline is calibrated, but the summary sentence \"leadership has not approved removing human review\" presents an unrecorded outcome as a settled negative. A reader gets a soft definite \"no\" where the records only show that nothing is recorded. The headline and the rest of the summary hedge correctly, so this falls short of trust-breaking.",
     "concision": "The pending status is restated several times: the headline, the summary's \"no decision is recorded\" clause, and the closing \"The Review remains pending and has not changed Current State.\" This is mild redundancy, but the answer is still a quick read."
-   }
+   },
+   "reference_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "corrections": []
   }
  ],
  "grader_v9_run": 43120040958,
@@ -793,5 +919,48 @@
   "missed_fails": [],
   "passes": false
  },
- "grader_v10_regression_misses": []
+ "grader_v10_regression_misses": [],
+ "reference_note_nov12": "Nov 12: reference scores revised for c11 and c04 directness after correction 5 (compound questions). `reference` keeps ChatGPT's original grades; `reference_adjudicated` holds the revised ones; each change is in `corrections`.",
+ "grader_v10_report_vs_nov12_reference": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.5833333333333334,
+    "within_one": 1.0,
+    "passes": false
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ }
 }
