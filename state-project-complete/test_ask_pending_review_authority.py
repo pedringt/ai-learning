@@ -401,3 +401,13 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
         bad = unsupported_settled_words(premise_payload, current_state)
         assert not bad, (f"Unhedged settled word(s) after a false-premise question: {bad}; "
                          f"whole units: {flagged_units(premise_payload, current_state)}")
+
+def test_claims_guidance_opens_a_denial_with_what_the_records_show():
+    """#567 (Paige, Nov 12): Q1 found A+D answers explaining the record correctly after a categorical lead
+    ("Security has not signed off..."). The rule asks for the record-grounded opening instead."""
+    from ask_service import claims_guidance
+
+    guidance = claims_guidance()
+    assert "Open such a sentence with what State's records show" in guidance
+    assert "This holds for every person, team and decision" in guidance
+    assert "State has no recorded leadership decision" in guidance and "not \"Security has not signed off" in guidance
