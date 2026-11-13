@@ -16,7 +16,7 @@ import re
 from typing import Any, Iterator
 
 from eval.authority_wording import (
-    MANUAL_REVIEW_NOTE, PREMISE_CORRECTED, SETTLED_WORDS, supported_by, unhedged, units, unsupported_conclusions,
+    MANUAL_REVIEW_NOTE, diagnostic_flags, PREMISE_CORRECTED, SETTLED_WORDS, supported_by, unhedged, units, unsupported_conclusions,
     unsupported_settled_words, visible_words,
 )
 
@@ -31,6 +31,13 @@ WITHHELD_SCENARIOS = (
     "ask_compound_question_keeps_governing_state", "ask_change_summary", "adv_authoritative_pending_wording",
     "adv_conflicting_pending_proposals", "adv_hedged_pending_item", "adv_hypothetical_draft_from_pending",
     "adv_hypothetical_draft_from_pending_v2",
+)
+# Nov 12 (Paige's packet review, findings 1-4): the scenarios A+D's wording targets, for the before/after (Q1).
+PACKET_FINDING_SCENARIOS = (
+    "ask_pending_review_not_truth", "adv_mixed_settled_and_open_in_one_question", "adv_pending_scope_qualifier_kept",
+    "ask_blocker_not_omitted", "ask_question_answer_no_state_mutation", "ask_compound_question_keeps_governing_state",
+    "adv_state_silent_evidence_loud", "adv_authoritative_pending_wording", "ask_superseded_pending_review",
+    "adv_superseded_proposal_closed",
 )
 # Nov 12: the scenarios where the fresh comparison's over-withholding showed (fixed in 8152820), re-measured.
 REMEASURE_SCENARIOS = (
@@ -62,6 +69,7 @@ def check(kind: str, payload: Any, current_state: dict[str, str]) -> dict[str, A
         "flagged_units": flagged_units(payload, current_state),
         "manual_review": MANUAL_REVIEW_NOTE if bad else None,
         "unsupported_conclusions": concluded,
+        "diagnostic_flags": diagnostic_flags(payload, current_state),   # for reading, never pass/fail (Nov 12)
         "payload": payload,
     }
     if kind == "premise":
@@ -108,6 +116,7 @@ def run_scenario(scenario: Any, provider: Any) -> dict[str, Any]:
                           ("forbidden_claims", result.forbidden_claims_ok), ("uncertainty", result.uncertainty_ok),
                           ("open_item", result.open_item_ok), ("authority", result.authority_ok)) if not ok],
         "error": result.error, "displayed": displayed_lines(answer, include_footer=True) if answer else [],
+        "diagnostic_flags": diagnostic_flags(answer, {}) if answer else {},
         "payload": answer, **diag,
     }
 

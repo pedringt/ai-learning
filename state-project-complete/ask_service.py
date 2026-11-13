@@ -139,7 +139,7 @@ def ask_cache_key(
         "candidates": _compact_candidates(connection),
         "as_of_date": (today or date.today()).isoformat(),
         # #567: answers changed shape (claims, fixed headlines); never serve one cached in the older shape.
-        "answer_shape": "claims-v1",
+        "answer_shape": "claims-v2",
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
@@ -351,7 +351,7 @@ def _grounding_rules(today: date | None = None) -> str:
 - Before answering "no relevant records" or "not enough information" for any yes/no or status question ("has X been decided/approved/changed?", "is X still true?"), you MUST check the supplied candidate Reviews for one whose decision_question or why_consequential addresses the same subject, even if worded differently. A candidate Review record about the same topic being present is proof relevant records DO exist; the correct answer is "not yet decided, pending Review" (job current_fact still applies -- a pending Review is a real, checkable record, not an absence of one), never a claim that no records were found.
 - Section, group, and category titles must accurately describe the actual conceptual domain of their contents (for example, do not label access or security constraints as retention constraints, or vice versa). If items span more than one domain, either split them into separate sections or use a domain-neutral title.
 - Consequentiality ordering must stay consistent for the same underlying records across every job and every refinement in this conversation. A refinement may narrow, reformat, or shorten what is shown, but it must select from what a fuller answer to the same request would already treat as most important -- never independently re-rank the same records into a different priority order, and never introduce a record that a fuller answer would have omitted.
-- An open Review's proposed statement, number, or decision is not yet true and does not close its linked Question, no matter how certain the underlying Evidence sounds (e.g. "Legal confirmed X"). Never describe an open Review's content as "confirmed", "established", "accepted", or as resolving/answering/closing a Question -- describe it as proposed and awaiting review, and state plainly that the linked Question remains open and Current State has not changed. Only an item actually present in Current State, or a Question actually absent from the open Questions list, may be described as settled.
+- An open Review's proposed statement, number, or decision is not accepted into Current State and does not close its linked Question, no matter how certain the underlying Evidence sounds (e.g. "Legal confirmed X"). Never describe an open Review's content as "confirmed", "established", "accepted", or as resolving/answering/closing a Question -- describe it as proposed and awaiting review, and state plainly that the linked Question remains open and the Review has not been accepted into Current State. Only an item actually present in Current State, or a Question actually absent from the open Questions list, may be described as settled.
 - Answered Questions are Questions a human closed by accepting a Review; each carries its recorded answer (the Evidence that Review accepted). When the request is about one, say plainly that the Question was answered and give the recorded answer as what the record says. Answering a Question is not a Current State change: never say the answer was recorded in, changed, or replaced Current State unless a Current State record itself says so, and state any related Current State fact exactly as it stands (for example, a contract that "remains under review" still remains under review).
 - When Current State says one thing and an open Review contains potentially conflicting evidence, state the maintained Current State first, then explicitly say the conflicting Review is unresolved and may change that understanding if a human accepts it. Do not flatten the two into a single confident answer, and do not present the Review as equivalent authority to Current State. Use explicit uncertainty language such as "under review", "unresolved", or "may change" so a reader can tell what is true now from what is still being evaluated.
 - If Current State establishes that an outcome happened but no supplied Current State, Review, Question, History, or Evidence record establishes why it happened, separate the known outcome from the unknown reason. State the known outcome, then explicitly say the reason is unknown, not established, or cannot be determined from the project record. Never infer a motive, cause, or rationale from the outcome alone.
@@ -391,7 +391,9 @@ def claims_guidance() -> str:
 - answered_question: a Question a human closed, with its recorded answer. primary_record_id is that answered Question.
 - history: an accepted past change. primary_record_id is that History record.
 - none: anything that does not rest on one record, such as what State does not have on record, or a corrected premise. primary_record_id is null.
-Never put two bases in one claim. If a sentence would combine an accepted fact with a proposal, a source report or an unknown, write two claims. supporting_record_ids (at most 2) lists records that back a claim up without setting its authority, such as the History entry behind a Current State fact. Every number, amount and date in a claim must appear in its records or in the user's request. When a claim contrasts its record with another record (for example a pending Review's 25 users against Current State's 10), list that other record in supporting_record_ids; it does not change the basis. A claim that cites a record it does not rest on, or names a number or date that neither its records nor the request contain, is not shown."""
+Never put two bases in one claim. If a sentence would combine an accepted fact with a proposal, a source report or an unknown, write two claims. supporting_record_ids (at most 2) lists records that back a claim up without setting its authority, such as the History entry behind a Current State fact. Every number, amount and date in a claim must appear in its records or in the user's request. When a claim contrasts its record with another record (for example a pending Review's 25 users against Current State's 10), list that other record in supporting_record_ids; it does not change the basis. A claim that cites a record it does not rest on, or names a number or date that neither its records nor the request contain, is not shown.
+When State has no accepted record of something, say it is not recorded or not established in State. Never say it did not happen, was not approved or is false: an open approval Question means the confirmation is missing, not that approval never happened, and a pending proposal is unaccepted, not untrue. Say that something changed Current State, or that Current State never changed, only from a History record; that a pending Review has not been accepted is not a change history.
+For a question with several parts, answer each part in its own claim. State a permission Current State grants directly, citing that record, and name any dependency or condition that appears only in pending material as pending."""
 
 
 def _one_call_prompt(query: str, candidates: Mapping[str, Any], previous_answer: Mapping[str, Any] | None, today: date | None = None) -> str:
@@ -429,7 +431,7 @@ CRITICAL: Append mode (conversational) means: include the full prior answer as-i
 
 Authority rules are non-negotiable:
 - Current State governs what is true, allowed, or in scope now.
-- Open Reviews qualify Current State; they never replace it, and their proposed content is not yet true. Never describe an open Review's proposed statement as "confirmed", "established", or as resolving its linked Question -- not even when the underlying Evidence itself uses the word "confirmed" (that describes what a source reported, not an accepted fact). It is proposed and awaiting review, the linked Question is still open, and Current State has not changed. Include a Review when it materially challenges State used by the answer, but phrase it as pending, not settled. If the user's own question assumes something is already resolved/confirmed that isn't, correct that false premise plainly before answering anything else.
+- Open Reviews qualify Current State; they never replace it, and their proposed content is not accepted. Never describe an open Review's proposed statement as "confirmed", "established", or as resolving its linked Question -- not even when the underlying Evidence itself uses the word "confirmed" (that describes what a source reported, not an accepted fact). It is proposed and awaiting review, the linked Question is still open, and the Review has not been accepted into Current State. Include a Review when it materially challenges State used by the answer, but phrase it as pending, not settled. If the user's own question assumes something is already resolved/confirmed that isn't, correct that false premise plainly before answering anything else.
 - A Question is blocking only when its supplied record says blocking=true. Ordinary Questions are known unknowns, not blockers.
 - History is accepted past change. Evidence is what was said or observed and cannot silently override Current State.
 - Project Rules constrain interpretation.
@@ -584,7 +586,7 @@ Non-negotiable rules:
 - Relevant open Reviews must be visible in the main answer under needs_review, never hidden only in sources.
 - confirmed blockers must remain distinct from ordinary open Questions. For a blocker, include its exact 'blocks' dependency in detail.
 - Evidence may describe activity/claims but may not silently override Current State.
-- An open Review's proposed content is not yet true. Never describe it as "confirmed", "established", or as resolving its linked Question -- it is proposed and awaiting review, the linked Question is still open, and Current State has not changed.
+- An open Review's proposed content is not accepted. Never describe it as "confirmed", "established", or as resolving its linked Question -- it is proposed and awaiting review, the linked Question is still open, and the Review has not been accepted into Current State.
 - Unknown must remain unknown. Do not infer absence from missing information.
 - Refinement may change format, audience, length, focus, or ordering; it may not change project truth.{refinement_guidance}
 - For meeting prep, frame relevant Questions as opportunities to get answered.
@@ -893,7 +895,7 @@ def _validate_synthesis(
         moved, withheld = checks.section(AskAnswerSection(kind="other", title="Project context", items=checks.moved_items))
         answer.withheld_items += withheld
         clean_sections.append(moved)
-    answer.sections = clean_sections
+    answer.sections = _without_redundant_cards(answer.claims, clean_sections)
     _finish_hypothetical(answer, checks)
     allowed = checks.allowed
     uncertainty_allowed = allowed["review"] | allowed["blocking_question"] | allowed["question"]
@@ -918,6 +920,38 @@ def _validate_synthesis(
             answer.sections.append(AskAnswerSection(kind="questions", title="Get these answered", items=items))
     return answer
 
+
+
+_CARD_WORD = re.compile(r"[a-z0-9$.,%]+")
+
+
+def _card_words(text: str) -> set[str]:
+    return {w.strip(".,") for w in _CARD_WORD.findall((text or "").lower()) if len(w.strip(".,")) > 2}
+
+
+def _without_redundant_cards(claims: list[AskClaim], sections: list[AskAnswerSection]) -> list[AskAnswerSection]:
+    """Paige, Nov 12 (P11): a Current State card repeating a shown claim that cites the same record is hidden, but only
+    when the card adds no information: every word and figure in it (text and detail) is already in that claim. A
+    claim may summarize part of a record (P13), so a card that adds anything stays. Not counted as withheld."""
+    cited: dict[str, set[str]] = {}
+    for claim in claims:
+        if claim.basis == "current_state" and claim.primary_record_id:
+            cited.setdefault(claim.primary_record_id, set()).update(_card_words(claim.text))
+    if not cited:
+        return sections
+    kept_sections = []
+    for section in sections:
+        items = []
+        for item in section.items:
+            words = _card_words(f"{item.text} {item.detail or ''}")
+            if item.record_type == "state" and item.record_id in cited and words and words <= cited[item.record_id]:
+                _log_decision("card", item.text, "state", item.record_id, [], "hidden", "repeats a shown claim on the same record")
+                continue
+            items.append(item)
+        if items or not section.items or section.hypothetical:
+            section.items = items
+            kept_sections.append(section)
+    return kept_sections
 
 
 def _finish_hypothetical(answer: AskSynthesis, checks: "_AnswerChecks") -> None:
@@ -1081,6 +1115,25 @@ def _selection_raw_from_answer(answer: Mapping[str, Any]) -> dict[str, Any]:
             record_id = item.get("record_id")
             if record_id and record_type in ids:
                 ids[record_type].append(record_id)
+    # #567 (Nov 12): the records the claims cite too. A Current State card that only repeated a claim is hidden
+    # (_without_redundant_cards), so the cards alone no longer list every record the answer rests on. A supporting id's
+    # type isn't stored; it is offered under each type, and _validate_selection drops it wherever it doesn't exist.
+    basis_types = {"current_state": "state", "pending_review": "review", "evidence_says": "evidence", "history": "history",
+                   "answered_question": "answered_question"}
+    for claim in answer.get("claims") or []:
+        if not isinstance(claim, Mapping):
+            continue
+        primary, basis = claim.get("primary_record_id"), claim.get("basis")
+        if primary and basis in basis_types:
+            ids[basis_types[basis]].append(primary)
+        elif primary and basis == "open_question":
+            ids["blocking_question"].append(primary)
+            ids["question"].append(primary)
+        for supporting in claim.get("supporting_record_ids") or []:
+            if isinstance(supporting, str):
+                for bucket in ids.values():
+                    bucket.append(supporting)
+    ids = {key: list(dict.fromkeys(values)) for key, values in ids.items()}
     return {
         "job": answer.get("job", "refinement"),
         "state_ids": ids["state"],

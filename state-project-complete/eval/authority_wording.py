@@ -208,5 +208,33 @@ PREMISE_CORRECTED = re.compile(
     re.I)
 
 
+# Paige, Nov 12 (packet review): DIAGNOSTIC flags only. They route a sentence to manual review and never decide a pass
+# or a failure; a match is not an error until it is read in context. Finding 1: missing accepted confirmation stated as
+# a categorical denial or a proposal called false. Finding 2: a claim about what changed Current State, or that it
+# stayed the same, which needs transition evidence ("this pending Review has not established a Current State change"
+# is supportable; "Current State has never changed" is a historical claim).
+_DIAGNOSTIC = {
+    "categorical_denial": re.compile(
+        r"\b(?:has|have|had|did)\s+not\s+(?:yet\s+)?(?:approved|approve|signed\s+off|sign\s+off|confirmed|confirm|decided|decide|"
+        r"accepted|agreed|happened|happen|occurred)\b|\b(?:hasn't|haven't|hadn't|didn't)\s+(?:yet\s+)?(?:approved|approve|"
+        r"signed|sign|confirmed|confirm|decided|decide|happened|happen)\b|\bnever\s+(?:approved|signed|confirmed|happened)\b",
+        re.I),
+    "proposal_called_false": re.compile(r"\bnot\s+(?:yet\s+)?true\b|\b(?:is|are|was)\s+(?:false|untrue|incorrect)\b", re.I),
+    "transition_claim": re.compile(
+        r"\b(?:did\s+not|didn't|has\s+not|hasn't|have\s+not|haven't|was\s+not|never)\s+(?:been\s+)?change[ds]?\b"
+        r"|\bremains?\s+unchanged\b|\bchanged\s+(?:because|after|when)\b|\b(?:has|have)\s+changed\b", re.I),
+}
+
+
+def diagnostic_flags(payload: Any, current_state: Mapping[str, str]) -> dict[str, list[str]]:
+    """Units worth a person's reading, by kind. Diagnostic only: never a pass/fail check."""
+    out: dict[str, list[str]] = {kind: [] for kind in _DIAGNOSTIC}
+    for unit in units(payload, current_state):
+        for kind, pattern in _DIAGNOSTIC.items():
+            if pattern.search(unit.text):
+                out[kind].append(unit.text)
+    return {kind: texts for kind, texts in out.items() if texts}
+
+
 def visible_words(payload: Any, current_state: Mapping[str, str]) -> str:
     return " ".join(unit.text for unit in units(payload, current_state))

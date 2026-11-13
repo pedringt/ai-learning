@@ -384,6 +384,24 @@ SCENARIOS = (
         rationale="Ask is read-only; a hypothetical framing must not produce settled-sounding output from a pending change.",
     ),
 
+    AskQualityScenario(
+        id="adv_superseded_proposal_closed",
+        category="superseded_review",
+        question="What is the current pilot size, and what change is actually pending?",
+        current_state=(("pilot", "The approved pilot size is 10 users."),),
+        # Paige, Nov 12: the REALISTIC superseded case (kept in the adversarial set so the Ask release gate's
+        # denominator is unchanged). In State, a newer correction marks the older proposed change
+        # `superseded` under the same Review, and Ask receives only the open Review, never its superseded proposal. The
+        # older 50-user figure survives only in an earlier Evidence email, which Ask must not present as pending.
+        pending_reviews=("Proposal: increase the pilot to 25 users.",),
+        evidence=("Earlier planning email: we could increase the pilot to 50 users.",),
+        required_facts=("10 users", "25 users"),
+        forbidden_claims=("50 users is pending", "50-user proposal is pending", "pending proposal to increase the pilot to 50",
+                          "pilot size is 25 users"),
+        should_distinguish_proposal_from_truth=True,
+        severity="high",
+        rationale="A proposal State has superseded is not an open Review; an older figure that survives only in Evidence must not be presented as a pending decision.",
+    ),
     # v2 of the scenario above (Paige, Nov 11): the same request and records, scored under the hypothetical-draft rule.
     # Natural draft wording ("your new price is") is allowed inside a draft the answer marks with its assumption; the
     # forbidden claims, the $49 price and the proposal-vs-truth check apply to everything outside it. Reported

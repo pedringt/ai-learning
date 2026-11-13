@@ -171,15 +171,19 @@ SCENARIOS = (
         category="superseded_review",
         question="What is the current pilot size, and what change is actually pending?",
         current_state=(("pilot", "The approved pilot size is 10 users."),),
+        # Paige, Nov 12: kept as the CONFLICT case. Both proposals are seeded as open Reviews, so the structured status
+        # says open while the text calls the 50-user one superseded. In real data intake marks a superseded proposal
+        # `superseded` (see adv_superseded_proposal_closed); here the inconsistency must produce a qualified answer
+        # (25 users pending, the 50-user proposal described as older or superseded), not be dropped from coverage.
         pending_reviews=(
             "OLDER SUPERSEDED proposal: increase the pilot to 50 users.",
             "NEWEST pending proposal: increase the pilot to 25 users; this replaces the older 50-user proposal and is still awaiting human review.",
         ),
-        required_facts=("10 users", "25 users"),
+        required_facts=("10 users", "25 users", ("superseded", "older", "replaced", "replaces")),
         forbidden_claims=("50 users is pending", "50-user proposal is current", "pilot size is 25 users"),
         should_distinguish_proposal_from_truth=True,
         severity="high",
-        rationale="Ask should keep approved Current State authoritative and surface the newest pending proposal without treating a superseded proposal as equally current.",
+        rationale="Ask should keep approved Current State authoritative and surface the newest pending proposal without treating a superseded proposal as equally current. When records conflict (open status, superseded text), the answer qualifies the older proposal instead of presenting it as a current decision.",
     ),
     AskQualityScenario(
         id="ask_known_outcome_unknown_reason",
@@ -206,7 +210,7 @@ SCENARIOS = (
         ),
         required_facts=("$40,000", ("not in current state", "not yet in current state", "not been recorded",
                                     "not recorded", "not been accepted", "not yet accepted", "pending review",
-                                    "awaiting review", "has not changed current state")),
+                                    "awaiting review")),
         forbidden_claims=("proposed for approval", "not yet approved", "has not been approved"),
         should_distinguish_proposal_from_truth=True,
         severity="high",
@@ -244,7 +248,7 @@ SCENARIOS = (
         pending_reviews=("Is the approved pilot budget of $40,000 ready to be recorded in Current State?",),
         required_facts=("$40,000", ("not in current state", "not yet in current state", "not been recorded",
                                     "not recorded", "not been accepted", "not yet accepted", "pending review",
-                                    "awaiting review", "has not changed current state", "not have the pilot budget recorded", "not yet record"),
+                                    "awaiting review", "not have the pilot budget recorded", "not yet record"),
                         # Oct 28 (Paige, #579): the answer must say the source reports the approval.
                         ("approved at", "as approved", "approved budget", "budget is approved", "budget was approved")),
         # Oct 28 (Paige, #579): "$40,000 per Q3 planning notes, but it is not yet approved in Current State" is

@@ -28,14 +28,14 @@ def main() -> int:
     parser.add_argument("--max-calls", type=int, required=True)
     parser.add_argument("--json", metavar="PATH")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--set", choices=("640", "step1", "one", "retention", "withheld", "remeasure"), default="640",
+    parser.add_argument("--set", choices=("640", "step1", "one", "retention", "withheld", "remeasure", "packet"), default="640",
                         help="640: the Nov 7 cause diagnostic; step1: the headline rule check; one: the #640 scenario alone, to capture one answer; "
                              "retention: the #567 live authority repro's two questions, every answer saved whole; "
                              "withheld: batch B2's scenarios that withheld a claim, with raw output and decisions")
     args = parser.parse_args()
     if args.set == "retention":
         return retention(args)
-    if args.set in ("withheld", "remeasure"):
+    if args.set in ("withheld", "remeasure", "packet"):
         return withheld(args)
     cases = step1_cases() if args.set == "step1" else step1_cases()[:1] if args.set == "one" else variants()
 
@@ -139,10 +139,10 @@ def withheld(args: argparse.Namespace) -> int:
     """#567 (Nov 11): batch B2's scenarios that withheld a claim, `--repeats` times each, with raw output and decisions."""
     from eval.ask_adversarial_scenarios import SCENARIOS as ADVERSARIAL
     from eval.ask_quality_scenarios import SCENARIOS
-    from eval.ask_retention_capture import REMEASURE_SCENARIOS, WITHHELD_SCENARIOS, run_scenario
+    from eval.ask_retention_capture import PACKET_FINDING_SCENARIOS, REMEASURE_SCENARIOS, WITHHELD_SCENARIOS, run_scenario
 
     model = os.getenv("CLAUDE_MODEL") or "claude-haiku-5-5"
-    wanted = REMEASURE_SCENARIOS if args.set == "remeasure" else WITHHELD_SCENARIOS
+    wanted = {"remeasure": REMEASURE_SCENARIOS, "packet": PACKET_FINDING_SCENARIOS}.get(args.set, WITHHELD_SCENARIOS)
     cases = [s for s in (*SCENARIOS, *ADVERSARIAL) if s.id in wanted]
     planned = len(cases) * args.repeats
     print(f"Plan: {len(cases)} scenarios x {args.repeats} repeats = {planned} Ask calls (cap {args.max_calls}); "
