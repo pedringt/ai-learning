@@ -325,3 +325,28 @@ def test_matrix_false_positives_are_shown(text, basis, records):
 ])
 def test_same_shape_assertions_are_still_withheld(text, basis):
     assert not check(text, basis, {}).ok
+
+
+# --- Nov 12 (Paige, P11/P13): a Current State card is hidden only when it adds nothing to a claim on the same record ---
+
+def test_a_card_that_repeats_a_cited_claim_word_for_word_is_hidden():
+    claim = _claim("Implementation planning can proceed with the bounded use case, but pilot launch still requires "
+                   "agreed thresholds for high-risk failures and escalation behavior.", "current_state", "k-launch")
+    card = AskAnswerItem(text=STATE["k-launch"], record_type="state", record_id="k-launch")
+    cleaned = _validated([claim], [AskAnswerSection(kind="established", title="Current State", items=[card])])
+    assert not [i for s in cleaned.sections for i in s.items if i.record_id == "k-launch"]
+    assert cleaned.withheld_items == 0
+
+
+def test_a_card_that_adds_information_to_a_partial_claim_stays():
+    claim = _claim("Implementation planning can proceed with the bounded use case.", "current_state", "k-launch")
+    card = AskAnswerItem(text=STATE["k-launch"], record_type="state", record_id="k-launch")
+    cleaned = _validated([claim], [AskAnswerSection(kind="established", title="Current State", items=[card])])
+    assert [i.record_id for s in cleaned.sections for i in s.items if i.record_type == "state"] == ["k-launch"]
+
+
+def test_a_card_on_a_record_no_claim_cites_stays():
+    claim = _claim("Implementation planning can proceed with the bounded use case.", "current_state", "k-launch")
+    card = AskAnswerItem(text=STATE["k-grounding"], record_type="state", record_id="k-grounding")
+    cleaned = _validated([claim], [AskAnswerSection(kind="established", title="Current State", items=[card])])
+    assert [i.record_id for s in cleaned.sections for i in s.items if i.record_type == "state"] == ["k-grounding"]

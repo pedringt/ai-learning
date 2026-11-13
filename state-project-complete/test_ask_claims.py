@@ -329,7 +329,7 @@ def test_a_refinement_rechecks_the_previous_claims_and_bullets_clear_them(tmp_pa
 def test_cache_key_names_the_answer_shape():
     """An answer cached in the older shape (headline + summary) must never be served after #567."""
     import inspect
-    assert '"answer_shape": "claims-v1"' in inspect.getsource(ask_cache_key)
+    assert '"answer_shape": "claims-v2"' in inspect.getsource(ask_cache_key)
 
 
 def test_streamed_eval_transport_times_the_first_checked_content(tmp_path):

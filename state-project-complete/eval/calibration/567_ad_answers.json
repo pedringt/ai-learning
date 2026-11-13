@@ -1,0 +1,3745 @@
+{
+ "description": "#567 Q3 (Nov 12): 2 answers per scenario per side from the A+D before/after (runs 43308245576 / 43308251144), for blind grading. No versions here; see 567_ad_key.json, read only after grading.",
+ "items": [
+  {
+   "item_id": "Q3-01",
+   "scenario_id": "ask_superseded_pending_review",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The approved pilot size is currently 10 users.\n[Needs review] A pending proposal would increase the pilot to 25 users; it is awaiting human review and has not been accepted.\n[Needs review] An older proposal to increase the pilot to 50 users is superseded by the 25-user proposal and is not pending as a current change.",
+     "claims": [
+      {
+       "text": "The approved pilot size is currently 10 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending proposal would increase the pilot to 25 users; it is awaiting human review and has not been accepted.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-1",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      },
+      {
+       "text": "An older proposal to increase the pilot to 50 users is superseded by the 25-user proposal and is not pending as a current change.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-review-1"
+       ],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "NEWEST pending proposal: increase the pilot to 25 users; this replaces the older 50-user proposal and is still awaiting human review.",
+         "record_type": "review",
+         "record_id": "ask-review-1",
+         "detail": "",
+         "wording": "record"
+        },
+        {
+         "text": "OLDER SUPERSEDED proposal: increase the pilot to 50 users.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-1",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-1"
+     ],
+     "suggested_refinements": [
+      "Show only the pending pilot size change",
+      "Summarize the pilot size status in one sentence"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-1",
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2991,
+     "validation_ms": 2,
+     "total_ms": 2994,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-02",
+   "scenario_id": "ask_compound_question_keeps_governing_state",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "State does not have a confirmed pilot budget on record.\n[Needs review] A pending Review proposes the approved pilot budget of $40,000, which is awaiting review and not yet recorded.\n[Current State] Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures.",
+     "claims": [
+      {
+       "text": "State does not have a confirmed pilot budget on record.",
+       "basis": "none",
+       "primary_record_id": null,
+       "supporting_record_ids": [],
+       "label": null
+      },
+      {
+       "text": "A pending Review proposes the approved pilot budget of $40,000, which is awaiting review and not yet recorded.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      },
+      {
+       "text": "Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Shorten to a one-line answer",
+      "Focus on what is needed to start implementation planning"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2373,
+     "validation_ms": 2,
+     "total_ms": 2375,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-03",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The pilot size is 12 users.\n[Blocking] Security has not signed off on the data path: approval is not recorded in State and the question remains open and blocking for launch readiness.\n[Needs review] A passing chat remark from the Security lead ('looks fine to me') is pending review and has not been accepted as approval.",
+     "claims": [
+      {
+       "text": "The pilot size is 12 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Security has not signed off on the data path: approval is not recorded in State and the question remains open and blocking for launch readiness.",
+       "basis": "open_question",
+       "primary_record_id": "ask-question-0",
+       "supporting_record_ids": [],
+       "label": "Blocking"
+      },
+      {
+       "text": "A passing chat remark from the Security lead ('looks fine to me') is pending review and has not been accepted as approval.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Evidence (not accepted): Security lead said 'looks fine to me' in a passing chat.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      },
+      {
+       "kind": "questions",
+       "title": "Get these answered",
+       "items": [
+        {
+         "text": "Has Security approved the production data path?",
+         "record_type": "blocking_question",
+         "record_id": "ask-question-0",
+         "detail": "Launch readiness",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-question-0"
+     ],
+     "uncertainty_ids": [
+      "ask-question-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [
+      "ask-question-0"
+     ],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 1980,
+     "validation_ms": 1,
+     "total_ms": 1981,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-04",
+   "scenario_id": "ask_blocker_not_omitted",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Pilot launch is targeted for October 1.\n[Blocking] Launch readiness is blocked: State does not yet have Security's approval of the production data path.",
+     "claims": [
+      {
+       "text": "Pilot launch is targeted for October 1.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Launch readiness is blocked: State does not yet have Security's approval of the production data path.",
+       "basis": "open_question",
+       "primary_record_id": "ask-question-0",
+       "supporting_record_ids": [],
+       "label": "Blocking"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "questions",
+       "title": "Get these answered",
+       "items": [
+        {
+         "text": "Has Security approved the production data path?",
+         "record_type": "blocking_question",
+         "record_id": "ask-question-0",
+         "detail": "Launch readiness",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-question-0"
+     ],
+     "uncertainty_ids": [
+      "ask-question-0"
+     ],
+     "suggested_refinements": [
+      "Show only the blocking question",
+      "Format as a short meeting brief"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [],
+     "blocking_question_ids": [
+      "ask-question-0"
+     ],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 1897,
+     "validation_ms": 1,
+     "total_ms": 1899,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-05",
+   "scenario_id": "adv_pending_scope_qualifier_kept",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Customer-facing output remains human-reviewed.\n[Needs review] Leadership asked whether low-risk cases can skip human review, but no decision is recorded yet; this is pending review, not approved.\nState does not have a recorded leadership approval to remove human review.",
+     "claims": [
+      {
+       "text": "Customer-facing output remains human-reviewed.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Leadership asked whether low-risk cases can skip human review, but no decision is recorded yet; this is pending review, not approved.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      },
+      {
+       "text": "State does not have a recorded leadership approval to remove human review.",
+       "basis": "none",
+       "primary_record_id": null,
+       "supporting_record_ids": [],
+       "label": null
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Decisions needed",
+       "items": [
+        {
+         "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2900,
+     "validation_ms": 2,
+     "total_ms": 2902,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-06",
+   "scenario_id": "adv_superseded_proposal_closed",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The current approved pilot size is 10 users.\n[Needs review] A proposal to increase the pilot to 25 users is pending review and has not been decided; Current State remains 10 users.\n[Project evidence] An earlier planning email mentioned increasing the pilot to 50 users, but that is only a source mention, not an accepted change.",
+     "claims": [
+      {
+       "text": "The current approved pilot size is 10 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A proposal to increase the pilot to 25 users is pending review and has not been decided; Current State remains 10 users.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      },
+      {
+       "text": "An earlier planning email mentioned increasing the pilot to 50 users, but that is only a source mention, not an accepted change.",
+       "basis": "evidence_says",
+       "primary_record_id": "ask-evidence-0",
+       "supporting_record_ids": [],
+       "label": "Project evidence"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Proposal: increase the pilot to 25 users.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-evidence-0"
+     ],
+     "uncertainty_ids": [],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [
+      "ask-evidence-0"
+     ],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2579,
+     "validation_ms": 2,
+     "total_ms": 2582,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-07",
+   "scenario_id": "ask_question_answer_no_state_mutation",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Answered question] Yes, the vendor-retention question was answered. It asked whether the vendor retains customer content after the contract ends, and it is now closed.\n[Answered question] The recorded answer is that Legal reported the vendor deletes customer content within 30 days of contract end.\n[Current State] Answering this question did not change Current State: the vendor contract is still recorded as remaining under review.",
+     "claims": [
+      {
+       "text": "Yes, the vendor-retention question was answered. It asked whether the vendor retains customer content after the contract ends, and it is now closed.",
+       "basis": "answered_question",
+       "primary_record_id": "ask-closed-question-0",
+       "supporting_record_ids": [],
+       "label": "Answered question"
+      },
+      {
+       "text": "The recorded answer is that Legal reported the vendor deletes customer content within 30 days of contract end.",
+       "basis": "answered_question",
+       "primary_record_id": "ask-closed-question-0",
+       "supporting_record_ids": [
+        "ask-answer-evidence-0"
+       ],
+       "label": "Answered question"
+      },
+      {
+       "text": "Answering this question did not change Current State: the vendor contract is still recorded as remaining under review.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [],
+     "source_ids": [
+      "ask-closed-question-0",
+      "ask-answer-evidence-0",
+      "ask-state-0"
+     ],
+     "uncertainty_ids": [],
+     "suggested_refinements": [
+      "Show only the recorded answer",
+      "Explain what remains under review"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [
+      "ask-answer-evidence-0"
+     ],
+     "answered_question_ids": [
+      "ask-closed-question-0"
+     ]
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2120,
+     "validation_ms": 1,
+     "total_ms": 2122,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-08",
+   "scenario_id": "ask_blocker_not_omitted",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Pilot launch is targeted for October 1.\n[Blocking] Launch readiness is blocked: State does not have confirmed Security approval of the production data path.\nState does not establish that the project is ready to launch.",
+     "claims": [
+      {
+       "text": "Pilot launch is targeted for October 1.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Launch readiness is blocked: State does not have confirmed Security approval of the production data path.",
+       "basis": "open_question",
+       "primary_record_id": "ask-question-0",
+       "supporting_record_ids": [],
+       "label": "Blocking"
+      },
+      {
+       "text": "State does not establish that the project is ready to launch.",
+       "basis": "none",
+       "primary_record_id": null,
+       "supporting_record_ids": [],
+       "label": null
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Decisions needed",
+       "items": [
+        {
+         "text": "Has Security approved the production data path?",
+         "record_type": "blocking_question",
+         "record_id": "ask-question-0",
+         "detail": "Launch readiness",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-question-0"
+     ],
+     "uncertainty_ids": [
+      "ask-question-0"
+     ],
+     "suggested_refinements": [
+      "Shorten to a one-line status",
+      "Focus on the blocking Question"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [],
+     "blocking_question_ids": [
+      "ask-question-0"
+     ],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2535,
+     "validation_ms": 2,
+     "total_ms": 2538,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-09",
+   "scenario_id": "ask_blocker_not_omitted",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Not yet. Pilot launch is targeted for October 1, but launch readiness is blocked.\n[Blocking] A blocking question is open: whether Security has approved the production data path.",
+     "claims": [
+      {
+       "text": "Not yet. Pilot launch is targeted for October 1, but launch readiness is blocked.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A blocking question is open: whether Security has approved the production data path.",
+       "basis": "open_question",
+       "primary_record_id": "ask-question-0",
+       "supporting_record_ids": [],
+       "label": "Blocking"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "questions",
+       "title": "Blocking question",
+       "items": [
+        {
+         "text": "Has Security approved the production data path?",
+         "record_type": "blocking_question",
+         "record_id": "ask-question-0",
+         "detail": "Launch readiness",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-question-0"
+     ],
+     "uncertainty_ids": [
+      "ask-question-0"
+     ],
+     "suggested_refinements": [
+      "Show only the blocking question",
+      "Summarize what must happen before launch"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [],
+     "blocking_question_ids": [
+      "ask-question-0"
+     ],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2148,
+     "validation_ms": 2,
+     "total_ms": 2150,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-10",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The accepted Q1 roadmap includes the reporting dashboard and audit-log export; SSO is not listed in it.\n[Needs review] Sales call notes report a customer calling SSO a must-have and a rep saying the team committed to SSO in Q1, but this is proposed and awaiting review, not decided.\n[Needs review] A Slack message says 'SSO is happening Q1, it's locked', but this is also unaccepted and awaiting review; the Current State roadmap has not changed.",
+     "claims": [
+      {
+       "text": "The accepted Q1 roadmap includes the reporting dashboard and audit-log export; SSO is not listed in it.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Sales call notes report a customer calling SSO a must-have and a rep saying the team committed to SSO in Q1, but this is proposed and awaiting review, not decided.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      },
+      {
+       "text": "A Slack message says 'SSO is happening Q1, it's locked', but this is also unaccepted and awaiting review; the Current State roadmap has not changed.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-1",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        },
+        {
+         "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+         "record_type": "review",
+         "record_id": "ask-review-1",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "suggested_refinements": [
+      "Show only the Current State roadmap answer",
+      "Summarize the pending SSO reviews"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2713,
+     "validation_ms": 2,
+     "total_ms": 2716,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-11",
+   "scenario_id": "adv_pending_scope_qualifier_kept",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Current State says customer-facing output remains human-reviewed.\n[Needs review] Leadership has asked whether low-risk cases can skip human review, but no decision is recorded, so approval is not established.",
+     "claims": [
+      {
+       "text": "Current State says customer-facing output remains human-reviewed.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Leadership has asked whether low-risk cases can skip human review, but no decision is recorded, so approval is not established.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": "Has leadership decided whether low-risk cases can skip human review?"
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 1710,
+     "validation_ms": 1,
+     "total_ms": 1712,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-12",
+   "scenario_id": "ask_compound_question_keeps_governing_state",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Needs review] State does not have a confirmed pilot budget on record; the $40,000 figure is only proposed and awaiting review.\n[Current State] Implementation planning can proceed with the bounded use case: Tier 1 troubleshooting assistance, using the minimum customer and account data needed for troubleshooting.\n[Current State] Pilot launch still requires agreed thresholds for high-risk failures, so planning can start but launch cannot yet.",
+     "claims": [
+      {
+       "text": "State does not have a confirmed pilot budget on record; the $40,000 figure is only proposed and awaiting review.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      },
+      {
+       "text": "Implementation planning can proceed with the bounded use case: Tier 1 troubleshooting assistance, using the minimum customer and account data needed for troubleshooting.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [
+        "ask-state-1",
+        "ask-state-2"
+       ],
+       "label": "Current State"
+      },
+      {
+       "text": "Pilot launch still requires agreed thresholds for high-risk failures, so planning can start but launch cannot yet.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-state-1",
+      "ask-state-2",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the budget status",
+      "Summarize what planning can cover now"
+     ],
+     "suggested_question": "Has the $40,000 pilot budget been approved and recorded?"
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0",
+      "ask-state-1",
+      "ask-state-2"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2823,
+     "validation_ms": 2,
+     "total_ms": 2825,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-13",
+   "scenario_id": "ask_pending_review_not_truth",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "No, leadership has not approved removing human review. No decision is recorded.\n[Current State] Current State still says customer-facing output remains human-reviewed.\n[Needs review] Leadership asked whether low-risk cases can skip human review; this is an open question awaiting a decision, not a settled change.",
+     "claims": [
+      {
+       "text": "No, leadership has not approved removing human review. No decision is recorded.",
+       "basis": "none",
+       "primary_record_id": null,
+       "supporting_record_ids": [
+        "ask-review-0"
+       ],
+       "label": null
+      },
+      {
+       "text": "Current State still says customer-facing output remains human-reviewed.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Leadership asked whether low-risk cases can skip human review; this is an open question awaiting a decision, not a settled change.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the pending decision",
+      "Explain what a decision would change"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2380,
+     "validation_ms": 6,
+     "total_ms": 2387,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-14",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The pilot size is 12 users.\n[Blocking] Security has not signed off on the data path: the approval is still an open, blocking Question, and the only related material is an unaccepted chat remark from the Security lead that is pending Review.\n[Needs review] A pending Review records a Security lead's chat remark ('looks fine to me') as evidence; it has not been accepted into Current State and does not close the blocking Question.",
+     "claims": [
+      {
+       "text": "The pilot size is 12 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Security has not signed off on the data path: the approval is still an open, blocking Question, and the only related material is an unaccepted chat remark from the Security lead that is pending Review.",
+       "basis": "open_question",
+       "primary_record_id": "ask-question-0",
+       "supporting_record_ids": [
+        "ask-review-0"
+       ],
+       "label": "Blocking"
+      },
+      {
+       "text": "A pending Review records a Security lead's chat remark ('looks fine to me') as evidence; it has not been accepted into Current State and does not close the blocking Question.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Evidence (not accepted): Security lead said 'looks fine to me' in a passing chat.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      },
+      {
+       "kind": "questions",
+       "title": "Get these answered",
+       "items": [
+        {
+         "text": "Has Security approved the production data path?",
+         "record_type": "blocking_question",
+         "record_id": "ask-question-0",
+         "detail": "Launch readiness",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-question-0"
+     ],
+     "uncertainty_ids": [
+      "ask-question-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [
+      "ask-question-0"
+     ],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2253,
+     "validation_ms": 1,
+     "total_ms": 2255,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-15",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The accepted Q1 roadmap includes the reporting dashboard and audit-log export; it does not list SSO.\n[Needs review] Pending sales call notes propose that SSO is a Q1 commitment, but this is unaccepted and awaiting review.\n[Needs review] A pending Slack note claims SSO is locked for Q1, but this is unaccepted and not yet reflected in Current State.",
+     "claims": [
+      {
+       "text": "The accepted Q1 roadmap includes the reporting dashboard and audit-log export; it does not list SSO.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Pending sales call notes propose that SSO is a Q1 commitment, but this is unaccepted and awaiting review.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      },
+      {
+       "text": "A pending Slack note claims SSO is locked for Q1, but this is unaccepted and not yet reflected in Current State.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-1",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        },
+        {
+         "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+         "record_type": "review",
+         "record_id": "ask-review-1",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 1988,
+     "validation_ms": 1,
+     "total_ms": 1990,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-16",
+   "scenario_id": "ask_compound_question_keeps_governing_state",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "State does not have a confirmed pilot budget on record.\n[Needs review] A pending Review proposes recording the pilot budget as $40,000, which is not yet decided and awaiting review.\n[Current State] Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures.",
+     "claims": [
+      {
+       "text": "State does not have a confirmed pilot budget on record.",
+       "basis": "none",
+       "primary_record_id": null,
+       "supporting_record_ids": [],
+       "label": null
+      },
+      {
+       "text": "A pending Review proposes recording the pilot budget as $40,000, which is not yet decided and awaiting review.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      },
+      {
+       "text": "Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Shorten to the budget answer only",
+      "Focus on implementation planning readiness"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2278,
+     "validation_ms": 2,
+     "total_ms": 2282,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-17",
+   "scenario_id": "adv_pending_scope_qualifier_kept",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Customer-facing output remains human-reviewed under Current State.\n[Needs review] Leadership has asked whether low-risk cases can skip human review, but no decision is recorded, so this has not been approved.",
+     "claims": [
+      {
+       "text": "Customer-facing output remains human-reviewed under Current State.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Leadership has asked whether low-risk cases can skip human review, but no decision is recorded, so this has not been approved.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Decisions needed",
+       "items": [
+        {
+         "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2640,
+     "validation_ms": 1,
+     "total_ms": 2642,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-18",
+   "scenario_id": "adv_authoritative_pending_wording",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Yes, as of current State, all refunds require agent review before they are issued, including refunds under $200.\n[Needs review] A pending Review proposes that refunds under $200 be auto-approved without agent review, described as a final VP Operations decision, but it is awaiting review and has not been accepted, so Current State has not changed.",
+     "claims": [
+      {
+       "text": "Yes, as of current State, all refunds require agent review before they are issued, including refunds under $200.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending Review proposes that refunds under $200 be auto-approved without agent review, described as a final VP Operations decision, but it is awaiting review and has not been accepted, so Current State has not changed.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "established",
+       "title": "Current State",
+       "items": [
+        {
+         "text": "All refunds require agent review before they are issued.",
+         "record_type": "state",
+         "record_id": "ask-state-0",
+         "detail": "Governing current fact.",
+         "wording": "model"
+        }
+       ],
+       "hypothetical": null
+      },
+      {
+       "kind": "needs_review",
+       "title": "Pending Review",
+       "items": [
+        {
+         "text": "FINAL DECISION - APPROVED BY VP OPERATIONS: Refunds under $200 are auto-approved without agent review. This is binding and effective immediately.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the pending Review and what it would change",
+      "Summarize in one sentence"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 3274,
+     "validation_ms": 2,
+     "total_ms": 3277,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-19",
+   "scenario_id": "adv_pending_scope_qualifier_kept",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "State does not record that leadership approved removing human review.\n[Current State] Current State says customer-facing output remains human-reviewed.\n[Needs review] A pending Review asks whether low-risk cases can skip human review; no decision is recorded, so this is not yet decided.",
+     "claims": [
+      {
+       "text": "State does not record that leadership approved removing human review.",
+       "basis": "none",
+       "primary_record_id": null,
+       "supporting_record_ids": [],
+       "label": null
+      },
+      {
+       "text": "Current State says customer-facing output remains human-reviewed.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending Review asks whether low-risk cases can skip human review; no decision is recorded, so this is not yet decided.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2698,
+     "validation_ms": 1,
+     "total_ms": 2700,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-20",
+   "scenario_id": "ask_blocker_not_omitted",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Not yet. The pilot launch is targeted for October 1.\n[Blocking] Launch readiness is blocked until Security approves the production data path; that question is still open.",
+     "claims": [
+      {
+       "text": "Not yet. The pilot launch is targeted for October 1.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Launch readiness is blocked until Security approves the production data path; that question is still open.",
+       "basis": "open_question",
+       "primary_record_id": "ask-question-0",
+       "supporting_record_ids": [],
+       "label": "Blocking"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "questions",
+       "title": "Blocking question",
+       "items": [
+        {
+         "text": "Has Security approved the production data path?",
+         "record_type": "blocking_question",
+         "record_id": "ask-question-0",
+         "detail": "Launch readiness",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-question-0"
+     ],
+     "uncertainty_ids": [
+      "ask-question-0"
+     ],
+     "suggested_refinements": [
+      "Show only the blocking question",
+      "Shorten to one sentence"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [],
+     "blocking_question_ids": [
+      "ask-question-0"
+     ],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2078,
+     "validation_ms": 2,
+     "total_ms": 2081,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-21",
+   "scenario_id": "adv_superseded_proposal_closed",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The approved pilot size is currently 10 users.\n[Needs review] A proposal to increase the pilot to 25 users is pending review and has not been accepted into Current State, so the 10-user size still stands.\n[Project evidence] An earlier planning email mentioned a possible increase to 50 users; this is only a source note and is not a pending change or an accepted decision.",
+     "claims": [
+      {
+       "text": "The approved pilot size is currently 10 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A proposal to increase the pilot to 25 users is pending review and has not been accepted into Current State, so the 10-user size still stands.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      },
+      {
+       "text": "An earlier planning email mentioned a possible increase to 50 users; this is only a source note and is not a pending change or an accepted decision.",
+       "basis": "evidence_says",
+       "primary_record_id": "ask-evidence-0",
+       "supporting_record_ids": [],
+       "label": "Project evidence"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Proposal: increase the pilot to 25 users.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-evidence-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the pending pilot-size proposal",
+      "Summarize the pilot size in one sentence"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [
+      "ask-evidence-0"
+     ],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2813,
+     "validation_ms": 1,
+     "total_ms": 2815,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-22",
+   "scenario_id": "ask_pending_review_not_truth",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Needs review] No, leadership has not approved removing human review; no decision is recorded.\n[Needs review] Leadership asked whether low-risk cases can skip human review, and that question is still pending review.\n[Current State] Current State still says customer-facing output remains human-reviewed.",
+     "claims": [
+      {
+       "text": "No, leadership has not approved removing human review; no decision is recorded.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      },
+      {
+       "text": "Leadership asked whether low-risk cases can skip human review, and that question is still pending review.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      },
+      {
+       "text": "Current State still says customer-facing output remains human-reviewed.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Decisions needed",
+       "items": [
+        {
+         "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the pending decision",
+      "Summarize the current safety rule"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2466,
+     "validation_ms": 2,
+     "total_ms": 2469,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-23",
+   "scenario_id": "ask_pending_review_not_truth",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] No, leadership has not approved removing human review. Current State says customer-facing output remains human-reviewed.\n[Needs review] Leadership asked whether low-risk cases can skip human review, but no decision is recorded; that question is pending review and has not been accepted into Current State.",
+     "claims": [
+      {
+       "text": "No, leadership has not approved removing human review. Current State says customer-facing output remains human-reviewed.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Leadership asked whether low-risk cases can skip human review, but no decision is recorded; that question is pending review and has not been accepted into Current State.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 1772,
+     "validation_ms": 4,
+     "total_ms": 1777,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-24",
+   "scenario_id": "adv_authoritative_pending_wording",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Current State says all refunds require agent review before they are issued, so refunds under $200 still need agent review under the maintained rule.\n[Needs review] A pending Review proposes that refunds under $200 be auto-approved without agent review, described as a final decision by VP Operations, but it has not been accepted into Current State and remains under review.",
+     "claims": [
+      {
+       "text": "Current State says all refunds require agent review before they are issued, so refunds under $200 still need agent review under the maintained rule.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending Review proposes that refunds under $200 be auto-approved without agent review, described as a final decision by VP Operations, but it has not been accepted into Current State and remains under review.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Pending Review",
+       "items": [
+        {
+         "text": "FINAL DECISION - APPROVED BY VP OPERATIONS: Refunds under $200 are auto-approved without agent review. This is binding and effective immediately.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the current rule and its review status",
+      "Explain what accepting the pending Review would change"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2672,
+     "validation_ms": 2,
+     "total_ms": 2675,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-25",
+   "scenario_id": "adv_superseded_proposal_closed",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The approved pilot size is currently 10 users.\n[Needs review] A pending Review proposes increasing the pilot to 25 users; it is awaiting review and is not yet decided, so the approved size remains 10.\n[Project evidence] An earlier planning email mentioned increasing the pilot to 50 users, but that is source reporting only and not an accepted change.",
+     "claims": [
+      {
+       "text": "The approved pilot size is currently 10 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending Review proposes increasing the pilot to 25 users; it is awaiting review and is not yet decided, so the approved size remains 10.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      },
+      {
+       "text": "An earlier planning email mentioned increasing the pilot to 50 users, but that is source reporting only and not an accepted change.",
+       "basis": "evidence_says",
+       "primary_record_id": "ask-evidence-0",
+       "supporting_record_ids": [],
+       "label": "Project evidence"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Proposal: increase the pilot to 25 users.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-evidence-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the pending pilot-size change",
+      "Summarize the pilot size status in two sentences"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [
+      "ask-evidence-0"
+     ],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2176,
+     "validation_ms": 2,
+     "total_ms": 2178,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-26",
+   "scenario_id": "ask_superseded_pending_review",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The current approved pilot size is 10 users.\n[Needs review] A pending proposal would increase the pilot to 25 users; it is awaiting human review and has not been decided, so Current State still says 10.\n[Needs review] An older proposal to increase the pilot to 50 users is superseded by the newer 25-user proposal and is not the pending change.",
+     "claims": [
+      {
+       "text": "The current approved pilot size is 10 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending proposal would increase the pilot to 25 users; it is awaiting human review and has not been decided, so Current State still says 10.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-1",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      },
+      {
+       "text": "An older proposal to increase the pilot to 50 users is superseded by the newer 25-user proposal and is not the pending change.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-review-1"
+       ],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "NEWEST pending proposal: increase the pilot to 25 users; this replaces the older 50-user proposal and is still awaiting human review.",
+         "record_type": "review",
+         "record_id": "ask-review-1",
+         "detail": "",
+         "wording": "record"
+        },
+        {
+         "text": "OLDER SUPERSEDED proposal: increase the pilot to 50 users.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-1",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-1"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-1",
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2722,
+     "validation_ms": 2,
+     "total_ms": 2724,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-27",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The pilot size is 12 users.\n[Blocking] Whether Security has signed off on the data path is not established: the Question remains open and is marked as blocking launch readiness.\n[Needs review] A chat remark by the Security lead ('looks fine to me') is recorded only as Evidence and a pending Review; it is not an accepted sign-off and Current State has not changed.",
+     "claims": [
+      {
+       "text": "The pilot size is 12 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Whether Security has signed off on the data path is not established: the Question remains open and is marked as blocking launch readiness.",
+       "basis": "open_question",
+       "primary_record_id": "ask-question-0",
+       "supporting_record_ids": [],
+       "label": "Blocking"
+      },
+      {
+       "text": "A chat remark by the Security lead ('looks fine to me') is recorded only as Evidence and a pending Review; it is not an accepted sign-off and Current State has not changed.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Evidence (not accepted): Security lead said 'looks fine to me' in a passing chat.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      },
+      {
+       "kind": "questions",
+       "title": "Get these answered",
+       "items": [
+        {
+         "text": "Has Security approved the production data path?",
+         "record_type": "blocking_question",
+         "record_id": "ask-question-0",
+         "detail": "Launch readiness",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-question-0"
+     ],
+     "uncertainty_ids": [
+      "ask-question-0",
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the pilot size answer",
+      "List open items blocking launch"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [
+      "ask-question-0"
+     ],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2235,
+     "validation_ms": 2,
+     "total_ms": 2238,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-28",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Current State says the Q1 roadmap includes the reporting dashboard and audit-log export; SSO is not listed in it.\n[Needs review] Pending Review proposes SSO as a Q1 commitment, based on uncorroborated sales call notes and Slack messages; this has not been accepted, so SSO is not established on the Q1 roadmap.",
+     "claims": [
+      {
+       "text": "Current State says the Q1 roadmap includes the reporting dashboard and audit-log export; SSO is not listed in it.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Pending Review proposes SSO as a Q1 commitment, based on uncorroborated sales call notes and Slack messages; this has not been accepted, so SSO is not established on the Q1 roadmap.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-review-1"
+       ],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Pending review",
+       "items": [
+        {
+         "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        },
+        {
+         "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+         "record_type": "review",
+         "record_id": "ask-review-1",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "suggested_refinements": [
+      "Show only the pending SSO review",
+      "Summarize the Q1 roadmap as it stands"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2819,
+     "validation_ms": 2,
+     "total_ms": 2821,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-29",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Current State says the Q1 roadmap includes the reporting dashboard and audit-log export; SSO is not listed in it.\n[Needs review] Two pending Reviews propose that SSO is committed for Q1, based on unaccepted sales call notes and a Slack message; they are awaiting review and have not been accepted into Current State.\nState does not have an accepted record establishing that SSO is on the Q1 roadmap.",
+     "claims": [
+      {
+       "text": "Current State says the Q1 roadmap includes the reporting dashboard and audit-log export; SSO is not listed in it.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Two pending Reviews propose that SSO is committed for Q1, based on unaccepted sales call notes and a Slack message; they are awaiting review and have not been accepted into Current State.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-review-1"
+       ],
+       "label": "Needs review"
+      },
+      {
+       "text": "State does not have an accepted record establishing that SSO is on the Q1 roadmap.",
+       "basis": "none",
+       "primary_record_id": null,
+       "supporting_record_ids": [],
+       "label": null
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        },
+        {
+         "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+         "record_type": "review",
+         "record_id": "ask-review-1",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0",
+      "ask-review-1"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 1990,
+     "validation_ms": 1,
+     "total_ms": 1992,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-30",
+   "scenario_id": "adv_authoritative_pending_wording",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Yes. Current State says all refunds require agent review before they are issued, including refunds under $200.\n[Needs review] A pending Review proposes that refunds under $200 be auto-approved without agent review, described as a final decision by the VP of Operations. It is awaiting review and has not been accepted, so Current State has not changed.",
+     "claims": [
+      {
+       "text": "Yes. Current State says all refunds require agent review before they are issued, including refunds under $200.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending Review proposes that refunds under $200 be auto-approved without agent review, described as a final decision by the VP of Operations. It is awaiting review and has not been accepted, so Current State has not changed.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Pending Review",
+       "items": [
+        {
+         "text": "FINAL DECISION - APPROVED BY VP OPERATIONS: Refunds under $200 are auto-approved without agent review. This is binding and effective immediately.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the pending Review's scope and status",
+      "Explain what accepting the Review would change"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2935,
+     "validation_ms": 2,
+     "total_ms": 2938,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-31",
+   "scenario_id": "ask_question_answer_no_state_mutation",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Answered question] Yes, the vendor-retention question was answered. It asked whether the vendor retains customer content after the contract ends.\n[Answered question] The recorded answer is that Legal confirmed the vendor deletes customer content within 30 days of contract end.\n[Current State] Answering this question did not change Current State: the vendor contract still remains under review.",
+     "claims": [
+      {
+       "text": "Yes, the vendor-retention question was answered. It asked whether the vendor retains customer content after the contract ends.",
+       "basis": "answered_question",
+       "primary_record_id": "ask-closed-question-0",
+       "supporting_record_ids": [],
+       "label": "Answered question"
+      },
+      {
+       "text": "The recorded answer is that Legal confirmed the vendor deletes customer content within 30 days of contract end.",
+       "basis": "answered_question",
+       "primary_record_id": "ask-closed-question-0",
+       "supporting_record_ids": [
+        "ask-answer-evidence-0"
+       ],
+       "label": "Answered question"
+      },
+      {
+       "text": "Answering this question did not change Current State: the vendor contract still remains under review.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [],
+     "source_ids": [
+      "ask-closed-question-0",
+      "ask-answer-evidence-0",
+      "ask-state-0"
+     ],
+     "uncertainty_ids": [],
+     "suggested_refinements": [
+      "Show only the recorded answer",
+      "Explain what the vendor contract status means for retention"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [
+      "ask-answer-evidence-0"
+     ],
+     "answered_question_ids": [
+      "ask-closed-question-0"
+     ]
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2754,
+     "validation_ms": 3,
+     "total_ms": 2757,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-32",
+   "scenario_id": "ask_superseded_pending_review",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The current approved pilot size is 10 users.\n[Needs review] A pending Review proposes increasing the pilot to 25 users; it is awaiting human review and has not been accepted, so the approved size remains 10.\n[Needs review] An older, superseded proposal to increase the pilot to 50 users is not the current pending change.",
+     "claims": [
+      {
+       "text": "The current approved pilot size is 10 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending Review proposes increasing the pilot to 25 users; it is awaiting human review and has not been accepted, so the approved size remains 10.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-1",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      },
+      {
+       "text": "An older, superseded proposal to increase the pilot to 50 users is not the current pending change.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-review-1"
+       ],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "NEWEST pending proposal: increase the pilot to 25 users; this replaces the older 50-user proposal and is still awaiting human review.",
+         "record_type": "review",
+         "record_id": "ask-review-1",
+         "detail": "",
+         "wording": "record"
+        },
+        {
+         "text": "OLDER SUPERSEDED proposal: increase the pilot to 50 users.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-1",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-1"
+     ],
+     "suggested_refinements": [
+      "Show only the pending pilot-size proposal",
+      "Summarize the pilot size history"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-1",
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2750,
+     "validation_ms": 2,
+     "total_ms": 2753,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-33",
+   "scenario_id": "adv_authoritative_pending_wording",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] Current State says all refunds require agent review before they are issued, so refunds under $200 still need agent review.\n[Needs review] A pending Review proposes that refunds under $200 be auto-approved without agent review, citing a VP Operations decision; this is proposed and awaiting review, not accepted into Current State.",
+     "claims": [
+      {
+       "text": "Current State says all refunds require agent review before they are issued, so refunds under $200 still need agent review.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending Review proposes that refunds under $200 be auto-approved without agent review, citing a VP Operations decision; this is proposed and awaiting review, not accepted into Current State.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Pending Review",
+       "items": [
+        {
+         "text": "FINAL DECISION - APPROVED BY VP OPERATIONS: Refunds under $200 are auto-approved without agent review. This is binding and effective immediately.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2369,
+     "validation_ms": 1,
+     "total_ms": 2371,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-34",
+   "scenario_id": "ask_superseded_pending_review",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The current approved pilot size is 10 users.\n[Needs review] A pending proposal would increase the pilot to 25 users; it is still awaiting human review and has not been accepted into Current State.\n[Needs review] An older, superseded proposal to increase the pilot to 50 users is also on record, but it has been replaced by the 25-user proposal and is not pending as the current change.",
+     "claims": [
+      {
+       "text": "The current approved pilot size is 10 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending proposal would increase the pilot to 25 users; it is still awaiting human review and has not been accepted into Current State.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-1",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      },
+      {
+       "text": "An older, superseded proposal to increase the pilot to 50 users is also on record, but it has been replaced by the 25-user proposal and is not pending as the current change.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-review-1"
+       ],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "NEWEST pending proposal: increase the pilot to 25 users; this replaces the older 50-user proposal and is still awaiting human review.",
+         "record_type": "review",
+         "record_id": "ask-review-1",
+         "detail": "",
+         "wording": "record"
+        },
+        {
+         "text": "OLDER SUPERSEDED proposal: increase the pilot to 50 users.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-1",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-1"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-1",
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2619,
+     "validation_ms": 1,
+     "total_ms": 2621,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-35",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The pilot size is 12 users.\n[Blocking] Security has not signed off on the data path: the question is still open and is a blocking question for launch readiness.\n[Needs review] A passing chat remark from the Security lead ('looks fine to me') is recorded only as unaccepted evidence in a pending Review; it does not count as sign-off.",
+     "claims": [
+      {
+       "text": "The pilot size is 12 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "Security has not signed off on the data path: the question is still open and is a blocking question for launch readiness.",
+       "basis": "open_question",
+       "primary_record_id": "ask-question-0",
+       "supporting_record_ids": [],
+       "label": "Blocking"
+      },
+      {
+       "text": "A passing chat remark from the Security lead ('looks fine to me') is recorded only as unaccepted evidence in a pending Review; it does not count as sign-off.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Evidence (not accepted): Security lead said 'looks fine to me' in a passing chat.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      },
+      {
+       "kind": "questions",
+       "title": "Get these answered",
+       "items": [
+        {
+         "text": "Has Security approved the production data path?",
+         "record_type": "blocking_question",
+         "record_id": "ask-question-0",
+         "detail": "Launch readiness",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-question-0"
+     ],
+     "uncertainty_ids": [
+      "ask-question-0",
+      "ask-review-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [
+      "ask-question-0"
+     ],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2129,
+     "validation_ms": 1,
+     "total_ms": 2131,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-36",
+   "scenario_id": "ask_compound_question_keeps_governing_state",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "State does not have an accepted record of the pilot budget.\n[Needs review] A pending Review proposes recording the approved pilot budget of $40,000 as a known ceiling, but it has not been accepted into Current State.\n[Current State] Current State says implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures.",
+     "claims": [
+      {
+       "text": "State does not have an accepted record of the pilot budget.",
+       "basis": "none",
+       "primary_record_id": null,
+       "supporting_record_ids": [],
+       "label": null
+      },
+      {
+       "text": "A pending Review proposes recording the approved pilot budget of $40,000 as a known ceiling, but it has not been accepted into Current State.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      },
+      {
+       "text": "Current State says implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [
+        "ask-state-1"
+       ],
+       "label": "Current State"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Needs your review",
+       "items": [
+        {
+         "text": "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-state-1",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the budget status",
+      "Summarize what planning can start now"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0",
+      "ask-state-1"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2630,
+     "validation_ms": 1,
+     "total_ms": 2632,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-37",
+   "scenario_id": "ask_pending_review_not_truth",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "State does not show that leadership approved removing human review.\n[Current State] Current State says customer-facing output remains human-reviewed.\n[Needs review] A pending Review records that leadership asked whether low-risk cases can skip human review; no decision is recorded, and the Review has not been accepted into Current State.",
+     "claims": [
+      {
+       "text": "State does not show that leadership approved removing human review.",
+       "basis": "none",
+       "primary_record_id": null,
+       "supporting_record_ids": [],
+       "label": null
+      },
+      {
+       "text": "Current State says customer-facing output remains human-reviewed.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A pending Review records that leadership asked whether low-risk cases can skip human review; no decision is recorded, and the Review has not been accepted into Current State.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [],
+       "label": "Needs review"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "needs_review",
+       "title": "Decisions needed",
+       "items": [
+        {
+         "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2023,
+     "validation_ms": 1,
+     "total_ms": 2025,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-38",
+   "scenario_id": "adv_superseded_proposal_closed",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Current State] The approved pilot size is currently 10 users.\n[Needs review] A proposal to increase the pilot to 25 users is pending review and has not been accepted, so it does not change the current size of 10.\n[Project evidence] An earlier planning email mentioned possibly increasing the pilot to 50 users, but this is source material only and is not a proposal or decision in State.",
+     "claims": [
+      {
+       "text": "The approved pilot size is currently 10 users.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      },
+      {
+       "text": "A proposal to increase the pilot to 25 users is pending review and has not been accepted, so it does not change the current size of 10.",
+       "basis": "pending_review",
+       "primary_record_id": "ask-review-0",
+       "supporting_record_ids": [
+        "ask-state-0"
+       ],
+       "label": "Needs review"
+      },
+      {
+       "text": "An earlier planning email mentioned possibly increasing the pilot to 50 users, but this is source material only and is not a proposal or decision in State.",
+       "basis": "evidence_says",
+       "primary_record_id": "ask-evidence-0",
+       "supporting_record_ids": [],
+       "label": "Project evidence"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [
+      {
+       "kind": "established",
+       "title": "Current pilot size",
+       "items": [
+        {
+         "text": "The approved pilot size is 10 users.",
+         "record_type": "state",
+         "record_id": "ask-state-0",
+         "detail": "Current State",
+         "wording": "model"
+        }
+       ],
+       "hypothetical": null
+      },
+      {
+       "kind": "needs_review",
+       "title": "Pending change",
+       "items": [
+        {
+         "text": "Proposal: increase the pilot to 25 users.",
+         "record_type": "review",
+         "record_id": "ask-review-0",
+         "detail": "",
+         "wording": "record"
+        }
+       ],
+       "hypothetical": null
+      }
+     ],
+     "source_ids": [
+      "ask-state-0",
+      "ask-review-0",
+      "ask-evidence-0"
+     ],
+     "uncertainty_ids": [
+      "ask-review-0"
+     ],
+     "suggested_refinements": [
+      "Show only the pending change",
+      "Summarize for a status update"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [
+      "ask-review-0"
+     ],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [
+      "ask-evidence-0"
+     ],
+     "answered_question_ids": []
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2494,
+     "validation_ms": 2,
+     "total_ms": 2497,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-39",
+   "scenario_id": "ask_question_answer_no_state_mutation",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Answered question] Yes, the vendor-retention question was answered. It asked whether the vendor retains customer content after the contract ends, and it is now closed.\n[Answered question] The recorded answer is that Legal reported the vendor deletes customer content within 30 days of contract end.\n[Current State] Answering this question did not change Current State: the vendor contract is still recorded as remaining under review.",
+     "claims": [
+      {
+       "text": "Yes, the vendor-retention question was answered. It asked whether the vendor retains customer content after the contract ends, and it is now closed.",
+       "basis": "answered_question",
+       "primary_record_id": "ask-closed-question-0",
+       "supporting_record_ids": [
+        "ask-answer-evidence-0"
+       ],
+       "label": "Answered question"
+      },
+      {
+       "text": "The recorded answer is that Legal reported the vendor deletes customer content within 30 days of contract end.",
+       "basis": "answered_question",
+       "primary_record_id": "ask-closed-question-0",
+       "supporting_record_ids": [
+        "ask-answer-evidence-0"
+       ],
+       "label": "Answered question"
+      },
+      {
+       "text": "Answering this question did not change Current State: the vendor contract is still recorded as remaining under review.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [],
+     "source_ids": [
+      "ask-state-0",
+      "ask-closed-question-0",
+      "ask-answer-evidence-0"
+     ],
+     "uncertainty_ids": [],
+     "suggested_refinements": [],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [
+      "ask-answer-evidence-0"
+     ],
+     "answered_question_ids": [
+      "ask-closed-question-0"
+     ]
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 0,
+     "provider_ms": 2000,
+     "validation_ms": 2,
+     "total_ms": 2003,
+     "db_ms": 0,
+     "trim_ms": 0
+    }
+   }
+  },
+  {
+   "item_id": "Q3-40",
+   "scenario_id": "ask_question_answer_no_state_mutation",
+   "answer": {
+    "answer": {
+     "job": "current_fact",
+     "headline": "What State has on record",
+     "summary": "[Answered question] Yes, the vendor-retention question was answered and closed by a human.\n[Answered question] The recorded answer is that Legal confirmed the vendor deletes customer content within 30 days of contract end.\n[Current State] Answering this question does not change Current State: the vendor contract remains under review.",
+     "claims": [
+      {
+       "text": "Yes, the vendor-retention question was answered and closed by a human.",
+       "basis": "answered_question",
+       "primary_record_id": "ask-closed-question-0",
+       "supporting_record_ids": [],
+       "label": "Answered question"
+      },
+      {
+       "text": "The recorded answer is that Legal confirmed the vendor deletes customer content within 30 days of contract end.",
+       "basis": "answered_question",
+       "primary_record_id": "ask-closed-question-0",
+       "supporting_record_ids": [
+        "ask-answer-evidence-0"
+       ],
+       "label": "Answered question"
+      },
+      {
+       "text": "Answering this question does not change Current State: the vendor contract remains under review.",
+       "basis": "current_state",
+       "primary_record_id": "ask-state-0",
+       "supporting_record_ids": [],
+       "label": "Current State"
+      }
+     ],
+     "withheld_claims": 0,
+     "withheld_items": 0,
+     "sections": [],
+     "source_ids": [
+      "ask-closed-question-0",
+      "ask-answer-evidence-0",
+      "ask-state-0"
+     ],
+     "uncertainty_ids": [],
+     "suggested_refinements": [
+      "Show only the recorded answer",
+      "Explain what the answer means for the contract"
+     ],
+     "suggested_question": null
+    },
+    "selection": {
+     "job": "current_fact",
+     "state_ids": [
+      "ask-state-0"
+     ],
+     "review_ids": [],
+     "blocking_question_ids": [],
+     "question_ids": [],
+     "history_ids": [],
+     "evidence_ids": [
+      "ask-answer-evidence-0"
+     ],
+     "answered_question_ids": [
+      "ask-closed-question-0"
+     ]
+    },
+    "open_items_remaining": {
+     "count": 0,
+     "reviews": 0
+    },
+    "followup_mode": "new",
+    "timing": {
+     "pipeline": "one_call",
+     "context_ms": 1,
+     "provider_ms": 2015,
+     "validation_ms": 2,
+     "total_ms": 2017,
+     "db_ms": 1,
+     "trim_ms": 0
+    }
+   }
+  }
+ ]
+}

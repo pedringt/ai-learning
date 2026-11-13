@@ -67,7 +67,6 @@
 /* v95.80 Learning Guide orientation: structured, shallow two-column summary. */
 
 /* v95.80 consistent supporting sections. */
-.learning-next{margin:38px 0 24px}.learning-next>.section-kicker{margin-bottom:10px}.learning-next>h2{margin:0 0 7px}.learning-next>.section-lead{margin-bottom:16px}
 
 /* v95.39 — explicit shared outer shell for the five Capabilities pages.
    This replaces reliance on inherited legacy `.wrap` geometry. */
@@ -441,10 +440,10 @@ body:has(>main.case-system-page){
 /* V7 homepage: prototype is a secondary artifact of the case study, not a third project card. */
 
 /* V7 Legal AI: one-page editorial case study with selective color and fewer containers. */
-.legal-single-case{}.legal-story .kicker{margin-bottom:8px;letter-spacing:.09em;text-transform:uppercase}.legal-method{border-top:1px solid var(--border)}.legal-method summary{cursor:pointer;color:var(--muted);font-size:12px;font-weight:750}.text-link{color:var(--purple);font-weight:800;text-decoration:none}.text-link:hover{text-decoration:underline}
+.legal-single-case{}.legal-story .kicker{margin-bottom:8px;letter-spacing:.09em;text-transform:uppercase}
 
 /* V8 shared case-study finish: tighter, more editorial, selective color. */
-.legal-story{margin-bottom:58px}.legal-story h2{font-size:25px;margin-bottom:9px}.legal-story p{font-size:14px;line-height:1.58}.legal-method{padding-top:9px}
+.legal-story{margin-bottom:58px}.legal-story h2{font-size:25px;margin-bottom:9px}.legal-story p{font-size:14px;line-height:1.58}
 /* Give the flagship case-study pages the same restrained color vocabulary. */
 .meridian-page-shell .meridian-case-hero{position:relative}.meridian-page-shell .meridian-case-hero:after{content:"";height:3px;border-radius:99px;background:var(--purple)}
 @media(max-width:760px){.legal-story h2{font-size:22px}}
@@ -492,15 +491,9 @@ body:has(>main.case-system-page){
 
 /* QA5 — Legal AI as a concise research memo / paper. */
 .legal-single-case .legal-paper{max-width:900px!important;margin:28px auto 72px!important;padding:0 34px!important;box-sizing:border-box}
-.legal-paper .paper-abstract{padding:0 0 34px;}
-.legal-paper .paper-abstract h2{max-width:760px;font-size:30px!important;line-height:1.14!important;margin:0 0 14px!important}
-.legal-paper .paper-deck{max-width:760px;margin:0 0 24px}
-.legal-paper .paper-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:24px 0 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.legal-paper .paper-meta>div{padding:14px 18px 14px 0}
-.legal-paper .paper-meta>div+div{padding-left:18px;border-left:1px solid var(--border)}
-.legal-paper .paper-meta dt,.legal-paper .paper-flow span,.legal-paper .paper-before-after span{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
-.legal-paper .paper-meta dd{margin:5px 0 0;color:var(--ink);font-size:12.5px;line-height:1.48}
-.legal-paper .legal-method{max-width:760px;margin-top:16px}
+
+.legal-paper .paper-flow span{color:var(--purple);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+
 .legal-paper .paper-section{padding:38px 0;}
 
 .legal-paper .paper-section>h2{max-width:760px;font-size:26px!important;line-height:1.18!important;margin:0 0 18px!important}
@@ -519,34 +512,20 @@ body:has(>main.case-system-page){
 .legal-paper .paper-flow>div{padding:15px 14px 15px 0}
 .legal-paper .paper-flow>div+div{padding-left:14px;border-left:1px solid var(--border)}
 .legal-paper .paper-flow p{margin:6px 0 0;color:var(--ink);font-size:12px!important;line-height:1.48!important}
-.legal-paper .paper-turn{margin-top:38px;padding:32px 0;border-top:3px solid var(--purple)!important;border-bottom:1px solid var(--border)}
-.legal-paper .paper-before-after{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:24px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.legal-paper .paper-before-after>div{padding:16px 20px 16px 0}
-.legal-paper .paper-before-after>div+div{padding-left:20px;border-left:1px solid var(--border)}
-.legal-paper .paper-before-after p{margin:7px 0 0;color:var(--ink);font-size:13px!important;}
-.legal-paper .paper-ruled{padding-left:16px;border-left:3px solid var(--purple);color:var(--ink)}
+
 .legal-paper .paper-next-grid{max-width:760px;display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:20px}
 .legal-paper .paper-next-grid p{margin:0;padding-top:12px;border-top:1px solid var(--border);}
-.legal-paper .paper-learning{padding:28px 0 0;border-top:1px solid var(--border)}
-.legal-paper .paper-learning p{margin:0 0 12px;color:var(--muted);}
+
 .legal-paper .paper-sources{max-width:760px;margin-top:20px;border-top:1px solid var(--border);color:var(--muted)}
 .legal-paper .paper-sources h3{margin:0 0 8px;font-size:11px;text-transform:uppercase;color:var(--muted)}
 .legal-paper .paper-sources ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.6}
 .legal-paper .paper-sources li{margin:3px 0}
-@media(max-width:760px){.legal-single-case .legal-paper{padding:0 18px!important;margin-top:18px!important}.legal-paper .paper-meta,.legal-paper .paper-flow,.legal-paper .paper-before-after,.legal-paper .paper-next-grid{grid-template-columns:1fr}.legal-paper .paper-meta>div+div,.legal-paper .paper-flow>div+div,.legal-paper .paper-before-after>div+div{padding-left:0;border-left:0;border-top:1px solid var(--border)}.legal-paper .paper-meta>div,.legal-paper .paper-flow>div,.legal-paper .paper-before-after>div{padding:12px 0}.legal-paper .paper-abstract h2{font-size:25px!important}.legal-paper .paper-section>h2{font-size:23px!important}.legal-paper .paper-findings li{padding-left:40px}}
+@media(max-width:760px){.legal-single-case .legal-paper{padding:0 18px!important;margin-top:18px!important}.legal-paper .paper-flow,.legal-paper .paper-next-grid{grid-template-columns:1fr}.legal-paper .paper-flow>div+div{padding-left:0;border-left:0;border-top:1px solid var(--border)}.legal-paper .paper-flow>div{padding:12px 0}.legal-paper .paper-section>h2{font-size:23px!important}.legal-paper .paper-findings li{padding-left:40px}}
 
 /* Final copy/feedback pass */
 
 .legal-paper{max-width:1040px;}
-.legal-paper .paper-abstract h2,
-.legal-paper .paper-deck,
-.legal-paper .legal-method,
-.legal-paper .paper-section>h2,
-.legal-paper .paper-section>p,
-.legal-paper .paper-findings,
-.legal-paper .paper-example figcaption,
-.legal-paper .paper-before-after{max-width:860px!important}
-.legal-paper .paper-learning{max-width:860px}
+.legal-paper .paper-section>h2,.legal-paper .paper-section>p,.legal-paper .paper-findings,.legal-paper .paper-example figcaption{max-width:860px!important}
 
 @media(max-width:760px){
   .legal-paper{padding-left:8px;padding-right:8px}
@@ -555,53 +534,16 @@ body:has(>main.case-system-page){
 
 /* Homepage: make the cross-project working pattern explicit without adding another large philosophy section. */
 
-.legal-part-divider{margin:48px 0 18px;padding:20px 22px;border:1px solid var(--border);border-radius:14px;background:var(--soft)}.legal-part-divider span{display:block;color:var(--purple);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.legal-part-divider h2{margin:0 0 8px;font-size:26px}.legal-part-divider p,.legal-part-transition p{margin:0;}.legal-part-transition{margin:42px 0 12px;padding:17px 19px;border-left:3px solid var(--purple);background:var(--softp);border-radius:0 12px 12px 0}.legal-part-transition strong{display:block;margin-bottom:5px;}
-
 /* ---- moved from site-polish.css (#451), in order; none of them crosses a rule it competes with ---- */
-.flagship-case .integration-flow{
-  padding-top:14px;
-  border-top:1px solid var(--border);
-  color:var(--muted);
-}
-.flagship-case .integration-flow span{
-  padding:0;
-  border:0;
-  border-radius:0;
-  color:var(--ink);
-  font-size:12px;
-  letter-spacing:0;
-  text-transform:none;
-  white-space:nowrap;
-}
-.flagship-case .integration-flow .ai-step,
-.flagship-case .integration-flow .human-step{color:var(--purple)}
-.flagship-case .integration-flow b{font-weight:600}
+
 .flagship-case .state-model-grid article{
   background:color-mix(in srgb,var(--soft) 38%,var(--card))!important;
   border-color:var(--border)!important;
 }
-.legal-paper .paper-learning{
-  margin-top:30px;
-  padding-top:24px;
-}
+
 .legal-paper .paper-sources{
   margin-top:18px;
   padding-top:18px;
-}
-.legal-paper .paper-learning + .paper-sources{margin-top:18px}
-@media(max-width:760px){
-  .flagship-case .integration-flow{
-    display:grid;
-    grid-template-columns:max-content 14px max-content 14px max-content;
-    padding-bottom:4px;
-  }
-}
-@media(max-width:430px){
-  
-  .flagship-case .integration-flow b{
-    width:14px;
-    margin-left:2px;
-  }
 }
 
 /* ==== Bright redesign (#428), moved here from site-redesign.css in #451 ====
@@ -932,11 +874,7 @@ html body #ai-cs-mock .tag {
   font-weight: 950;
   letter-spacing: 0.06em;
 }
-html body #ai-cs-mock .band {
-  border: 0;
-  border-radius: 24px;
-  background: var(--soft);
-}
+
 /* ---------- 4c. Inner reading pages: simple, one column, easy to read ---------- */
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) {
   max-width: 1100px;
@@ -1134,20 +1072,6 @@ html body #ai-cs-mock .learning-stage .stage-body { padding: 4px 24px 24px 80px 
 html body #ai-cs-mock .learning-stage .stage-body h3 { font-size: 13px; color: var(--purple); }
 html body #ai-cs-mock .learning-stage .stage-body p,
 html body #ai-cs-mock .learning-stage .stage-body li { font-size: 16px; }
-html body #ai-cs-mock [data-page="learn"] .learning-reference-map {
-  border: 0 !important;
-  padding: 26px 28px !important;
-}
-html body #ai-cs-mock .learning-reference-map h3 { font-size: 24px; margin: 8px 0; }
-html body #ai-cs-mock .learning-reference-links a {
-  display: inline-flex;
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid var(--ink);
-  background: #fff;
-  color: var(--ink) !important;
-  font-weight: 900;
-}
 
 /* old decorative rule under the hero */
 html body main .meridian-case-hero::after, html body main .meridian-case-hero::before { display: none; }
@@ -1245,16 +1169,7 @@ html body main :is(.surface-grid, .state-model-grid) > * > :is(span, small, .lab
 
 /* sections that hold a card grid plus a full-width box stack normally: cards in a row, the box underneath */
 html body main.case-system-page section:has(> .architecture-split) { display: block; }
-html body main.case-system-page section:has(> .architecture-split) > .architecture-split { width: 100%; max-width: none; }
-html body main.case-system-page .architecture-infra {
-  box-sizing: border-box;
-  width: 100%;
-  margin: 14px 0 0;
-  border: 1px solid var(--rd-line) !important;
-  border-radius: 20px;
-  background: #fff !important;
-  box-shadow: none !important;
-}
+
 /* inline flows wrap inside cards instead of clipping */
 html body main :is(.integration-flow, .human-flow, .authority-steps) {
   display: flex;
@@ -1271,25 +1186,7 @@ html body main :is(.callout, .plain-language, .note, .flagship-case > .evidence-
   background: #fbffd2 !important;
   box-shadow: none !important;
 }
-html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) {
-  border: 0 !important;
-  border-left: 5px solid var(--ink) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  padding: 4px 0 4px 22px;
-  margin: 26px 0;
-}
-html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) strong {
-  margin-bottom: 8px;
-  font-size: clamp(20px, 2.1vw, 26px);
-  font-weight: 900;
-  line-height: 1.2;
-  letter-spacing: -0.035em;
-}
-html body main .evidence-principle:not(.flagship-case > .evidence-principle:first-child) > p {
-  font-size: 15.5px !important;
-  line-height: 1.6 !important;
-}
+
 /* quote block: simple pull quote */
 html body main .question-shift {
   background: transparent !important;
@@ -1346,37 +1243,7 @@ html body #ai-cs-mock .applied-secondary-grid > .applied-secondary:nth-child(4n+
 html body #ai-cs-mock .applied-secondary-grid > .applied-secondary:nth-child(4n+3) .tag { background: #e6f9fc; }
 html body #ai-cs-mock .applied-secondary-grid > .applied-secondary:nth-child(4n+4) .tag { background: #fbffd2; }
 /* bottom band ("Portfolio note") */
-html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"] {
-  border: 0 !important;
-  border-radius: 28px !important;
-  background: linear-gradient(145deg, #ffe3f1, #e9e4ff 52%, #d9f6fb) !important;
-  padding: 22px 26px !important;
-  margin-top: 32px !important;
-  border-radius: 22px !important;
-}
-html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"]::before {
-  display: inline-flex !important;
-  margin: 0 0 14px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--ink);
-  font-size: 10.5px;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"] h3 {
-  font-size: clamp(24px, 2.6vw, 32px);
-  line-height: 1.1;
-  margin-bottom: 12px !important;
-}
-html body #ai-cs-mock [data-page="portfolio"] .band[style*="margin-top:30px"] p {
-  max-width: 760px;
-  color: #4a4353 !important;
-  font-size: 16.5px;
-  line-height: 1.6;
-}
+
 /* specificity match for the older #portfolio rules */
 html body #ai-cs-mock #portfolio :is(.applied-major, .applied-secondary) .tag {
   display: inline-flex !important;
@@ -1394,19 +1261,7 @@ html body #ai-cs-mock #portfolio .applied-featured-three > .card:nth-child(3n+3)
 html body #ai-cs-mock #portfolio .applied-secondary-grid > .applied-secondary:nth-child(4n+2) .tag { background: #ffeef6 !important; }
 html body #ai-cs-mock #portfolio .applied-secondary-grid > .applied-secondary:nth-child(4n+3) .tag { background: #e6f9fc !important; }
 html body #ai-cs-mock #portfolio .applied-secondary-grid > .applied-secondary:nth-child(4n+4) .tag { background: #fbffd2 !important; }
-html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] h3 {
-  font-size: clamp(18px, 1.7vw, 20px) !important;
-  line-height: 1.2 !important;
-  letter-spacing: -0.02em;
-  margin: 0 0 8px !important;
-  color: var(--ink) !important;
-}
-html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] p {
-  font-size: 14.5px !important;
-  line-height: 1.55 !important;
-  max-width: 760px;
-  color: #4a4353 !important;
-}
+
 /* ---------- 4h. Learning Library: open cards + exact centering of the +/- ---------- */
 html body #ai-cs-mock #learn details.learning-stage summary::after {
   content: "" !important;
@@ -1489,15 +1344,7 @@ html body #ai-cs-mock #learn details.learning-stage[open]:nth-of-type(4n+2) summ
 html body #ai-cs-mock #learn details.learning-stage[open]:nth-of-type(4n+3) summary { background: #f5fdfe !important; }
 html body #ai-cs-mock #learn details.learning-stage[open]:nth-of-type(4n+4) summary { background: #f9f8ff !important; }
 
-html body #ai-cs-mock [data-page="learn"] .learning-reference-map {
-  background: linear-gradient(145deg, #ffe3f1, #e9e4ff 52%, #d9f6fb) !important;
-}
 /* ---------- 4j. Project Health case study: mock-ups match the page ---------- */
-html body main.case-shell .product-panel {
-  border: 0;
-  border-radius: 24px;
-  background: var(--soft);
-}
 
 /* ---------- 4k. Labels are small rounded rectangles, not pills (buttons keep their shape) ---------- */
 html body main :is(.meta > span, .tag, .num, .flow-num, .map-chip, .map-step, span.accent) {
@@ -1536,15 +1383,6 @@ html body main.case-shell :is(.num, .flow-num) {
 }
 
 html body main.case-shell .example { box-shadow: none; }
-html body main.case-shell .example-row {
-  border: 0;
-  border-top: 1px solid var(--rd-line);
-  border-radius: 0;
-  background: transparent;
-  padding: 12px 0;
-}
-
-html body main.case-shell .flow-card { width: 100%; }
 
 /* callouts: only the one right under the hero keeps the highlight */
 html body main.case-shell .callout:not(.case-hero + .callout) {
@@ -1594,33 +1432,7 @@ html body main.case-shell .flow {
 @media (min-width: 701px){
   html body main.case-shell .flow:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 }
-html body main.case-shell .flow-row {
-  display: block;
-  padding: 20px;
-  border: 1px solid var(--rd-line);
-  border-radius: 20px;
-  background: #fff;
-}
-html body main.case-shell .flow-row .flow-card {
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-html body main.case-shell .flow-row .num { display: block; margin-bottom: 8px; }
-html body main.case-shell .evidence-list {
-  gap: 14px;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 701px){
-  html body main.case-shell .evidence-list:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-html body main.case-shell .evidence-item {
-  padding: 20px;
-  border: 1px solid var(--rd-line);
-  border-radius: 20px;
-  background: #fff;
-}
-html body main.case-shell .evidence-item > :first-child { display: block; }
+
 html body main.case-shell .example {
   border: 1px solid var(--rd-line);
   border-radius: 20px;
@@ -1628,7 +1440,7 @@ html body main.case-shell .example {
   padding: 20px;
   margin: 0 0 14px;
 }
-html body main.case-shell .example-head { background: transparent; padding: 0 0 8px; border: 0; }
+
 /* ---------- 4n. Homepage cards: aligned titles, consistent buttons ---------- */
 /* State's label sat in its own flex slot (18px gap before the title); the other cards keep label + title together */
 html body #ai-cs-mock .home-feature-state-anchor { gap: 0; }
@@ -1730,39 +1542,11 @@ html body #ai-cs-mock #portfolio .applied-featured-three > .card.applied-major >
 html body #ai-cs-mock #portfolio .applied-featured-three > .card.applied-major > .card-intro { font-size: 15.5px; color: #3b3445; }
 
 /* ---------- 4q. Learning Library footer ("How I use the map"): small, like the homepage footnote ---------- */
-html body #ai-cs-mock .learning-next { margin-top: 36px; }
-html body #ai-cs-mock .learning-next h2 { font-size: clamp(17px, 1.5vw, 20px) !important; line-height: 1.2; letter-spacing: -0.02em; margin: 10px 0 6px; }
-html body #ai-cs-mock .learning-next > p { font-size: 14px !important; line-height: 1.6; max-width: 62ch; }
-html body #ai-cs-mock .learning-next .section-kicker span { font-size: 10px; padding: 6px 10px; }
-html body #ai-cs-mock .learning-next .learning-how-note { padding: 12px 16px !important; }
-html body #ai-cs-mock .learning-next .learning-how-note strong { font-size: 14px; }
-html body #ai-cs-mock .learning-next .learning-how-note p { font-size: 14px !important; line-height: 1.55; margin: 6px 0 10px; }
-html body #ai-cs-mock .learning-next .learning-how-note a { min-height: 32px; padding: 0 12px; font-size: 13px; }
+
 /* ---------- 4r. State case study: hide the two duplicates (text stays in the page source) ---------- */
-html body main.case-system-page:has(.meridian-product-callout a[data-state-app-link]) .integration-flow.authority-steps { display: none; }
+
 /* ---------- 4s. Project Health case study bottom: fewer boxes ---------- */
-html body main.case-shell .evidence-list { display: block; }
-html body main.case-shell .evidence-item {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  gap: 14px;
-  padding: 12px 0;
-  border: 0;
-  border-top: 1px solid var(--rd-line);
-  border-radius: 0;
-  background: transparent;
-}
-html body main.case-shell .evidence-item > :first-child { margin: 0; }
-@media (max-width: 620px){
-  html body main.case-shell .evidence-item { grid-template-columns: 1fr; gap: 3px; }
-}
-html body main.case-shell .role-grid { gap: 40px !important; }
-html body main.case-shell .role-grid > * {
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  padding: 0 !important;
-}
+
 /* ---------- 4t. Project Health case study + Meridian: real space between sections (their headings are direct children of main) ---------- */
 html body main.case-shell > h2 {
   margin-top: 56px !important;
@@ -1772,37 +1556,10 @@ html body main.case-shell > h2 {
 }
 html body main.case-shell > h2:first-of-type { margin-top: 40px !important; }
 /* Project Health: "Failure recovery" repeats the "Unknown is not healthy" decision (text stays in the markup) */
-html body main.case-shell .evidence-list > .evidence-item:nth-child(2) { display: none; }
+
 /* ---------- 4u. Review follow-ups ---------- */
 /* Portfolio note: the Learning Library link fills the right side */
-html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 32px;
-  align-items: center;
-}
-html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"]::before { justify-self: start; }
-html body #ai-cs-mock #portfolio .band .band-link {
-  grid-column: 2;
-  grid-row: 1 / span 3;
-  align-self: center;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 18px;
-  border: 1px solid var(--ink);
-  background: #fff;
-  color: var(--ink) !important;
-  font-size: 14px;
-  font-weight: 900;
-  text-decoration: none;
-  white-space: nowrap;
-}
-html body #ai-cs-mock #portfolio .band .band-link:hover { background: var(--ink); color: #fff !important; }
-@media (max-width: 700px){
-  html body #ai-cs-mock #portfolio .band[style*="margin-top:30px"] { grid-template-columns: 1fr; }
-  html body #ai-cs-mock #portfolio .band .band-link { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 14px; }
-}
+
 /* Applied Work supporting cards: readable text size (contrast was already fine) */
 html body #ai-cs-mock #portfolio .applied-secondary .card-intro { font-size: 14px !important; line-height: 1.5 !important; }
 html body #ai-cs-mock #portfolio .applied-card-actions a { font-size: 13.5px !important; }
@@ -1815,24 +1572,7 @@ html body #ai-cs-mock #portfolio .applied-secondary > h3 { min-height: 40px; }
   html body #ai-cs-mock #portfolio .applied-secondary > h3 { min-height: 0 !important; }
 }
 /* "In short" line under each case study's intro */
-html body main .in-short {
-  max-width: 62ch;
-  margin: 22px 0 0;
-  font-size: clamp(17px, 1.6vw, 19px);
-  font-weight: 700;
-  line-height: 1.45;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-html body main .in-short > span {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
+
 /* Legal page: same column and hairline rules as the other case studies */
 html body main.legal-single-case .legal-story,html body main.legal-single-case .legal-paper{
   max-width: none !important;
@@ -1841,7 +1581,7 @@ html body main.legal-single-case .legal-story,html body main.legal-single-case .
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
-html body main.legal-single-case .paper-abstract { border-bottom: 1px solid var(--rd-line) !important; }
+
 html body main.legal-single-case .paper-example { border-top: 1px solid var(--rd-line) !important; }
 html body main.legal-single-case .paper-section { border-top: 1px solid var(--rd-line) !important; }
 /* ---------- 4v. Typography (reviewer feedback #10): loosened headings; all type is sans ---------- */
@@ -1879,7 +1619,7 @@ html body main .card > .tag + h3 { margin-top: 0; }
 /* case-study openings: one hairline between the metadata and the first section, not two */
 html body main header:has(> .case-meta:last-child) + .case-page-content > .section:first-child { margin-top: 0; border-top: 0 !important; }
 /* the "In short" line keeps the same 24px gap above whatever follows it */
-html body main .in-short + :is(.card, .meridian-product-callout) { margin-top: 24px; }
+
 /* lists in a case-study section read as body copy (the 4c list rule lost to an older 14px muted rule) */
 html body main.case-system-page .case-page-content .section > :is(ul, ol) > li { font-size: 16px; line-height: 1.6; color: #3f3f46; }
 /* a section label directly above the closing links stays with them: the hairline goes above the label */
@@ -1888,7 +1628,7 @@ html body main .kicker + .case-study-footer { margin-top: 0; padding-top: 0; bor
 /* Legal page: one hairline between blocks (the turn sections and the example figure also drew a bottom
    rule, so pairs of lines stacked 30-40px apart), and every full rule spans the column */
 html body main.legal-single-case :is(.paper-turn, .paper-example) { border-bottom: 0; }
-html body main.legal-single-case .paper-meta + .legal-method { border-top: 0; }
+
 html body main.legal-single-case :is(.legal-method, .paper-before-after, .paper-learning, .paper-sources) { max-width: none !important; }
 /* AI Support Workflow: the 9.5px "Customer" label was 4.15:1 in --cyan; a darker teal of the same hue
    reaches 5.1:1 (WCAG AA). The lane colour and legend dot keep --cyan. */
@@ -2024,10 +1764,7 @@ html body .topbar .nav :is(a[aria-current="page"], a.active, button.active)::aft
   background: var(--rd-pink, #f0408f) !important;
 }
 /* Homepage calls to action and reference links use a compact corner radius. */
-html body #ai-cs-mock :is(.rd-button, .home-state-button, .home-state-primary, .home-state-secondary, .home-state-button-secondary, .home-state-secondary),
-html body #ai-cs-mock .learning-reference-links a,
-html body #ai-cs-mock #learn .stage-body :is(.resource-row a, a.resource-link, .resource-row > a),
-html body #ai-cs-mock [data-page="learn"] .learning-reference-map > a {
+html body #ai-cs-mock :is(.rd-button, .home-state-button, .home-state-primary, .home-state-secondary, .home-state-button-secondary, .home-state-secondary),html body #ai-cs-mock #learn .stage-body :is(.resource-row a, a.resource-link, .resource-row > a){
   border-radius: 12px !important;
 }
 html body #ai-cs-mock .tag,html body #ai-cs-mock .resource-link{
@@ -2037,9 +1774,7 @@ html body #ai-cs-mock .rd-trace div,
 html body #ai-cs-mock .rd-status {
   border-radius: 8px !important;
 }
-html body #ai-cs-mock [data-page="learn"] .learning-reference-map {
-  border-radius: 18px !important;
-}
+
 /* Case-study CTAs, reference links, and process chips. */
 html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.closing-links > a, .meridian-primary-action, .cta, .appendix-link a, .resource-link) {
   border-radius: 12px;
@@ -2085,9 +1820,7 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.re
   border-radius: 7px !important;
 }
 /* Applied Work's Learning Library footer action is a compact corner button. */
-html body #ai-cs-mock #portfolio .band .band-link {
-  border-radius: 12px !important;
-}
+
 /* Keep large section surfaces softly rounded without the oversized capsule look. */
 
 @media (max-width: 860px){

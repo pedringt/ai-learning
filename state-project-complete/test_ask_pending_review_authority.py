@@ -70,14 +70,14 @@ _CANDIDATES = {"state": [], "reviews": [], "questions": [], "history": [], "evid
 
 def test_grounding_rules_forbid_describing_a_pending_review_as_confirmed():
     rules = _grounding_rules()
-    assert "not yet true" in rules
+    assert "not accepted" in rules and "not yet true" not in rules
     assert "confirmed" in rules.lower() and "never" in rules.lower()
     assert "linked Question" in rules and "open" in rules
 
 
 def test_one_call_prompt_forbids_confirmed_language_for_open_reviews():
     prompt = _one_call_prompt("What are the confirmed retention terms?", _CANDIDATES, None)
-    assert "not yet true" in prompt
+    assert "not accepted" in prompt and "not yet true" not in prompt
     assert '"confirmed"' in prompt
     assert "resolving its linked Question" in prompt or "resolves it" not in prompt.lower()
 
@@ -89,7 +89,7 @@ def test_synthesis_prompt_forbids_confirmed_language_for_open_reviews():
     )
     context = {"state": [], "reviews": [], "questions": [], "history": [], "evidence": [], "rules": []}
     prompt = _synthesis_prompt("What are the confirmed retention terms?", selection, context, None)
-    assert "not yet true" in prompt
+    assert "not accepted" in prompt and "not yet true" not in prompt
     assert '"confirmed"' in prompt
 
 
@@ -401,3 +401,13 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
         bad = unsupported_settled_words(premise_payload, current_state)
         assert not bad, (f"Unhedged settled word(s) after a false-premise question: {bad}; "
                          f"whole units: {flagged_units(premise_payload, current_state)}")
+
+def test_claims_guidance_opens_a_denial_with_what_the_records_show():
+    """#567 (Paige, Nov 12): Q1 found A+D answers explaining the record correctly after a categorical lead
+    ("Security has not signed off..."). The rule asks for the record-grounded opening instead."""
+    from ask_service import claims_guidance
+
+    guidance = claims_guidance()
+    assert "Open such a sentence with what State's records show" in guidance
+    assert "This holds for every person, team and decision" in guidance
+    assert "State has no recorded leadership decision" in guidance and "not \"Security has not signed off" in guidance

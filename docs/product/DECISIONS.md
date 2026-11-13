@@ -243,6 +243,8 @@ Spend from these endpoints shows up unexpectedly, or the dashboard gets traffic 
 
 **Update (Nov 8, Paige): small guards, still open to anyone.** The Nov 5 audit found that an investigation made a model call on every request while a failure was current, and that the eval run's 10-minute cooldown could be beaten by parallel requests (GitHub lists a dispatched run only after a delay). Neither counts toward DEC-014's $50 cap. Paige chose to keep both actions open and add cooldowns that hold across parallel requests: one investigation of the same failure (project, environment, commit, signal) per 5 minutes, and one eval run per branch per 10 minutes. Each is an atomic claim in the State backend (`project_health_claims`, migration 023), because Vercel functions share no memory. If the claim store cannot be reached, the action is allowed (fail open), so an outage of the State API never removes the actions. A failed dispatch or model call gives its claim back. Still rejected: an admin key or login.
 
+**Update (Nov 12, Paige): one investigation per project, environment and signal per window.** The Nov 12 audit found that the investigation claim key included the commit, and the endpoint accepts any older commit on the branch that has a failed check, so each such commit opened its own 5-minute window. The key no longer includes the commit, and the claim is taken before any GitHub or Vercel read, so a refused request costs nothing. A request that finds no current failure gives its claim back.
+
 ### DEC-013 — The Ask quality suite is read like the review suite (trial)
 
 **Status:** Superseded by DEC-022 (Nov 12); its reading still applies to quality misses  
@@ -398,7 +400,7 @@ On a planning spec, ordinary intake dropped the explicit open question ("what ex
 `eval.run_mixed_spec_intake` classifies each run as stated as fact, raised, hedged in a fact, or dropped (scored apart, Paige's choice). Before/after on the three intake sources, the Baseline mixed-spec source, and the consequentiality eval. Stated as fact must stay at 0. The Ask-quality eval is run with the eval session before promotion.
 
 **Measured (Nov 11, Haiku 5.5)**  
-Ordinary intake, open item dropped: mixed spec 10/60 before, 0/20 after; the other two mixed sources 0/40 before and after. Stated as fact: 0 in every run before and after. No Questions about anything other than the sources' own open items appeared. Baseline Setup mixed spec: raised 12/12 before and after. Consequentiality eval: 100% precision and recall after (as before). `qa-release` model-key tests: 72 passed with no rerun. Spend for #649 about 270 Haiku calls, roughly $1.20–1.60.
+Ordinary intake, open item dropped: mixed spec 10/60 before, 0/20 after; the other two mixed sources 0/40 before and after. Stated as fact: 0 in every run before and after. No Questions about anything other than the sources' own open items appeared. Baseline Setup mixed spec: raised 12/12 before and after. Consequentiality eval: 100% precision and recall after (as before). `qa-release` model-key tests: 72 passed with no rerun. Review-interpretation suite (run by the eval session, Nov 12, 16 cases x 3): 44/48 on main, 46/48 with the rule, and no case changed to raising an extra Question. Spend for #649 about 270 Haiku calls, roughly $1.20–1.60.
 
 **Revisit when**  
 The rule produces Questions people routinely dismiss as noise, or a flagged-open item turns out to be settled elsewhere in the same source.
