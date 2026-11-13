@@ -12,6 +12,11 @@ Usage (from the repo root):
   ... --runs 1                captures per page and width (default: 1)
   ... --pages index.html,...  only these pages
   ... --self                  compare the base against itself (noise check)
+  ... --project-health        compare project-health.html instead (every project x tab)
+
+Project Health renders live data, so with --project-health every /api/ GET is fetched once from the
+live site (--live-origin) and the same response is replayed to both sides; other requests to /api/
+are refused and the clock is frozen, so both sides render identical inputs.
 Exit status is 1 when any difference is found.
 """
 from __future__ import annotations
@@ -65,14 +70,41 @@ SETTLE_JS = """async () => {
 }"""
 
 
-def capture(browser, url: str, page_name: str, width: int, height: int):
+HEALTH_PAGES = [f"project-health.html?project={p}&tab={t}"
+                for p in ("state", "tastemake", "narc", "authority-lab")
+                for t in ("overview", "ai-quality", "releases", "decision-support")]
+HEALTH_CLOCK = "2026-11-12T18:00:00Z"
+
+
+def replay_api(page, cache: dict, live_origin: str):
+    """Serve each /api/ GET from one shared recording of the live site (fetched on first use)."""
+    def handle(route):
+        request = route.request
+        if request.method != "GET":
+            return route.abort()
+        key = request.url.split("/api/", 1)[1]
+        if key not in cache:
+            response = route.fetch(url=live_origin.rstrip("/") + "/api/" + key, timeout=30000)
+            cache[key] = {"status": response.status, "body": response.text(),
+                          "type": response.headers.get("content-type", "application/json")}
+        hit = cache[key]
+        route.fulfill(status=hit["status"], body=hit["body"], content_type=hit["type"])
+    page.route("**/api/**", handle)
+
+
+def capture(browser, url: str, page_name: str, width: int, height: int, api_cache: dict | None = None, live_origin: str = ""):
     ctx = browser.new_context(viewport={"width": width, "height": height}, reduced_motion="reduce")
     page = ctx.new_page()
     errors: list[str] = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     # Analytics and other third-party requests are not part of the page's own rendering.
     page.route("**/_vercel/**", lambda route: route.abort())
+    if api_cache is not None:
+        page.clock.set_fixed_time(HEALTH_CLOCK)
+        replay_api(page, api_cache, live_origin)
     page.goto(url + page_name, wait_until="domcontentloaded", timeout=90000)
+    if api_cache is not None:
+        page.wait_for_load_state("networkidle", timeout=60000)
     page.wait_for_timeout(1500)
     page.evaluate(SETTLE_JS)
     page.add_script_tag(content=CAPTURE_JS)
@@ -99,11 +131,14 @@ def main() -> int:
     parser.add_argument("--pages")
     parser.add_argument("--self", action="store_true", dest="self_check")
     parser.add_argument("--json", help="write the full report here")
+    parser.add_argument("--project-health", action="store_true")
+    parser.add_argument("--live-origin", default="https://www.contextswitch.tech")
     args = parser.parse_args()
 
     from playwright.sync_api import sync_playwright
 
-    pages = args.pages.split(",") if args.pages else portfolio_pages()
+    api_cache = {} if args.project_health else None
+    pages = args.pages.split(",") if args.pages else HEALTH_PAGES if args.project_health else portfolio_pages()
     worktree = tempfile.mkdtemp(prefix="portfolio-base-")
     print(f"checking out {args.base} for comparison...", flush=True)
     subprocess.run(["git", "-C", REPO, "worktree", "add", "--detach", "-q", worktree, args.base], check=True)
@@ -116,8 +151,8 @@ def main() -> int:
             for page_name in pages:
                 for label, (w, h) in WIDTHS.items():
                     for run in range(args.runs):
-                        before, eb = capture(browser, before_url, page_name, w, h)
-                        after, ea = capture(browser, after_url, page_name, w, h)
+                        before, eb = capture(browser, before_url, page_name, w, h, api_cache, args.live_origin)
+                        after, ea = capture(browser, after_url, page_name, w, h, api_cache, args.live_origin)
                         d = diff(before, after)
                         key = f"{page_name} {label} run {run + 1}"
                         report[key] = {"diff": d, "errors_before": eb, "errors_after": ea}

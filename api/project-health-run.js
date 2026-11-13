@@ -46,9 +46,13 @@ const RUNS={
   }
 };
 
+// Same cap as the investigate and decisions endpoints: the real body is a few small fields.
+const MAX_BODY_BYTES=2000;
 function readBody(req){
-  if(req.body&&typeof req.body==='object') return req.body;
-  try{return JSON.parse(req.body||'{}');}catch(_){return {};}
+  if(req.body&&typeof req.body==='object') return Buffer.byteLength(JSON.stringify(req.body))<=MAX_BODY_BYTES?req.body:null;
+  const raw=String(req.body||'');
+  if(Buffer.byteLength(raw)>MAX_BODY_BYTES) return null;
+  try{return JSON.parse(raw||'{}');}catch(_){return {};}
 }
 
 const RUN_COOLDOWN_MS=10*60*1000;
@@ -178,6 +182,7 @@ module.exports=async function handler(req,res){
   }
 
   const body=readBody(req);
+  if(!body){res.status(413).json({detail:'Request body is too large.'});return;}
   const projectId=String(body.project||'').toLowerCase();
   const run=RUNS[projectId];
   const info=runInfo(projectId);
@@ -200,7 +205,9 @@ module.exports=async function handler(req,res){
 
   const recent=await fetchRecentRuns(run,ref);
   if(!recent.ok){
-    res.status(recent.status).json({detail:recent.message||'Could not check recent quality runs'});
+    // GitHub's own error text stays in the server log, not the public response (Nov 12 audit).
+    console.error('project-health-run: recent runs',recent.status,recent.message);
+    res.status(502).json({detail:'Could not check recent quality runs (GitHub '+recent.status+').'});
     return;
   }
   const workflowRuns=recent.workflowRuns;
@@ -242,7 +249,8 @@ module.exports=async function handler(req,res){
   if(!response.ok){
     await releaseAction(claimKey,held.token);
     const payload=await response.json().catch(()=>({}));
-    res.status(response.status).json({detail:payload?.message||'GitHub workflow dispatch failed'});
+    console.error('project-health-run: dispatch',response.status,payload?.message);
+    res.status(502).json({detail:'GitHub workflow dispatch failed ('+response.status+').'});
     return;
   }
 
