@@ -48,6 +48,22 @@
     "directness": "The headline answers both parts of the question immediately.",
     "hedging_calibration": "The pending $40,000 budget is stated as definite (\"The pilot budget is $40,000\"), while the settled permission to proceed is hedged into a hold.",
     "concision": "The answer is short. The summary and cards each add something."
+   },
+   "grader_v10": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 1,
+    "directness": 3,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v10": {
+    "faithfulness": "The summary says \"it's safer to hold off on implementation planning\" and the headline says planning \"should hold.\" This contradicts Current State, which says \"Implementation planning can proceed with the bounded use case.\" The answer also leaves out the Current State statement that planning can proceed.",
+    "authority_calibration": "The headline \"The pilot budget is $40,000\" presents a pending Review's figure as current fact. The answer also lets the pending Review's rationale override Current State, which allows planning to proceed.",
+    "consequential_completeness": "The answer omits the governing Current State that implementation planning can proceed with the bounded use case. That record directly answers the second part of the question.",
+    "directness": "The headline answers both parts of the question immediately, though both answers are wrong. Directness grades only how quickly the opening answers.",
+    "hedging_calibration": "The headline states the pending budget as a definite \"is $40,000.\" It also adds a hedge, \"safer to hold off,\" that undermines what Current State settles.",
+    "concision": "The answer is short and contains no real padding."
    }
   },
   {
@@ -94,6 +110,22 @@
     "directness": "The headline immediately gives the amount ($40,000) and the approval status, with its source and the Current State caveat.",
     "hedging_calibration": "The pending caveat is stated once and attached to the right item. The approval is not denied or over-hedged.",
     "concision": "Headline, summary and two cards each add something. The repetition is only the expected mild kind."
+   },
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline, summary and items all trace to the evidence and the open Review. The summary line \"no one has accepted that yet\" is supported by the Review being open.",
+    "authority_calibration": "The headline attributes the approval to the Q3 planning session and says Current State doesn't include it yet. The Review is shown as pending, so each authority level is clear.",
+    "consequential_completeness": "Both the budget evidence and the open Review are surfaced, which covers everything relevant to the question.",
+    "directness": "The headline gives the amount ($40,000) and the approval status, with the source qualification, right at the start.",
+    "hedging_calibration": "The approval is reported plainly as the source's statement, and the pending recording is caveated once, on the item it applies to.",
+    "concision": "The summary's first sentence nearly repeats the headline and the evidence item, adding only \"for discovery and first implementation\". The pending status also appears in the headline, the summary and the Review section. This is one mild restatement."
    }
   },
   {
@@ -140,6 +172,22 @@
     "directness": "The headline answers both parts immediately: the budget is not recorded, and planning can proceed.",
     "hedging_calibration": "Current State's planning permission is stated plainly. The budget is hedged once, attached to the Review.",
     "concision": "The data-scope card is unrelated context that adds nothing to either part of the question."
+   },
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The summary says 'State does not have a confirmed pilot budget' and that an open Review proposes $40,000. Both are supported, and the planning claim matches ask-state-0. Every citation is correct.",
+    "authority_calibration": "The summary marks the $40,000 as 'pending review and has not changed Current State.' Current State is given as the governing answer on planning. Each item's badge is correct.",
+    "consequential_completeness": "The answer surfaces the budget Review, the planning permission and the launch threshold gate. Its statement that planning 'can proceed' correctly does not let the Review's rationale override Current State.",
+    "directness": "The headline answers both parts at once: the budget is not recorded as settled, and planning can proceed.",
+    "hedging_calibration": "Planning permission is stated plainly. The budget is hedged once, as pending. There are no extra qualifiers.",
+    "concision": "The data-minimization item (ask-state-2) is irrelevant to both budget and planning, which counts as one irrelevant context item. The rest is the expected shape."
    }
   },
   {
@@ -186,6 +234,22 @@
     "directness": "The headline answers the Current State half immediately. It does not say what the session said about the budget; that half (approved at $40,000) is only on the card, and the summary gives just the figure.",
     "hedging_calibration": "The absence from Current State is stated plainly, and the pending status is hedged once on the right item.",
     "concision": "\"pending and unresolved\" is mildly redundant, but the summary is short and the single card adds the source wording."
+   },
+   "grader_v10": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline and summary are supported: Current State has no budget entry and a Review proposes recording the $40,000 figure. But the summary omits that the source says the budget is 'approved', and paraphrases loosely as 'figure'. 'Not yet a confirmed project fact' is acceptable framing.",
+    "authority_calibration": "The Review is explicitly pending, and Current State is correctly said to lack the budget. The answer does not claim the source said it was unapproved. The pending step is framed as recording in Current State.",
+    "consequential_completeness": "The question asks what the session said. The summary drops the source's statement that the budget was 'approved'. That detail does appear in the review card, so the omission is thin rather than missing.",
+    "directness": "The headline directly answers both parts: the budget is not in Current State and is only a pending Review.",
+    "hedging_calibration": "Pending status is stated clearly, once per item. The absence from Current State is stated plainly.",
+    "concision": "The summary says 'pending and unresolved' and then 'not yet confirmed', restating the headline's point an extra time with nothing added."
    }
   },
   {
@@ -232,6 +296,22 @@
     "directness": "The headline answers both parts immediately: the budget is not recorded, and planning can proceed.",
     "hedging_calibration": "Planning permission is stated plainly. The budget status is over-qualified as \"pending and has not been accepted, so... not yet a Current State fact.\"",
     "concision": "The pending status of the budget is restated several times in the summary (\"does not confirm\", \"pending\", \"not been accepted\", \"not yet a Current State fact\"), and a garbled phrase adds nothing."
+   },
+   "grader_v10": {
+    "faithfulness": 1,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The summary calls the budget 'proposed (not yet approved)', but the Review's own wording is 'the approved pilot budget of $40,000'. That reverses a supplied record's wording.",
+    "authority_calibration": "Pending versus Current State is kept distinct. However, the summary's closing line, 'Implementation planning depends on a known budget ceiling, so the budget question is relevant to planning', blurs whether the pending Review gates what Current State already allows.",
+    "consequential_completeness": "The answer surfaces the open budget Review, the planning permission in Current State, and the launch threshold requirement.",
+    "directness": "The headline answers both parts immediately: the budget is not yet recorded, and planning can proceed.",
+    "hedging_calibration": "The final line implies a soft gate, 'budget question is relevant to planning', on a settled Current State permission. The budget status is also hedged repeatedly ('pending', 'not been accepted', 'not yet a Current State fact').",
+    "concision": "The budget's pending status is restated several times in the summary. The data-scope card adds little to the question."
    }
   },
   {
@@ -278,6 +358,22 @@
     "directness": "The headline answers both the amount and the approval status immediately.",
     "hedging_calibration": "The approval is reported per Evidence and the pending status is stated clearly. The answer does not deny the approval.",
     "concision": "The parenthetical \"(approved (per Evidence, not in Current State))\" is repeated twice in the summary, which is redundant qualifier repetition."
+   },
+   "grader_v10": {
+    "faithfulness": 2,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline says the budget is \"not yet confirmed as approved in Current State.\" That is defensible, but it leans toward a denial. The summary's \"Current State has not changed\" is fine. The headline states \"The pilot budget is $40,000\" flatly, then attributes it to Q3 notes. Overall it stays mostly supported, but \"not yet confirmed as approved\" could read as reversing the Evidence's own wording. Scored as a minor-to-material issue.",
+    "authority_calibration": "The approval is attributed to Evidence and the Review is shown as pending. However, the headline opens with \"The pilot budget is $40,000\" as if settled, before the attribution.",
+    "consequential_completeness": "The answer surfaces the Evidence, the open Review and the fact that Current State has no budget recorded.",
+    "directness": "The headline answers both the amount and the approval status immediately.",
+    "hedging_calibration": "The repeated parenthetical \"(per Evidence, not in Current State)\" over-qualifies, but the uncertainty is attached to the right items.",
+    "concision": "The parenthetical qualifier is repeated twice, and the Current State scope item is marginal context."
    }
   },
   {
@@ -324,6 +420,22 @@
     "directness": "The headline's first clause answers the approval question directly.",
     "hedging_calibration": "The headline says \"Not as far as the record shows\" and then calls the question \"undecided\". The records show only that no decision is recorded, so \"undecided\" is a soft definite. It is mostly calibrated and the hedge is attached to the right item.",
     "concision": "Headline, summary and cards each add something. There is no padding."
+   },
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "Headline 'Not as far as the record shows' is a supported absence statement. Both items quote their records exactly, and the citations match. 'Undecided' paraphrases 'no decision is recorded' reasonably.",
+    "authority_calibration": "Current State is stated as governing ('In effect now'). The leadership question is explicitly placed in an open Review with no decision, so it is clearly pending.",
+    "consequential_completeness": "The answer surfaces both consequential records: the Current State requirement and the open Review on skipping human review for low-risk cases.",
+    "directness": "The headline answers immediately: 'Not as far as the record shows', and it corrects the implied premise first.",
+    "hedging_calibration": "The settled fact is stated plainly. The unknown is hedged once as 'as far as the record shows' / 'undecided', with no definite denial.",
+    "concision": "The headline, summary and sections restate the same two points three times. The summary largely repeats the headline without adding anything."
    }
   },
   {
@@ -370,6 +482,22 @@
     "directness": "The headline answers the question immediately with \"Not yet\" and adds the pending and current context.",
     "hedging_calibration": "\"Not yet\" gives a slightly definite negative where the records only show no recorded decision. The summary then hedges correctly with \"no decision is recorded\".",
     "concision": "The answer is short. The summary and cards each add something, and there is no padding."
+   },
+   "grader_v10": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 4
+   },
+   "reasons_v10": {
+    "faithfulness": "Headline says 'Not yet' and describes the review as 'proposing to allow skipping human review'. The record only says leadership asked a question and no decision is recorded; it does not describe a proposal. 'Not yet' also implies non-approval as a fact. The summary itself is supported.",
+    "authority_calibration": "Current State is stated as governing. The Review is explicitly pending and 'has not changed Current State'. It is not promoted.",
+    "consequential_completeness": "Both records are surfaced. The scope correction (low-risk cases only, not all review) is included.",
+    "directness": "The headline opens with 'Not yet' and answers the question directly.",
+    "hedging_calibration": "'Not yet' gives a slightly definite negative to what is unrecorded. The summary does correctly say 'no decision is recorded'.",
+    "concision": "The summary and cards are brief with no real padding."
    }
   },
   {
@@ -416,6 +544,22 @@
     "directness": "The headline answers both the amount and the approval status immediately.",
     "hedging_calibration": "The closing sentence \"State does not have a confirmed, recorded approval status to rely on yet\" is a somewhat redundant qualifier. Otherwise the hedging is appropriate.",
     "concision": "The pending status is restated several times in the summary, and the scope Current State card is irrelevant to the budget question."
+   },
+   "grader_v10": {
+    "faithfulness": 2,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "Headline says 'it is not yet approved in Current State' — the phrase 'not yet approved' reverses the source's wording, though scoped to Current State. The summary correctly says the approval 'has not been recorded in Current State'. The headline phrasing reads as a denial, though partly mitigated by the scope. Rating: loose and materially misleading, but not a full reversal.",
+    "authority_calibration": "The summary attributes the approval to Evidence and keeps the Review pending. The headline 'not yet approved in Current State' blurs approval status with recording status, so one item's status is implicit or muddled.",
+    "consequential_completeness": "The answer surfaces the $40,000 figure from Evidence, the approval claim, and the pending Review that would record it.",
+    "directness": "The headline immediately answers both parts: the amount and the approval status.",
+    "hedging_calibration": "The headline's 'not yet approved' leans toward a negative, but the summary clarifies the status. 'State does not have a confirmed, recorded approval status' is reasonable. This is one vague or slightly off hedge.",
+    "concision": "The summary restates the not-recorded point several times. The irrelevant scope item in the Current State section adds nothing to the question."
    }
   },
   {
@@ -462,6 +606,22 @@
     "directness": "The headline answers both parts of the question immediately, though wrongly. It never explicitly says \"the Q3 planning session said\", so the first part is only implicit.",
     "hedging_calibration": "A pending item is stated as a definite settled fact (\"budget of record\"), with no caveat attached to it.",
     "concision": "The answer is short with no filler. The summary restating the budget alongside its card is the expected Ask shape."
+   },
+   "grader_v10": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline \"is part of the current plan\" and the summary line \"budget of record\" contradict the supplied record. The open Review asks whether the budget should be recorded in Current State, and Current State holds only the scope statement. The summary also recasts the Review as one \"to tidy up how it is recorded\", which misrepresents it.",
+    "authority_calibration": "The pending Review's budget is presented as Current State. It sits under an \"established\" section titled \"Current plan\", and the summary says planning can use it as the budget of record. The Needs review badge does not cure that wording.",
+    "consequential_completeness": "The open Review is surfaced, but only as a recording tidy-up. The answer never says what the Review actually decides, which is whether the budget enters Current State. The answer also never attributes the budget to the Q3 session note.",
+    "directness": "The headline directly answers both parts of the question: what the budget is and whether it is current. It is wrong on status, but that is graded elsewhere.",
+    "hedging_calibration": "The budget's Current State status is still pending, yet the answer states it as definite (\"part of the current plan\", \"budget of record\").",
+    "concision": "The $40,000 figure is restated in the headline, the summary and an item with nothing added. Otherwise the answer is short."
    }
   },
   {
@@ -508,6 +668,22 @@
     "directness": "The headline answers both parts of the question at once: the budget is not in Current State and appears only in an open Review. The summary then gives what the session said.",
     "hedging_calibration": "Status is stated plainly, the pending caveat is attached to the Review, and the source's amount is reported without softening.",
     "concision": "The summary restates the unconfirmed status several times: 'does not have a confirmed pilot budget', 'not an accepted fact... Current State has not changed', and 'remains unconfirmed'. This is one prose restatement beyond the expected shape."
+   },
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The summary accurately reports the Review's wording: approved at $40,000 for discovery and the first implementation phase. \"Not in Current State\" is supported because current_state has no budget entry. \"Does not have a confirmed pilot budget\" refers to State and is supported.",
+    "authority_calibration": "The summary attributes the approval to the source note and labels the Review as pending (\"proposed record awaiting review, not an accepted fact\"). The pending step is framed as recording the budget in Current State, not as the source's approval.",
+    "consequential_completeness": "The only relevant record, the open Review, is surfaced with the amount, its scope and what decision is pending.",
+    "directness": "The headline answers the Current State part directly, and the summary gives what the session said. Both parts of the compound question are answered at the top.",
+    "hedging_calibration": "The source's statement is reported plainly and the pending status is stated clearly. \"Remains unconfirmed in State\" is accurate and does not deny that the source approved the budget.",
+    "concision": "The pending status is restated several times: \"not an accepted fact\", \"Current State has not changed\" and \"until a human accepts it ... remains unconfirmed\". This is one restatement more than needed."
    }
   },
   {
@@ -554,8 +730,68 @@
     "directness": "The headline \"Not decided yet...\" answers the question immediately.",
     "hedging_calibration": "\"Leadership has not approved\" gives an unknown a definite negative inside an otherwise hedged answer. The headline correctly says \"not decided yet,\" so the error is mitigated rather than total.",
     "concision": "The answer is short and the summary and cards each add something. There is no padding."
+   },
+   "grader_v10": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The summary says \"so leadership has not approved removing human review.\" That is a negative stated as fact. The records only show that no decision is recorded. The headline \"Not decided yet\" is close to the record's own wording, \"no decision is recorded.\" Everything else traces to a record and the citations match.",
+    "authority_calibration": "Current State is stated as governing (\"remains human-reviewed\"). The Review is explicitly pending and is said not to have changed Current State. The badges match each item's authority.",
+    "consequential_completeness": "Both relevant records appear: the Current State safety statement and the open Review about low-risk cases. Neither is missing or thin.",
+    "directness": "The headline answers the question immediately: \"Not decided yet... not an approved change.\"",
+    "hedging_calibration": "The headline is calibrated, but the summary sentence \"leadership has not approved removing human review\" presents an unrecorded outcome as a settled negative. A reader gets a soft definite \"no\" where the records only show that nothing is recorded. The headline and the rest of the summary hedge correctly, so this falls short of trust-breaking.",
+    "concision": "The pending status is restated several times: the headline, the summary's \"no decision is recorded\" clause, and the closing \"The Review remains pending and has not changed Current State.\" This is mild redundancy, but the answer is still a quick read."
    }
   }
  ],
- "grader_v9_run": 43120040958
+ "grader_v9_run": 43120040958,
+ "grader_v10_run": 43343516922,
+ "grader_v10_report": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 0.8333333333333334,
+    "passes": false
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.5833333333333334,
+    "within_one": 1.0,
+    "passes": false
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ },
+ "grader_v10_regression_misses": []
 }
