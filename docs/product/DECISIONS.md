@@ -243,6 +243,8 @@ Spend from these endpoints shows up unexpectedly, or the dashboard gets traffic 
 
 **Update (Nov 8, Paige): small guards, still open to anyone.** The Nov 5 audit found that an investigation made a model call on every request while a failure was current, and that the eval run's 10-minute cooldown could be beaten by parallel requests (GitHub lists a dispatched run only after a delay). Neither counts toward DEC-014's $50 cap. Paige chose to keep both actions open and add cooldowns that hold across parallel requests: one investigation of the same failure (project, environment, commit, signal) per 5 minutes, and one eval run per branch per 10 minutes. Each is an atomic claim in the State backend (`project_health_claims`, migration 023), because Vercel functions share no memory. If the claim store cannot be reached, the action is allowed (fail open), so an outage of the State API never removes the actions. A failed dispatch or model call gives its claim back. Still rejected: an admin key or login.
 
+**Update (Nov 12, Paige): one investigation per project, environment and signal per window.** The Nov 12 audit found that the investigation claim key included the commit, and the endpoint accepts any older commit on the branch that has a failed check, so each such commit opened its own 5-minute window. The key no longer includes the commit, and the claim is taken before any GitHub or Vercel read, so a refused request costs nothing. A request that finds no current failure gives its claim back.
+
 ### DEC-013 — The Ask quality suite is read like the review suite (trial)
 
 **Status:** Superseded by DEC-022 (Nov 12); its reading still applies to quality misses  

@@ -21,9 +21,12 @@ const reply=(status,body)=>({ok:status>=200&&status<300,status,json:async()=>bod
   assert.strictEqual(stateApiBase('preview'),'https://state-api-staging.onrender.com','non-production deployments use the staging API');
   assert.strictEqual(claimKeyPart('Authority Lab/x'),'authority-lab-x');
   assert.strictEqual(investigate._test.INVESTIGATION_COOLDOWN_SECONDS,300,'Paige chose 5 minutes');
+  // Nov 12 (Paige): one investigation per project, environment and signal per window. The key once included the
+  // commit, and any older commit with a failed check was accepted, so each one opened its own window.
+  assert.strictEqual(investigate._test.investigationClaimKey(investigate._test.PROJECTS.state,'production','vercel'),'investigate:state:production:vercel');
 
   // The eval run: when another request holds the claim, nothing is dispatched.
-  const saved={token:process.env.GITHUB_TOKEN,key:process.env.PROJECT_HEALTH_USAGE_KEY,estimate:process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE};
+  const saved={token:process.env.GITHUB_TOKEN,key:process.env.PROJECT_HEALTH_USAGE_KEY,estimate:process.env.PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE,anthropic:process.env.ANTHROPIC_API_KEY,vercel:process.env.VERCEL_TOKEN};
   const realFetch=global.fetch;
   const handle=async claimStatus=>{
     const calls=[];
@@ -48,9 +51,20 @@ const reply=(status,body)=>({ok:status>=200&&status<300,status,json:async()=>bod
     const started=await handle(200);
     assert.strictEqual(started.res.code,202,'free claim: dispatched');
     assert.ok(started.calls.some(u=>u.endsWith('/dispatches')));
+
+    // An investigation refused by a held claim reads nothing from GitHub or Vercel, whatever commit it names.
+    process.env.ANTHROPIC_API_KEY='unused';process.env.VERCEL_TOKEN='unused';
+    for(const sha of [undefined,'a'.repeat(40),'b'.repeat(40)]){
+      const calls=[];
+      global.fetch=async url=>{calls.push(String(url));if(String(url).endsWith('/api/admin/project-health-claims'))return reply(409,{claimed:false,retry_after_seconds:200});throw new Error('unexpected '+url);};
+      const res={headers:{},code:null,body:null,setHeader(k,v){this.headers[k]=v;},status(c){this.code=c;return this;},json(b){this.body=b;return this;}};
+      await investigate({method:'POST',body:{project:'state',environment:'production',signalType:'github-check',sha}},res);
+      assert.strictEqual(res.code,429,'held claim: refused for commit '+sha);
+      assert.deepStrictEqual(calls.map(u=>u.replace(/^https:\/\/[^/]+/,'')),['/api/admin/project-health-claims'],'held claim: no GitHub or Vercel read');
+    }
   }finally{
     global.fetch=realFetch;
-    for(const [name,value] of [['GITHUB_TOKEN',saved.token],['PROJECT_HEALTH_USAGE_KEY',saved.key],['PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE',saved.estimate]]){
+    for(const [name,value] of [['GITHUB_TOKEN',saved.token],['PROJECT_HEALTH_USAGE_KEY',saved.key],['PROJECT_HEALTH_RUN_COST_ESTIMATE_STATE',saved.estimate],['ANTHROPIC_API_KEY',saved.anthropic],['VERCEL_TOKEN',saved.vercel]]){
       if(value===undefined)delete process.env[name];else process.env[name]=value;
     }
   }
