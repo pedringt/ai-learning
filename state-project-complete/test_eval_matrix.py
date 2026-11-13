@@ -573,10 +573,38 @@ def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
 
 def test_grader_rubric_carries_the_nov_11_rules():
     from eval.ask_grader import GRADER_VERSION, RUBRIC
-    assert GRADER_VERSION.startswith("ask-grader-v9")
+    assert GRADER_VERSION.startswith("ask-grader-v10")
     assert "Absence of a record is not a negative fact" in RUBRIC
     assert "not whether the answer is right" in RUBRIC
     assert "Do not apply a uniform deduction" in RUBRIC
+
+
+def test_grader_rubric_carries_the_nov_12_v10_rules():
+    from eval.ask_grader import RUBRIC
+    assert "neutral label" in RUBRIC and "judged like a claim" in RUBRIC
+    assert "A withholding notice neither excuses an omission nor proves that one occurred" in RUBRIC
+    assert "A badge never cures wording" in RUBRIC
+    assert "Multiple claims alone are not a directness flaw" in RUBRIC
+    assert "establishes the denial at the same scope" in RUBRIC
+    assert "restates the premise as background" in RUBRIC
+
+
+def test_grader_sees_the_all_withheld_line_when_no_claim_is_left():
+    from ask_display import ALL_WITHHELD_LINE, WITHHELD_LINE
+    from eval.ask_grader import visible_answer
+    none_left = {"headline": "What State has on record", "claims": [], "withheld_claims": 2, "sections": []}
+    some_left = {"headline": "What State has on record", "claims": [{"text": "c", "label": "Current State"}],
+                 "withheld_claims": 1, "sections": []}
+    assert visible_answer(none_left)["withheld_note"] == ALL_WITHHELD_LINE
+    assert visible_answer(some_left)["withheld_note"] == WITHHELD_LINE
+
+
+def test_641_holdout_regression_examples_name_saved_fresh_set_answers():
+    ids = {i.id for i in matrix.calibration_items(matrix.HOLDOUT_641_ANSWERS)}
+    assert {aid for aid, *_ in matrix.HOLDOUT_641_REGRESSIONS} == {"h6", "r4", "r3"} <= ids
+    results = [{"scenario_id": "r4", "grades": {"directness": {"score": 3}}}]
+    missed = matrix.calibration_641_regressions(results, matrix.HOLDOUT_641_REGRESSIONS)
+    assert "r4 directness: expected 1-2, got 3" in missed
 
 
 def test_grader_is_told_todays_date():

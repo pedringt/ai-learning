@@ -212,11 +212,25 @@ CALIBRATION_641_REGRESSIONS = (
 )
 
 
-def calibration_641_regressions(results: list[dict[str, Any]]) -> list[str]:
-    """The regression examples a recalibrate run missed, as readable lines (empty when all hold)."""
+# v10 (Nov 12): the fresh-set answers v9 missed against the adjudicated reference, kept as regression examples for
+# `validate` runs. From now on these are calibration material, not held-out evidence.
+HOLDOUT_641_REGRESSIONS = (
+    ("h6", "faithfulness", 1, 2),         # blind v06: "we didn't decide that" from a record about the first implementation only
+    ("h6", "hedging_calibration", 1, 2),  # ...a narrower-scope record stated as a definite denial
+    ("r4", "directness", 1, 2),           # blind v07: opening restates the false premise as background
+    ("r4", "faithfulness", 1, 2),         # ...and implies an unrecorded decision
+    ("r3", "directness", 1, 2),           # blind v11, the same flaw
+    ("r3", "faithfulness", 1, 2),
+)
+
+
+def calibration_641_regressions(results: list[dict[str, Any]],
+                                examples: tuple[tuple[str, str, int, int], ...] = CALIBRATION_641_REGRESSIONS) -> list[str]:
+    """The regression examples a recalibrate (or, with HOLDOUT_641_REGRESSIONS, validate) run missed, as readable
+    lines (empty when all hold)."""
     by_id = {r["scenario_id"]: r for r in results}
     missed = []
-    for answer_id, dim, low, high in CALIBRATION_641_REGRESSIONS:
+    for answer_id, dim, low, high in examples:
         grade = (by_id.get(answer_id, {}).get("grades") or {}).get(dim)
         score = grade["score"] if grade else None
         if score is None or not low <= score <= high:
