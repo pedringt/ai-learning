@@ -59,6 +59,12 @@ def test_consequentiality_guidance_instructs_checking_every_open_question_before
     assert "resolves_question_ids" in CONSEQUENTIALITY_AND_GROUPING_GUIDANCE
 
 
+
+def test_consequentiality_guidance_has_a_reversal_propose_the_new_state():
+    """#660 (Paige, Nov 12): a bare retire leaves Current State silent, so Ask can no longer say the fact changed."""
+    assert "propose an update that states the new state for that item" in CONSEQUENTIALITY_AND_GROUPING_GUIDANCE
+    assert "not a bare retire" in CONSEQUENTIALITY_AND_GROUPING_GUIDANCE
+
 def test_anthropic_prompt_contains_the_completeness_and_question_check_instructions():
     db_context, connection = _empty_context_connection()
     try:
