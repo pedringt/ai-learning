@@ -11,7 +11,7 @@ from collections import OrderedDict
 from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 from copy import deepcopy
-from threading import Lock
+from threading import Event, Lock
 from typing import Literal
 import logging
 import secrets
@@ -22,6 +22,7 @@ from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse, StreamingResponse
+import anyio
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -960,7 +961,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
 
         today = ask_today(payload.client_date)
 
-        def event_stream():
+        def event_stream(cancelled: Event):
             try:
                 with get_connection() as connection:
                     cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer, today=today)
@@ -971,7 +972,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                         return
                     try:
                         for event_name, event_payload in stream_ask_events(
-                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today
+                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today,
+                            cancelled=cancelled,
                         ):
                             if event_name == "final":
                                 request.app.state.ask_cache.put(cache_key, event_payload)
@@ -997,8 +999,33 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 message = AI_BUDGET_MESSAGE if is_ai_budget_exhausted(exc) else "Ask is temporarily unavailable. Please try again."
                 yield f"event: error\ndata: {json.dumps({'message': message})}\n\n"
 
+        async def closing_event_stream():
+            # #654: on a client disconnect Starlette cancels the response, but a sync body is read in a worker thread
+            # that cannot be interrupted, and it kept reading the provider until its next event (often the end of
+            # the answer); nothing then closed it. Abandon that thread on cancel, tell it to stop at the provider's
+            # next chunk, and close the generator (which closes the provider stream) once the thread lets go of it.
+            cancelled = Event()
+            step_lock = Lock()
+            events = event_stream(cancelled)
+
+            def step():
+                with step_lock:
+                    return next(events, None)
+
+            def close():
+                with step_lock:
+                    events.close()
+
+            try:
+                while (chunk := await anyio.to_thread.run_sync(step, abandon_on_cancel=True)) is not None:
+                    yield chunk
+            finally:
+                cancelled.set()
+                with anyio.CancelScope(shield=True):
+                    await anyio.to_thread.run_sync(close)
+
         return StreamingResponse(
-            event_stream(),
+            closing_event_stream(),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
