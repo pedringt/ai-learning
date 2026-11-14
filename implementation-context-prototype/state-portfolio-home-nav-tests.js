@@ -1,7 +1,7 @@
 // #588/#589: the portfolio homepage (index.html) opens with Paige's name and description, makes the
 // work the primary call to action, gives each State entry point its own job, exposes the active
 // primary view with aria-current, moves focus to the new view's heading only on user-initiated view
-// changes, and hides the purely decorative hero notes from assistive technology.
+// changes, and hides the purely decorative hero board pieces from assistive technology.
 // The browser check (keyboard, Back/Forward, phone picker, viewports) is in the #588/#589 report.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
@@ -45,12 +45,16 @@ check('the homepage State card describes the practical problem and keeps demo + 
 check('the authority-boundary explanation is not repeated in the homepage card or the catalog entry',
   ![homeCard,catalog].some(t=>/authoriz|human-approved|boundary/i.test(t)));
 
-// #589: decorative notes hidden; the real State link and card copy stay exposed.
-for(const cls of ['rd-review-human','rd-review-authority','rd-review-current'])
-  check(`hero ${cls} note is hidden from assistive technology`,html.includes(`<div class="rd-review-note ${cls}" aria-hidden="true">`));
-check('the yellow boundary note is hidden from assistive technology (the card says the same thing)',html.includes('<div class="rd-note" aria-hidden="true">'));
-const card=between('<div class="rd-card">','<div class="rd-trace"');
-check('the hero card heading, sentence and Open State link are not hidden',!/aria-hidden/.test(card.replace(/<span aria-hidden="true">↗<\/span>/,''))&&card.includes('data-state-app-link'));
+// #589, Nov 13 board hero: pins, tape, icons and the illustrative preview are hidden; the note words, the
+// card heading and the real State link stay exposed.
+const board=between('<aside class="rd-stage rd-board"','</aside>');
+check('hero board decorations and preview are hidden from assistive technology',
+  !!board&&[...board.matchAll(/<(span|svg|div) class="rd-board-(pin|tape|icon|preview)"[^>]*>/g)].every(m=>/aria-hidden="true"/.test(m[0]))&&/rd-board-preview" aria-hidden="true"/.test(board));
+const card=between('<div class="rd-board-card">','<div class="rd-board-preview"');
+check('the hero card heading and subtitle are not hidden, and Open State follows the preview',
+  !/aria-hidden/.test(card.replace('<span class="rd-board-tape" aria-hidden="true"></span>',''))&&card.includes('<h2>State</h2>')&&/<a class="rd-card-link"[^>]*data-state-app-link/.test(board));
+// Nov 13 (Paige): the rotating "What I pay attention to" strip and its typing script are removed, not hidden.
+check('the rotating text strip and its script are gone',!/rd-rail|rd-type-|What I pay attention to/.test(html));
 
 // #589: aria-current and focus management in the router.
 check('Home starts as the aria-current destination',html.includes('<button class="active" data-view="home" aria-current="page">Home</button>'));
@@ -63,12 +67,6 @@ check('Back/Forward update the view with focus, the initial load does not move f
 check('the brand goes Home through the router',router.includes("root.querySelector('[data-brand-home]')?.addEventListener('click',()=>go('home'));"));
 for(const [page,heading] of [['home','<h1 tabindex="-1">'],['portfolio','<h2 class="section-title" tabindex="-1">'],['learn','class="route-title" role="heading" tabindex="-1">']])
   check(`the ${page} view heading is a programmatic focus target`,html.includes(heading));
-
-// #589: the blue note covered the end of the State card sentence at 681-980px.
-const css=fs.readFileSync(path.join(root,'site-components.css'),'utf8');
-const tabletAt=css.indexOf('@media (max-width:980px) and (min-width:681px){\n  html body #ai-cs-mock .rd-hero h1');
-const tablet=tabletAt<0?'':css.slice(tabletAt,css.indexOf('\n}',tabletAt));
-check('at tablet widths the Current State note sits below the State card sentence',/\.rd-review-current\{right:-28px;top:262px\}/.test(tablet),tablet);
 
 // #588/#598: every homepage footer links the accepted general résumé, a real two-page PDF at /resume.pdf.
 const footers=[...html.matchAll(/<nav class="portfolio-contact"[\s\S]*?<\/nav>/g)].map(m=>m[0]);

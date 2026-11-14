@@ -717,45 +717,6 @@ html body #ai-cs-mock .rd-hero .lead {
   font-size: clamp(17px, 1.5vw, 21px);
   line-height: 1.5;
 }
-.rd-card::before {
-  position: absolute;
-  inset: -14px auto auto -14px;
-  width: 110px;
-  height: 110px;
-  border-radius: 26px;
-  background: var(--rd-acid);
-  z-index: -1;
-  transform: rotate(-12deg);
-}
-.rd-status::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: currentColor;
-}
-
-.rd-trace div {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 11px;
-  line-height: 1.2;
-}
-.rd-trace div:nth-child(2) { animation-delay: 0.45s; }
-.rd-trace div:nth-child(3) { animation-delay: 0.9s; }
-.rd-trace div:nth-child(4) { animation-delay: 1.35s; }
-.rd-note span {
-  display: block;
-  margin-top: 8px;
-  color: #493f11;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 /* Featured work grid */
 html body #ai-cs-mock .home-start { margin-top: 56px; }
 html body #ai-cs-mock .home-applied-heading { margin-bottom: 18px; }
@@ -1652,68 +1613,14 @@ html body main .owner-customer .owner-tag { color: #007a8a; }
   html body #ai-cs-mock .home-feature-state-anchor::after,
   html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(n)::after { display: none !important; }
 }
-.rd-paper::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(21,17,26,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(21,17,26,.035) 1px,transparent 1px);background-size:18px 18px;opacity:.38}
-.rd-paper-one{left:112px;top:128px;width:338px;height:250px;transform:rotate(-3.2deg)}
-.rd-paper-two{left:132px;top:150px;width:352px;height:246px;transform:rotate(2.4deg);opacity:.82}
-.rd-lines>path{fill:none;stroke-linecap:round;stroke-linejoin:round}
-.rd-sketch-main{stroke:#1b2431;stroke-width:1.7;stroke-dasharray:90;stroke-dashoffset:0}
-.rd-sketch-ghost{stroke:#1b2431;stroke-width:.85;opacity:.22;transform:translate(.7px,-.35px)}
-.rd-arrowhead-shape{fill:none;stroke:#1b2431;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
-.rd-card::before{content:none}
-.rd-status::before{width:7px;height:7px;box-shadow:0 0 0 4px rgba(238,42,123,.1);animation:none!important}
-html body #ai-cs-mock .rd-control h2{margin:0!important;font-size:38px!important;line-height:.96!important;letter-spacing:-.055em;color:#0f172a!important}
-html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!important;font-size:11.5px!important;line-height:1.45!important}
-.rd-trace div{display:flex;align-items:center;justify-content:center;min-height:31px;border:1px solid #efe4a5;border-radius:999px;background:#fff8c9;padding:6px 5px;color:#344054;font-size:9px;font-weight:750;white-space:nowrap;animation:none!important}
-.rd-mini-panel h3{margin:0 0 7px;font-size:10.5px;}
-.rd-mini-row:first-of-type{border-top:0}
-.rd-mini-row span:nth-child(2),.rd-mini-row>span:first-child:not(.mini-box){flex:1}
-.mini-count.amber{background:#ffe174;color:#5f4b00}
-.mini-count.blue{background:#e6edff;color:#334ac0}
-.mini-count.pink{background:#ffd6e2;color:#952449}
-.mini-count.slate{background:#e9ecf2;color:#475467}
-.rd-review-note .rd-tape{position:absolute;top:-8px;left:50%;width:38px;height:14px;background:rgba(221,224,221,.72);transform:translateX(-50%) rotate(-7deg);filter:drop-shadow(0 2px 2px rgba(21,17,26,.03))}
-.authority-icon{color:#0b9b51}
-.current-icon{color:#3157d8}
-.rd-review-human{left:18px;top:30px;width:188px;background:#fff0e9;transform:rotate(-6deg)}
-.rd-review-authority{right:2px;top:34px;width:180px;background:#eaf9e9;transform:rotate(6deg)}
-.rd-review-current{right:-30px;top:160px;width:128px;background:#edf5ff;transform:rotate(7deg)}
-.rd-review-current .rd-tape{left:64%;transform:translateX(-50%) rotate(5deg)}
-.rd-note .rd-tape-note{position:absolute;top:-15px;left:22px;width:38px;height:13px;background:rgba(218,220,216,.76);transform:rotate(-4deg)}
-.rd-note>span:last-child{margin-top:10px;padding-top:8px;border-top:1px solid rgba(44,42,15,.22);color:#252411;font-size:7.7px;font-weight:850;letter-spacing:.16em}
-.rd-type-anchor{flex:0 0 auto;color:#8b8490;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
-.rd-type-label span{color:#d6a31e;font-size:13px;letter-spacing:0}
-@media (max-width:1180px) and (min-width:981px){
-  .rd-stage{transform:scale(.9);transform-origin:center right}
-  .rd-review-current{right:-32px}
-  .rd-paper-one{left:38px}
-  .rd-paper-two{left:58px}
-}
 @media (max-width:980px) and (min-width:681px){
   html body #ai-cs-mock .rd-hero h1{max-width:760px;font-size:clamp(58px,9.5vw,80px)}
   html body #ai-cs-mock .rd-hero .lead{max-width:650px}
-  .rd-review-human{left:24px}
-  .rd-review-authority{right:14px}
-  /* #589: at 170px this note covered the end of the State card's description (reproduced at 681-980px); sit it over the decorative trace instead */
-  .rd-review-current{right:-28px;top:262px}
 }
 @media (max-width:680px){
   html body #ai-cs-mock .rd-hero h1{font-size:clamp(46px,13vw,62px);line-height:.91;letter-spacing:-.067em}
   html body #ai-cs-mock .rd-hero .lead{margin-top:20px;font-size:17px;}
-  .rd-control h2{font-size:36px}
-  .rd-control p{font-size:11px}
-  .rd-trace div{white-space:normal;min-height:34px}
-  .rd-type-anchor{font-size:8.5px;letter-spacing:.08em}
   
-}
-/* the blue "Current State" note sits further out on wide screens only; narrower ones have no room before the viewport edge */
-@media (min-width: 1300px){
-  .rd-review-current { right: -90px; }
-}
-@media (min-width: 1440px){
-  .rd-review-current { right: -130px; }
-}
-@media (min-width: 1600px){
-  .rd-review-current { right: -150px; }
 }
 /* ==== Folded in from portfolio-shape-polish.css (#451). Every page loaded that file
    immediately after this one, so appending it here keeps the cascade order. ==== */
@@ -1769,10 +1676,6 @@ html body #ai-cs-mock :is(.rd-button, .home-state-button, .home-state-primary, .
 }
 html body #ai-cs-mock .tag,html body #ai-cs-mock .resource-link{
   border-radius: 7px !important;
-}
-html body #ai-cs-mock .rd-trace div,
-html body #ai-cs-mock .rd-status {
-  border-radius: 8px !important;
 }
 
 /* Case-study CTAs, reference links, and process chips. */
@@ -1847,7 +1750,6 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.re
 @keyframes rdPulse { 0% { box-shadow: 0 0 0 0 rgba(182, 35, 106, 0.42); } 100% { box-shadow: 0 0 0 10px rgba(182, 35, 106, 0); } }
 @keyframes rdGlowStep { 0%, 100% { background: rgba(255, 255, 255, 0.68); } 45%, 55% { background: rgba(244, 255, 82, 0.42); border-color: rgba(255, 107, 87, 0.44); } }
 @keyframes rdDrift { to { transform: translateX(-50%); } }
-@keyframes rdCursorBlink{0%,48%{opacity:.72}49%,100%{opacity:0}}
 /* Case studies (#600–#605): My role / AI collaborator sit in one compact block above the closing links, and a
    short scope line can sit under the lead. The block keeps the hero's hairlines, so the closing links drop theirs. */
 html body main .case-credits { margin-top: 30px; }
