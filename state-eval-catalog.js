@@ -705,7 +705,8 @@
      "not been established",
      "does not have an established",
      "does not have a confirmed",
-     "does not have a safe autonomous-resolution percentage"
+     "does not have a safe autonomous-resolution percentage",
+     "has no established"
     ]
    ],
    "forbidden_claims": [

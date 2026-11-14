@@ -420,6 +420,9 @@ _ANSWER_UNCERTAINTY_SIGNALS = (
     # yet confirmed approval", "an open, blocking question", "an open, non-blocking question", "has not signed off".
     "not yet confirmed", "not yet approved", "not yet established", "has not signed off", "not signed off",
     "open, blocking question", "open, non-blocking question", "open blocking question", "open non-blocking question",
+    # Nov 13 (Paige, staging run 43532212042): the record-first wording #567's denial rule asks for, e.g. "State does
+    # not confirm launch readiness: a blocking Question is open..." and "State has no confirmed Security approval...".
+    "does not confirm", "has no confirmed",
 )
 
 
