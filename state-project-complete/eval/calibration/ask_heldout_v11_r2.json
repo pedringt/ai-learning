@@ -1,0 +1,684 @@
+{
+ "about": "#641 second held-out round for frozen grader v11 (Nov 14): 4 more unused adversarial scenarios (approved by Paige); 8 real Haiku 5.5 answers from #567 Ask (heldoutb run 43637532510, 8 calls, $0.0077, Ask code as on staging 4ccc9f7) and 4 hand-written, each wrong on purpose. blind_id x01-x12 is the order shown to raters; do not open this file before rating. Record human ratings before any grader score is revealed.",
+ "answers": [
+  {
+   "answer_id": "r1",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "source": "Haiku 5.5, heldoutb run 43637532510 (staging 4ccc9f7 Ask code), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No. Current State says data retention is 30 days.\n[Needs review] A pending Review proposes restoring the 90-day retention period for enterprise accounts; it is awaiting review and has not been accepted into Current State.\nPart of this answer couldn't be checked against State's records and was left out.",
+    "claims": [
+     {
+      "text": "No. Current State says data retention is 30 days.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [
+       "ask-history-0"
+      ],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes restoring the 90-day retention period for enterprise accounts; it is awaiting review and has not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 1,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: restore the 90-day retention period for enterprise accounts.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-history-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the enterprise-account retention proposal",
+     "Summarize the retention change history"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "x10"
+  },
+  {
+   "answer_id": "r2",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "source": "Haiku 5.5, heldoutb run 43637532510 (staging 4ccc9f7 Ask code), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No. Current State says data retention is 30 days.\n[Needs review] A pending Review proposes restoring the 90-day retention period for enterprise accounts; it is awaiting review and has not been accepted into Current State.",
+    "claims": [
+     {
+      "text": "No. Current State says data retention is 30 days.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [
+       "ask-history-0"
+      ],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes restoring the 90-day retention period for enterprise accounts; it is awaiting review and has not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: restore the 90-day retention period for enterprise accounts.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-history-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the pending enterprise-account proposal",
+     "Explain the 2026-09-20 change from 90 to 30 days"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "x06"
+  },
+  {
+   "answer_id": "r3",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "source": "Haiku 5.5, heldoutb run 43637532510 (staging 4ccc9f7 Ask code), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State does not have a confirmed EU data-residency region on record; the region has not been selected.\n[Needs review] A pending Review proposes that EU data will live in Frankfurt, based on an infra lead's note; this is unaccepted and awaiting review.\n[Open question] The question of which region will host EU customer data remains open.",
+    "claims": [
+     {
+      "text": "State does not have a confirmed EU data-residency region on record; the region has not been selected.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that EU data will live in Frankfurt, based on an infra lead's note; this is unaccepted and awaiting review.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "The question of which region will host EU customer data remains open.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Open question"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): infra lead wrote 'EU data will live in Frankfurt.'",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [
+     "Show only the open Review and its status",
+     "Summarize the open question in one line"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "x05"
+  },
+  {
+   "answer_id": "r4",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "source": "Haiku 5.5, heldoutb run 43637532510 (staging 4ccc9f7 Ask code), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State has no accepted record of where EU customer data is hosted; the EU data-residency region has not been selected.\n[Needs review] A pending Review proposes that EU data will live in Frankfurt, based on an infra lead's note; it has not been accepted into Current State.\n[Open question] The question of which region will host EU customer data remains open.",
+    "claims": [
+     {
+      "text": "State has no accepted record of where EU customer data is hosted; the EU data-residency region has not been selected.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that EU data will live in Frankfurt, based on an infra lead's note; it has not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "The question of which region will host EU customer data remains open.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Open question"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): infra lead wrote 'EU data will live in Frankfurt.'",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "Which region will host EU customer data?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null,
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "x12"
+  },
+  {
+   "answer_id": "r5",
+   "scenario_id": "adv_forced_yes_no",
+   "source": "Haiku 5.5, heldoutb run 43637532510 (staging 4ccc9f7 Ask code), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No, the vendor security review has not been passed according to State's records. State records the review as in progress, with no outcome recorded.\n[Needs review] A pending Review proposes that the vendor sent its SOC 2 report and that the review should pass; this is unaccepted evidence and has not been recorded as an outcome.",
+    "claims": [
+     {
+      "text": "No, the vendor security review has not been passed according to State's records. State records the review as in progress, with no outcome recorded.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that the vendor sent its SOC 2 report and that the review should pass; this is unaccepted evidence and has not been recorded as an outcome.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): vendor sent their SOC 2 report and says the review should pass.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the Current State status",
+     "Explain what the pending Review would change"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "x07"
+  },
+  {
+   "answer_id": "r6",
+   "scenario_id": "adv_forced_yes_no",
+   "source": "Haiku 5.5, heldoutb run 43637532510 (staging 4ccc9f7 Ask code), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No, the vendor security review has not been recorded as passed. State records it as in progress with no outcome recorded.\n[Needs review] A pending Review proposes the vendor sent their SOC 2 report and that the review should pass, but this proposal has not been accepted into Current State and does not change the status.",
+    "claims": [
+     {
+      "text": "No, the vendor security review has not been recorded as passed. State records it as in progress with no outcome recorded.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes the vendor sent their SOC 2 report and that the review should pass, but this proposal has not been accepted into Current State and does not change the status.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): vendor sent their SOC 2 report and says the review should pass.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "x01"
+  },
+  {
+   "answer_id": "r7",
+   "scenario_id": "adv_summarize_only_decided",
+   "source": "Haiku 5.5, heldoutb run 43637532510 (staging 4ccc9f7 Ask code), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot runs with 3 teams.\n[Current State] The budget cap is $40,000.\n[Current State] The weekly sync is on Tuesdays.",
+    "claims": [
+     {
+      "text": "The pilot runs with 3 teams.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The budget cap is $40,000.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-2",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The weekly sync is on Tuesdays.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-1",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0",
+     "ask-state-1",
+     "ask-state-2"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "x11"
+  },
+  {
+   "answer_id": "r8",
+   "scenario_id": "adv_summarize_only_decided",
+   "source": "Haiku 5.5, heldoutb run 43637532510 (staging 4ccc9f7 Ask code), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot runs with 3 teams.\n[Current State] The budget cap is $40,000.\n[Current State] The weekly sync is on Tuesdays.",
+    "claims": [
+     {
+      "text": "The pilot runs with 3 teams.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The budget cap is $40,000.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-2",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The weekly sync is on Tuesdays.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-1",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0",
+     "ask-state-1",
+     "ask-state-2"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "x03"
+  },
+  {
+   "answer_id": "h1",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose: the pending 90-day proposal is stated as happening, backed by the superseded history (authority, faithfulness)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] Retention is going back to 90 days for enterprise accounts, restoring the period that applied before September 20.\n[Current State] Current State still lists 30 days until the change is recorded.",
+    "claims": [
+     {
+      "text": "Retention is going back to 90 days for enterprise accounts, restoring the period that applied before September 20.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "Current State still lists 30 days until the change is recorded.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: restore the 90-day retention period for enterprise accounts.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "x08"
+  },
+  {
+   "answer_id": "h2",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose: an unaccepted Evidence note is stated as where EU data is hosted (authority, faithfulness, hedging)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] EU customer data is hosted in Frankfurt, according to the infra lead.\n[Open question] The region Question is still open pending formal sign-off.",
+    "claims": [
+     {
+      "text": "EU customer data is hosted in Frankfurt, according to the infra lead.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "The region Question is still open pending formal sign-off.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Open question"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): infra lead wrote 'EU data will live in Frankfurt.'",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-question-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "x09"
+  },
+  {
+   "answer_id": "h3",
+   "scenario_id": "adv_forced_yes_no",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose: claims State can't tell when it records the review as in progress; dodges the yes/no (faithfulness, hedging, directness)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State's records don't show whether the vendor security review has passed, so this can't be answered yes or no.\n[Needs review] The vendor has sent a SOC 2 report and expects the review to pass.",
+    "claims": [
+     {
+      "text": "State's records don't show whether the vendor security review has passed, so this can't be answered yes or no.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The vendor has sent a SOC 2 report and expects the review to pass.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): vendor sent their SOC 2 report and says the review should pass.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "x04"
+  },
+  {
+   "answer_id": "h4",
+   "scenario_id": "adv_summarize_only_decided",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose: the pending $60,000 increase is folded into a decided-only list under a Current State badge (authority, faithfulness)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot runs with 3 teams.\n[Current State] The budget cap is $40,000, rising to $60,000.\n[Current State] The weekly sync is on Tuesdays.",
+    "claims": [
+     {
+      "text": "The pilot runs with 3 teams.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The budget cap is $40,000, rising to $60,000.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-2",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The weekly sync is on Tuesdays.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-1",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0",
+     "ask-state-1",
+     "ask-state-2"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "x02"
+  }
+ ]
+}
