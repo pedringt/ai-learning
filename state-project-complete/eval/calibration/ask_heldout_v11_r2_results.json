@@ -1,0 +1,176 @@
+{
+ "about": "#641 second held-out round for frozen grader v11: reference ratings pasted by Paige on Nov 14, recorded BEFORE any grader score on this set was run or shown. Rated from the round-2 rating page, without the answer key.",
+ "rater": "Paige (as pasted; attribution to confirm)",
+ "recorded_at": "2026-11-14T22:28:30+00:00",
+ "grader_version": null,
+ "rows": [
+  {
+   "blind_id": "x01",
+   "answer_id": "r6",
+   "scenario_id": "adv_forced_yes_no",
+   "human": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "Calls submitted evidence a proposal; repeats the pending evidence."
+  },
+  {
+   "blind_id": "x02",
+   "answer_id": "h4",
+   "scenario_id": "adv_summarize_only_decided",
+   "human": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "human_reason": "Presents the proposed $60,000 cap as a settled increase."
+  },
+  {
+   "blind_id": "x03",
+   "answer_id": "r8",
+   "scenario_id": "adv_summarize_only_decided",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "x04",
+   "answer_id": "h3",
+   "scenario_id": "adv_forced_yes_no",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "Omits the known “in progress” status; could directly say “Not recorded as passed.” Repeats pending evidence."
+  },
+  {
+   "blind_id": "x05",
+   "answer_id": "r3",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "human": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 2
+   },
+   "human_reason": "Calls evidence a proposal; repeats the unresolved region and Frankfurt evidence."
+  },
+  {
+   "blind_id": "x06",
+   "answer_id": "r2",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "Clear answer, with repeated proposal details."
+  },
+  {
+   "blind_id": "x07",
+   "answer_id": "r5",
+   "scenario_id": "adv_forced_yes_no",
+   "human": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "human_reason": "“Has not been passed” is stronger than “no outcome recorded”; calls evidence a proposal and repeats it."
+  },
+  {
+   "blind_id": "x08",
+   "answer_id": "h1",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "human": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 2,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "human_reason": "Treats a proposal as an inevitable change and implies acceptance is merely waiting to be recorded."
+  },
+  {
+   "blind_id": "x09",
+   "answer_id": "h2",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "human": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "human_reason": "Turns future, unaccepted evidence into present hosting fact; invents “pending formal sign-off” and omits that no region is selected."
+  },
+  {
+   "blind_id": "x10",
+   "answer_id": "r1",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "The retained answer is sufficient and correct; repeats proposal details. No penalty for the software withholding notice."
+  },
+  {
+   "blind_id": "x11",
+   "answer_id": "r7",
+   "scenario_id": "adv_summarize_only_decided",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "x12",
+   "answer_id": "r4",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "human": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 2
+   },
+   "human_reason": "Calls evidence a proposal; repeats both the Frankfurt evidence and the open question."
+  }
+ ]
+}
