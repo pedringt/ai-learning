@@ -32,6 +32,35 @@
     "directness": "Claim 1 answers the pilot size directly, and claim 2 addresses the sign-off part.",
     "hedging_calibration": "'Informally signed off' gives the open unknown a soft implied yes, even though the blocking Question says approval is unknown.",
     "concision": "Three short claims with supporting cards; no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 2
+     },
+     "authority_calibration": {
+      "from": 4,
+      "to": 2
+     },
+     "consequential_completeness": {
+      "from": 4,
+      "to": 3
+     },
+     "hedging_calibration": {
+      "from": 4,
+      "to": 2
+     }
+    },
+    "note": "Paige agreed with the grader's reasoning after seeing it (Nov 14 walk-through)."
    }
   },
   {
@@ -62,6 +91,23 @@
     "directness": "The first claim gives the current date, which answers the question. However, it never states plainly that no new date has been set, so the reader must infer the premise correction from three claims together.",
     "hedging_calibration": "The current date is stated plainly. Pending proposals are hedged once each.",
     "concision": "Three short claims plus cards giving provenance. No padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "directness": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "note": "Paige agreed with the grader's reasoning after seeing it (Nov 14 walk-through)."
    }
   },
   {
@@ -92,6 +138,31 @@
     "directness": "The first claim states the support hours immediately.",
     "hedging_calibration": "A settled Current State fact is undermined by heavy hedging: \"appear to be\", \"can't confirm these are current\" and \"may have changed\". This is not a single minor qualifier, and the reader is left doubting real truth.",
     "concision": "The answer is one sentence, but the clause \"though State can't confirm these are current and they may have changed\" is filler that adds no fact."
+   },
+   "human_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 2
+     },
+     "authority_calibration": {
+      "from": 4,
+      "to": 2
+     },
+     "concision": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "note": "Paige agreed with the grader's reasoning after seeing it (Nov 14 walk-through)."
    }
   },
   {
@@ -122,6 +193,14 @@
     "directness": "The headline is a neutral label, and the first claim answers the question immediately.",
     "hedging_calibration": "The settled Current State fact is stated plainly, with no qualifiers.",
     "concision": "The answer is one claim with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
    }
   },
   {
@@ -152,6 +231,23 @@
     "directness": "The first claim answers the pilot-size part directly. The second claim answers the sign-off part right after.",
     "hedging_calibration": "The pilot size is stated plainly. Sign-off is treated as unknown and pending, with no definite 'no' and no implied yes. Each caveat is attached to its own item.",
     "concision": "There are three focused claims with provenance cards. The repetition is the expected claim-plus-card shape, and there is no filler."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "consequential_completeness": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "note": "Paige agreed with the grader's reasoning after seeing it (Nov 14 walk-through)."
    }
   },
   {
@@ -182,6 +278,31 @@
     "directness": "The opening claim states a limit right away. It is the wrong figure, but that is penalized under faithfulness and authority, not here.",
     "hedging_calibration": "The pending $5,000 proposal is stated as a definite current value, while the settled $2,500 is undermined with 'still lists... until processed'.",
     "concision": "Two claims and one review card; no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 1
+     },
+     "authority_calibration": {
+      "from": 4,
+      "to": 1
+     },
+     "hedging_calibration": {
+      "from": 4,
+      "to": 1
+     }
+    },
+    "note": "Paige agreed with the grader's reasoning after seeing it (Nov 14 walk-through)."
    }
   },
   {
@@ -212,6 +333,14 @@
     "directness": "The first claim answers the question directly: $2,500.",
     "hedging_calibration": "The current limit is stated plainly. The pending change is hedged once, and only on that item.",
     "concision": "Two claims plus one review card that gives provenance. There is no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
    }
   },
   {
@@ -242,6 +371,14 @@
     "directness": "The first claim answers the pilot-size part directly. The second claim answers the sign-off part immediately after.",
     "hedging_calibration": "The pilot size is stated plainly. The Security sign-off is left as an explicit unknown rather than a definite no, with its caveat attached to that item.",
     "concision": "There are three distinct claims and matching cards that provide provenance, with no filler or padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
    }
   },
   {
@@ -272,6 +409,27 @@
     "directness": "The first claim gives the current date, but it does not directly correct the premise that a new date exists. That correction only arrives in the third claim, 'No new launch date has been accepted', after the opening.",
     "hedging_calibration": "The current date is stated plainly and the proposals are hedged once as pending. Notably, the October 30 date is already past as of today, 2026-11-14, which the answer does not remark on, but this is not a hedging error.",
     "concision": "The third claim largely restates the first two: October 30 is the recorded date and nothing has been accepted. It adds little beyond them."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "adjudication": {
+    "changes": {
+     "directness": {
+      "from": 4,
+      "to": 3
+     },
+     "concision": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "note": "Paige agreed with the grader's reasoning after seeing it (Nov 14 walk-through)."
    }
   },
   {
@@ -302,6 +460,14 @@
     "directness": "The first claim answers directly: $2,500. The headline is a neutral label.",
     "hedging_calibration": "The settled fact is stated plainly. The single caveat \"may change the limit if a human accepts it\" is attached to the Review.",
     "concision": "Two claims plus one provenance card make up the expected shape, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
    }
   },
   {
@@ -332,6 +498,14 @@
     "directness": "The first claim answers the question directly. The headline is a neutral label and does not count.",
     "hedging_calibration": "The settled fact is stated plainly, with no qualifiers.",
     "concision": "The answer is one claim with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
    }
   },
   {
@@ -362,6 +536,39 @@
     "directness": "The opening adopts the false premise that a new date exists, answering \"December 1\" instead of correcting it with: no new date is authorized, October 30 stands, and two proposals conflict.",
     "hedging_calibration": "An unresolved, pending choice between two proposals is stated as a definite value: \"The new launch date is December 1.\"",
     "concision": "Two short claims plus the review cards. There is no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 1,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 2,
+      "to": 1
+     },
+     "authority_calibration": {
+      "from": 2,
+      "to": 1
+     },
+     "consequential_completeness": {
+      "from": 4,
+      "to": 3
+     },
+     "directness": {
+      "from": 4,
+      "to": 1
+     },
+     "hedging_calibration": {
+      "from": 2,
+      "to": 1
+     }
+    },
+    "note": "Paige agreed with the grader's reasoning after seeing it (Nov 14 walk-through)."
    }
   }
  ],
@@ -409,5 +616,48 @@
   "missed_fails": [],
   "passes": false
  },
- "grades_revealed_after": "human ratings committed in 7c07f00 before the grading run"
+ "grades_revealed_after": "human ratings committed in 7c07f00 before the grading run",
+ "grader_v11_report_vs_adjudicated": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.9166666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "concision": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   }
+  },
+  "missed_fails": [],
+  "passes": true
+ },
+ "adjudication_note": "Nov 14: Paige walked through every disagreement after the grader scores were revealed and agreed with the grader on all of them, except w02 completeness (her 3 stands: the withheld line gives no detail of what was left out, which she would want). The pre-reveal ratings in `human` are the held-out evidence; `human_adjudicated` was set after seeing the grader's reasons, so it is not independent and this set is now calibration material."
 }
