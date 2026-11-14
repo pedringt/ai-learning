@@ -171,6 +171,46 @@ When a real failure reveals a missing behavior case, add it to the cheapest laye
   - The Review version changes only because the fingerprint covers the whole harness file. Ask runs scored under earlier versions are not comparable.
 - **Scoring version `ask-13-a28ffe959a81` (Nov 14, Paige: "yeah let's include it").** `ask_compound_question_keeps_governing_state` also requires "$40,000" in the answer's own claims (`body_required_facts=("budget", "$40,000")`), the literal form this scenario's required facts already use. The authority rules above still apply, so "The pilot budget is $40,000." in the body without pending wording fails authority. Offline rescore of run 43635193846: 126/130. Repeat 1, which covers the budget but leaves the figure to the Review item, now fails as a missing fact (quality); it is the only change among the 3,486 saved answers. The Review version is unchanged.
 
+### Ask retrieval benchmark (#653, Nov 14)
+
+**What it measures.** Whether the record a question needs survives Ask's two narrowing steps before any model sees it: the recency windows in `_compact_candidates`, then word matching in `_trim_candidates_for_query`. It makes no model calls and changes no product code.
+
+**How to run it.**
+- Library: `eval/retrieval_benchmark.py`. Script: `python -m eval.run_retrieval_benchmark [--out file.json]`.
+- `test_retrieval_benchmark_653.py` runs in `qa-fast` on SQLite and on Postgres. It asserts invariants, not recall.
+
+**Fixture.**
+- A synthetic project larger than every window: 30 State, 8 open Reviews, 12 open Questions, 40 answered Questions, 40 History and 113 Evidence.
+- A twin project with identically worded key records, for the isolation check.
+- 31 cases: at least 5 in each of the four #653 families, plus the negative controls. Gold ids are true by construction.
+
+**A0 (today), Nov 14:**
+- **Overall:** recall 0.446.
+- **By family:** windows 0.0, paraphrase 0.33, links 0.6, answered Questions 0.4.
+- **Context:** about 12.2k characters (roughly 3k tokens, an estimate).
+- **Isolation and authority:** isolation violations 0; authority preserved in 100% of cases.
+
+**Alternatives, measured on the same cases (benchmark-only):**
+
+| Variant | Recall | Mean context (chars) |
+|---|---|---|
+| A1: no windows, today's matching | 0.804 | 12.3k |
+| A2: windows ×2 | 0.589 | 12.3k |
+| A2: windows ×4 | 0.661 | 12.4k |
+| A3: today's windows + stemming | 0.411 | 11.9k |
+| A4: no windows + BM25 | 0.786 | 12.1k |
+| A4 + A5 (link expansion) | 0.821 | 13.1k |
+
+What the comparison shows:
+- **Paraphrase stays at 0.33** for every deterministic variant.
+- **Limits, not windows, bound context size.** Removing the windows doesn't grow what the model receives.
+- **A6 and A7 were not run.** The reasons are in `SKIPPED_VARIANTS`.
+
+**Findings about today's code, recorded and not fixed here (#653 changes no product code):**
+- **Current State Review links are nondeterministic.** `_trim_candidates_for_query` appends a selected Review's missing State items from a `set` and keeps 2. With more than 2 missing, which ones survive depends on `PYTHONHASHSEED`, so the same question on the same data can get different context per process. Reproduced with seeds 0–5.
+- **The answered-Question window keeps the oldest.** `list_questions(connection, "resolved")[:30]` is ordered oldest-created first. Ask therefore keeps the 30 oldest answered Questions, not the newest. A newer answered Question neither reaches the model nor changes `ask_cache_key`.
+- **Cache dependency.** `ask_cache_key` hashes the windowed candidates. Any retrieval change must reassess cache invalidation, including edits to older records that become retrievable.
+
 ## Minimum behavior families to retain
 
 - clear state-changing evidence;
