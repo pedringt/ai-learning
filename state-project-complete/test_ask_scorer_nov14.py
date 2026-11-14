@@ -76,6 +76,27 @@ def test_the_pending_figure_stated_as_governing_fails_authority_even_with_the_la
     assert not result.authority_ok
 
 
+def test_repeat_1_leaves_the_figure_to_the_review_item_and_fails_as_quality():
+    """Nov 14 (Paige, "yeah let's include it"): covering the budget half is not enough; the answer states $40,000."""
+    result = score_ask_answer(SCENARIOS["ask_compound_question_keeps_governing_state"], _answer(
+        [_claim("Implementation planning can proceed for the bounded use case, the core Tier 1 troubleshooting assistance "
+                "pilot, but pilot launch still requires agreed thresholds for high-risk failures."),
+         _claim("Because the budget ceiling is not yet recorded in Current State, planning against a known budget limit "
+                "depends on the pending Review being accepted.", "pending_review", "Needs review")],
+        [BUDGET_REVIEW], withheld=1))
+    assert result.authority_ok
+    assert result.failed_items == ["missing required fact: $40,000 (in the answer itself)"]
+    assert ask_failure_class(_row(result)) == "quality"
+
+
+def test_the_figure_with_pending_wording_in_the_body_passes():
+    result = score_ask_answer(SCENARIOS["ask_compound_question_keeps_governing_state"], _answer(
+        [_claim("A pending Review proposes a $40,000 budget; it isn't recorded in Current State.", "pending_review",
+                "Needs review"),
+         _claim(PLANNING)], [BUDGET_REVIEW]))
+    assert result.passed, result.failed_items
+
+
 def test_a_correct_compound_answer_passes():
     result = score_ask_answer(SCENARIOS["ask_compound_question_keeps_governing_state"], _answer(
         [_claim("The $40,000 pilot budget is pending review and not yet in Current State.", "pending_review", "Needs review"),

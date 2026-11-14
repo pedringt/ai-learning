@@ -1125,7 +1125,8 @@
    "known_unsupported": "",
    "hypothetical_draft": false,
    "body_required_facts": [
-    "budget"
+    "budget",
+    "$40,000"
    ]
   },
   {

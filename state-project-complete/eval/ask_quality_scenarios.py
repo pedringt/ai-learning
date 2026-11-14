@@ -243,7 +243,8 @@ SCENARIOS = (
         required_facts=("$40,000", ("can proceed", "may proceed", "can start", "can begin", "can move forward")),
         forbidden_claims=("should wait", "must wait", "cannot start", "can't start", "cannot begin", "cannot proceed"),
         should_distinguish_proposal_from_truth=True,
-        body_required_facts=("budget",),
+        # Nov 14 (Paige, "yeah let's include it"): the answer itself states the figure, not only the budget half.
+        body_required_facts=("budget", "$40,000"),
         severity="high",
         rationale="Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
     ),
