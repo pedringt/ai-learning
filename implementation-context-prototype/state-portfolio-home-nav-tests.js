@@ -52,6 +52,9 @@ check('the yellow boundary note is hidden from assistive technology (the card sa
 const card=between('<div class="rd-card">','<div class="rd-trace"');
 check('the hero card heading, sentence and Open State link are not hidden',!/aria-hidden/.test(card.replace(/<span aria-hidden="true">↗<\/span>/,''))&&card.includes('data-state-app-link'));
 
+// Nov 13 (Paige): the rotating "What I pay attention to" strip and its typing script are removed, not hidden.
+check('the rotating text strip and its script are gone',!/rd-rail|rd-type-|What I pay attention to/.test(html));
+
 // #589: aria-current and focus management in the router.
 check('Home starts as the aria-current destination',html.includes('<button class="active" data-view="home" aria-current="page">Home</button>'));
 const router=between('<script id="v895-router">','</script>');

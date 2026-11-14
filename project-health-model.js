@@ -786,6 +786,8 @@
     open_question:['open a new Question','proposed a new Question'],
     link_existing_question:['link the Evidence to the existing open Question','proposed linking the Evidence to the existing open Question'],
     state_at_risk:['flag the Current State fact as at risk','raised a Review flagging a Current State fact as at risk'],
+    // #660: a retire proposes removing the fact with no replacement wording (quality_harness.py).
+    retire_state:['propose retiring the Current State fact with no replacement','proposed retiring the Current State fact with no replacement'],
     // The harness records this code whenever no Review proposes a change, Question, link or risk flag (quality_harness.py).
     preserve_evidence_only:['keep the update as Evidence only, with no Current State change or Question','proposed no Current State change, Question or at-risk flag'],
     error:['finish processing','failed before producing an outcome']
@@ -799,6 +801,7 @@
     open_question:['a new Question','proposed a new Question'],
     link_existing_question:['a link to the existing open Question','proposed a link to the existing open Question'],
     state_at_risk:['the fact flagged as at risk','flagged the fact as at risk'],
+    retire_state:['the fact retired','proposed retiring the fact'],
     preserve_evidence_only:['Evidence kept with no change','proposed nothing'],
     error:['a scored outcome','failed before producing an outcome']
   };

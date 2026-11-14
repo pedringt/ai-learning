@@ -162,7 +162,7 @@ const NESTED_BLOCK=/<(p|div|h[1-6]|ul|ol|dl|dt|dd|section|article|header|footer|
 const EXCLUDED_TAGS=new Set(['svg','nav','figure','table','button','summary','head','form','label','select']);
 // The State illustration and typed rail, navigation, contact links, the
 // Meridian flow diagram, and the Library are outside the editor's scope.
-const EXCLUDED_CLASS=/(^|\s)(topbar|site-breadcrumb|rd-stage|rd-rail|portfolio-contact|learning-stages?|flow-[\w-]+)(\s|$)/;
+const EXCLUDED_CLASS=/(^|\s)(topbar|site-breadcrumb|rd-stage|portfolio-contact|learning-stages?|flow-[\w-]+)(\s|$)/;
 
 function excludedBy(el){
   if(EXCLUDED_TAGS.has(el.tag)||el.block)return true;

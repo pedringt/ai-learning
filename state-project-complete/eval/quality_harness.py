@@ -161,9 +161,13 @@ def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, st
         return "preserve_evidence_only", ""
     placeholders = ",".join("?" for _ in review_ids)
     state_rows = connection.execute(
-        f"SELECT proposed_statement FROM proposed_state_changes WHERE review_id IN ({placeholders}) AND status='pending'",
+        f"SELECT proposed_statement, operation FROM proposed_state_changes WHERE review_id IN ({placeholders}) AND status='pending'",
         tuple(review_ids),
     ).fetchall()
+    # #660 (Nov 14): a retire's proposed_statement holds the old fact being retired, not new wording, so it
+    # is scored as a retire rather than read as a proposal that repeats the old fact.
+    retires = sum(1 for row in state_rows if row["operation"] == "retire")
+    state_rows = [row for row in state_rows if row["operation"] != "retire"]
     state_changes = len(state_rows)
     proposed_state_text = " ".join(str(row["proposed_statement"] or "") for row in state_rows)
     proposed_questions = connection.execute(
@@ -185,6 +189,8 @@ def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, st
         return "update_state_and_open_question", proposed_state_text
     if state_changes:
         return "update_state", proposed_state_text
+    if retires:
+        return "retire_state", ""
     if proposed_questions:
         # #477: a suggested Question whose text matches an open one is offered as "Link existing Question".
         texts = connection.execute(
@@ -213,8 +219,10 @@ def _review_prose(connection, review_ids: list[str]) -> str:
             f"SELECT decision_question, why_consequential FROM review_issues WHERE id IN ({placeholders})", tuple(review_ids)).fetchall():
         parts += [str(row["decision_question"] or ""), str(row["why_consequential"] or "")]
     for row in connection.execute(
-            f"SELECT proposed_statement, rationale FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall():
-        parts += [str(row["proposed_statement"] or ""), str(row["rationale"] or "")]
+            f"SELECT proposed_statement, rationale, operation FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall():
+        # #660: a retire's statement is the old fact, not the Review's prose.
+        statement = "" if row["operation"] == "retire" else str(row["proposed_statement"] or "")
+        parts += [statement, str(row["rationale"] or "")]
     return " ".join(p for p in parts if p)
 
 
@@ -420,6 +428,9 @@ _ANSWER_UNCERTAINTY_SIGNALS = (
     # yet confirmed approval", "an open, blocking question", "an open, non-blocking question", "has not signed off".
     "not yet confirmed", "not yet approved", "not yet established", "has not signed off", "not signed off",
     "open, blocking question", "open, non-blocking question", "open blocking question", "open non-blocking question",
+    # Nov 13 (Paige, staging run 43532212042): the record-first wording #567's denial rule asks for, e.g. "State does
+    # not confirm launch readiness: a blocking Question is open..." and "State has no confirmed Security approval...".
+    "does not confirm", "has no confirmed",
 )
 
 

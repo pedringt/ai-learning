@@ -1680,8 +1680,6 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
 .rd-review-current .rd-tape{left:64%;transform:translateX(-50%) rotate(5deg)}
 .rd-note .rd-tape-note{position:absolute;top:-15px;left:22px;width:38px;height:13px;background:rgba(218,220,216,.76);transform:rotate(-4deg)}
 .rd-note>span:last-child{margin-top:10px;padding-top:8px;border-top:1px solid rgba(44,42,15,.22);color:#252411;font-size:7.7px;font-weight:850;letter-spacing:.16em}
-.rd-type-anchor{flex:0 0 auto;color:#8b8490;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
-.rd-type-label span{color:#d6a31e;font-size:13px;letter-spacing:0}
 @media (max-width:1180px) and (min-width:981px){
   .rd-stage{transform:scale(.9);transform-origin:center right}
   .rd-review-current{right:-32px}
@@ -1702,7 +1700,6 @@ html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!impo
   .rd-control h2{font-size:36px}
   .rd-control p{font-size:11px}
   .rd-trace div{white-space:normal;min-height:34px}
-  .rd-type-anchor{font-size:8.5px;letter-spacing:.08em}
   
 }
 /* the blue "Current State" note sits further out on wide screens only; narrower ones have no room before the viewport edge */
@@ -1847,7 +1844,6 @@ html body main:is(.case-system-page, .case-shell, .edge-wrap, .map-wrap) :is(.re
 @keyframes rdPulse { 0% { box-shadow: 0 0 0 0 rgba(182, 35, 106, 0.42); } 100% { box-shadow: 0 0 0 10px rgba(182, 35, 106, 0); } }
 @keyframes rdGlowStep { 0%, 100% { background: rgba(255, 255, 255, 0.68); } 45%, 55% { background: rgba(244, 255, 82, 0.42); border-color: rgba(255, 107, 87, 0.44); } }
 @keyframes rdDrift { to { transform: translateX(-50%); } }
-@keyframes rdCursorBlink{0%,48%{opacity:.72}49%,100%{opacity:0}}
 /* Case studies (#600–#605): My role / AI collaborator sit in one compact block above the closing links, and a
    short scope line can sit under the lead. The block keeps the hero's hairlines, so the closing links drop theirs. */
 html body main .case-credits { margin-top: 30px; }
