@@ -120,8 +120,9 @@ html body #ai-cs-mock .rd-control p{font-size:13.5px!important;line-height:1.45!
 
 .rd-review-note{position:absolute;z-index:4;display:flex;align-items:center;gap:10px;box-sizing:border-box;border:1px solid rgba(21,17,26,.055);border-radius:12px;padding:10px 13px;box-shadow:0 12px 24px rgba(21,17,26,.07);color:#111827;font-size:12px;line-height:1.08;font-weight:700;pointer-events:none}
 .rd-review-human{left:50px;top:16px;width:192px;transform:rotate(-4deg)}
-/* About 1.3x the pink label's width and 1.4x its height, tilted clockwise so its right edge sits lower. */
-.rd-review-authority{right:6px;top:20px;width:248px;gap:14px;padding:13px 18px;font-size:16px;line-height:1.05;transform:rotate(9deg)}
+/* About 1.3x the pink label's width and 1.4x its height, tilted clockwise so its right edge sits lower and its corner
+   tucks over the card's top edge (Paige picked 44px lower than level with the pink label, Nov 13). */
+.rd-review-authority{right:6px;top:64px;width:248px;gap:14px;padding:13px 18px;font-size:16px;line-height:1.05;transform:rotate(9deg)}
 
 .rd-review-icon{display:grid;place-items:center;width:31px;height:31px;border:1.9px solid currentColor;border-radius:9px;background:rgba(255,255,255,.78);font-size:13px;font-weight:800;flex:0 0 31px}
 .rd-review-authority .rd-review-icon{flex-basis:40px;width:40px;height:40px;border-radius:11px;font-size:17px}
