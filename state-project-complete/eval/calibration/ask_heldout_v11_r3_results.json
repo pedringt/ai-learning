@@ -1,0 +1,176 @@
+{
+ "about": "#641 third held-out round for frozen grader v11: Paige's own human ratings (Nov 14), recorded BEFORE any grader score on this set was run or shown, from the round-3 rating page without the answer key.",
+ "rater": "Paige (human)",
+ "recorded_at": "2026-11-14T23:36:35+00:00",
+ "grader_version": null,
+ "rows": [
+  {
+   "blind_id": "y01",
+   "answer_id": "h3",
+   "scenario_id": "adv_presupposed_pending_change",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "i think the two needs review items are a little confusing presented this way since they kind of depend on each toher"
+  },
+  {
+   "blind_id": "y02",
+   "answer_id": "r7",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "y03",
+   "answer_id": "h1",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 4
+   },
+   "human_reason": "I think it's overstating that the slack and sales rep are what is needed to approve it"
+  },
+  {
+   "blind_id": "y04",
+   "answer_id": "r5",
+   "scenario_id": "adv_presupposed_pending_change",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "y05",
+   "answer_id": "h4",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 1
+   },
+   "human_reason": "The needs review stuff is not related to it at all, but i wasn't sure where to reflect that in the scores"
+  },
+  {
+   "blind_id": "y06",
+   "answer_id": "r8",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "y07",
+   "answer_id": "r4",
+   "scenario_id": "adv_double_negated_pending",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "I think there's still some ambiguity if above 50 means any amount above 50 or if there is still an upper limit, not sure how to reflect that in the scores"
+  },
+  {
+   "blind_id": "y08",
+   "answer_id": "h2",
+   "scenario_id": "adv_double_negated_pending",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 4
+   },
+   "human_reason": "There are 2 conflicting needs review items that need pointed out somehow"
+  },
+  {
+   "blind_id": "y09",
+   "answer_id": "r3",
+   "scenario_id": "adv_double_negated_pending",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "Maybe a note that unsure if there will still be an upper limit or not limit at all"
+  },
+  {
+   "blind_id": "y10",
+   "answer_id": "r6",
+   "scenario_id": "adv_presupposed_pending_change",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "y11",
+   "answer_id": "r2",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "the first needs review item and the statement underneath feels repetitive"
+  },
+  {
+   "blind_id": "y12",
+   "answer_id": "r1",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  }
+ ]
+}
