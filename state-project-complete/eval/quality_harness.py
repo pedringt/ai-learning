@@ -508,7 +508,7 @@ _NEGATION_BEFORE = re.compile(r"(?:\bnot|\bno longer|n't|\bnever)\s+(?:\w+\s+){0
 # failed). Only a frame ending in a reporting verb counts, so "the record says we decided" still asserts.
 # Oct 16 (adversarial suite): "whether SSO is on the Q1 roadmap remains unresolved" asks about the claim
 # rather than making it. A "whether" with no comma or sentence end between it and the claim covers it,
-# the same rule as the Ask backstop (ask_authority_text._soften_match).
+# the same rule the retired Ask word backstop used (removed Nov 14; see #656).
 _INSIDE_WHETHER = re.compile(r"\bwhether\b[^,.;:!?]*$")
 # Oct 19 (adversarial suite): "the premise that the Zendesk integration was approved is not confirmed"
 # names the user's premise to correct it; it is not the claim.

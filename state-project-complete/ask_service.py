@@ -23,27 +23,12 @@ from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_ca
 from ask_display import claim_lines, has_withheld, withheld_line
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from db import project_id_of
-from ask_authority_text import (  # noqa: F401  (re-exported: tests and callers import these from ask_service)
-    _evidence_backing,
+from ask_authority_text import (  # noqa: F401  (re-exported: tests import these from ask_service)
     _DEMO_SLUG_ID,
     _INTERNAL_JSON_FIELD_NAMES,
-    _NEGATION_RE,
-    _PENDING_HEDGE_PHRASES,
-    _SENTENCE_SPLIT_RE,
-    _SETTLED_TARGET_WORD_RE,
-    _SETTLED_WORD_REPLACEMENTS,
-    _UNEARNED_SETTLED_PROSE_REPLACEMENTS,
-    _WORD_RE,
-    _already_hedged,
     _candidate_pool_ids,
     _clean_visible_ask_text,
     _source_type_labels,
-    _governing_state_ngrams,
-    _match_case,
-    _quotes_governing_state,
-    _soften_unearned_settled_prose,
-    _soften_unearned_settled_words,
-    _words,
 )
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_state, question_source_evidence
 # Ask sees the Review list people see (an extension point; Baseline hides routine
@@ -666,8 +651,8 @@ class _AnswerChecks:
         self.canonical_questions = {x["id"]: x for x in context.get("questions", [])}
         self.canonical_answered = {x["id"]: x for x in context.get("answered_questions", [])}
 
-        # #567 (Nov 11): the word backstop (_soften_unearned_settled_*) no longer runs on answers. Claims, cards and
-        # titles are shown as written, withheld, or replaced by record text (ask_assertions), never reworded.
+        # #567 (Nov 11): software never rewords an answer. Claims, cards and titles are shown as written, withheld, or
+        # replaced by record text (ask_assertions).
         self.checker = ClaimChecker(context, query=query, today=today)
 
     def clean(self, value: str | None) -> str | None:
