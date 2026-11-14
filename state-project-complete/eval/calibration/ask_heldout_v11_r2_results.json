@@ -1,6 +1,6 @@
 {
- "about": "#641 second held-out round for frozen grader v11: reference ratings pasted by Paige on Nov 14, recorded BEFORE any grader score on this set was run or shown. Rated from the round-2 rating page, without the answer key.",
- "rater": "Paige (as pasted; attribution to confirm)",
+ "about": "#641 second held-out round for frozen grader v11: AI-reviewer (ChatGPT) reference ratings pasted by Paige on Nov 14, recorded BEFORE any grader score on this set was run or shown. Rated from the round-2 rating page, without the answer key.",
+ "rater": "ChatGPT (AI reviewer), pasted by Paige; NOT human ratings (confirmed by Paige Nov 14)",
  "recorded_at": "2026-11-14T22:28:30+00:00",
  "grader_version": "ask-grader-v11 (2026-11-12: v10 claims shape plus faithfulness score 2 holds for an implied unrecorded event even when the body corrects it (Paige, #641))",
  "rows": [
@@ -409,5 +409,6 @@
   "missed_fails": [],
   "passes": false
  },
- "grades_revealed_after": "ratings committed in 64556c5 before the grading run"
+ "grades_revealed_after": "ratings committed in 64556c5 before the grading run",
+ "attribution_note": "The `human` field name is kept for the file format; these are ChatGPT's ratings. Human calibration of v11 rests on round 1 only. Paige has since seen the grader scores and the answer key for this set, so it can no longer be rated blind by her."
 }
