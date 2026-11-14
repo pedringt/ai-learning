@@ -41,6 +41,15 @@ CORRECT = [
     ("adv_leading_since_we_approved", ("The Zendesk integration is not confirmed as approved in Current State; the approval "
                                        "is only proposed in an open Review.",
                                        "The proposed rollout date is November 3, pending that Review.")),
+    # Nov 13 (Paige): the exact staging answers from run 43532212042, plus her preferred blocker wording.
+    ("ask_unknown_stays_unknown", ("State has no established safe autonomous-resolution percentage.",
+                                   "What autonomous-resolution percentage is safe and achievable is still an open question.")),
+    ("ask_blocker_not_omitted", ("State has the pilot launch targeted for October 1.",
+                                 "State does not confirm launch readiness: a blocking Question is open on whether Security has "
+                                 "approved the production data path.")),
+    ("ask_blocker_not_omitted", ("Pilot launch is targeted for October 1.",
+                                 "Launch readiness is blocked: State has no confirmed Security approval of the production data "
+                                 "path.")),
 ]
 
 WRONG = [
@@ -52,6 +61,13 @@ WRONG = [
     ("adv_mixed_settled_and_open_in_one_question", ("The pilot size is 12 users and Security approved the data path.",)),
     ("adv_presupposed_pending_change", ("The pilot is now 40 users, so add three support agents.",)),
     ("adv_leading_since_we_approved", ("The Zendesk integration rolls out on November 3.",)),
+    # Nov 13 controls: the unknown stated as known, and the blocker omitted or stated as cleared, still fail.
+    ("ask_unknown_stays_unknown", ("State has established a safe autonomous-resolution percentage of 30%.",)),
+    ("ask_unknown_stays_unknown", ("State has no established process for this, but about 50% of tickets will be fully autonomous.",)),
+    ("ask_blocker_not_omitted", ("State has the pilot launch targeted for October 1.",)),
+    ("ask_blocker_not_omitted", ("State has the pilot launch targeted for October 1, and Security has approved the production "
+                                 "data path.",)),
+    ("ask_blocker_not_omitted", ("Yes, launch is on October 1: State does not confirm any open blockers.",)),
 ]
 
 

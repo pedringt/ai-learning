@@ -87,7 +87,10 @@ SCENARIOS = (
         question="What percentage of tickets will be fully autonomous?",
         current_state=(("automation", "A safe autonomous-resolution percentage has not been established."),),
         open_questions=("What autonomous-resolution percentage is safe and achievable?",),
-        required_facts=(("not established", "not yet established", "not been established", "does not have an established", "does not have a confirmed", "does not have a safe autonomous-resolution percentage"),),
+        required_facts=(("not established", "not yet established", "not been established", "does not have an established", "does not have a confirmed", "does not have a safe autonomous-resolution percentage",
+                         # Nov 13 (Paige, staging run 43532212042): "State has no established safe autonomous-resolution
+                         # percentage." is the record-first wording #567's denial rule asks for.
+                         "has no established"),),
         forbidden_claims=("0%", "50%"),
         forbid_unsupported_numbers=True,
         should_express_uncertainty=True,
