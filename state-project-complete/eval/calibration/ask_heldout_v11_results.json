@@ -1,0 +1,176 @@
+{
+ "about": "#641 held-out test for frozen grader v11: Paige's human ratings, recorded Nov 14 BEFORE any grader score on this set was run or shown. Rated from docs/evals/heldout-v11-rating-sheet.md via a rating page, without the answer key.",
+ "rater": "Paige (human)",
+ "recorded_at": "2026-11-14T19:16:31+00:00",
+ "grader_version": null,
+ "rows": [
+  {
+   "blind_id": "w01",
+   "answer_id": "h3",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "w02",
+   "answer_id": "r4",
+   "scenario_id": "adv_conflicting_pending_proposals",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "\"Part of this answer couldn't be checked against State's records and was left out.\" maybe need detail on what was left out?"
+  },
+  {
+   "blind_id": "w03",
+   "answer_id": "h4",
+   "scenario_id": "adv_control_settled_fact_no_hedge",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 4
+   },
+   "human_reason": "\" though State can't confirm these are current and they may have changed.\" seems like overkill, just say what's in current state in thsi scenario"
+  },
+  {
+   "blind_id": "w04",
+   "answer_id": "r7",
+   "scenario_id": "adv_control_settled_fact_no_hedge",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "w05",
+   "answer_id": "r5",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "w06",
+   "answer_id": "h1",
+   "scenario_id": "adv_number_mismatch_state_vs_review",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "w07",
+   "answer_id": "r1",
+   "scenario_id": "adv_number_mismatch_state_vs_review",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "w08",
+   "answer_id": "r6",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "w09",
+   "answer_id": "r3",
+   "scenario_id": "adv_conflicting_pending_proposals",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "w10",
+   "answer_id": "r2",
+   "scenario_id": "adv_number_mismatch_state_vs_review",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "w11",
+   "answer_id": "r8",
+   "scenario_id": "adv_control_settled_fact_no_hedge",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "w12",
+   "answer_id": "h2",
+   "scenario_id": "adv_conflicting_pending_proposals",
+   "human": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 4
+   },
+   "human_reason": "I don't think we should claim engineering's date supersedes in this case, let someone decide"
+  }
+ ]
+}
