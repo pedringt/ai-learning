@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 SCHEMA = "state-eval-matrix/v1"
-SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade", "calibration", "recalibrate", "holdout", "validate", "heldout")
+SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade", "calibration", "recalibrate", "holdout", "validate", "heldout", "assess")
 MODEL_ID_PATTERN = re.compile(r"^claude-[a-z0-9.-]+$")
 
 # USD per million tokens, Anthropic first-party API. Source: the claude-api skill's model table
@@ -65,6 +65,7 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
     "recalibrate": {"input": 3_500, "output": 1_000, "max_output": 9_500},
     "holdout": {"input": 4_000, "output": 900, "max_output": 2_400},
     "heldout": {"input": 4_000, "output": 900, "max_output": 2_400},
+    "assess": {"input": 3_500, "output": 1_000, "max_output": 9_500},
     "validate": {"input": 3_500, "output": 1_000, "max_output": 9_500},
     "consequentiality": {"input": 3_500, "output": 700, "max_output": 2_000},
     "baseline": {"input": 7_500, "output": 900, "max_output": 2_000},
@@ -74,7 +75,7 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
 # review 35-40s (16 cases; State AI quality check runs 38195077931, 38199551242, 38299891763, 38411808397),
 # ask 27.6-28.3s (10 cases; same workflow), consequentiality 67-77s (36 cases; State QA Release runs
 # 38078551511, 38079304500, 38271757236), baseline 119-126s per 6 repeats of 5 sources per route (run 38187113539).
-SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "regrade": 30, "calibration": 12, "recalibrate": 30, "holdout": 12, "validate": 30, "heldout": 12, "consequentiality": 80, "baseline": 22}
+SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "regrade": 30, "calibration": 12, "recalibrate": 30, "holdout": 12, "validate": 30, "heldout": 12, "assess": 30, "consequentiality": 80, "baseline": 22}
 # Other models are unmeasured here; plan shards as if they were this much slower.
 MODEL_SLOWDOWN: dict[str, float] = {"claude-haiku-5-5": 1.0, "claude-haiku-4-5": 2.0}
 DEFAULT_SLOWDOWN = 3.0
@@ -155,6 +156,8 @@ def scenario_ids(suite: str) -> list[str]:
         SCENARIOS = calibration_items(HOLDOUT_641_ANSWERS)
     elif suite == "heldout":
         SCENARIOS = calibration_scenarios(HELDOUT_V11_SCENARIOS)
+    elif suite == "assess":
+        SCENARIOS = calibration_items(HELDOUT_V11_ANSWERS)
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     elif suite == "baseline":
@@ -181,9 +184,10 @@ class CalibrationItem:
 
 
 def calibration_items(path: Path = CALIBRATION_ANSWERS) -> list[CalibrationItem]:
+    from eval.ask_adversarial_scenarios import SCENARIOS as ADVERSARIAL
     from eval.ask_quality_scenarios import SCENARIOS as ASK
 
-    by_id = {s.id: s for s in ASK}
+    by_id = {s.id: s for s in (*ASK, *ADVERSARIAL)}
     data = json.loads(Path(path).read_text())
     return [CalibrationItem(a["answer_id"], by_id[a["scenario_id"]], a["answer"]) for a in data["answers"]]
 
@@ -252,7 +256,8 @@ HOLDOUT_641_ANSWERS = Path(__file__).resolve().parent / "calibration" / "ask_hol
 # Held-out test for the frozen grader v11 (Nov 13, scenarios approved by Paige): four adversarial scenarios no grader
 # calibration set has used, answered by #567 Ask as on staging 67592bc. Human ratings are recorded before any grader
 # score is revealed; if these answers lead to a rubric change, they become calibration material. `heldout`
-# generates the real answers.
+# generates the real answers; `assess` grades the saved set (8 real, 4 hand-written) once the human ratings are in.
+HELDOUT_V11_ANSWERS = Path(__file__).resolve().parent / "calibration" / "ask_heldout_v11.json"
 HELDOUT_V11_SCENARIOS = ("adv_number_mismatch_state_vs_review", "adv_conflicting_pending_proposals",
                          "adv_mixed_settled_and_open_in_one_question", "adv_control_settled_fact_no_hedge")
 
@@ -273,7 +278,7 @@ def estimated_call_cost(suite: str, model: str, output_key: str = "output") -> f
 
         ask, grade = TOKENS_PER_CALL["ask"], TOKENS_PER_CALL["graded"]
         return (call_cost(model, ask["input"], ask[output_key]) + call_cost(GRADER_MODEL, grade["input"], grade[output_key])) / 2
-    if suite in ("regrade", "recalibrate", "validate"):
+    if suite in ("regrade", "recalibrate", "validate", "assess"):
         from eval.ask_grader import GRADER_MODEL
 
         grade = TOKENS_PER_CALL[suite]
@@ -766,6 +771,8 @@ def _scenarios(suite: str) -> list[Any]:
         SCENARIOS = calibration_items(HOLDOUT_641_ANSWERS)
     elif suite == "heldout":
         SCENARIOS = calibration_scenarios(HELDOUT_V11_SCENARIOS)
+    elif suite == "assess":
+        SCENARIOS = calibration_items(HELDOUT_V11_ANSWERS)
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     else:
@@ -775,7 +782,7 @@ def _scenarios(suite: str) -> list[Any]:
 
 def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: float) -> Callable[[Any], dict[str, Any]]:
     """A function that runs one scenario once and returns its record (without usage/latency)."""
-    if suite in ("regrade", "recalibrate", "validate"):
+    if suite in ("regrade", "recalibrate", "validate", "assess"):
         from eval.ask_grader import grade_answer
         return lambda item: regrade_record(item, grade_answer)
     if suite in ("review", "ask", "adversarial", "graded", "consequentiality", "calibration", "holdout", "heldout"):

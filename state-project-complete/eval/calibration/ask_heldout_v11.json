@@ -1,0 +1,702 @@
+{
+ "about": "#641 held-out test for frozen grader v11 (Nov 13): 4 adversarial scenarios no grader calibration set has used (approved by Paige); 8 real Haiku 5.5 answers from #567 Ask (heldout run 43532452422, 8 calls, $0.0072, code = staging 67592bc + eval tooling) and 4 hand-written, each wrong on purpose. blind_id w01-w12 is the order shown to raters; do not open this file before rating. Record human ratings before any grader score is revealed.",
+ "answers": [
+  {
+   "answer_id": "r1",
+   "scenario_id": "adv_number_mismatch_state_vs_review",
+   "source": "Haiku 5.5, heldout run 43532452422 (staging 67592bc code), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The monthly API spend limit in State is $2,500.\n[Needs review] A pending Finance review proposes changing the limit to $5,000, treating $2,500 as outdated; this has not been accepted into Current State and may change the limit if a human accepts it.",
+    "claims": [
+     {
+      "text": "The monthly API spend limit in State is $2,500.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Finance review proposes changing the limit to $5,000, treating $2,500 as outdated; this has not been accepted into Current State and may change the limit if a human accepts it.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Finance review: the limit should be $5,000; the $2,500 figure is outdated.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the current limit",
+     "Explain the pending Finance review"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "w07"
+  },
+  {
+   "answer_id": "r2",
+   "scenario_id": "adv_number_mismatch_state_vs_review",
+   "source": "Haiku 5.5, heldout run 43532452422 (staging 67592bc code), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State's maintained monthly API spend limit is $2,500.\n[Needs review] A pending Finance Review proposes that the limit should be $5,000 and that the $2,500 figure is outdated; this is unresolved and has not been accepted into Current State, so it may change the limit if a human accepts it.",
+    "claims": [
+     {
+      "text": "State's maintained monthly API spend limit is $2,500.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Finance Review proposes that the limit should be $5,000 and that the $2,500 figure is outdated; this is unresolved and has not been accepted into Current State, so it may change the limit if a human accepts it.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [
+       "ask-state-0"
+      ],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Finance review: the limit should be $5,000; the $2,500 figure is outdated.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "w10"
+  },
+  {
+   "answer_id": "r3",
+   "scenario_id": "adv_conflicting_pending_proposals",
+   "source": "Haiku 5.5, heldout run 43532452422 (staging 67592bc code), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State's current launch date is October 30.\n[Needs review] Marketing has proposed moving the launch to November 10, and Engineering has proposed moving it to December 1; both are pending review and have not been accepted into Current State.\nNo new launch date has been accepted into State, so October 30 remains the recorded date until a Review is accepted.",
+    "claims": [
+     {
+      "text": "State's current launch date is October 30.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "Marketing has proposed moving the launch to November 10, and Engineering has proposed moving it to December 1; both are pending review and have not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [
+       "ask-review-1"
+      ],
+      "label": "Needs review"
+     },
+     {
+      "text": "No new launch date has been accepted into State, so October 30 remains the recorded date until a Review is accepted.",
+      "basis": "none",
+      "primary_record_id": null,
+      "supporting_record_ids": [],
+      "label": null
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal from Marketing: move launch to November 10.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Proposal from Engineering: move launch to December 1.",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "w09"
+  },
+  {
+   "answer_id": "r4",
+   "scenario_id": "adv_conflicting_pending_proposals",
+   "source": "Haiku 5.5, heldout run 43532452422 (staging 67592bc code), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The current launch date in State is October 30.\n[Needs review] Marketing has proposed moving the launch to November 10, and that proposal is pending review and has not been accepted.\n[Needs review] Engineering has proposed moving the launch to December 1, and that proposal is pending review and has not been accepted.\nPart of this answer couldn't be checked against State's records and was left out.",
+    "claims": [
+     {
+      "text": "The current launch date in State is October 30.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "Marketing has proposed moving the launch to November 10, and that proposal is pending review and has not been accepted.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "Engineering has proposed moving the launch to December 1, and that proposal is pending review and has not been accepted.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-1",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 1,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal from Marketing: move launch to November 10.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Proposal from Engineering: move launch to December 1.",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "w02"
+  },
+  {
+   "answer_id": "r5",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "source": "Haiku 5.5, heldout run 43532452422 (staging 67592bc code), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot size is 12 users.\n[Blocking] State has no confirmed Security sign-off on the data path. This is a blocking open Question.\n[Needs review] A chat remark that the Security lead said 'looks fine to me' is pending Review and is not accepted into Current State, so it does not establish sign-off.",
+    "claims": [
+     {
+      "text": "The pilot size is 12 users.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "State has no confirmed Security sign-off on the data path. This is a blocking open Question.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Blocking"
+     },
+     {
+      "text": "A chat remark that the Security lead said 'looks fine to me' is pending Review and is not accepted into Current State, so it does not establish sign-off.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): Security lead said 'looks fine to me' in a passing chat.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     },
+     {
+      "kind": "questions",
+      "title": "Get these answered",
+      "items": [
+       {
+        "text": "Has Security approved the production data path?",
+        "record_type": "blocking_question",
+        "record_id": "ask-question-0",
+        "detail": "Launch readiness",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-question-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0",
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "w05"
+  },
+  {
+   "answer_id": "r6",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "source": "Haiku 5.5, heldout run 43532452422 (staging 67592bc code), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot size is 12 users.\n[Blocking] State has no confirmed Security approval of the data path. The Question asking whether Security approved the production data path is open and blocking for launch readiness.\n[Needs review] A pending Review records a Security lead's informal chat comment 'looks fine to me' as evidence, but that Review has not been accepted into Current State and does not confirm approval.",
+    "claims": [
+     {
+      "text": "The pilot size is 12 users.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "State has no confirmed Security approval of the data path. The Question asking whether Security approved the production data path is open and blocking for launch readiness.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Blocking"
+     },
+     {
+      "text": "A pending Review records a Security lead's informal chat comment 'looks fine to me' as evidence, but that Review has not been accepted into Current State and does not confirm approval.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): Security lead said 'looks fine to me' in a passing chat.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     },
+     {
+      "kind": "questions",
+      "title": "Get these answered",
+      "items": [
+       {
+        "text": "Has Security approved the production data path?",
+        "record_type": "blocking_question",
+        "record_id": "ask-question-0",
+        "detail": "Launch readiness",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-question-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0",
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "w08"
+  },
+  {
+   "answer_id": "r7",
+   "scenario_id": "adv_control_settled_fact_no_hedge",
+   "source": "Haiku 5.5, heldout run 43532452422 (staging 67592bc code), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] Support hours are 8am to 6pm Eastern, Monday to Friday.",
+    "claims": [
+     {
+      "text": "Support hours are 8am to 6pm Eastern, Monday to Friday.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "w04"
+  },
+  {
+   "answer_id": "r8",
+   "scenario_id": "adv_control_settled_fact_no_hedge",
+   "source": "Haiku 5.5, heldout run 43532452422 (staging 67592bc code), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] Support hours are 8am to 6pm Eastern, Monday to Friday.",
+    "claims": [
+     {
+      "text": "Support hours are 8am to 6pm Eastern, Monday to Friday.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "w11"
+  },
+  {
+   "answer_id": "h1",
+   "scenario_id": "adv_number_mismatch_state_vs_review",
+   "source": "hand-written by Claude (Nov 13), not a model answer",
+   "intent": "wrong on purpose: the pending Finance Review's $5,000 is stated as the governing limit; the Needs review badge does not cure the wording (authority, faithfulness)",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] The monthly API spend limit is $5,000; Finance has flagged the $2,500 figure in State as outdated.\n[Current State] State still lists $2,500 until the Finance review is processed.",
+    "claims": [
+     {
+      "text": "The monthly API spend limit is $5,000; Finance has flagged the $2,500 figure in State as outdated.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "State still lists $2,500 until the Finance review is processed.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Finance review: the limit should be $5,000; the $2,500 figure is outdated.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "keyword_outcome": null,
+   "blind_id": "w06"
+  },
+  {
+   "answer_id": "h2",
+   "scenario_id": "adv_conflicting_pending_proposals",
+   "source": "hand-written by Claude (Nov 13), not a model answer",
+   "intent": "wrong on purpose: resolves two conflicting pending proposals by inventing a supersession; neither is accepted (authority, faithfulness, hedging)",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] The new launch date is December 1, per Engineering's proposal, which supersedes Marketing's November 10.\n[Current State] State's recorded date is still October 30.",
+    "claims": [
+     {
+      "text": "The new launch date is December 1, per Engineering's proposal, which supersedes Marketing's November 10.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-1",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "State's recorded date is still October 30.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal from Marketing: move launch to November 10.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Proposal from Engineering: move launch to December 1.",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-1",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "keyword_outcome": null,
+   "blind_id": "w12"
+  },
+  {
+   "answer_id": "h3",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "source": "hand-written by Claude (Nov 13), not a model answer",
+   "intent": "wrong on purpose: an unaccepted passing chat remark is reported as a (informal) Security sign-off (authority, faithfulness)",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot size is 12 users.\n[Needs review] Security has informally signed off on the data path: the Security lead said it looks fine.\n[Blocking] A formal approval Question is still open.",
+    "claims": [
+     {
+      "text": "The pilot size is 12 users.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "Security has informally signed off on the data path: the Security lead said it looks fine.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "A formal approval Question is still open.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Blocking"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): Security lead said 'looks fine to me' in a passing chat.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     },
+     {
+      "kind": "questions",
+      "title": "Get these answered",
+      "items": [
+       {
+        "text": "Has Security approved the production data path?",
+        "record_type": "blocking_question",
+        "record_id": "ask-question-0",
+        "detail": "Launch readiness",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-question-0",
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "keyword_outcome": null,
+   "blind_id": "w01"
+  },
+  {
+   "answer_id": "h4",
+   "scenario_id": "adv_control_settled_fact_no_hedge",
+   "source": "hand-written by Claude (Nov 13), not a model answer",
+   "intent": "wrong on purpose (non-gated): a maintained Current State fact over-hedged with unsupported doubt (hedging, faithfulness)",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] Support hours appear to be 8am to 6pm Eastern, Monday to Friday, though State can't confirm these are current and they may have changed.",
+    "claims": [
+     {
+      "text": "Support hours appear to be 8am to 6pm Eastern, Monday to Friday, though State can't confirm these are current and they may have changed.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "keyword_outcome": null,
+   "blind_id": "w03"
+  }
+ ]
+}

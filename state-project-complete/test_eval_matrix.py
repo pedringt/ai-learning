@@ -566,6 +566,15 @@ def test_heldout_suite_uses_adversarial_scenarios_no_calibration_set_has_seen():
     assert matrix.plan(["heldout"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
 
 
+def test_assess_suite_grades_the_saved_held_out_set():
+    items = matrix._scenarios("assess")
+    assert len(items) == 12 and {i.scenario.id for i in items} == set(matrix.HELDOUT_V11_SCENARIOS)
+    data = json.loads(matrix.HELDOUT_V11_ANSWERS.read_text())["answers"]
+    assert sorted(a["blind_id"] for a in data) == [f"w{i:02d}" for i in range(1, 13)]
+    assert sum(a["answer_id"].startswith("h") for a in data) == 4
+    assert matrix.calls_per_repeat("assess") == 12
+
+
 def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
     ids = {i.id for i in matrix.calibration_items(matrix.CALIBRATION_641_ANSWERS)}
     assert {aid for aid, *_ in matrix.CALIBRATION_641_REGRESSIONS} <= ids
