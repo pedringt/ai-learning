@@ -46,7 +46,7 @@ check('the authority-boundary explanation is not repeated in the homepage card o
   ![homeCard,catalog].some(t=>/authoriz|human-approved|boundary/i.test(t)));
 
 // #589: decorative notes hidden; the real State link and card copy stay exposed.
-for(const cls of ['rd-review-human','rd-review-authority'])
+for(const cls of ['rd-review-human','rd-review-authority','rd-review-current'])
   check(`hero ${cls} note is hidden from assistive technology`,html.includes(`<div class="rd-review-note ${cls}" aria-hidden="true">`));
 check('the yellow boundary note is hidden from assistive technology (the card says the same thing)',html.includes('<div class="rd-note" aria-hidden="true">'));
 const card=between('<div class="rd-card">','<div class="rd-trace"');
@@ -66,6 +66,12 @@ check('Back/Forward update the view with focus, the initial load does not move f
 check('the brand goes Home through the router',router.includes("root.querySelector('[data-brand-home]')?.addEventListener('click',()=>go('home'));"));
 for(const [page,heading] of [['home','<h1 tabindex="-1">'],['portfolio','<h2 class="section-title" tabindex="-1">'],['learn','class="route-title" role="heading" tabindex="-1">']])
   check(`the ${page} view heading is a programmatic focus target`,html.includes(heading));
+
+// #589: the blue note covered the end of the State card sentence at 681-980px.
+const css=fs.readFileSync(path.join(root,'site-components.css'),'utf8');
+const tabletAt=css.indexOf('@media (max-width:980px) and (min-width:681px){\n  html body #ai-cs-mock .rd-hero h1');
+const tablet=tabletAt<0?'':css.slice(tabletAt,css.indexOf('\n}',tabletAt));
+check('at tablet widths the Current State note sits below the State card sentence',/\.rd-review-current\{right:-28px;top:262px\}/.test(tablet),tablet);
 
 // #588/#598: every homepage footer links the accepted general résumé, a real two-page PDF at /resume.pdf.
 const footers=[...html.matchAll(/<nav class="portfolio-contact"[\s\S]*?<\/nav>/g)].map(m=>m[0]);
