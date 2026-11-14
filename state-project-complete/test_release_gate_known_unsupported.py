@@ -50,8 +50,8 @@ def test_the_held_scenario_failing_every_run_does_not_block():
 
 def test_other_failures_still_block_exactly_as_before():
     assert _gate({HELD, OTHER}) == []                               # one other miss is still allowed
-    assert _gate({HELD, OTHER, THIRD}) == ["10 of 12 passed; the Ask reading needs at least 11"]
-    assert _gate({HELD, OTHER}, previous={OTHER}) == ["failed in two consecutive runs: " + OTHER]
+    assert _gate({HELD, OTHER, THIRD}) == ["2 quality misses; the Ask reading allows at most 1"]
+    assert _gate({HELD, OTHER}, previous={OTHER}) == ["quality miss in two consecutive runs: " + OTHER]
 
 
 def test_the_held_scenario_is_still_reported_as_failing():

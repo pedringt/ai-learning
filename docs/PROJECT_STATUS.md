@@ -2,25 +2,25 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: November 8, 2026, Pacific time. One dated current-state section, then durable reference. Earlier handoff sections (Sept 19 to Oct 27) were moved verbatim to `docs/history/PROJECT_STATUS_THROUGH_2026-10-27.md` (#630). When you update this file, replace "Current state" rather than adding a new dated section above it; move what it replaces to `docs/history/` if it is worth keeping._
+_Last updated: November 13, 2026, Pacific time. One dated current-state section, then durable reference. Earlier handoff sections (Sept 19 to Oct 27) were moved verbatim to `docs/history/PROJECT_STATUS_THROUGH_2026-10-27.md` (#630). When you update this file, replace "Current state" rather than adding a new dated section above it; move what it replaces to `docs/history/` if it is worth keeping._
 
-## Current state (Nov 8, 2026)
+## Current state (Nov 13, 2026)
 
-- **`main` (production):** `b111d8a`, the Nov 7 eval release (PR #646). Before it on Nov 7: #636-#638 (the Nov 5 audit fixes, the frontend observer cleanup, the Deep QA wording fix, Project Health release naming).
-- **`staging`:** ahead of `main` with work not yet promoted (promotion needs Paige's OK each time):
-  - the Nov 5 audit follow-up batches: #619-#621, #625-#627, #629;
-  - the State CSS cleanup (#648): dead rules, overridden declarations, about 790 `!important` flags and 132 `html body` prefixes removed, each proven with `scripts/state_ui_compare/compare.py`;
-  - the eval session's #640 work that changes Ask behaviour (held on staging; DEC-013's Nov 7 update);
-  - the Nov 8 batch: DEC-012 guards (Project Health cooldown claims, migration 023), #624, #630, #622 (frontend half), #628, #623;
-  - DEC-019: the model-key tests #624 added to `qa-release` rerun a failure once and block only if it fails again (#649 tracks a Baseline case they found);
-  - the portfolio's Ignored Build Step now asks GitHub's compare API (`api/_vercel-ignore-build.js`); the git version never skipped because `.vercelignore` removes `.git` first.
-  - **Checks on staging (Nov 8):** Deep QA 17/17 on `3e567de`; `qa-release` against `main` passed on `e2b0e26` (eval 100/100, model-key tests 72 passed). Later pushes added the other session's #640 Answered Questions view; re-run Deep QA before promoting.
-  - Before promoting: migration 023 is a schema change, so take a production backup first (`CLAUDE.md`).
+- **`main` (production):** `1deda48` (PR #658, DEC-020), with a staging-to-`main` promotion PR open on Nov 13. Promotion needs Paige's OK each time.
+- **`staging`:** `8a7de3f` plus this status update. Everything on it is in the Nov 13 promotion PR:
+  - **#567 claim-level Ask authority** (C, E, B, A+D and the denial-opening rule; prompt changes), with **#656**'s backstop repair underneath it;
+  - **#640** Ask retrieval of answered Questions (41a0961; held under DEC-013 on Nov 7 for a model-written headline defect; #567 replaced that headline with a fixed label, and #567 depends on the retrieval);
+  - **#642 DEC-022:** the Ask release gate blocks on a single trust failure;
+  - the Nov 13 scorer phrasings (scoring version `ask-13-f3e94ccb5f61`);
+  - CSS dead-selector pass, portfolio + Project Health cleanup, the DEC-012 investigation cooldown (one per project, environment and signal), and #649's eval tooling.
+  - **Checks:** Deep QA 17/17 and `qa-release` passed on `67592bc` (run_eval all categories OK; model-key tests 73 passed, 2 skipped); review suite passed on `67592bc`; Ask suite 13/13 on `8a7de3f`. `8a7de3f` adds only the scorer phrasings and the regenerated eval catalog.
+  - **Before merging:** take a production backup (#642's release notes ask for one; no schema change is pending).
+- **Not in the promotion:** the Library session's homepage hero and cheat-sheet branches (local, awaiting Paige); `fix/656-backstop-meaning` (a `main`-only #656 path, unneeded if #567 ships); `eval/*` branches and `feature/567-citation-nudge` (measured, not adopted); PR #645 (Tastemake second example, awaiting Paige).
 - **Production:** portfolio `https://www.contextswitch.tech/`, State `https://state.contextswitch.tech/`, API `https://state-api-6waw.onrender.com`. **Data** is SQLite on the `state-api` persistent disk (`/var/data/state.db`), not Postgres; backups per `CLAUDE.md`.
 - **Model:** `claude-haiku-5-5` (code default). Rollback and model history: `docs/history/PROJECT_STATUS_THROUGH_2026-10-27.md` (Oct 10 and Oct 20 sections).
-- **Spend:** State has a $50/day cap on recorded model spend (DEC-014). Project Health's paid actions are open to anyone with cooldowns (DEC-012, updated Nov 8).
-- **Release checks:** `make qa-fast` (free, no model calls; Nov 8: 1,172 passed / 149 skipped in `qa-python` before this batch) and `make qa-release` (paid on model-sensitive changes; since #624 it also runs the key-gated pytest files). Deep QA on staging is the browser gate. Paid workflows are pre-approved for testing; report calls and cost afterwards. Details: `QA.md`, `RELEASE.md`, `docs/evals/`.
-- **Parked or waiting on Paige:** #594 visitor isolation (parked Nov 8); #567 claim-level Ask authority (design for her approval, no build); #142 is a learning placeholder. GitHub Issues and the **State** Project are the source of truth for open work.
+- **Spend:** State has a $50/day cap on recorded model spend (DEC-014). Project Health's paid actions are open to anyone with cooldowns (DEC-012, updated Nov 12).
+- **Release checks:** `make qa-fast` (free, no model calls; Nov 13: 1,465 passed / 165 skipped) and `make qa-release` (paid on model-sensitive changes). Deep QA on staging is the browser gate. Paid workflows are pre-approved for testing; report calls and cost afterwards. Details: `QA.md`, `RELEASE.md`, `docs/evals/`.
+- **Open after promotion:** review `ask_question_answer_no_state_mutation`'s `known_unsupported` marker now that #640 retrieval ships; #641 grader v11 held-out set awaits Paige's ratings; #594 visitor isolation parked; #142 is a learning placeholder. GitHub Issues and the **State** Project are the source of truth for open work.
 - **Other repos:** Tastemake (`~/code/tastemake`, see its `docs/HANDOFF.md`); Authority Lab (`~/code/authority-lab`).
 
 ## Deploy verification rule

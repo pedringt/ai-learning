@@ -46,11 +46,13 @@ import re
 
 import pytest
 
-from ask_contract import AskAnswerItem, AskAnswerSection, AskSelection, AskSynthesis
+from eval.ask_retention_capture import flagged_units
+from eval.authority_wording import PREMISE_CORRECTED, unsupported_conclusions, unsupported_settled_words, visible_words
+from ask_contract import AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis
 from ask_provider import LiveAskProvider
 from ask_service import (
     _clean_visible_ask_text, _grounding_rules, _one_call_prompt, _soften_unearned_settled_prose,
-    _soften_unearned_settled_words, _synthesis_prompt, _validate_synthesis, run_ask,
+    _finish_display_fields, _soften_unearned_settled_words, _synthesis_prompt, _validate_synthesis, run_ask,
 )
 from database_migration_backed import get_test_db
 from anthropic_provider import AnthropicProvider
@@ -68,14 +70,14 @@ _CANDIDATES = {"state": [], "reviews": [], "questions": [], "history": [], "evid
 
 def test_grounding_rules_forbid_describing_a_pending_review_as_confirmed():
     rules = _grounding_rules()
-    assert "not yet true" in rules
+    assert "not accepted" in rules and "not yet true" not in rules
     assert "confirmed" in rules.lower() and "never" in rules.lower()
     assert "linked Question" in rules and "open" in rules
 
 
 def test_one_call_prompt_forbids_confirmed_language_for_open_reviews():
     prompt = _one_call_prompt("What are the confirmed retention terms?", _CANDIDATES, None)
-    assert "not yet true" in prompt
+    assert "not accepted" in prompt and "not yet true" not in prompt
     assert '"confirmed"' in prompt
     assert "resolving its linked Question" in prompt or "resolves it" not in prompt.lower()
 
@@ -87,7 +89,7 @@ def test_synthesis_prompt_forbids_confirmed_language_for_open_reviews():
     )
     context = {"state": [], "reviews": [], "questions": [], "history": [], "evidence": [], "rules": []}
     prompt = _synthesis_prompt("What are the confirmed retention terms?", selection, context, None)
-    assert "not yet true" in prompt
+    assert "not accepted" in prompt and "not yet true" not in prompt
     assert '"confirmed"' in prompt
 
 
@@ -205,35 +207,29 @@ def _selection_and_context_with_open_review():
     return selection, context
 
 
-def test_validate_synthesis_softens_headline_and_titles_when_context_has_an_open_review():
+def test_validate_synthesis_titles_fall_back_and_the_headline_is_fixed_when_context_has_an_open_review():
+    """#567: software sets the headline per job, so it can't claim a status. A section title that asserts a status is
+    replaced by its kind's fixed title (never reworded). An uncited report of what Legal said is withheld: a report
+    of a source needs that source cited (basis evidence_says)."""
     selection, context = _selection_and_context_with_open_review()
     answer = AskSynthesis(
         job="current_fact",
-        headline="Retention Terms: Legal Confirmed",
-        summary="Legal confirmed the terms, but the Review is still open and the Question remains unresolved.",
+        claims=[AskClaim(text="Legal confirmed the terms, but the Review is still open and the Question remains unresolved.")],
         sections=[AskAnswerSection(kind="other", title="Confirmed Retention and Deletion", items=[
-            AskAnswerItem(text="Some free-text detail that says confirmed too", record_type="none"),
+            AskAnswerItem(text="The retention terms are still awaiting a decision.", record_type="none"),
         ])],
     )
     cleaned = _validate_synthesis(answer, selection, context)
-    assert "Confirmed" not in cleaned.headline and "confirmed" not in cleaned.headline
-    assert "Confirmed" not in cleaned.sections[0].title and "confirmed" not in cleaned.sections[0].title
-    # Full prose (summary, free-text items) is left to the prompt rules, not
-    # the code-level backstop, since the model reliably hedges there already
-    # and blind word-replacement in longer sentences risks garbling meaning.
-    assert "confirmed" in cleaned.summary.lower()
+    _finish_display_fields(cleaned, None)
+    assert cleaned.headline == "What State has on record"
+    assert [s.title for s in cleaned.sections if s.kind == "other"] == ["Project context"]
+    assert cleaned.claims == [] and cleaned.withheld_claims == 1
 
 
-def test_validate_synthesis_softens_headline_when_review_exists_but_was_not_selected():
-    """Live-QA bug (2026-09-14): the selector LLM call is non-deterministic, so
-    the same question run twice could select a pending Review into `context`
-    on one run and omit it on another -- meaning the hedging backstop only
-    fired sometimes for an identical underlying fact (pilot budget "approved"
-    vs. "not yet approved" across two runs of the same prompt). The backstop
-    must key off the deterministic candidate pool for this query, not off
-    what the selector happened to choose, so this case -- an open Review the
-    selector skipped over -- still gets hedged.
-    """
+def test_validate_synthesis_withholds_an_unsupported_status_whether_or_not_the_review_was_selected():
+    """Live-QA bug (2026-09-14): the selector is non-deterministic, so a pending Review may or may not be selected.
+    Since #567 (Nov 11) the outcome no longer depends on it: a status claim that no cited Current State record carries
+    is withheld either way."""
     selection = AskSelection(
         job="current_fact", state_ids=["k-1"], review_ids=[], blocking_question_ids=[],
         question_ids=[], history_ids=[], evidence_ids=[],
@@ -244,13 +240,10 @@ def test_validate_synthesis_softens_headline_when_review_exists_but_was_not_sele
         "reviews": [{"id": "r-1", "review_type": "proposed_update", "decision_question": "Is the budget approved?", "why_consequential": "x", "affected_state_ids": [], "evidence_ids": []}],
         "questions": [],
     }
-    answer = AskSynthesis(job="current_fact", headline="Pilot Budget", summary="The pilot budget is approved at $40,000.", sections=[])
-    cleaned = _validate_synthesis(answer, selection, context, candidates)
-    assert "approved at $40,000" not in cleaned.summary, (
-        "The pending Review in the candidate pool was skipped by the selector, but the claim "
-        "must still be hedged -- otherwise the same question can answer 'approved' on one run "
-        "and 'not yet approved' on another depending on non-deterministic selection."
-    )
+    for pool in (candidates, None):
+        answer = AskSynthesis(job="current_fact", claims=[AskClaim(text="The pilot budget is approved.")], sections=[])
+        cleaned = _validate_synthesis(answer, selection, context, pool)
+        assert cleaned.claims == [] and cleaned.withheld_claims == 1
 
 
 def test_validate_synthesis_leaves_headline_alone_when_nothing_is_pending():
@@ -337,20 +330,20 @@ def test_soften_unearned_settled_prose_handles_none_and_empty():
     assert _soften_unearned_settled_prose("") == ""
 
 
-def test_validate_synthesis_softens_summary_and_free_text_items_when_pending():
+def test_validate_synthesis_withholds_unsupported_claims_and_cards_and_keeps_hedged_ones_unchanged():
     selection, context = _selection_and_context_with_open_review()
     answer = AskSynthesis(
         job="current_fact",
-        headline="Retention",
-        summary="Legal has confirmed retention is 30 days. This is still pending Security approval.",
+        claims=[AskClaim(text="Legal has confirmed the retention terms."),
+                AskClaim(text="This is still pending Security approval.")],
         sections=[AskAnswerSection(kind="other", title="Details", items=[
             AskAnswerItem(text="This resolves the retention blocker.", record_type="none"),
         ])],
     )
     cleaned = _validate_synthesis(answer, selection, context)
-    assert "Legal has confirmed" not in cleaned.summary
-    assert "still pending Security approval" in cleaned.summary, "The already-hedged sentence must survive unchanged."
-    assert "This resolves" not in cleaned.sections[0].items[0].text
+    assert [c.text for c in cleaned.claims] == ["This is still pending Security approval."]
+    assert cleaned.withheld_claims == 1 and cleaned.withheld_items == 1
+    assert not [i for s in cleaned.sections for i in s.items if i.record_type == "none"]
 
 
 @requires_anthropic_key
@@ -366,14 +359,10 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
     WITHOUT any nearby hedge ("not", "pending", "awaiting", "n't", "yet",
     "open", "before").
 
-    Only checks Ask's own generated prose (headline, summary, section
-    titles, and free-text items) -- not item text/detail for record_type
-    review/question/blocking_question/evidence, which _validate_synthesis
-    overwrites with the record's own stored fields or the Evidence's own
-    quoted content (a decision_question or a source quote is allowed to
-    contain "confirmed"; that wording comes from evidence intake's own
-    prompt in anthropic_provider.py, a separate subsystem this fix does
-    not touch).
+    Only checks what Ask itself worded, each unit on its own with chips stripped: claims (or, in the older
+    shape, the headline and each summary sentence), section titles, free-text cards and cards still in the
+    model's wording (eval/authority_wording.py, Nov 11). Review and Question cards show their record's own
+    text and are not checked. "Confirmed" passes when an authorized Current State record supports it.
     """
     provider = AnthropicProvider()
     ask_provider = LiveAskProvider(provider)
@@ -392,56 +381,33 @@ def test_the_exact_reported_repro_no_longer_treats_pending_evidence_as_settled()
         assert intake.processing_status == "succeeded", "Evidence intake setup failed (a separate, already-flaky pipeline path unrelated to this fix) even after retries."
         assert intake.review_ids, "Evidence intake itself should still create the linked Review (already covered elsewhere); nothing to check Ask against otherwise."
 
-        hedges = ("not ", "n't ", "pending", "awaiting", "yet", "open", "before", "hasn't", "has not")
-        # Also safe (Paige, Nov 8): attributing the word to a source, which is the phrasing Ask's grounding rules
-        # ask for ("Evidence reports Legal said X", "Legal is reported to have said X"), and a plain negation
-        # ("No confirmed retention terms are in Current State"). The first live runs (Nov 8, after #624 put this
-        # test in qa-release) failed only on those two shapes.
-        safe_patterns = (r"\bno\b", r"\breport(s|ed)\b", r"\baccording to\b", r"\b(says|said)\b")
-
-        def _unhedged_claims(text, word):
-            hits = []
-            lowered = text.lower()
-            start = 0
-            while True:
-                idx = lowered.find(word, start)
-                if idx == -1:
-                    break
-                # "unconfirmed"/"unresolved" are themselves the correct, safe
-                # word (the "un-" prefix already IS the hedge) -- not a claim
-                # that needs a nearby hedge phrase to be safe.
-                if idx >= 2 and lowered[idx - 2:idx] == "un":
-                    start = idx + len(word)
-                    continue
-                window = lowered[max(0, idx - 40):idx + len(word) + 20]
-                if not any(h in window for h in hedges) and not any(re.search(p, window) for p in safe_patterns):
-                    hits.append(text[max(0, idx - 40):idx + len(word) + 20])
-                start = idx + len(word)
-            return hits
-
-        def _flat_text(payload):
-            answer = payload.get("answer", {})
-            parts = [answer.get("headline", ""), answer.get("summary", "")]
-            for section in answer.get("sections", []):
-                parts.append(section.get("title", ""))
-                for item in section.get("items", []):
-                    if item.get("record_type") not in (None, "none"):
-                        continue
-                    parts.append(item.get("text", ""))
-                    parts.append(item.get("detail", "") or "")
-            return " ".join(parts)
+        # Nov 11 (Paige, #567): each claim, title and model-worded card is checked on its own with chips stripped,
+        # and "confirmed" passes when an authorized Current State record supports the sentence (eval/authority_wording).
+        current_state = {row["id"]: row["statement"] for row in conn.execute(
+            "SELECT id, statement FROM current_state_items WHERE status='active'").fetchall()}
 
         confirmed_payload = run_ask(conn, ask_provider, "What are the confirmed retention terms?")
-        confirmed_text = _flat_text(confirmed_payload)
-        for word in ("confirmed", "resolved"):
-            bad = _unhedged_claims(confirmed_text, word)
-            assert not bad, f"Unhedged '{word}' claim(s) about pending retention evidence: {bad}"
+        bad = unsupported_settled_words(confirmed_payload, current_state)
+        assert not bad, (f"Unhedged settled word(s) about pending retention evidence: {bad}; "
+                         f"whole units: {flagged_units(confirmed_payload, current_state)}")
 
         premise_payload = run_ask(conn, ask_provider, "Since retention is resolved, what can move forward?")
-        premise_text = _flat_text(premise_payload)
-        assert re.search(r"not\s+(yet\s+)?resolved|isn.t resolved|hasn.t been resolved", premise_text, re.I), (
-            f"Expected the false premise ('retention is resolved') to be corrected explicitly; got: {premise_text[:400]}"
+        premise_text = visible_words(premise_payload, current_state)
+        assert PREMISE_CORRECTED.search(premise_text), (
+            f"Expected the false premise ('retention is resolved') to be corrected explicitly; got: {premise_text}"
         )
-        for word in ("confirmed", "resolved"):
-            bad = _unhedged_claims(premise_text, word)
-            assert not bad, f"Unhedged '{word}' claim(s) after a false-premise question: {bad}"
+        concluded = unsupported_conclusions(premise_payload, current_state)
+        assert not concluded, f"A go-ahead drawn from unaccepted material after a false-premise question: {concluded}"
+        bad = unsupported_settled_words(premise_payload, current_state)
+        assert not bad, (f"Unhedged settled word(s) after a false-premise question: {bad}; "
+                         f"whole units: {flagged_units(premise_payload, current_state)}")
+
+def test_claims_guidance_opens_a_denial_with_what_the_records_show():
+    """#567 (Paige, Nov 12): Q1 found A+D answers explaining the record correctly after a categorical lead
+    ("Security has not signed off..."). The rule asks for the record-grounded opening instead."""
+    from ask_service import claims_guidance
+
+    guidance = claims_guidance()
+    assert "Open such a sentence with what State's records show" in guidance
+    assert "This holds for every person, team and decision" in guidance
+    assert "State has no recorded leadership decision" in guidance and "not \"Security has not signed off" in guidance

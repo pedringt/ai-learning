@@ -251,6 +251,7 @@ async function summarizeWithModel(evidence){
   await recordUsage(evidence.project,body,result.payload,Date.now()-started);
   return reportText(result.payload);
 }
+function investigationClaimKey(project,environment,signalType){return ['investigate',project.slug,environment,signalType].map(claimKeyPart).join(':');}
 module.exports=async function handler(req,res){
   if(req.method!=='POST'){res.setHeader('Allow','POST');return response(res,405,{detail:'Method not allowed'});}
   res.setHeader('Cache-Control','no-store');
@@ -261,24 +262,26 @@ module.exports=async function handler(req,res){
   const signalType=String(body.signalType||'');
   if(!project||!project.branches[environment]||!['vercel','github-check'].includes(signalType))return response(res,400,{detail:'Unsupported project, environment, or signal.'});
   if(!process.env.ANTHROPIC_API_KEY||!process.env.VERCEL_TOKEN)return response(res,503,{configured:false,detail:'The server-side model and Vercel read connections are not configured.'});
+  // DEC-012 (Nov 12, Paige): one investigation per project, environment and signal per window, whatever commit
+  // is named; the claim comes before any GitHub or Vercel read, so a refused request costs nothing.
+  const claimKey=investigationClaimKey(project,environment,signalType);
+  const held=await claimAction(claimKey,INVESTIGATION_COOLDOWN_SECONDS);
+  if(!held.allowed){
+    const minutes=Math.ceil(held.retryAfterSeconds/60);
+    res.setHeader('Retry-After',String(held.retryAfterSeconds));
+    return response(res,429,{code:'investigation_cooldown',retry_after_seconds:held.retryAfterSeconds,detail:'This project was investigated in the last few minutes. Try again in about '+minutes+' minute'+(minutes===1?'':'s')+'.'});
+  }
   const branch=await fetchBranch(project,environment);
-  if(!branch)return response(res,502,{detail:'Could not verify the current project branch.'});
+  if(!branch){await releaseAction(claimKey,held.token);return response(res,502,{detail:'Could not verify the current project branch.'});}
   const sha=await investigatedCommit(project,branch,body.sha);
   const selected=await fetchGithubEvidence(project,sha,signalType);
-  if(!selected)return response(res,409,{detail:'That failure is no longer present on the current branch. Refresh Project Health and try again.'});
+  if(!selected){await releaseAction(claimKey,held.token);return response(res,409,{detail:'That failure is no longer present on the current branch. Refresh Project Health and try again.'});}
   let deploymentEvidence=null;
   if(signalType==='vercel')deploymentEvidence=await fetchVercelEvidence(project,sha);
   let commitEvidence=null;
   if(!selected.hasDiagnostic||(signalType==='vercel'&&!deploymentEvidence?.hasDiagnostic))commitEvidence=await fetchCommitFollowup(project,sha);
   const followUps=[deploymentEvidence?.summary,commitEvidence?.summary].filter(Boolean).join('\n');
   const evidence={project:project.slug,environment,branch:branch.branch,commit:sha,signalType,primary:selected.summary,followUp:followUps||'No follow-up source was available.'};
-  const claimKey=['investigate',project.slug,environment,sha,signalType].map(claimKeyPart).join(':');
-  const held=await claimAction(claimKey,INVESTIGATION_COOLDOWN_SECONDS);
-  if(!held.allowed){
-    const minutes=Math.ceil(held.retryAfterSeconds/60);
-    res.setHeader('Retry-After',String(held.retryAfterSeconds));
-    return response(res,429,{code:'investigation_cooldown',retry_after_seconds:held.retryAfterSeconds,detail:'This failure was investigated in the last few minutes. Try again in about '+minutes+' minute'+(minutes===1?'':'s')+'.'});
-  }
   const report=await summarizeWithModel(evidence);
   if(report?.budgetPaused||!report)await releaseAction(claimKey,held.token);
   if(report?.budgetPaused)return response(res,503,{code:'ai_budget_paused',detail:AI_BUDGET_MESSAGE});
@@ -287,5 +290,5 @@ module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   return response(res,200,{project:project.slug,environment,commit:sha,report,model:MODEL,sources,observedAt:new Date().toISOString(),readOnly:true});
 };
-module.exports._test={PROJECTS,githubHeaders,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE,INVESTIGATION_COOLDOWN_SECONDS};
+module.exports._test={PROJECTS,investigationClaimKey,githubHeaders,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE,INVESTIGATION_COOLDOWN_SECONDS};
 

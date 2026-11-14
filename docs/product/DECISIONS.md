@@ -243,9 +243,11 @@ Spend from these endpoints shows up unexpectedly, or the dashboard gets traffic 
 
 **Update (Nov 8, Paige): small guards, still open to anyone.** The Nov 5 audit found that an investigation made a model call on every request while a failure was current, and that the eval run's 10-minute cooldown could be beaten by parallel requests (GitHub lists a dispatched run only after a delay). Neither counts toward DEC-014's $50 cap. Paige chose to keep both actions open and add cooldowns that hold across parallel requests: one investigation of the same failure (project, environment, commit, signal) per 5 minutes, and one eval run per branch per 10 minutes. Each is an atomic claim in the State backend (`project_health_claims`, migration 023), because Vercel functions share no memory. If the claim store cannot be reached, the action is allowed (fail open), so an outage of the State API never removes the actions. A failed dispatch or model call gives its claim back. Still rejected: an admin key or login.
 
+**Update (Nov 12, Paige): one investigation per project, environment and signal per window.** The Nov 12 audit found that the investigation claim key included the commit, and the endpoint accepts any older commit on the branch that has a failed check, so each such commit opened its own 5-minute window. The key no longer includes the commit, and the claim is taken before any GitHub or Vercel read, so a refused request costs nothing. A request that finds no current failure gives its claim back.
+
 ### DEC-013 — The Ask quality suite is read like the review suite (trial)
 
-**Status:** Revisit if condition changes  
+**Status:** Superseded by DEC-022 (Nov 12); its reading still applies to quality misses  
 **Date:** 2026-10-19  
 **Related:** `state-project-complete/eval/release_gate.py`; RELEASE.md "Reading the review interpretation suite"; DEC-012
 
@@ -398,7 +400,57 @@ On a planning spec, ordinary intake dropped the explicit open question ("what ex
 `eval.run_mixed_spec_intake` classifies each run as stated as fact, raised, hedged in a fact, or dropped (scored apart, Paige's choice). Before/after on the three intake sources, the Baseline mixed-spec source, and the consequentiality eval. Stated as fact must stay at 0. The Ask-quality eval is run with the eval session before promotion.
 
 **Measured (Nov 11, Haiku 5.5)**  
-Ordinary intake, open item dropped: mixed spec 10/60 before, 0/20 after; the other two mixed sources 0/40 before and after. Stated as fact: 0 in every run before and after. No Questions about anything other than the sources' own open items appeared. Baseline Setup mixed spec: raised 12/12 before and after. Consequentiality eval: 100% precision and recall after (as before). `qa-release` model-key tests: 72 passed with no rerun. Spend for #649 about 270 Haiku calls, roughly $1.20–1.60.
+Ordinary intake, open item dropped: mixed spec 10/60 before, 0/20 after; the other two mixed sources 0/40 before and after. Stated as fact: 0 in every run before and after. No Questions about anything other than the sources' own open items appeared. Baseline Setup mixed spec: raised 12/12 before and after. Consequentiality eval: 100% precision and recall after (as before). `qa-release` model-key tests: 72 passed with no rerun. Review-interpretation suite (run by the eval session, Nov 12, 16 cases x 3): 44/48 on main, 46/48 with the rule, and no case changed to raising an extra Question. Spend for #649 about 270 Haiku calls, roughly $1.20–1.60.
 
 **Revisit when**  
 The rule produces Questions people routinely dismiss as noise, or a flagged-open item turns out to be settled elsewhere in the same source.
+
+### DEC-021 — Ask answers in checked claims under a fixed headline (#567)
+
+**Status:** Decided; on `staging` (Nov 12), not on `main`. Nov 11–12 additions, all Paige's decisions: software no longer rewrites answer wording (a claim, card or title is shown as written, withheld, or replaced by record text, by what it asserts and its records' authority: `ask_assertions.py`); explicitly requested hypothetical drafts show the user's assumption with the draft (`ask_drafts.py`); the fixed headline is a small label, not a heading. Fresh comparison Nov 12: no authority violations in 480 answers; the comparison packet awaits Paige's ratings. (Numbered DEC-020 on the feature branch; renumbered at the staging merge, where DEC-020 was taken.)  
+**Date:** 2026-11-10  
+**Related:** #567 (revised design, Nov 10 comment), #640, #642, #653; `ask_claims.py`, `ask_display.py`, `eval/review_sample_567.py`
+
+**Decision**  
+Paige approved the revised #567 design with two clarifications:
+- **Claims replace the summary.** 1-4 claims, one basis each. One primary record sets the claim's chip; up to two supporting references never raise it. A claim that fails its reference check or its anchor check is withheld, and one fixed line says part of the answer was left out.
+- **The headline is fixed per job and written by software** ("What State has on record", "Meeting brief", ...). No status-word list.
+- **Model-worded Current State, History and Evidence cards get the same checks.** The record's own text replaces the wording only after the card's reference passes (project, selection, type, status). An invalid or cross-project reference is withheld, never replaced from that record.
+- **What the checks cannot do is stated, not implied.** The anchor check (numbers and months must be in the cited records) is a limited safeguard, not proof of meaning: a figure on the wrong subject, a reversed negation or a wrong attribution passes. No structural check can tell that one sentence mixes authority levels; prompts, evals and human review own that.
+- **Copy and the compatibility `summary` keep the chips**, and the evals score the displayed answer (`ask_display`).
+- **Streaming shows a claim or section only after the same checks** as the finished answer.
+- **Measurement:** withholding and replacement rates are reported separately from error rates. Withholding above 5% is a provisional trigger to investigate, not a release rule; every fully withheld answer and any loss of required information gets inspected. The targeted #640 check aims at 0/20 observed contradictions, reported with its sample-size limit (0/20 still allows a true rate up to about 14%). The grader stays observe-only. The first human review covers 12 after and 6 before answers across the known failure types and grows only if findings warrant it. It is shuffled and version-unlabelled, not blinded: the two answer formats reveal the version. Labels never satisfy a scored fact; the keyword checks read the answer's words only.
+
+**Why**  
+Every production failure on #567 was model-written headline or summary prose that a word-rewriting backstop either missed or made false. Structure (ids, types, statuses) is what software can actually enforce.
+
+**Rejected / deferred**  
+A model-written headline checked against a status-word list; a badge-only fallback that keeps unsupported wording; joint promotion with #640's held retrieval (a later decision).
+
+**Revisit when**  
+The withheld rate stays high after investigation, answers lose required information, or human review finds unsupported text shown with a chip.
+
+### DEC-022 — What blocks an Ask release: trust failures, quality misses, operational failures
+
+**Status:** Decided (Paige, Nov 12); supersedes DEC-013 for the Ask suite
+**Date:** 2026-11-12
+**Related:** #642, #656, DEC-013, DEC-017, `eval/release_gate.py`, `eval/ask_risk_acceptances.json`
+
+**Decision**
+Each failed Ask scenario is classed by the check it failed.
+- **Trust failure:** Ask said something false about the project. This covers pending or Evidence material presented as governing (`authority`), a reversed or invented claim (`forbidden_claims`), a number in no record, and an unknown stated as definite (`uncertainty`). One trust failure fails the run unless `eval/ask_risk_acceptances.json` holds an unexpired acceptance for that scenario. Each acceptance names the scenario, the release, the reason, who accepted it, the date and an expiry, and each needs Paige's explicit OK.
+- **Quality miss:** the answer is true but incomplete (`required_facts`, `open_item`). DEC-013's reading still applies: at most one quality miss per run, and the same scenario does not miss in two consecutive runs.
+- **Operational failure:** an error or timeout. It is reported in the log and not counted as quality.
+
+Observe-only (DEC-017) and known-unsupported (#640) scenarios stay out of the gate.
+
+**Why**
+Under DEC-013 every miss counted the same. A deterministic defect that reversed a source's wording (#656) never blocked a release, because it missed in different runs of different scenarios. A false statement about the project can mislead someone acting on it even once. A thinner answer cannot.
+
+**Rejected / deferred**
+- Counting a missing blocker (`open_item`) as a trust failure. It stays a quality miss and is the known variable case behind DEC-013.
+- Category-level repeat checks.
+
+**Revisit when**
+Risk acceptances become routine, or a check's class proves wrong in practice.
+

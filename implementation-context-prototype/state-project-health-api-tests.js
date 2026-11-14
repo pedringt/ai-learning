@@ -124,6 +124,28 @@ platformFetchTest.then(async()=>{
     assert.strictEqual(thrown.body.last_run_started_at,null);
     global.fetch=async()=>({ok:true,status:200,json:async()=>({workflow_runs:[]})});
     assert.strictEqual((await call({method:'GET',query:{project:'narc'}})).body.last_run_started_at,null,'no runs yet');
+
+    // Nov 12 audit: the POST body is capped, and GitHub's own error text never reaches the public response.
+    const originalConsoleError=console.error;console.error=()=>{};
+    try{
+      methods.length=0;
+      global.fetch=async(url,options={})=>{methods.push(options.method||'GET');return {ok:false,status:401,json:async()=>({message:'Bad credentials for token ghp_internal'})};};
+      const oversized=await call({method:'POST',body:JSON.stringify({project:'state',pad:'x'.repeat(3000)})});
+      assert.strictEqual(oversized.res.code,413);
+      assert.deepStrictEqual(methods,[],'an oversized body is refused before any GitHub call');
+      const lookupFailed=await call({method:'POST',body:{project:'narc'}});
+      assert.strictEqual(lookupFailed.res.code,502);
+      assert.strictEqual(lookupFailed.body.detail,'Could not check recent quality runs (GitHub 401).');
+      const qualityHandler=require('../api/project-health-project-quality.js');
+      const quality=await new Promise(resolve=>{
+        const res={setHeader(){},status(code){this.code=code;return this;},json(payload){resolve({code:this.code,body:payload});return this;}};
+        global.fetch=async()=>{throw new Error('connect ECONNREFUSED 10.0.0.7:443');};
+        qualityHandler({method:'GET',query:{project:'narc'}},res);
+      });
+      assert.strictEqual(quality.code,502);
+      assert.strictEqual(quality.body.detail,'Quality source unavailable','unexpected errors are not passed through');
+    }finally{console.error=originalConsoleError;}
+
     delete process.env.GITHUB_TOKEN;
     const fetchedUrls=[];global.fetch=async url=>{fetchedUrls.push(String(url));throw new Error('should not fetch GitHub');};
     const noToken=await call({method:'GET',query:{project:'state'}});

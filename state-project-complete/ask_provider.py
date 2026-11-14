@@ -205,7 +205,8 @@ def _is_lookup_part(part: str) -> bool:
 def _record_text(record: Mapping[str, Any]) -> str:
     parts: list[str] = []
     for key, value in record.items():
-        if key in {"authority", "id", "state_item_id", "evidence_ids", "affected_state_ids", "question_ids"}:
+        if key in {"authority", "id", "state_item_id", "evidence_ids", "affected_state_ids", "question_ids",
+                   "answered_by_review_id", "answer_evidence_id"}:
             continue
         if isinstance(value, (str, int, float)):
             parts.append(str(value))
@@ -245,7 +246,7 @@ def _filter_candidate_payload(query: str, payload: Mapping[str, Any]) -> dict[st
     if topic_terms and not (anchor_terms - _ENTITY_ANCHORS):
         return data
 
-    for bucket in ("state", "reviews", "questions", "history", "evidence"):
+    for bucket in ("state", "reviews", "questions", "answered_questions", "history", "evidence"):
         records = data.get(bucket)
         if not isinstance(records, list):
             continue

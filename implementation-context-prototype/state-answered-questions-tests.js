@@ -74,5 +74,10 @@ check('Open Items renders the Answered section collapsed by default, at the bott
   assert.ok(html.indexOf('Answered Questions')>html.indexOf('Draft notes'),'after Draft notes');
 });
 
+check('Answered-question cards in Ask answers open the Question by id',()=>{
+  const src=require('fs').readFileSync(require('path').join(__dirname,'context-ask.js'),'utf8');
+  assert.match(src,/record_type==='answered_question'&&i\.record_id\)\{[\s\S]*?data-action="open-answered-question"/);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);

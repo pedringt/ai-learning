@@ -160,3 +160,15 @@ def test_api_pagination_is_opt_in_and_reports_the_next_page():
         page = client.get("/api/questions?status=resolved&limit=10&offset=0").json()
         assert [q["id"] for q in page["items"]] == ["q-review"] and page["next_offset"] is None
 
+
+def test_ask_keeps_its_own_review_choice_and_answer_text_through_the_shared_lookup(db):
+    """Paige, Nov 8: sharing the lookup must not change Ask. Ask still names the most recently resolved linked Review
+    (the view, by contrast, says the resolver is not recorded when two could have resolved it)."""
+    from ask_service import _answered_question
+    _evidence(db, "e1", "Legal confirmed the vendor deletes customer content within 30 days of contract end.")
+    _question(db, "q1", evidence_id="e1")
+    _review(db, "r-early", "q1", resolved_at="2026-10-01 09:00:00"); _review(db, "r-late", "q1", resolved_at="2026-10-02 09:00:00")
+    record = _answered_question(db, get_question(db, "q1"))
+    assert record["answer"] == "Legal confirmed the vendor deletes customer content within 30 days of contract end."
+    assert record["answered_by_review_id"] == "r-late" and record["answer_evidence_id"] == "e1"
+    assert resolving_review(db, "q1") is None

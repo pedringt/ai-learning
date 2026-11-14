@@ -106,22 +106,6 @@ html body .button[disabled] { border-color: var(--line); color: var(--muted); }
 html body .button.primary[disabled] { background: #f3f2f7; border-color: var(--line); color: var(--muted); }
 
 /* project chooser cards */
-html body .project-card {
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: none;
-  transition: transform 220ms ease, box-shadow 220ms ease;
-}
-html body .project-card:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(21, 17, 26, 0.1); }
-html body .overview-grid .project-card.project-card.active,
-html body .project-card.active {
-  border-color: var(--ink);
-  outline: 0;
-  background: linear-gradient(145deg, #fff1fa, #f5f0ff 55%, #e8fbff) !important;
-  box-shadow: 5px 5px 0 var(--ink);
-  transform: none;
-}
 
 /* selected project panel */
 html body .detail-head h2 { letter-spacing: -0.02em; word-spacing: 0.02em; font-weight: 700; }
@@ -233,7 +217,7 @@ html body :is(h1, h2, h3, h4):not(#_) { font-weight: 700 !important; letter-spac
 
 @media (max-width: 680px) {
   html body h1 { font-size: clamp(40px, 12vw, 56px); }
-  html body .project-card.active { box-shadow: 3px 3px 0 var(--ink); }
+  
 }
 
 @media (prefers-reduced-motion: reduce) {

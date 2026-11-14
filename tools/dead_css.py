@@ -23,6 +23,12 @@ with it alive. Prove the result with scripts/state_ui_compare/compare.py.
 
     python3 tools/dead_css.py --state                     # report
     python3 tools/dead_css.py --state --apply FILE...     # paths relative to implementation-context-prototype/
+
+Project Health (project-health.html) with --project-health: the sources are its markup, its own scripts and the shared
+site-shell.js, with the same runtime-prefix rule as --state. The default targets are its stylesheet and inline styles.
+It renders live data, so portfolio_compare.py skips it; prove the result with portfolio_compare.py --project-health.
+
+    python3 tools/dead_css.py --project-health            # report
 """
 from __future__ import annotations
 
@@ -33,11 +39,13 @@ import sys
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 EXCLUDE_PAGES = {"project-health.html", "state-evals.html"}
-SCRIPTS = ["site-shell.js", "site-environment.js"]
+SCRIPTS = ["site-shell.js", "site-environment.js", "site-mobile-nav.js"]
 SHARED_CSS = ["site-shell.css", "site-components.css", "site-redesign.css",
               "implementation-context-case.css"]
 STATE_DIR = os.path.join(REPO, "implementation-context-prototype")
 STATE_CSS = ["state-app.css", "context-tool.css", "state-shell.css", "index.html"]
+HEALTH_SOURCES = ["project-health.html", "project-health.js", "project-health-model.js", "state-eval-catalog.js", "site-shell.js"]
+HEALTH_CSS = ["project-health-redesign.css", "project-health.html"]
 
 
 class Words(set):
@@ -55,6 +63,13 @@ def state_source_words() -> Words:
         if name.endswith("-tests.js") or name == "state-layer-css.js":  # tests and the test-only CSS reader
             continue
         corpus.append(open(script).read())
+    words = Words(re.findall(r"[A-Za-z_][\w-]*", "\n".join(corpus)))
+    words.prefixes = tuple(w for w in words if w.endswith(("-", "_")) and len(w) > 2)
+    return words
+
+
+def health_source_words() -> Words:
+    corpus = [re.sub(r"<style[^>]*>.*?</style>", "", open(os.path.join(REPO, name)).read(), flags=re.S) for name in HEALTH_SOURCES]
     words = Words(re.findall(r"[A-Za-z_][\w-]*", "\n".join(corpus)))
     words.prefixes = tuple(w for w in words if w.endswith(("-", "_")) and len(w) > 2)
     return words
@@ -188,10 +203,12 @@ def process_html(text: str, words: set[str]):
 
 def main() -> int:
     state = "--state" in sys.argv
-    words = state_source_words() if state else source_words()
+    health = "--project-health" in sys.argv
+    words = state_source_words() if state else health_source_words() if health else source_words()
     apply = "--apply" in sys.argv
     base = STATE_DIR if state else REPO
-    targets = [a for a in sys.argv[1:] if a not in ("--apply", "--state")] or (STATE_CSS if state else SHARED_CSS + ["index.html"])
+    defaults = STATE_CSS if state else HEALTH_CSS if health else SHARED_CSS + ["index.html"]
+    targets = [a for a in sys.argv[1:] if a not in ("--apply", "--state", "--project-health")] or defaults
     for name in targets:
         path = os.path.join(base, name)
         text = open(path).read()

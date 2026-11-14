@@ -1,0 +1,242 @@
+{
+ "Q3-01": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_superseded_pending_review",
+  "repeat": 0
+ },
+ "Q3-02": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_compound_question_keeps_governing_state",
+  "repeat": 1
+ },
+ "Q3-03": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+  "repeat": 1
+ },
+ "Q3-04": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_blocker_not_omitted",
+  "repeat": 1
+ },
+ "Q3-05": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_pending_scope_qualifier_kept",
+  "repeat": 1
+ },
+ "Q3-06": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_superseded_proposal_closed",
+  "repeat": 0
+ },
+ "Q3-07": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_question_answer_no_state_mutation",
+  "repeat": 1
+ },
+ "Q3-08": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_blocker_not_omitted",
+  "repeat": 0
+ },
+ "Q3-09": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_blocker_not_omitted",
+  "repeat": 1
+ },
+ "Q3-10": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_state_silent_evidence_loud",
+  "repeat": 1
+ },
+ "Q3-11": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_pending_scope_qualifier_kept",
+  "repeat": 0
+ },
+ "Q3-12": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_compound_question_keeps_governing_state",
+  "repeat": 0
+ },
+ "Q3-13": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_pending_review_not_truth",
+  "repeat": 0
+ },
+ "Q3-14": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+  "repeat": 0
+ },
+ "Q3-15": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_state_silent_evidence_loud",
+  "repeat": 0
+ },
+ "Q3-16": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_compound_question_keeps_governing_state",
+  "repeat": 0
+ },
+ "Q3-17": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_pending_scope_qualifier_kept",
+  "repeat": 0
+ },
+ "Q3-18": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_authoritative_pending_wording",
+  "repeat": 0
+ },
+ "Q3-19": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_pending_scope_qualifier_kept",
+  "repeat": 1
+ },
+ "Q3-20": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_blocker_not_omitted",
+  "repeat": 0
+ },
+ "Q3-21": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_superseded_proposal_closed",
+  "repeat": 1
+ },
+ "Q3-22": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_pending_review_not_truth",
+  "repeat": 1
+ },
+ "Q3-23": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_pending_review_not_truth",
+  "repeat": 0
+ },
+ "Q3-24": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_authoritative_pending_wording",
+  "repeat": 0
+ },
+ "Q3-25": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_superseded_proposal_closed",
+  "repeat": 1
+ },
+ "Q3-26": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_superseded_pending_review",
+  "repeat": 1
+ },
+ "Q3-27": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+  "repeat": 0
+ },
+ "Q3-28": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_state_silent_evidence_loud",
+  "repeat": 1
+ },
+ "Q3-29": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_state_silent_evidence_loud",
+  "repeat": 0
+ },
+ "Q3-30": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_authoritative_pending_wording",
+  "repeat": 1
+ },
+ "Q3-31": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_question_answer_no_state_mutation",
+  "repeat": 0
+ },
+ "Q3-32": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_superseded_pending_review",
+  "repeat": 0
+ },
+ "Q3-33": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_authoritative_pending_wording",
+  "repeat": 1
+ },
+ "Q3-34": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_superseded_pending_review",
+  "repeat": 1
+ },
+ "Q3-35": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+  "repeat": 1
+ },
+ "Q3-36": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_compound_question_keeps_governing_state",
+  "repeat": 1
+ },
+ "Q3-37": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_pending_review_not_truth",
+  "repeat": 1
+ },
+ "Q3-38": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "adv_superseded_proposal_closed",
+  "repeat": 0
+ },
+ "Q3-39": {
+  "version": "after A+D",
+  "build": "36e31b7",
+  "scenario_id": "ask_question_answer_no_state_mutation",
+  "repeat": 0
+ },
+ "Q3-40": {
+  "version": "before A+D",
+  "build": "6226560",
+  "scenario_id": "ask_question_answer_no_state_mutation",
+  "repeat": 1
+ }
+}

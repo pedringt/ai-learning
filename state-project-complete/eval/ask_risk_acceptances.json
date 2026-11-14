@@ -1,0 +1,4 @@
+{
+  "about": "DEC-022 (Paige, Nov 12): an Ask trust failure blocks a release even once unless an acceptance here names its scenario. Each entry needs Paige's explicit OK: scenario_id, release, reason, accepted_by, date, and expires (YYYY-MM-DD; the gate ignores an expired or incomplete entry). Remove entries when the fix ships.",
+  "acceptances": []
+}

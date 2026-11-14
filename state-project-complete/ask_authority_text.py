@@ -72,14 +72,69 @@ def _hedged_by_phrase(text: str) -> bool:
     return any(hedge in lowered for hedge in _PENDING_HEDGE_PHRASES)
 
 
+# #656 (Nov 11 retention capture): two negations the rule above missed, so a correct sentence was rewritten
+# into a false one. "No retention or deletion term is established as accepted project fact" became "...is proposed
+# (not yet established)..." ("no" governs the subject, not the word), and "The premise that retention is resolved is
+# not correct" became "The premise that retention is reported (not yet resolved) is not correct" (the denial comes
+# after the word). The second form counts only when the negated predicate denies the subject's status or truth,
+# within the same clause: "The approved budget is not enough" still asserts approval.
+_NO_SUBJECT_RE = re.compile(
+    r"\b(?:no|nothing|none)\s+(?!doubt\b)(?:[\w'’-]+\s+){0,6}?(?:is|are|was|were|has\s+been|have\s+been)\s+(?:\w+ly\s+)?"
+    r"(?=(?:confirmed|resolved|established|approved|decided|known)\b)",
+    re.I,
+)
+_STATUS_DENIED_AFTER_RE = re.compile(
+    r"^(?:\s+[\w'’-]+){0,5}?\s+(?:(?:is|are|was|were|has|have)\s+(?:not|never)|isn['’]t|aren['’]t|wasn['’]t|weren['’]t|"
+    r"hasn['’]t|haven['’]t)\s+(?!only\b)(?:yet\s+)?(?:been\s+)?(?:yet\s+)?(?:correct|accurate|true|right|valid|established|"
+    r"recorded|confirmed|accepted|approved|resolved|settled|final|known|decided|in\s+current\s+state|on\s+record|in\s+place)\b",
+    re.I,
+)
+
+
 def _negated(text: str) -> bool:
     lowered = text.lower()
     negation = _NEGATION_RE.search(lowered)
-    return bool(negation and _SETTLED_TARGET_WORD_RE.search(lowered, negation.end()))
+    if negation and _SETTLED_TARGET_WORD_RE.search(lowered, negation.end()):
+        return True
+    if _NO_SUBJECT_RE.search(lowered):
+        return True
+    return any(_status_denied_after(lowered, m) for m in _SETTLED_TARGET_WORD_RE.finditer(lowered))
+
+
+# A definite noun phrase ("the approved budget has not been recorded") still refers to a thing a source called
+# approved, so it keeps the Evidence qualifier (#567, Oct 28). The denial-after form covers a bare noun phrase that
+# opens the clause ("Confirmed retention terms are not recorded") and a word inside a that-clause the sentence denies
+# ("the premise that retention is resolved is not correct").
+_DEFINITE_RE = re.compile(r"\b(?:the|that|this|these|those|its|their|a|an|our|your)\s+$")
+
+
+def _status_denied_after(lowered: str, match: "re.Match[str]") -> bool:
+    lead = re.split(r"[,;:]|\b(?:and|but|so|while|because)\b", lowered[:match.start()])[-1]
+    predicative = re.search(r"\b(?:is|are|was|were|be|been)\s+$", lead) and re.search(r"\bthat\b", lead)
+    bare = not lead.strip() or re.fullmatch(r"\s*(?:no|any)\s+", lead)
+    if not (predicative or bare) or _DEFINITE_RE.search(lead):
+        return False
+    after = re.split(r"[,;:]|\b(?:and|but|so|while|because)\b", lowered[match.end():])[0]
+    return bool(_STATUS_DENIED_AFTER_RE.match(after))
+
+
+# #656: "The Question was resolved previously, then reopened" became "...was reported (not yet resolved)
+# previously...". A past-tense status that the same sentence says was later undone is history, not a claim that it
+# holds now. Only a reversal counts: "The budget was approved earlier this week" is still a claim of approval.
+_PAST_STATUS_RE = re.compile(
+    r"\b(?:was|were|had\s+been)\s+(?:\w+ly\s+)?(?:confirmed|resolved|established|approved|decided)\b", re.I)
+_REVERSAL_RE = re.compile(
+    r"\b(?:re-?opened|reversed|revoked|withdrawn|rescinded|superseded|replaced|rolled\s+back|no\s+longer|"
+    r"later\s+changed|has\s+since\s+changed|since\s+reopened)\b", re.I)
+
+
+def _historical(text: str) -> bool:
+    past = _PAST_STATUS_RE.search(text)
+    return bool(past and _REVERSAL_RE.search(text, past.end()))
 
 
 def _already_hedged(text: str) -> bool:
-    return _hedged_by_phrase(text) or _negated(text)
+    return _hedged_by_phrase(text) or _negated(text) or _historical(text)
 
 
 # #474: a negation only covers its own clause in prose. Cowork, Oct 9: "This conflicts
@@ -250,8 +305,57 @@ def _refers_to_governing_state(text: str, match: "re.Match[str]", governing) -> 
     if not statements or not noun:
         return False
     numbers = _numbers(text)
-    return any(word in tokens and noun in tokens and numbers <= statement_numbers
-               for tokens, statement_numbers, _grams in statements)
+    # #656: the noun phrase, not one word of it: "the approved Support Slack source" is not "approved support
+    # material". Up to two words after the settled word must all be in the statement.
+    phrase = [w for w in _words(text[match.end():])[:2] if w not in _NOT_A_NOUN and not w.isdigit()]
+    phrase = phrase[:2] if len(phrase) == 2 and phrase[0] == noun else [noun]
+    # #656: "Support Slack is not an approved retrieval source" uses the word to deny it; it never spares it.
+    return any(word in tokens and all(w in tokens for w in phrase) and numbers <= statement_numbers
+               and not any(g[0] in ("not", "no") and word in g for g in grams)
+               for tokens, statement_numbers, grams in statements)
+
+
+def _stem(word: str) -> str:
+    return word[:5]
+
+
+def _modified_noun(text: str, match: "re.Match[str]") -> str | None:
+    """The noun an attributive settled word modifies, reading through a hyphen compound: "approved-knowledge
+    grounding" modifies "grounding"."""
+    rest = text[match.end():]
+    if rest.startswith("-"):
+        rest = re.sub(r"^-[\w]+", "", rest)
+    words = [w for w in _words(rest)[:3] if w not in _NOT_A_NOUN and not w.isdigit() and len(w) >= 3]
+    return words[0] if words else None
+
+
+def _names_accepted_thing(text: str, match: "re.Match[str]", governing) -> str | None:
+    """#656: "approved-knowledge grounding" paraphrases the governing "grounded in approved support material", and
+    "the approved evaluation direction" names the evaluation approach Current State records, but both were rewritten
+    to say the thing is "not yet approved". Returns how to word the match instead, or None to soften as before:
+    - the word itself, when a governing statement uses the same word about the same noun (stems compared);
+    - "" (drop the adjective, never deny it) when a governing statement names the noun without that word and does
+      not deny it. The sentence then makes no approval claim either way.
+    A sentence whose figures are not in that statement (a pending Review's $95,000) is still softened."""
+    statements = getattr(governing, "statements", ())
+    if not statements:
+        return None
+    before = _words(text[:match.start()])[-1:]
+    if before and before[0] in _PREDICATIVE_LEADS:
+        return None
+    noun = _modified_noun(text, match)
+    if not noun:
+        return None
+    word = match.group(0).lower()
+    numbers = _numbers(text)
+    naming = [(tokens, grams) for tokens, statement_numbers, grams in statements
+              if numbers <= statement_numbers and any(_stem(t) == _stem(noun) for t in tokens)]
+    # "Support Slack is not an approved retrieval source": Current State denies the word about this thing.
+    if any(g[0] in ("not", "no") and word in g for _tokens, grams in naming for g in grams):
+        return None
+    if any(word in tokens for tokens, _grams in naming):
+        return match.group(0)
+    return "" if naming else None
 
 
 def _governing_state_ngrams(statements) -> frozenset:
@@ -322,11 +426,17 @@ _WHETHER_RE = re.compile(r"\bwhether\b", re.I)
 # verb earlier in the same clause attributes it to a source, with no comma or conjunction in between
 # ("the note says the budget was approved"), or when it sits inside quotation marks. Attribution to State's
 # own record is not spared: "Current State says the terms are approved" is the claim the backstop guards.
+# Nov 12 (#656): participles attribute too: "a Q3 planning session note saying the pilot budget is approved"
+# became "...saying the pilot budget is proposed for approval (not yet approved)".
 _REPORTING_VERB_RE = re.compile(
-    r"\b(?:says|said|reports|reported|states|stated|claims|claimed|describes|described|writes|wrote|"
-    r"mentions|mentioned|notes\s+that|noted\s+that|according\s+to)\b",
+    r"\b(?:says|said|saying|reports|reported|reporting|states|stated|stating|claims|claimed|claiming|describes|"
+    r"described|describing|writes|wrote|writing|mentions|mentioned|mentioning|notes\s+that|noted\s+that|"
+    r"noting\s+that|according\s+to)\b",
     re.I,
 )
+# Nov 12 (#656): "According to the Q3 planning session, the pilot budget was approved" names its source before
+# a comma, so that one comma ends the source's name rather than the attribution.
+_ACCORDING_TO_RE = re.compile(r"\baccording\s+to\b", re.I)
 _ATTRIBUTION_BREAK_RE = re.compile(r",|;|\b(?:and|but|so|while|although|though|because)\b", re.I)
 # Only the few words right before the verb name who is speaking: "The only relevant record is an open Review
 # noting that the Q3 note says..." is attributed to the note, not to a record (Oct 27 eval matrix, #566).
@@ -353,11 +463,24 @@ _NUMBER_WITH_COMMAS_RE = re.compile(r"\d(?:[\d,.]*\d)?")
 _QUOTED_SPAN_RE = re.compile(r"[“\"][^”\"]+[”\"]|(?<![\w’'])['‘][^'’]+['’](?![\w])")
 
 
+def _according_to_a_source(after: str) -> bool:
+    """True if `after`, the text following "according to", is "<a source>, <the claim>" with no further break,
+    and the source is not State's own record ("According to Current State, ..." is still a claim)."""
+    after = _NUMBER_WITH_COMMAS_RE.sub("0", after)
+    source, comma, rest = after.partition(",")
+    if not comma or _ATTRIBUTION_BREAK_RE.search(source) or _ATTRIBUTION_BREAK_RE.search(rest):
+        return False
+    names_state_record = _RECORD_RE.search(source) and not _SOURCE_RECORD_RE.search(source)
+    return not _STATE_RECORD_SUBJECT_RE.search(source) and not names_state_record
+
+
 def _attributed_to_a_source(prefix: str) -> bool:
     """True if `prefix`, the sentence text before a settled word (back to the last ";"), credits it to a source."""
     verb = None
     for verb in _REPORTING_VERB_RE.finditer(prefix):
         pass
+    if verb and _ACCORDING_TO_RE.fullmatch(verb.group(0)) and _according_to_a_source(prefix[verb.end():]):
+        return True
     # A comma inside "$40,000" is not a clause break (#569 diagnosis, Oct 27).
     if verb and not _ATTRIBUTION_BREAK_RE.search(_NUMBER_WITH_COMMAS_RE.sub("0", prefix[verb.end():])):
         subject = " ".join(_words(prefix[:verb.start()])[-_SUBJECT_WORDS:])
@@ -428,12 +551,52 @@ def _soften_match(text: str, match: "re.Match[str]", replacement, governing, lea
         return match.group(0)
     if _evidence_backed(text, match, evidence):
         return match.group(0) + EVIDENCE_QUALIFIER
+    accepted = _names_accepted_thing(text, match, governing) if match.group(0).lower() in _ATTRIBUTIVE_REPLACEMENTS else None
+    if accepted is not None:
+        return accepted
     attributive = _ATTRIBUTIVE_REPLACEMENTS.get(match.group(0).lower())
     if attributive and _attributive(text, match):
         # "the approved move budget" -> "the proposed (not yet approved) move budget",
         # not the ungrammatical "the proposed for approval (not yet approved) move budget".
         return _match_case(attributive, match.group(0))
     return replacement(match)
+
+
+# #656: "Retention is resolved, so Security approval can proceed" became "Retention is reported (not yet resolved),
+# so Security approval can proceed": the premise was qualified, but the go-ahead drawn from it still reached the
+# reader. The same holds when the premise is attributed to a source ("Legal reportedly confirmed 30 days, so...").
+# A consequence clause that grants a go-ahead is removed from such a sentence; the premise stays. A negated go-ahead
+# ("so approval cannot proceed") is not one, and a sentence whose premise is itself negated ("Retention is not
+# resolved, so only independent work can proceed") is left alone.
+_CONSEQUENCE_RE = re.compile(r"[,;]?\s*\b(?:so|therefore|thus|hence|which\s+means|meaning)\b(?P<rest>[^.;]*)", re.I)
+_GO_AHEAD_RE = re.compile(
+    r"\b(?:can|may|could|should)\s+(?:now\s+)?(?:proceed|move\s+forward|go\s+ahead|begin|start|launch)\b"
+    r"|\b(?:is|are)\s+(?:now\s+)?(?:approved|cleared|unblocked|settled|final)\b",
+    re.I,
+)
+_ATTRIBUTION_HEDGES = ("reportedly", "reported to", "is reported", "evidence says", "evidence reports", "according to")
+_GO_AHEAD_NEGATION_RE = re.compile(r"\b(?:not|cannot|never|until|nothing|no)\b|n['’]t\b", re.I)
+
+
+def _drop_unsupported_go_ahead(sentence: str, original: str | None = None) -> str:
+    """`original` is the sentence before softening: its premise decides whether it was negated, since the
+    softened premise now contains "(not yet resolved)" itself."""
+    original_premise = None
+    if original is not None:
+        first = _CONSEQUENCE_RE.search(original)
+        original_premise = original[:first.start()] if first else original
+    for consequence in _CONSEQUENCE_RE.finditer(sentence):
+        premise, rest = sentence[:consequence.start()], consequence.group("rest")
+        go = _GO_AHEAD_RE.search(rest)
+        judged = original_premise if original_premise is not None else premise
+        if not go or _negated(judged) or re.search(r"\bnot\b|n['’]t\b", judged, re.I):
+            continue
+        own_clause = re.split(r",|\band\b", rest[:go.start()])[-1] + go.group(0)
+        if _GO_AHEAD_NEGATION_RE.search(own_clause):
+            continue
+        tail = sentence[consequence.end():]
+        return premise.rstrip(" ,;") + ("." if not tail.strip() else tail)
+    return sentence
 
 
 def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozenset = frozenset(), evidence=()) -> str | None:
@@ -461,8 +624,13 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
     sentences = _SENTENCE_SPLIT_RE.split(value)
     rewritten = []
     for sentence in sentences:
-        if _hedged_by_phrase(sentence) or sentence.rstrip().endswith("?"):
+        if _historical(sentence):
             rewritten.append(sentence)
+            continue
+        if _hedged_by_phrase(sentence) or sentence.rstrip().endswith("?"):
+            lowered = sentence.lower()
+            attributed = any(h in lowered for h in _ATTRIBUTION_HEDGES)
+            rewritten.append(_drop_unsupported_go_ahead(sentence) if attributed else sentence)
             continue
         parts = _CLAUSE_SPLIT_RE.split(sentence)
         original = list(parts)
@@ -476,7 +644,8 @@ def _soften_unearned_settled_prose(value: str | None, governing_ngrams: frozense
                 current = fixed
                 fixed = pattern.sub(lambda m, r=replacement, t=current, l=lead: _soften_match(t, m, r, governing_ngrams, l, evidence), current)
             parts[index] = fixed
-        rewritten.append("".join(parts))
+        changed = "".join(parts)
+        rewritten.append(_drop_unsupported_go_ahead(changed, sentence) if changed != sentence else changed)
     text = " ".join(rewritten)
     text = re.sub(r"\s{2,}", " ", text).strip()
     return text or value
@@ -503,6 +672,8 @@ _INTERNAL_JSON_FIELD_NAMES = frozenset({
     "source_ids", "uncertainty_ids", "suggested_refinements", "suggested_question",
     "governing_current_fact", "qualifies_current_state", "known_unknown",
     "accepted_past_transition", "supporting_or_event_evidence", "interpretation_guardrail",
+    "answered_question", "answered_questions", "answered_question_ids", "answered_by_review_id", "answer_evidence_id",
+    "resolved_at",
     "needs_review", "recent_context", "open_attention",
 })
 

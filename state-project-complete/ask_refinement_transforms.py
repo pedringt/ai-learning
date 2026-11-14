@@ -107,6 +107,7 @@ def transform_to_three_bullets(answer: AskSynthesis) -> AskSynthesis:
     answer.sections = [bullet_section]
     answer.headline = ""  # Clear headline
     answer.summary = ""  # Clear summary
+    answer.claims = []  # #567: the claims are the summary now
     answer.suggested_refinements = []  # No refinement chips
     return answer
 

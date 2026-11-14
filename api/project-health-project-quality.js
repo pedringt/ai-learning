@@ -38,7 +38,7 @@ async function githubJson(path){
   if(process.env.GITHUB_TOKEN)headers.Authorization='Bearer '+process.env.GITHUB_TOKEN;
   const response=await timedFetch('https://api.github.com'+path,{headers});
   const payload=await response.json().catch(()=>({}));
-  if(!response.ok) throw new Error(payload?.message||('GitHub request failed: '+response.status));
+  if(!response.ok) throw new Error('GitHub request failed: '+response.status);
   return payload;
 }
 
@@ -211,7 +211,10 @@ module.exports=async function handler(req,res){
     res.status(200).json(payload);
   }catch(error){
     res.setHeader('Cache-Control','no-store');
-    res.status(502).json({detail:error?.message||'Quality source unavailable'});
+    // Only this file's own messages reach the page; anything else (GitHub or parse errors) stays in the log.
+    const own=/^(Quality source timed out|GitHub (file )?request failed: \d+)$/.test(String(error?.message||''));
+    if(!own) console.error('project-health-project-quality',error);
+    res.status(502).json({detail:own?error.message:'Quality source unavailable'});
   }
 };
 

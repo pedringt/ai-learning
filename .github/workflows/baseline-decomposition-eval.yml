@@ -1,11 +1,25 @@
-# Makes real model calls, manually only: 5 sources x repeats x routes (default 60 calls,
-# about 30 cents on Haiku 5.5). Measures how Baseline splits a source into facts, and how
+# Makes real model calls, manually only: 6 sources x repeats x routes (default 72 calls,
+# about 35 cents on Haiku 5.5). Measures how Baseline splits a source into facts, and how
 # often the model invents a year or amount the source never states (#233, #240).
+# suite=mixed_spec_intake instead runs #649's mixed spec (or the sources named in `only`) through
+# ordinary intake `repeats` times each (one call each) and counts what happened to its open item.
 # Sources are synthetic; the JSON report (with the fact text) is a workflow artifact.
 name: Baseline decomposition eval
 on:
   workflow_dispatch:
     inputs:
+      suite:
+        description: What to measure
+        required: true
+        default: decomposition
+        type: choice
+        options:
+          - decomposition
+          - mixed_spec_intake
+      only:
+        description: "space-separated source ids (empty = all for decomposition, mixed_spec for intake)"
+        required: false
+        default: ''
       repeats:
         description: Runs per source and route
         required: true
@@ -26,7 +40,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: baseline-decomposition-eval-${{ github.ref_name }}
+  group: baseline-decomposition-eval-${{ github.ref_name }}-${{ inputs.suite }}
   cancel-in-progress: false
 jobs:
   eval:
@@ -45,15 +59,28 @@ jobs:
         run: pip install -r requirements.txt
       - name: Plan and budget check (no model calls)
         env:
+          SUITE: ${{ inputs.suite }}
+          ONLY: ${{ inputs.only }}
           REPEATS: ${{ inputs.repeats }}
           ROUTES: ${{ inputs.routes }}
           MAX_CALLS: ${{ inputs.max_calls }}
         run: |
           [[ "$REPEATS" =~ ^[0-9]+$ && "$MAX_CALLS" =~ ^[0-9]+$ ]] || { echo "repeats and max_calls must be whole numbers"; exit 1; }
+          [[ "$ONLY" =~ ^[a-z0-9_\ ]*$ ]] || { echo "only must be space-separated source ids"; exit 1; }
+          only_args=(); [ -n "$ONLY" ] && only_args=(--only $ONLY)
+          if [ "$SUITE" = mixed_spec_intake ]; then
+            plan="$(ANTHROPIC_API_KEY= python -m eval.run_mixed_spec_intake --dry-run --repeats "$REPEATS" "${only_args[@]}")"
+            echo "$plan"
+            total="$(echo "$plan" | sed -nE 's/.*= ([0-9]+) paid model call.*/\1/p')"
+            [ -n "$total" ] || { echo "Could not read the planned call count"; exit 1; }
+            echo "Planned calls: $total (max $MAX_CALLS)"
+            if (( total > MAX_CALLS )); then echo "Refusing: $total planned calls is above max_calls=$MAX_CALLS"; exit 1; fi
+            exit 0
+          fi
           if [ "$ROUTES" = both ]; then routes="paste upload"; else routes="$ROUTES"; fi
           total=0
           for route in $routes; do
-            plan="$(ANTHROPIC_API_KEY= python -m eval.run_baseline_decomposition --dry-run --repeats "$REPEATS" --route "$route")"
+            plan="$(ANTHROPIC_API_KEY= python -m eval.run_baseline_decomposition --dry-run --repeats "$REPEATS" --route "$route" "${only_args[@]}")"
             echo "$plan"
             calls="$(echo "$plan" | sed -nE 's/.*= ([0-9]+) paid model call.*/\1/p')"
             [ -n "$calls" ] || { echo "Could not read the planned call count"; exit 1; }
@@ -66,10 +93,19 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          SUITE: ${{ inputs.suite }}
+          ONLY: ${{ inputs.only }}
           REPEATS: ${{ inputs.repeats }}
         run: |
+          set -o pipefail
+          only_args=(); [ -n "$ONLY" ] && only_args=(--only $ONLY)
+          if [ "$SUITE" = mixed_spec_intake ]; then
+            python -m eval.run_mixed_spec_intake --repeats "$REPEATS" "${only_args[@]}" --keep-raw --json out-mixed-spec-intake.json | tee summary-mixed-spec-intake.txt
+            { echo "### Mixed spec through ordinary intake"; echo '```'; cat summary-mixed-spec-intake.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           for route in $ROUTE_LIST; do
-            python -m eval.run_baseline_decomposition --repeats "$REPEATS" --route "$route" --json "out-$route.json" | tee "summary-$route.txt"
+            python -m eval.run_baseline_decomposition --repeats "$REPEATS" --route "$route" "${only_args[@]}" --json "out-$route.json" | tee "summary-$route.txt"
             { echo "### Route: $route"; echo '```'; cat "summary-$route.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           done
       - name: Upload reports
