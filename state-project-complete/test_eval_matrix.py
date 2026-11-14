@@ -575,12 +575,12 @@ def test_assess_suite_grades_the_saved_held_out_set():
     assert matrix.calls_per_repeat("assess") == 12
 
 
-def test_heldout2_suite_uses_adversarial_scenarios_no_earlier_set_has_seen():
-    assert [s.id for s in matrix._scenarios("heldout2")] == list(matrix.HELDOUT_V11_R2_SCENARIOS)
+def test_heldoutb_suite_uses_adversarial_scenarios_no_earlier_set_has_seen():
+    assert [s.id for s in matrix._scenarios("heldoutb")] == list(matrix.HELDOUT_V11_R2_SCENARIOS)
     seen = set(matrix.CALIBRATION_641_SCENARIOS) | set(matrix.HOLDOUT_641_SCENARIOS) | set(matrix.HELDOUT_V11_SCENARIOS)
     seen |= {a["scenario_id"] for a in json.loads(matrix.CALIBRATION_ANSWERS.read_text())["answers"]}
     assert not set(matrix.HELDOUT_V11_R2_SCENARIOS) & seen
-    assert matrix.plan(["heldout2"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
+    assert matrix.plan(["heldoutb"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
 
 
 def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
