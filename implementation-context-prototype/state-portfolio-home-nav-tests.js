@@ -1,7 +1,7 @@
 // #588/#589: the portfolio homepage (index.html) opens with Paige's name and description, makes the
 // work the primary call to action, gives each State entry point its own job, exposes the active
 // primary view with aria-current, moves focus to the new view's heading only on user-initiated view
-// changes, and hides the purely decorative hero board pieces from assistive technology.
+// changes, and hides the purely decorative hero notes from assistive technology.
 // The browser check (keyboard, Back/Forward, phone picker, viewports) is in the #588/#589 report.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'..');
@@ -45,14 +45,13 @@ check('the homepage State card describes the practical problem and keeps demo + 
 check('the authority-boundary explanation is not repeated in the homepage card or the catalog entry',
   ![homeCard,catalog].some(t=>/authoriz|human-approved|boundary/i.test(t)));
 
-// #589, Nov 13 board hero: pins, tape, icons and the illustrative preview are hidden; the note words, the
-// card heading and the real State link stay exposed.
-const board=between('<aside class="rd-stage rd-board"','</aside>');
-check('hero board decorations and preview are hidden from assistive technology',
-  !!board&&[...board.matchAll(/<(span|svg|div) class="rd-board-(pin|tape|icon|preview)"[^>]*>/g)].every(m=>/aria-hidden="true"/.test(m[0]))&&/rd-board-preview" aria-hidden="true"/.test(board));
-const card=between('<div class="rd-board-card">','<div class="rd-board-preview"');
-check('the hero card heading and subtitle are not hidden, and Open State follows the preview',
-  !/aria-hidden/.test(card.replace('<span class="rd-board-tape" aria-hidden="true"></span>',''))&&card.includes('<h2>State</h2>')&&/<a class="rd-card-link"[^>]*data-state-app-link/.test(board));
+// #589: decorative notes hidden; the real State link and card copy stay exposed.
+for(const cls of ['rd-review-human','rd-review-authority'])
+  check(`hero ${cls} note is hidden from assistive technology`,html.includes(`<div class="rd-review-note ${cls}" aria-hidden="true">`));
+check('the yellow boundary note is hidden from assistive technology (the card says the same thing)',html.includes('<div class="rd-note" aria-hidden="true">'));
+const card=between('<div class="rd-card">','<div class="rd-trace"');
+check('the hero card heading, sentence and Open State link are not hidden',!/aria-hidden/.test(card.replace(/<span aria-hidden="true">↗<\/span>/,''))&&card.includes('data-state-app-link'));
+
 // Nov 13 (Paige): the rotating "What I pay attention to" strip and its typing script are removed, not hidden.
 check('the rotating text strip and its script are gone',!/rd-rail|rd-type-|What I pay attention to/.test(html));
 

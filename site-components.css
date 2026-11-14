@@ -717,6 +717,36 @@ html body #ai-cs-mock .rd-hero .lead {
   font-size: clamp(17px, 1.5vw, 21px);
   line-height: 1.5;
 }
+.rd-card::before {
+  position: absolute;
+  inset: -14px auto auto -14px;
+  width: 110px;
+  height: 110px;
+  border-radius: 26px;
+  background: var(--rd-acid);
+  z-index: -1;
+  transform: rotate(-12deg);
+}
+.rd-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.rd-trace div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.2;
+}
+.rd-trace div:nth-child(2) { animation-delay: 0.45s; }
+.rd-trace div:nth-child(3) { animation-delay: 0.9s; }
+.rd-trace div:nth-child(4) { animation-delay: 1.35s; }
+
 /* Featured work grid */
 html body #ai-cs-mock .home-start { margin-top: 56px; }
 html body #ai-cs-mock .home-applied-heading { margin-bottom: 18px; }
@@ -1613,6 +1643,28 @@ html body main .owner-customer .owner-tag { color: #007a8a; }
   html body #ai-cs-mock .home-feature-state-anchor::after,
   html body #ai-cs-mock .home-feature-stack-right .home-feature-card:nth-child(n)::after { display: none !important; }
 }
+.rd-paper::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(21,17,26,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(21,17,26,.035) 1px,transparent 1px);background-size:18px 18px;opacity:.38}
+.rd-lines>path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.rd-sketch-main{stroke:#1b2431;stroke-width:1.7;stroke-dasharray:90;stroke-dashoffset:0}
+.rd-sketch-ghost{stroke:#1b2431;stroke-width:.85;opacity:.22;transform:translate(.7px,-.35px)}
+.rd-arrowhead-shape{fill:none;stroke:#1b2431;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.rd-card::before{content:none}
+.rd-status::before{width:7px;height:7px;box-shadow:0 0 0 4px rgba(238,42,123,.1);animation:none!important}
+html body #ai-cs-mock .rd-control h2{margin:0!important;font-size:38px!important;line-height:.96!important;letter-spacing:-.055em;color:#0f172a!important}
+html body #ai-cs-mock .rd-control p{margin:10px 0 0!important;color:#63708a!important;font-size:11.5px!important;line-height:1.45!important}
+.rd-trace div{display:flex;align-items:center;justify-content:center;min-height:31px;border:1px solid #efe4a5;border-radius:999px;background:#fff8c9;padding:6px 5px;color:#344054;font-size:9px;font-weight:750;white-space:nowrap;animation:none!important}
+.rd-mini-panel h3{margin:0 0 7px;font-size:10.5px;}
+.rd-mini-row:first-of-type{border-top:0}
+.rd-mini-row span:nth-child(2),.rd-mini-row>span:first-child:not(.mini-box){flex:1}
+.mini-count.amber{background:#ffe174;color:#5f4b00}
+.mini-count.blue{background:#e6edff;color:#334ac0}
+.mini-count.pink{background:#ffd6e2;color:#952449}
+.mini-count.slate{background:#e9ecf2;color:#475467}
+.rd-review-note .rd-tape{position:absolute;top:-8px;left:50%;width:38px;height:14px;background:rgba(221,224,221,.72);transform:translateX(-50%) rotate(-7deg);filter:drop-shadow(0 2px 2px rgba(21,17,26,.03))}
+.authority-icon{color:#0b9b51}
+.rd-review-human{background:#fff0e9}
+.rd-review-authority{background:#eaf9e9}
+.rd-note .rd-tape-note{position:absolute;top:-15px;left:22px;width:38px;height:13px;background:rgba(218,220,216,.76);transform:rotate(-4deg)}
 @media (max-width:980px) and (min-width:681px){
   html body #ai-cs-mock .rd-hero h1{max-width:760px;font-size:clamp(58px,9.5vw,80px)}
   html body #ai-cs-mock .rd-hero .lead{max-width:650px}
@@ -1620,6 +1672,9 @@ html body main .owner-customer .owner-tag { color: #007a8a; }
 @media (max-width:680px){
   html body #ai-cs-mock .rd-hero h1{font-size:clamp(46px,13vw,62px);line-height:.91;letter-spacing:-.067em}
   html body #ai-cs-mock .rd-hero .lead{margin-top:20px;font-size:17px;}
+  .rd-control h2{font-size:36px}
+  .rd-control p{font-size:11px}
+  .rd-trace div{white-space:normal;min-height:34px}
   
 }
 /* ==== Folded in from portfolio-shape-polish.css (#451). Every page loaded that file
@@ -1676,6 +1731,10 @@ html body #ai-cs-mock :is(.rd-button, .home-state-button, .home-state-primary, .
 }
 html body #ai-cs-mock .tag,html body #ai-cs-mock .resource-link{
   border-radius: 7px !important;
+}
+html body #ai-cs-mock .rd-trace div,
+html body #ai-cs-mock .rd-status {
+  border-radius: 8px !important;
 }
 
 /* Case-study CTAs, reference links, and process chips. */
