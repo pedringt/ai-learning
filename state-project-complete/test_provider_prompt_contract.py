@@ -178,7 +178,9 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # 11800 -> 12100 (2026-11-11): DEC-020's explicitly-open rule (#649). Ordinary intake named a spec's
     # "Open question:" in its own summary but raised no Question in 10/60 runs (Haiku 5.5); measured
     # before/after with eval.run_mixed_spec_intake.
-    assert len(prompt) < 12100
+    # 12100 -> 12200 (2026-11-14): #660's reversal rule (propose the new state, not a bare retire; Paige, Nov 12).
+    # review_direct_reversal 2/10 -> 10/10 on Haiku 5.5, measured before/after (runs 43635190380, 43635193846).
+    assert len(prompt) < 12200
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():
