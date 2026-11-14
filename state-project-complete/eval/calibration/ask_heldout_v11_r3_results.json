@@ -32,6 +32,40 @@
     "directness": "The opening adopts the false premise ('With the pilot at 40 users') and answers on that basis. Only the second claim corrects it.",
     "hedging_calibration": "An unknown (the number of agents needed) is given a definite value of about 3, with only a soft 'about' qualifier.",
     "concision": "Two short claims and one card. There is no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 1,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 1
+     },
+     "authority_calibration": {
+      "from": 4,
+      "to": 1
+     },
+     "consequential_completeness": {
+      "from": 2,
+      "to": 3
+     },
+     "directness": {
+      "from": 4,
+      "to": 1
+     },
+     "hedging_calibration": {
+      "from": 4,
+      "to": 1
+     }
+    },
+    "kept": {},
+    "note": "Paige: the invented '3 agents' looked sourced because it sat under a Needs review badge"
    }
   },
   {
@@ -62,6 +96,14 @@
     "directness": "The headline is a neutral label, and the first claim answers the question directly: Northwind.",
     "hedging_calibration": "The settled fact is stated plainly, with no hedge prompted by the unrelated pending Review.",
     "concision": "A single claim with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
    }
   },
   {
@@ -92,6 +134,34 @@
     "directness": "The opening claim answers the yes/no question immediately, even though the answer is wrong. Correctness is judged under other dimensions.",
     "hedging_calibration": "An unsettled item is stated as a definite \"Yes, SSO is committed for Q1,\" with no hedge.",
     "concision": "Two claims plus their source cards, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "authority_calibration": {
+      "from": 2,
+      "to": 1
+     },
+     "consequential_completeness": {
+      "from": 4,
+      "to": 3
+     },
+     "hedging_calibration": {
+      "from": 2,
+      "to": 1
+     }
+    },
+    "kept": {
+     "faithfulness": "Paige: promoting a real but unconfirmed source is authority/hedging, not faithfulness (her 4 stands)"
+    },
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
    }
   },
   {
@@ -122,6 +192,24 @@
     "directness": "The first claim says State cannot answer, but it does not correct the premise. The correction (approved size is 15; 40 is only proposed) arrives in the second and third claims. That is one claim of setup before the correction rather than an adopted premise.",
     "hedging_calibration": "The 15-user size is stated plainly, the 40-user expansion is hedged once as pending, and the agent count is left explicitly unknown.",
     "concision": "Three short claims plus one card with provenance; no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "directness": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "kept": {},
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
    }
   },
   {
@@ -152,6 +240,32 @@
     "directness": "The first claim, \"The pilot customer is Northwind.\", answers the question directly.",
     "hedging_calibration": "The phrase \"details of the pilot may still change\" casts doubt on a settled Current State answer because of an unrelated pending Review. It undermines the settled fact.",
     "concision": "The second claim and its Review section add context unrelated to the question about the pilot customer."
+   },
+   "human_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 2
+     },
+     "hedging_calibration": {
+      "from": 4,
+      "to": 2
+     },
+     "concision": {
+      "from": 1,
+      "to": 3
+     }
+    },
+    "kept": {},
+    "note": "Paige: mostly agrees; hard to tell invented content from Evidence"
    }
   },
   {
@@ -182,6 +296,14 @@
     "directness": "The first claim answers the question directly: 'The pilot customer is Northwind.'",
     "hedging_calibration": "The settled fact is stated plainly, with no hedge prompted by the unrelated pending Review.",
     "concision": "A single sentence answers the question, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
    }
   },
   {
@@ -212,6 +334,24 @@
     "directness": "The first claim answers directly: a $75 credit requires manager approval.",
     "hedging_calibration": "The Current State rule is stated plainly. The pending Review is hedged once, attached to that item.",
     "concision": "Two claims and one provenance card, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "consequential_completeness": {
+      "from": 3,
+      "to": 4
+     }
+    },
+    "kept": {},
+    "note": "Paige: agrees; the proposal's own ambiguity is for the reviewer to notice"
    }
   },
   {
@@ -242,6 +382,32 @@
     "directness": "The first claim opens 'No.' and answers the exact question immediately.",
     "hedging_calibration": "The Current State rule is stated plainly, and the pending Review is hedged once with 'has not been accepted.'",
     "concision": "There are two claims and one card, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 3,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 1
+     },
+     "consequential_completeness": {
+      "from": 4,
+      "to": 2
+     },
+     "hedging_calibration": {
+      "from": 3,
+      "to": 4
+     }
+    },
+    "kept": {},
+    "note": "Paige: confused by the misread; agrees"
    }
   },
   {
@@ -272,6 +438,14 @@
     "directness": "The first claim answers directly: a $75 credit requires manager approval.",
     "hedging_calibration": "The current rule is stated plainly, and the pending proposal is hedged once, attached to that item.",
     "concision": "Two claims and one card, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
    }
   },
   {
@@ -302,6 +476,24 @@
     "directness": "Claim 1 corrects the false premise first by stating the accepted size is 15, then addresses the agent-count question. That is the right order for a false-premise question.",
     "hedging_calibration": "The 15-user size is stated plainly. The 40-user expansion is hedged once as pending. The agent number is left unknown and not given a value.",
     "concision": "Claim 3 restates the second half of claim 1 ('no confirmed basis for a support-agent number') and adds nothing new."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "adjudication": {
+    "changes": {
+     "concision": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "kept": {},
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
    }
   },
   {
@@ -332,6 +524,21 @@
     "directness": "The first claim answers the question directly: the Q1 roadmap records the dashboard and audit-log export, not SSO.",
     "hedging_calibration": "The Current State fact is stated plainly. The pending items are hedged once and clearly, and the confident Slack language is not allowed to fill the gap.",
     "concision": "Claim 3 largely restates claim 1 (the roadmap does not include SSO) and claim 2 (it is pending review). It adds only the 'treat as' guidance."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "adjudication": {
+    "changes": {},
+    "kept": {
+     "faithfulness": "unresolved: Paige unsure; her 4 kept"
+    },
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
    }
   },
   {
@@ -362,6 +569,24 @@
     "directness": "The first claim directly answers whether SSO is on the Q1 roadmap per accepted records.",
     "hedging_calibration": "The answer states plainly what Current State contains. The pending reports are hedged once, and the Evidence's confidence is not allowed to fill the gap.",
     "concision": "Two claims and the cards give provenance. There is no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "kept": {},
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
    }
   }
  ],
@@ -409,5 +634,48 @@
   "passes": false
  },
  "grades_revealed_after": "ratings committed in f062167 before the grading run",
- "grader_v11_cost_usd": 0.3387
+ "grader_v11_cost_usd": 0.3387,
+ "grader_v11_report_vs_adjudicated": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "concision": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   }
+  },
+  "missed_fails": [],
+  "passes": true
+ },
+ "adjudication_note": "Nov 14 walk-through after the grader scores and key were revealed. Paige agreed with the grader on every disagreement except y03 faithfulness (she holds that promoting a real but unconfirmed source belongs under authority and hedging, not faithfulness) and y11 faithfulness (unresolved). Finding: in the claims shape a badge makes any sentence look sourced; twice (y01, y05) she read model-added content as coming from the Evidence. `human` (pre-reveal) is the held-out evidence; `human_adjudicated` is not independent."
 }
