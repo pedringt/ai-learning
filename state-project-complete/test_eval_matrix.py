@@ -591,6 +591,15 @@ def test_assessb_suite_grades_the_saved_second_round():
     assert sum(a["answer_id"].startswith("h") for a in data) == 4
 
 
+def test_heldoutc_suite_uses_adversarial_scenarios_no_earlier_round_has_seen():
+    assert [s.id for s in matrix._scenarios("heldoutc")] == list(matrix.HELDOUT_V11_R3_SCENARIOS)
+    seen = (set(matrix.CALIBRATION_641_SCENARIOS) | set(matrix.HOLDOUT_641_SCENARIOS)
+            | set(matrix.HELDOUT_V11_SCENARIOS) | set(matrix.HELDOUT_V11_R2_SCENARIOS))
+    seen |= {a["scenario_id"] for a in json.loads(matrix.CALIBRATION_ANSWERS.read_text())["answers"]}
+    assert not set(matrix.HELDOUT_V11_R3_SCENARIOS) & seen
+    assert matrix.plan(["heldoutc"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
+
+
 def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
     ids = {i.id for i in matrix.calibration_items(matrix.CALIBRATION_641_ANSWERS)}
     assert {aid for aid, *_ in matrix.CALIBRATION_641_REGRESSIONS} <= ids
