@@ -2,7 +2,7 @@
  "about": "#641 held-out test for frozen grader v11: Paige's human ratings, recorded Nov 14 BEFORE any grader score on this set was run or shown. Rated from docs/evals/heldout-v11-rating-sheet.md via a rating page, without the answer key.",
  "rater": "Paige (human)",
  "recorded_at": "2026-11-14T19:16:31+00:00",
- "grader_version": null,
+ "grader_version": "ask-grader-v11 (2026-11-12: v10 claims shape plus faithfulness score 2 holds for an implied unrecorded event even when the body corrects it (Paige, #641))",
  "rows": [
   {
    "blind_id": "w01",
@@ -16,7 +16,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 2, 'Security has informally signed off on the data path', turns a passing 'looks fine to me' chat remark into a sign-off. The record does not support a sign-off of any kind, so this is an unsupported characterization rather than a fabricated formal approval.",
+    "authority_calibration": "Claim 2 states 'Security has informally signed off' as a fact, giving unaccepted Evidence authority it lacks. The badge 'Needs review' and the open blocking Question in claim 3 keep the overall status correct, so this is a material flaw rather than a presentation as Current State.",
+    "consequential_completeness": "The blocking Question is surfaced. Claim 3 does not say it blocks launch readiness; that detail appears only in the card.",
+    "directness": "Claim 1 answers the pilot size directly, and claim 2 addresses the sign-off part.",
+    "hedging_calibration": "'Informally signed off' gives the open unknown a soft implied yes, even though the blocking Question says approval is unknown.",
+    "concision": "Three short claims with supporting cards; no padding."
+   }
   },
   {
    "blind_id": "w02",
@@ -30,7 +46,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": "\"Part of this answer couldn't be checked against State's records and was left out.\" maybe need detail on what was left out?"
+   "human_reason": "\"Part of this answer couldn't be checked against State's records and was left out.\" maybe need detail on what was left out?",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Every claim traces to a record. 'Has not been accepted' is a fair reading of an open Review, since open means pending. Citations match.",
+    "authority_calibration": "October 30 is badged Current State. Both proposals are explicitly pending review and badged Needs review. Neither is presented as the new date.",
+    "consequential_completeness": "The current date and both conflicting pending proposals are surfaced. The premise that a new date exists is implicitly corrected by showing October 30 as current with two unresolved proposals.",
+    "directness": "The first claim gives the current date, which answers the question. However, it never states plainly that no new date has been set, so the reader must infer the premise correction from three claims together.",
+    "hedging_calibration": "The current date is stated plainly. Pending proposals are hedged once each.",
+    "concision": "Three short claims plus cards giving provenance. No padding."
+   }
   },
   {
    "blind_id": "w03",
@@ -44,7 +76,23 @@
     "hedging_calibration": 2,
     "concision": 4
    },
-   "human_reason": "\" though State can't confirm these are current and they may have changed.\" seems like overkill, just say what's in current state in thsi scenario"
+   "human_reason": "\" though State can't confirm these are current and they may have changed.\" seems like overkill, just say what's in current state in thsi scenario",
+   "grader_v11": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The added qualifier \"State can't confirm these are current and they may have changed\" is not supported by any record. Current State is, by definition, what is authorized as true now, so the claim undercuts the record rather than paraphrasing it.",
+    "authority_calibration": "The claim carries a Current State badge, but its wording (\"appear to be\", \"can't confirm these are current\") denies Current State its governing authority and treats an authorized fact as uncertain.",
+    "consequential_completeness": "The only relevant record, the Current State support hours, is surfaced in full. There are no open Reviews, Questions or Evidence to include.",
+    "directness": "The first claim states the support hours immediately.",
+    "hedging_calibration": "A settled Current State fact is undermined by heavy hedging: \"appear to be\", \"can't confirm these are current\" and \"may have changed\". This is not a single minor qualifier, and the reader is left doubting real truth.",
+    "concision": "The answer is one sentence, but the clause \"though State can't confirm these are current and they may have changed\" is filler that adds no fact."
+   }
   },
   {
    "blind_id": "w04",
@@ -58,7 +106,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The single claim, 'Support hours are 8am to 6pm Eastern, Monday to Friday.', matches the Current State statement verbatim.",
+    "authority_calibration": "The claim carries the 'Current State' badge and is stated as the governing fact, which matches its authority.",
+    "consequential_completeness": "There are no open Reviews, Questions or Evidence, so the single Current State fact is everything consequential.",
+    "directness": "The headline is a neutral label, and the first claim answers the question immediately.",
+    "hedging_calibration": "The settled Current State fact is stated plainly, with no qualifiers.",
+    "concision": "The answer is one claim with no padding."
+   }
   },
   {
    "blind_id": "w05",
@@ -72,7 +136,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The claim 'pilot size is 12 users' matches Current State. 'State has no confirmed Security sign-off\u2026 blocking open Question' is framed as an absence and is supported. The chat remark is described accurately. All citations match their records.",
+    "authority_calibration": "Pilot size is badged and stated as Current State. The chat remark is explicitly pending and not accepted, and the sign-off is kept as an open blocking Question. No confidence leaks across authority levels.",
+    "consequential_completeness": "The blocking Question and the pending remark are both surfaced. The claim says the Question is blocking but does not say what it blocks (Launch readiness). That appears only in the card detail, so the claim is slightly thin.",
+    "directness": "The first claim answers the pilot-size part directly. The second claim answers the sign-off part right after.",
+    "hedging_calibration": "The pilot size is stated plainly. Sign-off is treated as unknown and pending, with no definite 'no' and no implied yes. Each caveat is attached to its own item.",
+    "concision": "There are three focused claims with provenance cards. The repetition is the expected claim-plus-card shape, and there is no filler."
+   }
   },
   {
    "blind_id": "w06",
@@ -86,7 +166,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The first claim, \"The monthly API spend limit is $5,000\", contradicts Current State, which says $2,500. The Review only says the limit should be $5,000.",
+    "authority_calibration": "The first claim presents the pending Finance Review's $5,000 as the current limit and treats Current State as overturned. The 'Needs review' badge does not cure that wording.",
+    "consequential_completeness": "Both the Current State value of $2,500 and the pending Finance Review are surfaced.",
+    "directness": "The opening claim states a limit right away. It is the wrong figure, but that is penalized under faithfulness and authority, not here.",
+    "hedging_calibration": "The pending $5,000 proposal is stated as a definite current value, while the settled $2,500 is undermined with 'still lists... until processed'.",
+    "concision": "Two claims and one review card; no padding."
+   }
   },
   {
    "blind_id": "w07",
@@ -100,7 +196,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Both claims trace to records: $2,500 from Current State, and the Finance review's $5,000 proposal and 'outdated' wording are paraphrased accurately. 'Has not been accepted into Current State' is supported, since Current State still shows $2,500.",
+    "authority_calibration": "Claim 1 states $2,500 as Current State. Claim 2 labels the $5,000 proposal as pending, says it has not been accepted, and frames its effect as conditional on human acceptance. Neither claim overstates authority.",
+    "consequential_completeness": "The answer surfaces the conflicting open Review and says what would resolve it: human acceptance. There are no blocking Questions.",
+    "directness": "The first claim answers the question directly: $2,500.",
+    "hedging_calibration": "The current limit is stated plainly. The pending change is hedged once, and only on that item.",
+    "concision": "Two claims plus one review card that gives provenance. There is no padding."
+   }
   },
   {
    "blind_id": "w08",
@@ -114,7 +226,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Every claim traces to a supplied record. The pilot size of 12 is in Current State. The open blocking Question is cited correctly. The chat comment is quoted accurately. \"No confirmed Security approval\" correctly describes what is absent from the record rather than asserting a denial.",
+    "authority_calibration": "The pilot size is stated as Current State. The Security approval is framed as an open blocking Question. The chat comment is explicitly described as pending and not accepted, so it does not leak into Current State.",
+    "consequential_completeness": "The answer surfaces the blocking Question, including what it blocks (launch readiness), and the pending evidence Review. Nothing consequential is missing.",
+    "directness": "The first claim answers the pilot-size part directly. The second claim answers the sign-off part immediately after.",
+    "hedging_calibration": "The pilot size is stated plainly. The Security sign-off is left as an explicit unknown rather than a definite no, with its caveat attached to that item.",
+    "concision": "There are three distinct claims and matching cards that provide provenance, with no filler or padding."
+   }
   },
   {
    "blind_id": "w09",
@@ -128,7 +256,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Each claim traces to a record: Current State says October 30, and the two Reviews propose November 10 and December 1. 'Not accepted into Current State' is supported by Current State itself.",
+    "authority_calibration": "October 30 is badged Current State. Both proposals are explicitly called pending. Neither is promoted to the new date.",
+    "consequential_completeness": "Both conflicting Reviews are surfaced along with the Current State date. The answer also notes what would change things: a Review being accepted.",
+    "directness": "The first claim gives the current date, but it does not directly correct the premise that a new date exists. That correction only arrives in the third claim, 'No new launch date has been accepted', after the opening.",
+    "hedging_calibration": "The current date is stated plainly and the proposals are hedged once as pending. Notably, the October 30 date is already past as of today, 2026-11-14, which the answer does not remark on, but this is not a hedging error.",
+    "concision": "The third claim largely restates the first two: October 30 is the recorded date and nothing has been accepted. It adds little beyond them."
+   }
   },
   {
    "blind_id": "w10",
@@ -142,7 +286,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Both claims trace to the supplied records: $2,500 comes from Current State, and the Finance Review proposal is paraphrased accurately. \"Has not been accepted into Current State\" is supported because the record is an open Review.",
+    "authority_calibration": "Claim 1 states $2,500 as Current State. Claim 2 labels $5,000 explicitly as pending and unresolved, so the levels are unambiguous and correct.",
+    "consequential_completeness": "The conflicting pending Review is surfaced, including what would change the limit (a human accepting it).",
+    "directness": "The first claim answers directly: $2,500. The headline is a neutral label.",
+    "hedging_calibration": "The settled fact is stated plainly. The single caveat \"may change the limit if a human accepts it\" is attached to the Review.",
+    "concision": "Two claims plus one provenance card make up the expected shape, with no padding."
+   }
   },
   {
    "blind_id": "w11",
@@ -156,7 +316,23 @@
     "hedging_calibration": 4,
     "concision": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The single claim, \"Support hours are 8am to 6pm Eastern, Monday to Friday,\" matches the Current State statement verbatim.",
+    "authority_calibration": "The claim carries a \"Current State\" badge and is stated as the governing fact, which matches its authority.",
+    "consequential_completeness": "There are no open Reviews, Questions or conflicts in the records. The only relevant record is surfaced.",
+    "directness": "The first claim answers the question directly. The headline is a neutral label and does not count.",
+    "hedging_calibration": "The settled fact is stated plainly, with no qualifiers.",
+    "concision": "The answer is one claim with no padding."
+   }
   },
   {
    "blind_id": "w12",
@@ -170,7 +346,68 @@
     "hedging_calibration": 2,
     "concision": 4
    },
-   "human_reason": "I don't think we should claim engineering's date supersedes in this case, let someone decide"
+   "human_reason": "I don't think we should claim engineering's date supersedes in this case, let someone decide",
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 1,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The first claim says \"The new launch date is December 1... which supersedes Marketing's November 10.\" No record says either proposal supersedes the other or is the new date. This fabricates a decision.",
+    "authority_calibration": "The first claim presents a pending Review as the new launch date, overriding Current State's October 30. The \"Needs review\" badge does not cure this wording.",
+    "consequential_completeness": "Both Reviews and Current State are surfaced in the cards and claims. The conflict between the two proposals is misrepresented as resolved rather than stated, but the records themselves are present.",
+    "directness": "The opening adopts the false premise that a new date exists, answering \"December 1\" instead of correcting it with: no new date is authorized, October 30 stands, and two proposals conflict.",
+    "hedging_calibration": "An unresolved, pending choice between two proposals is stated as a definite value: \"The new launch date is December 1.\"",
+    "concision": "Two short claims plus the review cards. There is no padding."
+   }
   }
- ]
+ ],
+ "grader_v11_run": 43631247682,
+ "grader_v11_cost_usd": 0.3306,
+ "grader_v11_report": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.75,
+    "passes": false
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.75,
+    "passes": false
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 0.8333333333333334,
+    "passes": false
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ },
+ "grades_revealed_after": "human ratings committed in 7c07f00 before the grading run"
 }
