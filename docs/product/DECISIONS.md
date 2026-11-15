@@ -462,7 +462,8 @@ Risk acceptances become routine, or a check's class proves wrong in practice.
 **Related:** #653 (benchmark results), #664, #640, DEC-014, DEC-015, DEC-018, R-005, R-007, R-012
 
 **Decision**
-- **No recency windows.** Ask scores every record in the project. Today it scores only the newest 24 Evidence, 18 History and 30 answered Questions. The per-type limits that cap what the model receives stay as they are until the budget is decided (below).
+- **No recency windows.** Ask scores every record in the project. Today it scores only the newest 24 Evidence, 18 History and 30 answered Questions.
+- **Context budget: today's per-type limits doubled (Paige, Nov 14, after the paid context-size run).** Current State goes from 12 to 24, Reviews 6 to 12, open Questions 12 to 24, answered Questions 6 to 12, History 10 to 20 and Evidence 12 to 24. On the fixture this gave selection recall 0.96 (0.73 at today's limits, 0.92 with the whole project), at about 14.5k input tokens and $0.0016 per Ask on Haiku 5.5, with first token about 0.9 s (run 43676969245, `docs/evals/ask-context-size-results.md`).
 - **Link expansion by default.** After selection, Ask adds the records the selected ones link to, capped:
   - a Review's Evidence and State items;
   - an Evidence note's Review;
@@ -472,7 +473,6 @@ Risk acceptances become routine, or a check's class proves wrong in practice.
 - **Answered Questions are ranked like every other record type**, within their limit of 6. The extra "must share a query word" rule is dropped.
 
 **Pending**
-- **Context budget:** measure real cost and latency at each size first, in a paid run with a dry run and Paige's OK.
 - **Paraphrase misses:** research the options and report back.
 - **Copy Context by task text:** measure it in the benchmark first.
 - **"Not found" vs "not retrieved" wording:** scope the paid absence-wording run.
