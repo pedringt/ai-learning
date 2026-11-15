@@ -100,8 +100,8 @@ def test_plan_accepts_sonnet_and_opus_5_5():
 
 
 def test_shards_cover_every_repeat_and_caps_never_exceed_max_calls():
-    max_calls = 40_000
     suites = [s for s in matrix.SUITES if matrix.calls_per_repeat(s)]  # a saved set not yet filled has nothing to plan
+    max_calls = 2 * 120 * sum(matrix.calls_per_repeat(s) for s in suites)   # room for every suite, headroom included
     p = matrix.plan(suites, "claude-haiku-5-5", 120, max_calls)
     assert p["refusal"] is None
     for suite in suites:

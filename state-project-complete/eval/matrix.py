@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 SCHEMA = "state-eval-matrix/v1"
-SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade", "calibration", "recalibrate", "holdout", "validate", "heldout", "assess", "heldoutb", "assessb", "heldoutc", "assessc", "recheck", "recheckb", "heldoutd", "assessd")
+SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade", "calibration", "recalibrate", "holdout", "validate", "heldout", "assess", "heldoutb", "assessb", "heldoutc", "assessc", "recheck", "recheckb", "heldoutd", "assessd", "contextsize")
 MODEL_ID_PATTERN = re.compile(r"^claude-[a-z0-9.-]+$")
 
 # USD per million tokens, Anthropic first-party API. Source: the claude-api skill's model table
@@ -77,13 +77,17 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
     "validate": {"input": 3_500, "output": 1_000, "max_output": 9_500},
     "consequentiality": {"input": 3_500, "output": 700, "max_output": 2_000},
     "baseline": {"input": 7_500, "output": 900, "max_output": 2_000},
+    # DEC-023 context-size experiment (#653): measured prompts average about 11,700 tokens across its five conditions
+    # (8,100 today to 22,100 for the whole project; `python -m eval.context_size_experiment --dry-run`).
+    "contextsize": {"input": 11_700, "output": 1_200, "max_output": 2_400},
 }
 
 # Wall-clock seconds per repeat on Haiku 5.5, from past runs of the existing workflows:
 # review 35-40s (16 cases; State AI quality check runs 38195077931, 38199551242, 38299891763, 38411808397),
 # ask 27.6-28.3s (10 cases; same workflow), consequentiality 67-77s (36 cases; State QA Release runs
 # 38078551511, 38079304500, 38271757236), baseline 119-126s per 6 repeats of 5 sources per route (run 38187113539).
-SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "regrade": 30, "calibration": 12, "recalibrate": 30, "holdout": 12, "validate": 30, "heldout": 12, "assess": 30, "heldoutb": 12, "assessb": 30, "heldoutc": 12, "assessc": 30, "recheck": 30, "recheckb": 30, "heldoutd": 12, "assessd": 30, "consequentiality": 80, "baseline": 22}
+SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "regrade": 30, "calibration": 12, "recalibrate": 30, "holdout": 12, "validate": 30, "heldout": 12, "assess": 30, "heldoutb": 12, "assessb": 30, "heldoutc": 12, "assessc": 30, "recheck": 30, "recheckb": 30, "heldoutd": 12, "assessd": 30, "consequentiality": 80, "baseline": 22,
+                                     "contextsize": 1_100}  # 155 streamed Asks, not yet measured: about 7 s each
 # Other models are unmeasured here; plan shards as if they were this much slower.
 MODEL_SLOWDOWN: dict[str, float] = {"claude-haiku-5-5": 1.0, "claude-haiku-4-5": 2.0}
 DEFAULT_SLOWDOWN = 3.0
@@ -186,6 +190,9 @@ def scenario_ids(suite: str) -> list[str]:
         from eval.scenarios import SCENARIOS
     elif suite == "baseline":
         from eval.baseline_decomposition import SCENARIOS
+    elif suite == "contextsize":
+        from eval.context_size_experiment import scenarios
+        SCENARIOS = scenarios()
     else:
         raise PlanError(f"Unknown suite {suite!r}")
     return [s.id for s in (graded_subset(list(SCENARIOS)) if suite == "graded" else SCENARIOS)]
@@ -836,6 +843,9 @@ def _scenarios(suite: str) -> list[Any]:
         SCENARIOS = calibration_items(HELDOUT_V12_ANSWERS)
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
+    elif suite == "contextsize":
+        from eval.context_size_experiment import scenarios
+        SCENARIOS = scenarios()
     else:
         from eval.baseline_decomposition import SCENARIOS
     return graded_subset(list(SCENARIOS)) if suite == "graded" else list(SCENARIOS)
@@ -843,6 +853,13 @@ def _scenarios(suite: str) -> list[Any]:
 
 def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: float) -> Callable[[Any], dict[str, Any]]:
     """A function that runs one scenario once and returns its record (without usage/latency)."""
+    if suite == "contextsize":
+        from anthropic_provider import AnthropicProvider
+        from ask_provider import LiveAskProvider
+        from eval.context_size_experiment import run_one
+
+        ask_provider = LiveAskProvider(AnthropicProvider(model_identifier=model))
+        return lambda s: run_one(s, ask_provider)
     if suite in ("regrade", "recalibrate", "validate", "assess", "assessb", "assessc", "recheck", "recheckb", "assessd"):
         from eval.ask_grader import grade_answer
         return lambda item: regrade_record(item, grade_answer)
