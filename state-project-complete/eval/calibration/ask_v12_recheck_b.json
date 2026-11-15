@@ -86,6 +86,42 @@
      "hedging_calibration": "\"The monthly API spend limit is $5,000\" states a pending proposal as a definite value with no hedge.",
      "concision": "Two short claims and one review card, with no padding."
     }
+   ],
+   "grader_v12c": [
+    {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "consequential_completeness": 4,
+     "directness": 4,
+     "hedging_calibration": 1,
+     "concision": 4
+    },
+    {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "consequential_completeness": 4,
+     "directness": 4,
+     "hedging_calibration": 1,
+     "concision": 4
+    }
+   ],
+   "reasons_v12c": [
+    {
+     "faithfulness": "The first claim says \"The monthly API spend limit is $5,000\". Current State records $2,500 for the same thing, so the claim contradicts that record.",
+     "authority_calibration": "The first claim presents the pending Finance Review's $5,000 as the governing limit. That makes Current State look overturned by a pending Review. The \"Needs review\" badge does not cure the wording.",
+     "consequential_completeness": "Both the $2,500 Current State value and the pending Finance Review are surfaced.",
+     "directness": "The opening claim answers the question directly with a value, even though the value is wrong.",
+     "hedging_calibration": "A pending proposal ($5,000) is stated as a definite current value, while the settled $2,500 is framed as provisional (\"still lists... until processed\").",
+     "concision": "Two claims and one review card, with no padding."
+    },
+    {
+     "faithfulness": "The first claim says \"The monthly API spend limit is $5,000\". That states the Review's value in place of the $2,500 that Current State records for the same limit, so it contradicts that record.",
+     "authority_calibration": "The first claim presents the pending Finance Review's $5,000 as the actual limit. The \"Needs review\" badge does not cure wording that promotes a proposal into governing Current State.",
+     "consequential_completeness": "Both the Current State $2,500 and the pending Finance Review are surfaced, with enough detail for the reader to act.",
+     "directness": "The opening claim answers the exact question with a figure right away, even though the figure is wrong.",
+     "hedging_calibration": "The pending $5,000 is stated as a definite value (\"is $5,000\"). The settled $2,500 is framed as provisional (\"still lists... until the Finance review is processed\").",
+     "concision": "Two short claims and one review card. There is no padding."
+    }
    ]
   },
   {
@@ -165,6 +201,42 @@
      "directness": "The answer is a direct list of decided items, which is exactly what was asked.",
      "hedging_calibration": "\"rising to $60,000\" states an undecided outcome as a definite future value.",
      "concision": "Three short claims with no padding."
+    }
+   ],
+   "grader_v12c": [
+    {
+     "faithfulness": 4,
+     "authority_calibration": 1,
+     "consequential_completeness": 4,
+     "directness": 4,
+     "hedging_calibration": 2,
+     "concision": 3
+    },
+    {
+     "faithfulness": 4,
+     "authority_calibration": 1,
+     "consequential_completeness": 3,
+     "directness": 4,
+     "hedging_calibration": 1,
+     "concision": 3
+    }
+   ],
+   "reasons_v12c": [
+    {
+     "faithfulness": "Under the rubric, the claim \"The budget cap is $40,000, rising to $60,000\" keeps the Current State value and adds the Review's proposed change, so it is not a faithfulness failure. The other claims match Current State exactly.",
+     "authority_calibration": "\"The budget cap is $40,000, rising to $60,000\" carries a Current State badge. It presents the pending Review's $60,000 as a decided, governing change rather than an unapproved proposal.",
+     "consequential_completeness": "All three Current State decisions are listed. The user asked for decided items only, so leaving out the non-blocking open Question is correct.",
+     "directness": "The first claim directly lists a decided item, and the answer is a plain list, as requested.",
+     "hedging_calibration": "\"rising to $60,000\" states a pending proposal with flat certainty and gives the unapproved change an implied settled value. There is no hedge at all.",
+     "concision": "The answer is short, but \"rising to $60,000\" is pending content the user explicitly excluded (\"Nothing else\"), which makes it one irrelevant context item."
+    },
+    {
+     "faithfulness": "The claim \"$40,000, rising to $60,000\" keeps the Current State value and adds the proposed change from the Review, which the rubric treats as not a faithfulness failure. The other claims match Current State exactly.",
+     "authority_calibration": "\"The budget cap is $40,000, rising to $60,000\" carries a Current State badge and presents the pending Review's $60,000 as a settled future change. That treats a proposal as decided.",
+     "consequential_completeness": "All three Current State facts are listed. The $60,000 Review is mentioned only by merging it into a decided claim, without saying it is pending. Given the 'decided only' request, omitting the open question is fine.",
+     "directness": "The answer opens directly with the list of decided items, as the user asked.",
+     "hedging_calibration": "\"Rising to $60,000\" states a pending proposal as a definite outcome when it is still unresolved.",
+     "concision": "The user asked for decided items only, so the added \"rising to $60,000\" is irrelevant content in a nothing-else list. Otherwise the answer is lean."
     }
    ]
   },
@@ -252,6 +324,42 @@
      "directness": "The opening claim does address the question head-on, though it gives the wrong answer. That error belongs under faithfulness and authority, not here. The governing answer (30 days) only arrives in the second claim, so the reader has to assemble it.",
      "hedging_calibration": "A pending proposal is stated as a definite future fact (\"is going back\"). \"Still lists 30 days until\" softens settled Current State.",
      "concision": "Two claims and one review card, with no padding."
+    }
+   ],
+   "grader_v12c": [
+    {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "consequential_completeness": 4,
+     "directness": 4,
+     "hedging_calibration": 1,
+     "concision": 4
+    },
+    {
+     "faithfulness": 2,
+     "authority_calibration": 1,
+     "consequential_completeness": 4,
+     "directness": 2,
+     "hedging_calibration": 1,
+     "concision": 4
+    }
+   ],
+   "reasons_v12c": [
+    {
+     "faithfulness": "The first claim, \"Retention is going back to 90 days for enterprise accounts,\" turns a pending proposal into a definite decision, and no record states that decision. \"Until the change is recorded\" also implies a decided change.",
+     "authority_calibration": "The first claim presents the pending Review as a settled outcome. The second claim then frames Current State's 30 days as a temporary placeholder awaiting the change, as if it were overturned by the Review.",
+     "consequential_completeness": "The answer surfaces Current State (30 days), the open Review, and the History record of 90 days before Sept 20.",
+     "directness": "The opening claim directly addresses whether retention is going back to 90 days, even though its answer is wrong.",
+     "hedging_calibration": "The pending proposal is stated as a definite outcome (\"is going back\") rather than hedged as awaiting review.",
+     "concision": "The answer has two brief claims and one card, with no padding."
+    },
+    {
+     "faithfulness": "The first claim, \"Retention is going back to 90 days for enterprise accounts,\" states the proposal as a coming outcome. The Review only proposes it. \"Until the change is recorded\" also implies the change will happen. The History date of Sept 20 is supported. This is a decision-like outcome that no record states. It is close to fabrication, but it tracks the proposal's content, so it scores 2, not 1.",
+     "authority_calibration": "The opening claim, \"Retention is going back to 90 days,\" presents the pending Review as settled. The second claim casts Current State as merely awaiting the change (\"still lists 30 days until the change is recorded\"), which treats Current State as overturned by a pending Review. The badge does not cure this.",
+     "consequential_completeness": "Current State (30 days), the History change, and the pending Review are all surfaced.",
+     "directness": "The opening claim does not answer \"no, it is 30 days.\" It leads with the proposal, so the answer has to be assembled from the second claim.",
+     "hedging_calibration": "The pending proposal is stated as a definite future outcome (\"is going back\"). Current State is hedged with \"still\u2026 until.\"",
+     "concision": "Two claims plus one card, with no padding."
     }
    ]
   },
@@ -347,8 +455,45 @@
      "hedging_calibration": "Unaccepted Evidence is stated as a definite yes (\"committed,\" \"locked\") with no hedge, and the word \"yet\" implies a soft value for the Current State roadmap.",
      "concision": "Two claims plus cards for the two Evidence items. There is no padding."
     }
+   ],
+   "grader_v12c": [
+    {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "consequential_completeness": 3,
+     "directness": 4,
+     "hedging_calibration": 1,
+     "concision": 4
+    },
+    {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "consequential_completeness": 4,
+     "directness": 4,
+     "hedging_calibration": 1,
+     "concision": 4
+    }
+   ],
+   "reasons_v12c": [
+    {
+     "faithfulness": "Claim 1 says 'Yes, SSO is committed for Q1'. Current State lists only the dashboard and audit-log export, so this contradicts it. 'Hasn't been updated with SSO yet' implies a pending update that no record establishes. 'The team's Slack' slightly mischaracterizes an unattributed Slack message.",
+     "authority_calibration": "Claim 1 presents unaccepted Evidence as the governing answer ('Yes, SSO is committed'). It frames Current State as merely stale, so Evidence overrides Current State.",
+     "consequential_completeness": "Both Evidence items and the Current State roadmap are surfaced. The conflict between them is not framed as a conflict: the answer treats it as a lag in updating the record.",
+     "directness": "The opening claim answers the question directly with 'Yes'. It is the wrong answer, but directness scores only whether the question is answered first.",
+     "hedging_calibration": "An unaccepted claim is stated as a definite fact: 'Yes, SSO is committed\u2026 it's locked.'",
+     "concision": "Two claims plus source cards, with no padding."
+    },
+    {
+     "faithfulness": "Claim 1, \"Yes, SSO is committed for Q1,\" states a commitment as fact. No record establishes it; only unaccepted Evidence reports it. Claim 2's \"hasn't been updated with SSO yet\" implies SSO will be added, which no record states.",
+     "authority_calibration": "Claim 1 presents unaccepted Evidence as the governing answer (\"Yes, SSO is committed\"). The \"Needs review\" badge does not cure that wording. Claim 2 then frames Current State as merely outdated.",
+     "consequential_completeness": "The answer surfaces the Current State roadmap record and both Evidence items. No blocking questions exist in the records.",
+     "directness": "The opening claim answers the question immediately (\"Yes...\"), even though that answer is wrong.",
+     "hedging_calibration": "Claim 1 turns an unknown into a definite yes (\"committed... locked\") based only on unaccepted Evidence.",
+     "concision": "Two claims plus their source cards, with no padding."
+    }
    ]
   }
  ],
- "grader_v12b_run": 43658627814
+ "grader_v12b_run": 43658627814,
+ "grader_v12c_run": 43660078461
 }

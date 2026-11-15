@@ -642,6 +642,9 @@ def test_heldoutd_uses_two_scenarios_no_earlier_round_has_seen():
             | set(matrix.HELDOUT_V11_R2_SCENARIOS) | set(matrix.HELDOUT_V11_R3_SCENARIOS))
     assert not set(matrix.HELDOUT_V12_SCENARIOS) & seen
     assert matrix.calls_per_repeat("recheckb") == 4
+    data = json.loads(matrix.HELDOUT_V12_ANSWERS.read_text())["answers"]
+    assert sorted(a["blind_id"] for a in data) == [f"z{i:02d}" for i in range(1, 7)]
+    assert matrix.calls_per_repeat("assessd") == 6
 
 
 def test_grader_rubric_carries_the_nov_14_v12_rule():
