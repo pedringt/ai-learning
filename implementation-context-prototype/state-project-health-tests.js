@@ -859,7 +859,7 @@ const operationalCompared=H.operationalSignals({
   quality:{resolvedReviews:1,materialEditRate:0,recent:[]},
   platform:{aiTelemetry:{available:true,response_speed:{sample_size:10,p95_ms:8200}}},
   previousPlatform:{aiTelemetry:{available:true,response_speed:{sample_size:8,p95_ms:5700}}},
-  investigationHistory:[{observedAt:new Date(Date.now()-2*24*60*60*1000).toISOString(),trigger:'AI eval failure · ask_conflicting_evidence',needsAttentionAtRun:true,resolvedAt:null}]
+  investigationHistory:[{id:'phinv_0123456789abcdef',observedAt:new Date(Date.now()-2*24*60*60*1000).toISOString(),trigger:'AI eval failure · ask_conflicting_evidence',outcome:null}]
 });
 const speedChanged=operationalCompared.find(item=>item.label==='AI response speed');
 // Nov 15: the saved value was this browser's previous page load, so no delta is shown against it.
@@ -867,7 +867,7 @@ assert.strictEqual(speedChanged.status,'Measured');
 assert.doesNotMatch(speedChanged.detail,/last saved|slower|faster/);
 const openInvestigation=operationalCompared.find(item=>item.label==='Open investigation');
 assert.strictEqual(openInvestigation.status,'Open');
-assert.match(openInvestigation.detail,/no resolution recorded yet/);
+assert.match(openInvestigation.detail,/no outcome recorded yet/);
 
 
 const regressionWithBuilds=H.regressionSignal({

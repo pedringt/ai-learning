@@ -614,12 +614,12 @@
         signals.push({kind:'available',label:'Eval context changed',status:'Context',detail:contextChanges.join(' · ')+'.'});
       }
     }
-    const unresolved=(Array.isArray(data?.investigationHistory)?data.investigationHistory:[])
-      .filter(item=>item?.needsAttentionAtRun&&!item?.resolvedAt)
+    const open=(Array.isArray(data?.investigationHistory)?data.investigationHistory:[])
+      .filter(investigationIsOpen)
       .sort((a,b)=>(dateMs(b?.observedAt)||0)-(dateMs(a?.observedAt)||0))[0];
-    if(unresolved){
-      const age=relativeAge(unresolved.observedAt);
-      signals.push({kind:'warn',label:'Open investigation',status:'Open',detail:(unresolved.trigger||'Project investigation')+' · opened '+age+' · no resolution recorded yet.'});
+    if(open){
+      const age=relativeAge(open.observedAt);
+      signals.push({kind:'warn',label:'Open investigation',status:'Open',detail:(open.trigger||'Project investigation')+' · opened '+age+' · '+investigationOutcomeText(open,data)+'.'});
     }
     return signals;
   }
@@ -685,6 +685,8 @@
       if(q.kind==='warn'&&q.nextAction)return q.nextAction;
     }else{
       const q=externalQualityAttention(data?.externalQuality);
+      // DEC-025: a warning carries its own next action; the generic lines remain for one that does not.
+      if(['bad','warn'].includes(q?.kind)&&q.nextAction)return q.nextAction;
       if(q?.kind==='bad')return 'Review the failing product-quality signal and decide whether the next change should address it.';
       if(q?.kind==='warn')return 'Decide whether the watched quality signal needs action before expanding scope.';
     }
@@ -695,7 +697,8 @@
     if(Array.isArray(data?.openPullRequests)&&data.openPullRequests.length)return 'Decide whether the current open work is ready for the next release.';
     // Missing data does not support carrying on unchanged (Paige, Nov 3): with no more specific finding, restore the checks.
     if(['Delivery','Quality','Activity','Production backend','Quality behavior'].some(label=>signalRefreshFailure(data,[label])))return 'Restore the missing checks before assessing project health.';
-    return 'No immediate product decision is required. Continue the current goal until the next review.';
+    // DEC-025: with nothing needing attention, the project's own next decision from the registry.
+    return data?.project?.nextDecision||'No immediate product decision is required. Continue the current goal until the next review.';
   }
   function failureCheckCount(q,check){
     const runs=[q?.review,q?.ask].filter(Boolean);
@@ -1188,8 +1191,8 @@
       items.push({when:externalQ.recorded.updated_at,type:'Quality check',category:'quality',title:'Game quality record updated',detail:externalQ.recorded.full_playtest_pending?'Full first-run playtest still open.':'Latest recorded quality state.'});
     }
     for(const item of data?.investigationHistory||[]){
-      items.push({when:item.observedAt,type:'Investigation',category:'investigations',title:item.trigger||'Project check',detail:(item.summary||'Investigation completed')+(item.resolvedAt?' · later resolved':'')});
-      if(item.resolvedAt)items.push({when:item.resolvedAt,type:'Investigation',category:'investigations',title:'Investigated issue resolved',detail:item.trigger||'Project investigation'});
+      items.push({when:item.observedAt,type:'Investigation',category:'investigations',title:item.trigger||'Project check',detail:item.summary||'Investigation completed'});
+      if(item.outcome&&item.outcomeAt)items.push({when:item.outcomeAt,type:'Investigation',category:'investigations',title:'Investigation outcome: '+investigationOutcomeLabel(item.outcome),detail:(item.trigger||'Project investigation')+(item.outcomeNote?' · '+item.outcomeNote:'')});
     }
     for(const note of data?.productNotes||[]){
       if(note?.createdAt&&note?.text)items.push({when:note.createdAt,type:note.type==='change'?'Change':note.type==='experiment'?'Experiment':'Decision',category:'decisions',title:note.type==='change'?'Product change recorded':note.type==='experiment'?'Experiment recorded':'Product decision recorded',detail:note.text});
@@ -1318,6 +1321,20 @@
     const data=emptyProjectData(project,match);
     if(!match)initialPendingSignals(project).forEach(label=>data.pending.add(label));
     return data;
+  }
+  // DEC-025 (Nov 15): investigation records are shared on the State backend. Paige records one of four outcomes; the
+  // last two close a record. Nothing closes on its own: an open record on a project that now reads Healthy asks for one.
+  const INVESTIGATION_OUTCOMES={awaiting_evidence:'Awaiting evidence',investigating:'Investigating',accepted_limitation:'Accepted limitation',resolved:'Resolved'};
+  function investigationOutcomeLabel(outcome){return INVESTIGATION_OUTCOMES[outcome]||'No outcome yet';}
+  function investigationIsOpen(item){return !!item&&!['accepted_limitation','resolved'].includes(item.outcome);}
+  function investigationRecordRow(record){
+    return {id:record?.id,observedAt:record?.createdAt,lastSeenAt:record?.lastSeenAt||null,trigger:record?.trigger||'Investigation',summary:record?.summary||'',
+      evidence:Array.isArray(record?.evidence)?record.evidence:[],outcome:record?.outcome||null,outcomeNote:record?.outcomeNote||'',outcomeAt:record?.outcomeAt||null};
+  }
+  function investigationOutcomeText(item,data){
+    const label=item?.outcome?investigationOutcomeLabel(item.outcome):'no outcome recorded yet';
+    const healthyHint=investigationIsOpen(item)&&data&&overallAttention(data).kind==='good'?' · Project now reads Healthy: record an outcome':'';
+    return label+healthyHint;
   }
   function investigationHistorySummary(investigation){
     if(!investigation)return'Investigation completed';
@@ -2261,5 +2278,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,gateEligibility,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,staleFailureContext,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,INVESTIGATION_OUTCOMES,investigationOutcomeLabel,investigationIsOpen,investigationRecordRow,investigationOutcomeText,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,gateEligibility,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,staleFailureContext,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

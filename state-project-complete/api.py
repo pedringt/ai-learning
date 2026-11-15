@@ -25,6 +25,7 @@ from product_analytics import register_product_analytics
 from quality_analytics_api import register_quality_analytics
 from project_health_usage_api import register_project_health_usage
 from project_health_decisions_api import register_project_health_decisions
+from project_health_investigations_api import register_project_health_investigations
 
 __all__ = ["Settings", "app", "create_app"]
 
@@ -48,6 +49,7 @@ def create_app(settings=None, provider=None, ask_provider=None):
     register_quality_analytics(application, application.state.settings)
     register_project_health_usage(application, application.state.settings)
     register_project_health_decisions(application, application.state.settings)
+    register_project_health_investigations(application, application.state.settings)
     return application
 
 

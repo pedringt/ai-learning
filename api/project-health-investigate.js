@@ -251,6 +251,37 @@ async function summarizeWithModel(evidence){
   await recordUsage(evidence.project,body,result.payload,Date.now()-started);
   return reportText(result.payload);
 }
+// DEC-025 (Nov 15): a completed investigation of a verified failure becomes a shared record in the State backend
+// (project_health_investigations_api.py). The summary is the report's first plain line, redacted like the evidence and
+// cut to 300 characters; the evidence list is source names only. One open record per project, environment and signal.
+// A missing key or a failed write never affects the investigation.
+const REPORT_HEADINGS=/^(Investigation scope|Current assessment|What failed|Why this matters|Likely cause|Recommended next action|Evidence)$/i;
+function reportSummaryLine(report){
+  // Redact first, then drop list and emphasis marks; underscores stay, since tokens contain them.
+  const line=sanitizeText(report,3000).split(/\n+/).map(item=>item.replace(/^[#>*\-\s]+|[*`]+/g,'').trim()).find(item=>item&&!REPORT_HEADINGS.test(item.replace(/:$/,'')));
+  return (line||'Investigation completed').slice(0,300);
+}
+function investigationRecord(project,environment,signalType,report,sources){
+  return {
+    project:project.slug,
+    problem_key:environment+':'+signalType,
+    trigger:(signalType==='vercel'?'Deployment failure':'Failed release check')+(environment==='production'?'':' · '+environment),
+    summary:reportSummaryLine(report),
+    evidence:[...new Set((sources||[]).map(source=>sanitizeText(source?.label,80)).filter(Boolean))].slice(0,8)
+  };
+}
+async function recordInvestigation(record,{fetchImpl=fetch,key=process.env.PROJECT_HEALTH_USAGE_KEY,env}={}){
+  if(!key)return null;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),2500);
+  try{
+    const response=await fetchImpl(stateApiBase(env)+'/api/admin/project-health-investigations',{method:'POST',signal:controller.signal,
+      headers:{'content-type':'application/json','X-Project-Health-Usage-Key':key},body:JSON.stringify(record)});
+    if(!response.ok)return null;
+    const payload=await response.json().catch(()=>({}));
+    return typeof payload?.record?.id==='string'?payload.record.id:null;
+  }catch(_){return null;}
+  finally{clearTimeout(timer);}
+}
 function investigationClaimKey(project,environment,signalType){return ['investigate',project.slug,environment,signalType].map(claimKeyPart).join(':');}
 module.exports=async function handler(req,res){
   if(req.method!=='POST'){res.setHeader('Allow','POST');return response(res,405,{detail:'Method not allowed'});}
@@ -287,8 +318,9 @@ module.exports=async function handler(req,res){
   if(report?.budgetPaused)return response(res,503,{code:'ai_budget_paused',detail:AI_BUDGET_MESSAGE});
   if(!report)return response(res,502,{detail:'The investigation model could not return a report. No project changes were made.'});
   const sources=[...selected.sources,...(deploymentEvidence?.sources||[]),...(commitEvidence?.sources||[])];
+  const recordId=await recordInvestigation(investigationRecord(project,environment,signalType,report,sources));
   res.setHeader('Cache-Control','no-store');
-  return response(res,200,{project:project.slug,environment,commit:sha,report,model:MODEL,sources,observedAt:new Date().toISOString(),readOnly:true});
+  return response(res,200,{project:project.slug,environment,commit:sha,report,model:MODEL,sources,observedAt:new Date().toISOString(),readOnly:true,recordId});
 };
-module.exports._test={PROJECTS,investigationClaimKey,githubHeaders,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE,INVESTIGATION_COOLDOWN_SECONDS};
+module.exports._test={PROJECTS,investigationClaimKey,githubHeaders,FAILED_CHECKS,sanitizeText,safeSourceUrl,failedCheckRuns,statusFailure,eventLines,boundedEvidence,fetchBranch,fetchVercelEvidence,fetchGithubEvidence,fetchCommitFollowup,jobLogExcerpt,jobIdFrom,fetchJobLog,fetchRunContext,recordUsage,usageEndpoint,reportSummaryLine,investigationRecord,recordInvestigation,investigationRequest,reportText,MODEL,MAX_OUTPUT_TOKENS,isAiBudgetExhausted,AI_BUDGET_MESSAGE,INVESTIGATION_COOLDOWN_SECONDS};
 

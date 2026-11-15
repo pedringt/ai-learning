@@ -513,3 +513,28 @@ A generic "part of this answer couldn't be checked" left both the reader and the
 **Revisit when**
 State gets access control (a review page becomes possible), or the kinds prove too coarse to act on.
 
+
+### DEC-025 — Project Health: shared investigation records with recorded outcomes, and project-specific next decisions
+
+**Status:** Decided (Paige, Nov 15)
+**Date:** 2026-11-15
+**Related:** DEC-012, DEC-016, `state-project-complete/project_health_investigations_api.py`, `api/project-health-investigations.js`, `api/project-health-investigate.js`, `api/project-health-project-quality.js`, `project-health-model.js`, `docs/product/DATA_PRIVACY.md`
+
+**Decision**
+Paige made these choices after the Nov 15 review of an outside Project Health review:
+- **Investigation history is stored on the State backend**, like the decision log, so every visitor sees the same history. It was in each browser's localStorage.
+- **Only real problems create a record.** A visitor's Investigate creates one only when the project needs attention: the AI investigator's run on a current deployment or release-check failure (written by the Vercel function, which verifies the failure), or a State AI-eval investigation while the latest recorded eval run has failures (verified by the State backend). Quick checks on a healthy project are not recorded. A project and problem has at most one open record; a repeat updates its "last seen" time.
+- **A record holds** the project, what triggered it, the evidence source names, a one-line summary and the times. The summary of an AI-investigated failure is the first line of the AI report, redacted like the investigator's evidence and cut to 300 characters; the State eval summary is written by the backend from the recorded run. Browsers never send summary text.
+- **Four outcomes:** Awaiting evidence, Investigating, Accepted limitation, Resolved, with an optional note (at most 500 characters). Only Paige sets them, with `PROJECT_HEALTH_DECISION_KEY`. A new record has no outcome. Accepted limitation and Resolved close a record.
+- **Nothing closes on its own.** When a project reads Healthy while a record is still open, the record shows a hint to record an outcome. The old automatic "resolved" is removed.
+- **Next decision:** when a project-quality signal needs attention, the dashboard shows that warning's own next action (for example NARC's first-run playtest) instead of a generic line. When nothing needs attention, it shows the project's own next decision from the registry, used as written.
+- **Authority Lab Web Analytics stays off.** The card says it is not enabled.
+
+**Why**
+Per-browser history meant every visitor saw a different record, a first-time visitor saw none, and "resolved" was inferred from a project turning Healthy, which is not the same as the problem being fixed. Free text from browsers would let anyone put text on the public dashboard, so the server writes it.
+
+**Rejected / deferred**
+Recording every Investigate click; records only Paige saves; facts-only records with no summary; automatic resolution, labelled or not; enabling Authority Lab analytics. NARC, Tastemake and Authority Lab warnings that the dashboard checks only in the browser create no record yet.
+
+**Revisit when**
+Records pile up as noise, a summary needs more redaction, or a non-State warning needs a shared record.
