@@ -538,3 +538,28 @@ Recording every Investigate click; records only Paige saves; facts-only records 
 
 **Revisit when**
 Records pile up as noise, a summary needs more redaction, or a non-State warning needs a shared record.
+
+### DEC-026 — Current State shows when a person last confirmed each item (#678)
+
+**Status:** Decided (Paige, Nov 15); not built.
+**Date:** 2026-11-15
+**Related:** #678, #679, DEC-021, R-006
+
+**Decision**
+- **Only a person confirms.** "Last confirmed" moves when someone accepts a Review that changes or re-states an item, or uses a new "Still true" action, which adds a History entry.
+- **Agreeing evidence gets its own, weaker date.** Evidence that matches an item ("No review needed") records "last mentioned in evidence". It never moves "last confirmed".
+- **Expiry is a per-project setting, off by default.** Individual items can override the project threshold. The seeded demo projects use 60 days and seed a deliberate mix of old and recent items, and the UI says expiry can be turned on in Settings.
+- **An old item is flagged, never changed.** Current State marks it "Needs re-check · last confirmed <date>"; a "Show dates" toggle (off by default) shows dates on every item. State suggests a re-check Question for a person to add, the overview counts items needing a re-check, and the Review queue gets one bundled entry that opens Current State filtered to them.
+- **Ask notes it in software.** When a claim's primary record is flagged, software adds the note beside its chip. No prompt change.
+
+**Why**
+Stale "true" items are the next trust failure once the authority boundary holds: an item can be correctly accepted and still no longer true. Comparable tools (Guru, Document360, Notion, Confluence) have a person verify content, set intervals per item with a team default, and notify rather than change content; Guru's current default is "Does not expire".
+
+**Rejected / deferred**
+- Agreeing evidence moving the main date: it is a model judgment, not a person's confirmation.
+- One fixed threshold for every project, and per-area thresholds.
+- One Review-queue entry per old item: it adds review load (#679).
+- Model-worded staleness in Ask answers: a prompt change for something software can state.
+
+**Revisit when**
+State gets logins (an owner to notify becomes possible), or the bundled Review entry is routinely ignored.

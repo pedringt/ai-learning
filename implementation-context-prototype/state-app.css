@@ -1294,9 +1294,10 @@ html:not(#_#_#_) #askStateDrawer[data-ask-controls="answered"] .ask-state-drawer
 .note-linked-question span{font-weight:700;color:#5b6474;margin-right:4px}
 
 /* #482 (QA-16): on phones the drawer's full-width button rule stretched the answer's Copy button
-   to ~240px and wrapped the "Meeting prep" label. Keep the answer header to one tidy row. */
+   to ~240px and wrapped the "Meeting prep" label. Keep the answer header to one tidy row.
+   #674: the label also carries the headline since DEC-021, so it may wrap; nowrap pushed Copy off a 375px drawer. */
 #askStateDrawer .ask-answer-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-#askStateDrawer .ask-answer-head .result-label{white-space:nowrap}
+#askStateDrawer .ask-answer-head .result-label{min-width:0;flex:1 1 auto}
 #askStateDrawer .ask-answer-head{width:100%}
 #askStateDrawer .ask-answer-head .ask-answer-actions{flex:0 0 auto;width:auto;margin-left:auto}
 #askStateDrawer .ask-answer-head .ask-answer-actions .btn{width:auto;min-width:0;flex:0 0 auto;padding:7px 14px}

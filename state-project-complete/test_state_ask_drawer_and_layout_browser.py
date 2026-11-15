@@ -280,3 +280,32 @@ def test_answer_has_no_hidden_extras_and_cites_each_record_once(browser_and_url)
         assert 'Has Security approved the retention term?' in texts
     finally:
         page.close()
+
+
+CLAIMS_ANSWER = {
+    'job': 'answer', 'headline': 'What State has on record',
+    'claims': [{'text': 'The pilot is limited to Tier 1 troubleshooting.', 'label': 'Current State', 'basis': 'current_state'}],
+    'sections': [],
+}
+
+
+@pytest.mark.parametrize('width', [320, 375])
+def test_phone_answer_header_keeps_copy_inside_the_drawer(browser_and_url, width):
+    """#674: since DEC-021 the answer label carries the headline ("State Ask · What State has on record"). It was
+    nowrap (#482), so at 375px it pushed the drawer's Copy button past its right edge ("Cop")."""
+    page = _open(browser_and_url, width, 760, ask_answer=CLAIMS_ANSWER)
+    try:
+        page.evaluate("document.getElementById('askStateLauncher').click()")
+        page.fill('#askStateDrawerInput', 'What is the pilot scope?')
+        page.evaluate("document.querySelector('#askStateDrawer .ask-state-drawer-form button[type=submit]').click()")
+        copy = '#askStateDrawerResult .ask-answer-actions [data-review-batch-action="copy-ask-answer"]'
+        page.wait_for_selector(copy)
+        edges = page.evaluate("""(() => {
+          const drawer = document.getElementById('askStateDrawer').getBoundingClientRect();
+          const copy = document.querySelector('#askStateDrawerResult .ask-answer-actions [data-review-batch-action="copy-ask-answer"]');
+          return {drawer: drawer.right, copy: copy.getBoundingClientRect().right};
+        })()""")
+        assert edges['copy'] <= edges['drawer'], edges
+        assert page.evaluate("document.documentElement.scrollWidth") <= width
+    finally:
+        page.close()

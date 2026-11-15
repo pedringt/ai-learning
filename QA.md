@@ -131,6 +131,14 @@ Manual/agent exploration should spend time on things deterministic tests are wea
 
 For Cowork, use `docs/qa/COWORK.md`.
 
+## Deliberate behavior, not bugs
+
+These look like defects to a first-time reviewer but are intended. Check here, `docs/product/DECISIONS.md` and `docs/product/RISKS.md` before reporting one. Each entry points at its source; if the source changes, it wins.
+
+- **Seeded Slack note "Tier 2 should be fine to include too" shows "No review needed"** although it contradicts the Tier 1 scope. Seeded Ask evidence (`ask-evidence-tier2-slack` in `seed_demo.py`) with the project rule "Slack is supporting evidence, not authoritative approval"; Ask tests depend on it. How its status reads to a cold reviewer is #673.
+- **Seeded note about "demo copy and spacing on the internal prototype"** in Notes. Deliberate retrieval noise (`ask-evidence-demo-noise` in `seed_demo.py`).
+- **Ask says how many statements it left out, and what kind, but never shows them.** DEC-024. Withheld statements are kept for internal review, not displayed.
+
 ## Finding format
 
 Classify each finding as one of:

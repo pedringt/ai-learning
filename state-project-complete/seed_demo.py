@@ -242,6 +242,12 @@ HISTORY_SCENARIOS = [
     ("rollout-sequence", "k-rollout", "The assistant may be made available to the broader support team after implementation is ready.", "Rollout begins with a bounded internal pilot before any broader support-team availability is considered.", "The rollout sequence was constrained so evidence from a bounded pilot must precede broader availability.", "Leadership and Support agreed to a bounded internal pilot before considering wider support-team rollout.", "2026-08-28 15:10:00"),
 ]
 
+# #673 (Nov 15): these are seeded as already processed, so Notes shows "No review needed" without a model call. That
+# label matches real intake: eval/run_intake_checks.py ran each note 4 times against this seeded Northstar (Actions
+# runs 43764142070 and 43770646739, claude-haiku-5-5). Retrieval test and demo noise: no Review 4/4. Security meeting
+# and the Tier 2 Slack note: no Review 3/4 (once each it suggested a Question; Tier 2's linked the existing Tier 2
+# Question, never a scope change). The vendor email is linked to demo-review-retention below. Paige chose the
+# majority outcomes.
 ASK_EVIDENCE = [
     ("ask-evidence-security-meeting", "Security review is scheduled for September 3. Agenda: vendor retention terms, pilot access boundaries, and what remains before security approval.", "project_note", "2026-09-02 09:00:00"),
     ("ask-evidence-vendor-retention", "For the pilot environment, retained conversation data is deleted after 30 days.", "vendor_email", "2026-09-01 14:00:00"),

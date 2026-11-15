@@ -27,6 +27,8 @@ on:
           - ask-independent-review-567
           - ask-diagnostic-packet
           - ask-independent-review-ad
+          - intake-checks
+          - intake-seed-notes-x3
       max_calls:
         description: Hard cap on model calls (30 keeps an Ask-only run under $0.05 on Haiku 5.5)
         required: false
@@ -69,6 +71,19 @@ jobs:
             RECORD_URL="https://state-api-staging.onrender.com"
           else
             RECORD_URL="https://state-api-6waw.onrender.com"
+          fi
+          # Nov 15 (#671, #673): the intake-injection cases x3 (observe-only) and one analysis of Northstar's seeded
+          # Ask notes; 17 intake calls, nothing recorded.
+          # Nov 15 (#673): the seeded notes analyzed 3 more times before their outcomes are seeded; 15 intake calls.
+          if [ "${{ inputs.suite }}" = "intake-seed-notes-x3" ]; then
+            python state-project-complete/eval/run_intake_checks.py --set seed-notes --seed-repeats 3 \
+              --max-calls "${{ inputs.max_calls || '18' }}" --json diagnostic-report.json
+            exit 0
+          fi
+          if [ "${{ inputs.suite }}" = "intake-checks" ]; then
+            python state-project-complete/eval/run_intake_checks.py --max-calls "${{ inputs.max_calls || '20' }}" \
+              --json diagnostic-report.json
+            exit 0
           fi
           # Nov 7: the #640 diagnostic (eval/ask_diagnostic_640.py): 3 variants x 5, one Ask call each, nothing recorded.
           if [ "${{ inputs.suite }}" = "ask-diagnostic-640" ] || [ "${{ inputs.suite }}" = "ask-headline-step1" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-one" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-retention" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-withheld" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-remeasure" ] || [ "${{ inputs.suite }}" = "ask-independent-review-567" ] || [ "${{ inputs.suite }}" = "ask-diagnostic-packet" ] || [ "${{ inputs.suite }}" = "ask-independent-review-ad" ]; then
