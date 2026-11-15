@@ -5,7 +5,10 @@ import json
 import re
 from pathlib import Path
 
-from ask_display import ALL_WITHHELD_LINE, RECORD_LABELS, SCOPE_NOTE, WITHHELD_LINE, answer_lead, displayed_text
+import pytest
+
+from ask_display import (ALL_WITHHELD_LINE, RECORD_LABELS, SCOPE_NOTE, WITHHELD_KIND_PHRASES, WITHHELD_LINE, answer_lead,
+                         displayed_text, withheld_line)
 from eval.ask_quality_scenarios import SCENARIOS as ASK_QUALITY_SCENARIOS
 from eval.quality_harness import score_ask_answer
 
@@ -61,6 +64,9 @@ def test_labels_match_the_ui_chips():
     js_labels = json.loads(re.sub(r"(\w+):", r'"\1":', match.group(1)).replace("'", '"'))
     assert js_labels == RECORD_LABELS
     assert SCOPE_NOTE in source and WITHHELD_LINE in source and ALL_WITHHELD_LINE in source
+    match = re.search(r"const WITHHELD_KIND_PHRASES=(\{.*?\});", source)
+    assert match, "WITHHELD_KIND_PHRASES not found in context-ask.js"
+    assert json.loads(re.sub(r"(\w+):\"", r'"\1":"', match.group(1))) == WITHHELD_KIND_PHRASES
 
 
 def test_scorer_reads_displayed_text_not_json_fields():
@@ -89,3 +95,43 @@ def test_the_scoring_version_covers_the_display_formatter():
     from eval.scoring_version import harness_source
 
     assert "def displayed_lines" in harness_source()
+
+
+# --- #662: the withheld line says how many and what kind ----------------------------------------------------------
+
+def _withheld(kinds, claims=1, items=0, shown=True):
+    return {"claims": [{"text": "Shown."}] if shown else [], "withheld_claims": claims, "withheld_items": items,
+            "withheld_kinds": kinds}
+
+
+def test_withheld_line_says_how_many_and_what_kind():
+    assert withheld_line(_withheld({"settled": 1})) == \
+        "1 statement was left out: it said something was settled that State's records don't establish."
+    assert withheld_line(_withheld({"figure": 2}, claims=2)) == \
+        "2 statements were left out: both used a number or date that isn't in State's records."
+    assert withheld_line(_withheld({"reference": 1, "settled": 2}, claims=2, items=1)) == (
+        "3 statements were left out: 2 said something was settled that State's records don't establish, "
+        "and 1 cited a record State doesn't have.")
+
+
+def test_withheld_line_counts_unexplained_units_as_other_and_keeps_older_answers_unchanged():
+    assert withheld_line(_withheld({}, claims=1)) == "1 statement was left out: it couldn't be checked against State's records."
+    assert withheld_line({"claims": [{"text": "Shown."}], "withheld_claims": 1}) == WITHHELD_LINE
+    assert withheld_line(_withheld({"settled": 2}, claims=2, shown=False)) == ALL_WITHHELD_LINE
+
+
+def test_js_builds_the_same_withheld_line(tmp_path):
+    import shutil
+    import subprocess
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node not installed")
+    source = ASK_JS.read_text()
+    start = source.index("const WITHHELD_KIND_PHRASES=")
+    end = source.index("const withheldLine=")
+    script = tmp_path / "w.js"
+    cases = [_withheld({"settled": 1}), _withheld({"figure": 2}, claims=2),
+             _withheld({"reference": 1, "settled": 2}, claims=2, items=1), _withheld({}, claims=1)]
+    script.write_text(source[start:end] + f"for (const a of {json.dumps(cases)}) console.log(withheldKindsLine(a));")
+    out = subprocess.run([node, str(script)], capture_output=True, text=True, check=True).stdout.splitlines()
+    assert out == [withheld_line(a) for a in cases]

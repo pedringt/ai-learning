@@ -160,7 +160,8 @@ def test_a_compound_answer_with_the_go_ahead_on_the_wrong_basis_shows_the_limita
     ])
     lines = displayed_lines(cleaned.model_dump())
     assert [c.text for c in cleaned.claims] == ["Retention is not resolved: the retention Question is still open."]
-    assert WITHHELD_LINE in lines
+    assert "1 statement was left out: it said something could go ahead without a record that allows it." in lines
+    assert cleaned.withheld_kinds == {"permission": 1}
 
 
 # --- partly and fully withheld answers ---------------------------------------------------------------------------
@@ -170,8 +171,9 @@ def test_a_partly_withheld_answer_keeps_its_shown_claims_and_says_part_was_left_
                           _claim("Retention is resolved.", "none")])
     lines = displayed_lines(cleaned.model_dump())
     assert "[Blocking] Retention is not confirmed." in lines
-    assert WITHHELD_LINE in lines and ALL_WITHHELD_LINE not in lines
-    assert cleaned.summary.endswith(WITHHELD_LINE)
+    line = "1 statement was left out: it said something was settled that State's records don't establish."
+    assert line in lines and ALL_WITHHELD_LINE not in lines and WITHHELD_LINE not in lines
+    assert cleaned.summary.endswith(line)
 
 
 def test_a_fully_withheld_answer_says_so_without_calling_it_wrong_or_empty():

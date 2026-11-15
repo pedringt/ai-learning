@@ -22,6 +22,7 @@ from contextvars import ContextVar
 from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_card, fixed_headline, prepare_answer_raw, record_text
 from ask_display import claim_lines, has_withheld, withheld_line
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
+from ask_withheld_log import record_withheld, withheld_kind
 from db import project_id_of
 from ask_authority_text import (  # noqa: F401  (re-exported: tests import these from ask_service)
     _DEMO_SLUG_ID,
@@ -729,8 +730,9 @@ class _AnswerChecks:
         claim.text = self.clean(claim.text) or ""
         label = self.checker.check_claim(claim.model_dump()) if claim.text else None
         if label is None:
+            failed = "reference" if not claim.text else self.checker.failure_kind(claim.model_dump())
             _log_decision("claim", raw_text, claim.basis, claim.primary_record_id, claim.supporting_record_ids,
-                          "withheld", "reference or anchor check failed")
+                          "withheld", f"{'reference' if failed == 'reference' else 'anchor'} check failed")
             return None
         verdict = ask_assertions.check(claim.text, claim.basis, self._authority_records(claim))
         if verdict.ok and self._restates_assumption(claim.text):
@@ -868,6 +870,8 @@ class _AnswerChecks:
                 continue
             if not (item.record_id and item.record_id in self.allowed.get(item.record_type, set())):
                 # #567: a card whose record isn't among the selected records is withheld, and counted.
+                _log_decision("card", item.text, item.record_type, item.record_id, [], "withheld",
+                              "card's record isn't among the answer's records")
                 withheld += 1
                 continue
             # For unresolved decisions/questions, visible wording comes from
@@ -896,6 +900,8 @@ class _AnswerChecks:
                 item.text = self.clean(item.text) or ""
                 item.detail = self.clean(item.detail)
                 if record is None:
+                    _log_decision("card", item.text, item.record_type, item.record_id, [], "withheld",
+                                  "card's record isn't among the answer's records")
                     withheld += 1
                     continue
                 raw_text = item.text
@@ -921,7 +927,32 @@ class _AnswerChecks:
 def _validate_synthesis(
     answer: AskSynthesis, selection: AskSelection, context: Mapping[str, Any],
     candidates: Mapping[str, list[dict]] | None = None, *, query: str = "", today: date | None = None,
-    previous_answer: Mapping[str, Any] | None = None,
+    previous_answer: Mapping[str, Any] | None = None, withheld_units: list[dict] | None = None,
+) -> AskSynthesis:
+    # #662: this pass's check decisions, to count withheld statements by kind (and, through `withheld_units`, keep them
+    # for review). An eval that already collects decisions (UNIT_DECISIONS) keeps its list; this reads what it adds.
+    outer_log = UNIT_DECISIONS.get()
+    log = outer_log if outer_log is not None else []
+    start = len(log)
+    token = UNIT_DECISIONS.set(log) if outer_log is None else None
+    try:
+        answer = _checked_synthesis(answer, context, candidates, query=query, today=today, previous_answer=previous_answer)
+    finally:
+        if token is not None:
+            UNIT_DECISIONS.reset(token)
+    units = [d for d in log[start:] if d.get("decision") == "withheld"]
+    answer.withheld_kinds = {}
+    for unit in units:
+        kind = withheld_kind(unit.get("reason"))
+        answer.withheld_kinds[kind] = answer.withheld_kinds.get(kind, 0) + 1
+    if withheld_units is not None:
+        withheld_units.extend(units)
+    return answer
+
+
+def _checked_synthesis(
+    answer: AskSynthesis, context: Mapping[str, Any], candidates: Mapping[str, list[dict]] | None, *, query: str,
+    today: date | None, previous_answer: Mapping[str, Any] | None,
 ) -> AskSynthesis:
     checks = _AnswerChecks(context, candidates, query=query, today=today, previous_answer=previous_answer)
     shown_claims = []
@@ -1105,6 +1136,7 @@ def _finalize_ask_result(
     first_token_ms: int | None = None,
     today: date | None = None,
     first_validated_ms: int | None = None,
+    connection: Any = None,
 ) -> dict[str, Any]:
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
@@ -1112,8 +1144,11 @@ def _finalize_ask_result(
     prepared, withheld_before = prepare_answer_raw(answer_raw)
     answer = AskSynthesis.model_validate(prepared)
     answer.withheld_claims = withheld_before
+    withheld_units: list[dict] = []
     answer = _validate_synthesis(answer, selection, context, candidates, query=query, today=today,
-                                 previous_answer=previous_answer)
+                                 previous_answer=previous_answer, withheld_units=withheld_units)
+    if connection is not None:
+        record_withheld(connection, query, withheld_units)
     answer = _transform_keeping_drafts(query, _normalize_meeting_prep(answer))
     _finish_display_fields(answer, previous_answer)
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
@@ -1406,7 +1441,7 @@ def stream_ask_events(
         candidates, selection_raw, answer_raw, pipeline="one_call_stream",
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
         query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, first_token_ms=first_token_ms,
-        today=today, first_validated_ms=first_validated_ms,
+        today=today, first_validated_ms=first_validated_ms, connection=connection,
     )
     yield "final", result
 
@@ -1460,5 +1495,5 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     return _finalize_ask_result(
         candidates, selection_raw, answer_raw, pipeline=pipeline,
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
-        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, today=today,
+        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, today=today, connection=connection,
     )

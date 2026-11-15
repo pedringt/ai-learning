@@ -81,6 +81,20 @@ The review interpretation suite's results can be exported as evidence for Author
 
 It never includes scenario ids, Evidence, Current State, Questions, proposals, rationales, prompts, model output or traces; a test checks this. Only controlled synthetic eval runs are exported. Production activity is not, because production holds seeded demo data and resettable visitor activity, which isn't meaningful production evidence (Paige, Oct 12). Delivery to Authority Lab is a pull request to that repository (#518), so anything exported becomes public.
 
+## Withheld Ask statements (Paige, Nov 14, #662)
+
+When Ask's checks leave a claim or card out of an answer, the person sees only how many statements were left out and what kind. So that removals can be checked, State keeps what was left out, as an approved exception to "no Ask answer text":
+
+- **Stored:**
+  - the withheld statement and the person's question, each cut to 300 characters;
+  - the check's reason and its kind;
+  - the cited record id and basis;
+  - the project id, build and time.
+- **Where:** its own table, `ask_withheld_units` (`ask_withheld_log.py`). It is not Product Analytics, and no page reads it. It is read from the Render shell or by a script.
+- **Scope:** every project on production and staging, including visitor-created projects. Visitors can type anything into Ask, so the question text may contain whatever they wrote.
+- **Retention:** 90 days. Older rows are deleted on each write.
+- It is never sent to a model, the dashboard or any other service. A write failure never fails Ask.
+
 ## If State were a real company product
 
 Before connecting real Slack channels, documents, transcripts, or other company sources, product and engineering would need explicit controls for:
