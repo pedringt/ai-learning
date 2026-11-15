@@ -12,6 +12,8 @@ import pytest
 pytest.importorskip("playwright.sync_api")
 from playwright.sync_api import Error as PlaywrightError, sync_playwright
 
+from browser_test_offline import isolate_from_live_api, wait_until_loaded
+
 ROOT = Path(__file__).resolve().parents[1]
 STATE_URL = (ROOT / "implementation-context-prototype" / "index.html").as_uri()
 _FALLBACKS = ("/usr/bin/chromium", "/usr/bin/chromium-browser", "/usr/bin/google-chrome",
@@ -43,6 +45,7 @@ def test_phone_ask_input_is_16px_and_keeps_its_height(width):
     browser = _launch(pw)
     try:
         page = browser.new_page(viewport={"width": width, "height": 812})
+        isolate_from_live_api(page)
         page.goto(STATE_URL)
         page.wait_for_selector(".ask-state-launcher", state="attached")
         page.evaluate("document.querySelector('.ask-state-launcher').click()")
@@ -60,6 +63,7 @@ def test_phone_text_links_have_24px_tap_areas(width):
     browser = _launch(pw)
     try:
         page = browser.new_page(viewport={"width": width, "height": 812})
+        isolate_from_live_api(page)
         page.goto(STATE_URL)
         page.wait_for_timeout(1500)
         areas = page.evaluate(TAP_AREA_JS)
@@ -76,8 +80,10 @@ def test_phone_tab_strip_fades_while_tabs_remain_off_screen(width):
     browser = _launch(pw)
     try:
         page = browser.new_page(viewport={"width": width, "height": 812})
+        isolate_from_live_api(page)
         page.goto(STATE_URL)
-        page.wait_for_timeout(1500)
+        wait_until_loaded(page)      # #666: the tab labels (counts) change when loading finishes
+        page.wait_for_timeout(300)
         nav = page.locator(".mobile-primary-nav")
         assert nav.evaluate("e => getComputedStyle(e, '::after').content") in ("none", "normal"), "the covering cue is back"
         more = nav.evaluate("e => e.scrollWidth - e.clientWidth > 1")

@@ -21,6 +21,8 @@ from pathlib import Path
 import pytest
 from playwright.sync_api import sync_playwright
 
+from browser_test_offline import isolate_from_live_api
+
 from test_browser_user_flows import _launch_chromium
 
 FRONTEND = Path(__file__).resolve().parents[1] / 'implementation-context-prototype'
@@ -82,6 +84,7 @@ def _load(browser, url, *, color_scheme, saved_theme=None):
     if saved_theme:
         context.add_init_script(f"try{{localStorage.setItem('ai-cs-theme','{saved_theme}')}}catch(e){{}}")
     context.add_init_script(WATCH_DARK_CLASS_JS)
+    isolate_from_live_api(context)
     page = context.new_page()
     page.set_default_timeout(15000)
     errors = []

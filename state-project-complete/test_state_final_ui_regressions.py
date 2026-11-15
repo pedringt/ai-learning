@@ -7,6 +7,8 @@ import pytest
 pytest.importorskip("playwright.sync_api")
 from playwright.sync_api import Error as PlaywrightError, sync_playwright
 
+from browser_test_offline import isolate_from_live_api, wait_until_loaded
+
 ROOT = Path(__file__).resolve().parents[1]
 STATE_URL = (ROOT / "implementation-context-prototype" / "index.html").as_uri()
 
@@ -33,6 +35,7 @@ def _page(width=1200, height=900):
     pw = sync_playwright().start()
     browser = _launch(pw)
     page = browser.new_page(viewport={"width": width, "height": height})
+    isolate_from_live_api(page)
     page.goto(STATE_URL)
     # context-layout.js (formerly context-final-mobile.js, #450) clears this class after the first render.
     page.wait_for_function("!document.documentElement.classList.contains('state-final-mobile-pending')")
@@ -110,7 +113,8 @@ def test_mobile_ask_starters_are_full_width_and_drawer_can_close():
 def test_add_evidence_modal_uses_neutral_surface_and_blue_action():
     pw, browser, page = _page()
     try:
-        page.locator('[data-action="add-info"]').click()
+        # The Workspace's own button: once loading has finished, the reviewer guide shows a second Add Evidence (#666).
+        page.locator('.overview-add[data-action="add-info"]').click()
         dialog = page.locator("#overlay .dialog")
         assert dialog.is_visible()
         assert page.locator("#addInfoText").is_visible()
@@ -183,6 +187,7 @@ def test_idle_page_does_not_rewrite_the_dom_every_frame(open_ask):
     # must not change at all.
     pw, browser, page = _page()
     try:
+        wait_until_loaded(page)      # #666: a late load-time render used to land inside the window below
         if open_ask:
             page.locator("#askStateLauncher").click()
         page.wait_for_timeout(1500)
