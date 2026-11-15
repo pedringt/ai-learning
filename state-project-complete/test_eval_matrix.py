@@ -651,6 +651,7 @@ def test_survey_suite_covers_every_ask_and_adversarial_scenario_once():
     ids = [s.id for s in matrix._scenarios("survey")]
     assert len(ids) == len(set(ids)) == 36
     assert matrix.plan(["survey"], "claude-haiku-5-5", 1, 40)["total_calls"] == 36
+    assert matrix.calls_per_repeat("surveygrade") == len(json.loads(matrix.SURVEY_665_ANSWERS.read_text())["answers"])
 
 
 def test_grader_rubric_carries_the_nov_14_v12_rule():
