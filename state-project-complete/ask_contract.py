@@ -108,6 +108,8 @@ class AskSynthesis(BaseModel):
     # Claims and record cards that failed a check and were not shown (#567); the UI then shows one fixed line.
     withheld_claims: int = Field(default=0, ge=0)
     withheld_items: int = Field(default=0, ge=0)
+    # #662: how many of those were withheld for each kind of reason (ask_display.WITHHELD_KIND_PHRASES); software-only.
+    withheld_kinds: dict[str, int] = Field(default_factory=dict)
     sections: list[AskAnswerSection] = Field(default_factory=list, max_length=7)
     source_ids: list[str] = Field(default_factory=list, max_length=80)
     uncertainty_ids: list[str] = Field(default_factory=list, max_length=50)

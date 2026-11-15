@@ -454,3 +454,29 @@ Under DEC-013 every miss counted the same. A deterministic defect that reversed 
 **Revisit when**
 Risk acceptances become routine, or a check's class proves wrong in practice.
 
+### DEC-023 — Ask says what kind of statement it left out, and keeps withheld statements for review (#662)
+
+**Status:** Decided (Paige, Nov 14)
+**Date:** 2026-11-14
+**Related:** #662, #567, DEC-021, `ask_display.withheld_line`, `ask_withheld_log.py`, `docs/product/DATA_PRIVACY.md`
+
+**Decision**
+- **The withheld line says how many statements were left out and what kind**, from the check's reason, without showing them. For example: "2 statements were left out: 1 said something was settled that State's records don't establish, and 1 cited a record State doesn't have." The kinds are:
+  - a record State doesn't have;
+  - a number or date not in State's records;
+  - something stated as settled, or as allowed to go ahead, that the records don't establish;
+  - a draft's assumption stated as fact;
+  - otherwise, "couldn't be checked".
+- **When every claim is withheld,** the existing line stays.
+- **Withheld statements are kept for review:** the statement and question (each cut to 300 characters), with the reason, kind, record, basis, project, build and time. They are kept in their own table with no page, for 90 days, on every project in production and staging. This is the privacy exception in `DATA_PRIVACY.md`.
+
+**Why**
+A generic "part of this answer couldn't be checked" left both the reader and the team unable to tell what was removed or whether removing it was right.
+
+**Rejected / deferred**
+- Showing the withheld sentence itself: it is exactly the unverified content the check exists to keep out.
+- A review page: State has no login, so anyone could read it.
+
+**Revisit when**
+State gets access control (a review page becomes possible), or the kinds prove too coarse to act on.
+

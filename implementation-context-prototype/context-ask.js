@@ -128,7 +128,11 @@
   // #567 (Nov 11): a hypothetical draft's assumption line and notes, set by the server, shown with the draft always.
   const hypotheticalLines=s=>s?.hypothetical?[s.hypothetical.line,...(s.hypothetical.notes||[])].filter(Boolean):[];
   const hypotheticalHtml=s=>hypotheticalLines(s).map((l,n)=>`<p class="${n?'ask-withheld-note':'ask-hypothetical-line'}">${esc(l)}</p>`).join('');
-  const withheldLine=a=>!a?.streaming&&Array.isArray(a?.claims)&&a.withheld_claims&&!a.claims.some(c=>c?.text)?ALL_WITHHELD_LINE:WITHHELD_LINE;
+  // #662 (Paige, Nov 14): how many statements were left out and what kind (withheld_line in ask_display.py; a test keeps the
+  // phrases in step). An answer without withheld_kinds (recorded before #662, or still streaming) keeps WITHHELD_LINE.
+  const WITHHELD_KIND_PHRASES={reference:"cited a record State doesn't have",figure:"used a number or date that isn't in State's records",settled:"said something was settled that State's records don't establish",permission:"said something could go ahead without a record that allows it",draft:"stated the draft's assumption as fact",other:"couldn't be checked against State's records"};
+  const withheldKindsLine=a=>{const order=Object.keys(WITHHELD_KIND_PHRASES),counts={};for(const [k,v] of Object.entries(a.withheld_kinds||{}))if(order.includes(k)&&Number(v)>0)counts[k]=Number(v);const known=Object.values(counts).reduce((x,y)=>x+y,0),rest=Number(a.withheld_claims||0)+Number(a.withheld_items||0)-known;if(rest>0)counts.other=(counts.other||0)+rest;const sorted=Object.entries(counts).sort((x,y)=>y[1]-x[1]||order.indexOf(x[0])-order.indexOf(y[0])),total=sorted.reduce((t,[,n])=>t+n,0);if(total===1)return`1 statement was left out: it ${WITHHELD_KIND_PHRASES[sorted[0][0]]}.`;if(sorted.length===1)return`${total} statements were left out: ${total===2?'both':`all ${total}`} ${WITHHELD_KIND_PHRASES[sorted[0][0]]}.`;const parts=sorted.map(([k,n])=>`${n} ${WITHHELD_KIND_PHRASES[k]}`);return`${total} statements were left out: ${parts.slice(0,-1).join(', ')}, and ${parts[parts.length-1]}.`;};
+  const withheldLine=a=>!a?.streaming&&Array.isArray(a?.claims)&&a.withheld_claims&&!a.claims.some(c=>c?.text)?ALL_WITHHELD_LINE:(!a?.streaming&&a?.withheld_kinds&&typeof a.withheld_kinds==='object'?withheldKindsLine(a):WITHHELD_LINE);
   const labelled=(label,text)=>label?`[${label}] ${text}`:text;
   // #567: claims replace the summary; each keeps its chip, on screen and in copied text. An answer without claims
   // (a software-written starter answer) still shows its summary.
