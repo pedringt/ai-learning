@@ -648,7 +648,8 @@ def test_grader_rubric_carries_the_nov_14_v12_rule():
     from eval.ask_grader import RUBRIC
     assert "Faithfulness judges whether the content is in a record, not whether it has authority" in RUBRIC
     assert "(one that no supplied record states, including Evidence and Reviews)" in RUBRIC
-    assert "in place of a Current State fact that it conflicts with" in RUBRIC
+    assert "in place of a different value that Current State records for the same thing" in RUBRIC
+    assert "does not mention the topic, or that lists other items, does not conflict" in RUBRIC
 
 
 def test_grader_rubric_carries_the_nov_12_v10_rules():
