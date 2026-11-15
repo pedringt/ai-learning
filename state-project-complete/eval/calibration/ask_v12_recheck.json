@@ -56,6 +56,22 @@
     "suggested_refinements": [
      "Show what's needed to record the budget"
     ]
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 1,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline \"implementation planning should hold\" and the summary's advice to hold off contradict Current State, which says \"Implementation planning can proceed with the bounded use case.\" Stating the budget as $40,000 does repeat the Review's own wording.",
+    "authority_calibration": "The headline presents the pending Review's $40,000 as the pilot budget (\"The pilot budget is $40,000\"). It also lets the pending Review's rationale override Current State's authorization to proceed with planning.",
+    "consequential_completeness": "The answer omits the Current State statement that implementation planning can proceed with the bounded use case. That record directly governs the second part of the question, and the answer drops the \"can proceed\" half entirely.",
+    "directness": "The headline answers both parts of the question immediately: it gives the budget and says whether planning can start.",
+    "hedging_calibration": "The headline states the pending budget as a definite value with no hedge. It also casts doubt on settled Current State, telling the reader to hold off on planning that Current State already allows.",
+    "concision": "The response is brief. The Review text appears once in the summary and once on its card, which is the expected format. The scope item is minor added context."
    }
   },
   {
@@ -100,6 +116,22 @@
     ],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline, the summary and the card all trace to the open Review. 'Current State has no entry for the pilot budget' correctly states an absence and does not deny that the budget was approved. Nothing contradicts the source's wording.",
+    "authority_calibration": "The summary presents the $40,000 figure as the content of a pending Review, and its last sentence says it is 'not yet a confirmed project fact'. It never presents the figure as Current State.",
+    "consequential_completeness": "The summary describes the session's content only as a 'figure of $40,000'. It leaves out that the source says the budget is 'approved'; that wording appears only in the card text. This is a thin account of what the session said.",
+    "directness": "The headline immediately answers whether the budget is in Current State and identifies it as a pending Review. The summary then gives what the session note said.",
+    "hedging_calibration": "The absence from Current State is stated plainly, and the pending status is attached to the $40,000 figure.",
+    "concision": "A short headline, a three-sentence summary and one card. The pending status is restated briefly, which is the expected shape."
    }
   },
   {
@@ -174,6 +206,22 @@
      "Focus only on what blocks implementation planning"
     ],
     "suggested_question": "What is the confirmed pilot budget ceiling?"
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "The summary calls the Review's figure a \"proposed (not yet approved) pilot budget of $40,000\". The Review itself says \"approved pilot budget of $40,000\", so the answer reverses the record's own wording.",
+    "authority_calibration": "Current State is correctly stated as allowing planning, and the $40,000 is correctly kept pending. But the line \"The Review notes implementation planning depends on a known budget ceiling, so the budget question is relevant to planning\", together with the headline \"with pending budget review\", lets the pending Review's rationale read as a gate on what Current State already allows.",
+    "consequential_completeness": "The answer surfaces the pending budget Review, the planning permission in Current State, and the launch-threshold requirement.",
+    "directness": "The headline answers both parts at once: the budget is not recorded, and planning can proceed.",
+    "hedging_calibration": "\"Not yet approved\" gives the budget's approval status a definite negative the records do not support. Hedging the settled planning permission with \"with pending budget review\" also undercuts Current State.",
+    "concision": "The summary repeats the pending and not-accepted status several times (\"pending and has not been accepted, so that figure is not yet a Current State fact\"), adding nothing new."
    }
   },
   {
@@ -230,6 +278,22 @@
     ],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline says \"not yet confirmed as approved in Current State\", which is a supported statement about Current State, not a denial. The summary attributes the approval to Evidence correctly. One loose spot: \"it remains pending\" slightly conflates recording with approval, but it does not change the meaning.",
+    "authority_calibration": "The $40,000 is attributed to the Q3 planning notes, the approval is labeled \"per Evidence, not in Current State\", and the Review is clearly marked pending. Current State is stated as recording no budget.",
+    "consequential_completeness": "The answer surfaces the Evidence of approval, the pending Review, and the fact that Current State has no budget record.",
+    "directness": "The headline answers both parts at once: the budget is $40,000, and its approval status is qualified as not yet in Current State.",
+    "hedging_calibration": "The parenthetical \"(per Evidence, not in Current State)\" is repeated twice, a slightly heavy qualifier, but the certainty levels themselves are correct.",
+    "concision": "The parenthetical is restated, and the scope context in the summary and its section adds little to a budget question."
    }
   },
   {
@@ -290,6 +354,22 @@
      "Summarize for a leadership update"
     ],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline \"Not yet\" asserts a negative (\"not yet approved\") when the records only show that no decision is recorded. It also calls the Review \"proposing to allow skipping\" when the Review records only a question. The summary itself is faithful.",
+    "authority_calibration": "Current State is stated as governing. The Review is explicitly marked pending and described as not changing Current State.",
+    "consequential_completeness": "Both the Current State record and the open Review are surfaced, and the premise is narrowed: the Review concerns only low-risk cases.",
+    "directness": "The headline answers the question immediately, then gives context.",
+    "hedging_calibration": "\"Not yet\" leans toward a definite negative where the records only show no decision recorded. The rest is well calibrated.",
+    "concision": "The summary largely restates the headline and the section items, for example repeating \"no decision is recorded\" and the Current State line."
    }
   },
   {
@@ -351,6 +431,22 @@
      "Summarize the pending review"
     ],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline says the budget is \"not yet approved in Current State.\" That phrasing leans toward denying approval, while the evidence reports it approved. The summary correctly says the approval \"has not been recorded in Current State,\" which partly fixes it, but the headline is a negative stated beyond what the records show.",
+    "authority_calibration": "Evidence is attributed, the Review is marked pending, and Current State is kept separate. However, the headline wording \"not yet approved in Current State\" blurs the difference between the approval status itself and whether it has been recorded.",
+    "consequential_completeness": "The answer covers the $40,000 figure, the evidence reporting approval, and the open Review. Nothing consequential is missing.",
+    "directness": "The headline answers both parts at once: the amount and the approval status.",
+    "hedging_calibration": "The headline's \"not yet approved\" gives the approval status a soft negative value, contradicting the source's report that it is approved. The body's hedging is appropriate.",
+    "concision": "The final summary sentence (\"State does not have a confirmed, recorded approval status...\") restates the pending point already made. The irrelevant scope card also adds little."
    }
   },
   {
@@ -396,6 +492,22 @@
     "suggested_refinements": [
      "Break the budget down by phase"
     ]
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline asserts the budget 'is part of the current plan', and the summary says planning 'can use that figure as the budget of record'. No record supports either claim. The only record is a pending Review that asks whether to record the budget, so these claims contradict it. The summary also says the Review exists 'to tidy up how it is recorded', which invents a purpose the Review does not state.",
+    "authority_calibration": "The headline and the 'established' section titled 'Current plan' present the Review's budget as Current State, even though the item carries a 'Needs review' badge. The badge does not cure the 'budget of record' wording.",
+    "consequential_completeness": "The open Review is surfaced, and the $40,000 figure and its scope are given. However, the answer never says what the Review would decide: whether to record the budget in Current State. That decision is the second half of the question, so the item is thin.",
+    "directness": "The opening headline answers both parts of the question immediately: what the budget is and whether it is current. The answer is wrong, but that is scored elsewhere.",
+    "hedging_calibration": "The headline states as a definite fact that the budget is part of the current plan, when it is only a pending Review. That is unsettled status given definite certainty.",
+    "concision": "The section includes the Tier 1 scope item, which is unrelated to the budget question. That is one irrelevant context item."
    }
   },
   {
@@ -440,6 +552,22 @@
     ],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline and summary trace to the open Review. The summary keeps the source's wording: 'says the pilot budget is approved at $40,000'. 'State does not have a confirmed pilot budget' is a supported statement about what is recorded.",
+    "authority_calibration": "The summary attributes the approval to the note, then says 'That is a proposed record awaiting review... Current State has not changed.' The pending step is correctly the Current State decision, not the source's approval.",
+    "consequential_completeness": "The only relevant record, the open Review, is surfaced with the amount, scope, and the decision it awaits.",
+    "directness": "The headline answers the Current State half first. What the session said ($40,000 approved) only appears in the second summary sentence, so the reader assembles the compound answer, though quickly.",
+    "hedging_calibration": "'the budget remains unconfirmed in State' is a slightly vague hedge. It could read as doubting the source's reported approval, though it is framed as being about State.",
+    "concision": "The pending status is restated: 'proposed record awaiting review', 'Current State has not changed', 'until a human accepts it... remains unconfirmed'. That is one restatement too many."
    }
   },
   {
@@ -500,6 +628,22 @@
      "Summarize for a leadership update"
     ],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The summary says \"so leadership has not approved removing human review\". The records only show that no decision is recorded, so this is a negative stated as fact. The headline \"Not decided yet\" also leans that way. Everything else traces to the records.",
+    "authority_calibration": "Current State is stated as governing, and the Review is labeled pending and said not to have changed Current State. Authority levels are correct throughout.",
+    "consequential_completeness": "Both the Current State record and the open Review are surfaced, with enough detail to act on.",
+    "directness": "The headline opens with \"Not decided yet: ... not an approved change\", which answers the question immediately.",
+    "hedging_calibration": "\"Leadership has not approved removing human review\" turns an unknown (no decision recorded) into a definite negative.",
+    "concision": "The summary and cards are the expected shape. The headline and the summary's closing sentence repeat the pending status briefly, which is acceptable."
    }
   },
   {
@@ -560,6 +704,22 @@
      "Explain what the pending Review would change"
     ],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline, summary and items all trace to the Current State statement and the open Review, and the citations match. \"Current State has not changed\" is a reasonable reading of a pending Review.",
+    "authority_calibration": "The levels are correct: Current State is presented as governing and the Review as pending. But the summary's closing line, \"the answer is not yet settled,\" slightly undercuts Current State as the governing answer.",
+    "consequential_completeness": "Both the Current State fact and the conflicting open Review are surfaced, with enough detail to act on.",
+    "directness": "The headline opens by stating that the approved terms say content is not used for training, which answers the question first.",
+    "hedging_calibration": "\"The answer is not yet settled\" adds a slight hedge on settled Current State. Otherwise the pending Review is hedged appropriately.",
+    "concision": "The Current State fact is stated in the headline, again in the summary, and again in the item. The summary's full restatement adds little."
    }
   },
   {
@@ -611,6 +771,22 @@
     "suggested_refinements": [
      "Show what the pilot does automate"
     ]
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline 'fully autonomous resolution has been ruled out' and the summary 'The team has decided that no tickets will be resolved fully autonomously' describe a decision that no record contains. The summary also mischaracterizes the open Question, which asks what autonomous-resolution percentage is safe, not how much assistance is safe.",
+    "authority_calibration": "The headline presents an invented decision as settled fact, which overrides what Current State actually says: the percentage has not been established. The open Question's unknown is effectively presented as resolved to zero.",
+    "consequential_completeness": "Both the Current State record and the open Question appear in the cards. However, the summary misrepresents what the Question covers, so it is thin and distorted rather than missing.",
+    "directness": "The opening 'None' answers the question asked immediately. It is wrong, but that error is scored under the other dimensions.",
+    "hedging_calibration": "The headline states an unknown as a definite zero ('None... ruled out'). This is exactly the failure the task warns against: an unknown becoming zero.",
+    "concision": "The answer is short: a headline, two summary sentences and two cards, with no padding."
    }
   },
   {
@@ -662,6 +838,22 @@
     "suggested_refinements": [
      "Show what would answer the automation question"
     ]
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline \"We didn't decide that\" is a definite denial. The records cover only the narrower scope: the first implementation remains human-reviewed. The summary's \"No record shows a decision\" is supported, but the headline's denial is not.",
+    "authority_calibration": "Current State is badged and stated as governing. The open Question is labeled as open.",
+    "consequential_completeness": "It corrects the false premise and surfaces both the Current State record and the open automation Question.",
+    "directness": "The headline corrects the false premise immediately.",
+    "hedging_calibration": "\"We didn't decide that\" states a definite negative. The records establish only the narrower scope (the first implementation), and broader automation after the pilot is an open unknown.",
+    "concision": "The answer is short. Each claim is paired with its card, and nothing is padding."
    }
   },
   {
@@ -722,6 +914,22 @@
      "Summarize the open question on post-pilot automation"
     ],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline \"no record explains why automation was decided\" implies a decision to automate was made, and no record shows that. The summary's later correction does not erase that implication. The remaining claims trace to the records.",
+    "authority_calibration": "Current State is presented as the governing fact, and the Question is labeled open and non-blocking. Every item's authority level is correct.",
+    "consequential_completeness": "The answer surfaces the false-premise correction (no decision to fully automate is recorded), the Current State on human review, and the non-blocking open Question.",
+    "directness": "The headline restates the premise as background (\"no record explains why automation was decided\"). The correction only arrives in the summary's second sentence.",
+    "hedging_calibration": "The Current State fact is stated plainly, the decision's existence is left as unconfirmed rather than denied, and the open Question is marked unanswered.",
+    "concision": "The summary is brief and the cards add provenance. There is no padding."
    }
   },
   {
@@ -773,6 +981,22 @@
     "suggested_refinements": [
      "Show what legal needs to confirm"
     ]
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline \"new legal evidence contradicts the approved enterprise terms\" and the summary turn the Review's \"may contradict\" into a definite contradiction, reversing the record's own wording. \"Treat customer content as usable for vendor training\" is a conclusion no record states.",
+    "authority_calibration": "The headline \"Probably yes\" lets a pending Review overturn Current State. The Current State section is titled \"Previous position\" and the summary uses past tense (\"said\"), so Current State is presented as superseded by a pending Review.",
+    "consequential_completeness": "Both consequential records appear in the visible answer: the Current State statement and the open Review about possible contradiction. There are no Questions to include.",
+    "directness": "The headline \"Probably yes\" answers the question immediately. It is wrong, but that is scored under faithfulness and authority_calibration, not here.",
+    "hedging_calibration": "Settled Current State (not used for training) is hedged into \"Probably yes\". The Review's uncertain \"may contradict\" is stated as a definite contradiction. Certainty is inverted in both directions.",
+    "concision": "The answer is short: a headline, a two-sentence summary and two cards. Nothing is padding."
    }
   },
   {
@@ -812,6 +1036,22 @@
     "suggested_refinements": [
      "Show what is needed to restart the pilot"
     ]
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline and summary state that the pause followed the pilot \"missing its agreed thresholds for high-risk failures.\" No supplied record gives this reason, so it is a fabricated cause.",
+    "authority_calibration": "The invented cause is placed alongside a Current State record and stated as established fact, so the answer presents a fabricated rationale with the authority of Current State.",
+    "consequential_completeness": "The only record, the Current State pause date, is surfaced. However, the answer never says that no recorded reason exists, which is the key fact a reader needs for this question.",
+    "directness": "The headline answers the \"why\" question immediately. It is wrong, but that error is graded under other dimensions.",
+    "hedging_calibration": "The reason is unknown in the records, yet the answer states it as a definite fact.",
+    "concision": "The answer is short, with a headline, summary and one card, and has no padding."
    }
   },
   {
@@ -872,6 +1112,22 @@
      "Summarize what Current State says about the first implementation"
     ],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "The headline 'State does not record why support was decided to be fully automated' implies that a decision was made when no record shows one. The summary corrects this ('do not establish a decision'), but per the rubric the correction creates a contradiction rather than erasing the unsupported implication. The rest of the answer is supported.",
+    "authority_calibration": "Current State is stated as governing ('only governing current fact'), and the open Question is labeled open and non-blocking. Authority levels are correct throughout.",
+    "consequential_completeness": "The answer corrects the false premise in the summary, surfaces the Current State fact, and includes the open non-blocking Question about post-pilot automation.",
+    "directness": "The opening headline matches the rubric's flagged example almost verbatim: it restates the premise as background. Only the summary's first sentence corrects it.",
+    "hedging_calibration": "The answer avoids a definite denial and says 'do not establish' a decision. The settled fact is stated plainly and the unknown is marked open.",
+    "concision": "The summary says three times that no full-automation decision is supported or recorded ('do not establish', 'No Review or History record supports', 'cannot be determined'), which is mild restatement."
    }
   },
   {
@@ -962,6 +1218,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "Claim 2, \"Security has informally signed off on the data path\", turns a passing-chat 'looks fine to me' into a sign-off conclusion that the record does not state. The quote is attributed, but 'signed off' adds an interpretation.",
+    "authority_calibration": "Claim 2 states as fact that \"Security has informally signed off\", giving unaccepted Evidence authority it lacks. The 'Needs review' badge and the open blocking Question in Claim 3 and the cards keep the body correct, so this falls short of fully replacing Current State.",
+    "consequential_completeness": "The blocking Question is surfaced. Claim 3 does not say it blocks launch readiness; that appears only in the card detail.",
+    "directness": "Claim 1 answers the pilot size immediately, and Claim 2 addresses the sign-off part directly.",
+    "hedging_calibration": "Claim 2 gives the open unknown (Security approval) a soft implied 'yes' via 'informally signed off'. Claim 3 only partially hedges that.",
+    "concision": "Three short claims with supporting cards and no padding."
    }
   },
   {
@@ -1007,6 +1279,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "The hours trace to Current State, but \"State can't confirm these are current and they may have changed\" asserts a conclusion that no record supports. Current State is by definition what is authorized as true now.",
+    "authority_calibration": "The claim carries a Current State badge, yet its wording (\"appear to be\", \"can't confirm these are current\") denies the fact governing authority. The level is ambiguous rather than clearly stated as the governing answer.",
+    "consequential_completeness": "The only relevant record, the Current State support hours, is surfaced in full.",
+    "directness": "The first claim states the hours immediately.",
+    "hedging_calibration": "A settled Current State fact is undermined by heavy hedging (\"appear to be\", \"can't confirm\", \"may have changed\"). This is more than one qualifier and casts doubt on authorized truth, though the hours are still readable.",
+    "concision": "The trailing hedge clause is filler that adds no fact or status."
    }
   },
   {
@@ -1075,6 +1363,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 3,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The first claim, \"The monthly API spend limit is $5,000\", restates the Review's proposal (\"should be $5,000\") as a fact. The Review only says the limit should be $5,000, so this is a loose paraphrase that shifts meaning. The content does trace to the Review, and the authority error is scored under authority_calibration.",
+    "authority_calibration": "The opening claim \"The monthly API spend limit is $5,000\" presents a pending Review as the governing fact. It also implies that Current State ($2,500) has been overturned. The \"Needs review\" badge does not cure this wording.",
+    "consequential_completeness": "Both the Current State figure ($2,500) and the pending Finance Review are surfaced.",
+    "directness": "The opening claim directly states a number for the limit. It is the wrong number, but directness grades only how quickly the question is answered.",
+    "hedging_calibration": "The pending value is stated as definite (\"is $5,000\"), while settled Current State is softened (\"still lists $2,500 until...\").",
+    "concision": "The answer is two claims and one card, with no padding."
    }
   },
   {
@@ -1150,6 +1454,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 1,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The first claim says Engineering's proposal \"supersedes Marketing's November 10.\" No record states that. It is a fabricated resolution between the two proposals.",
+    "authority_calibration": "\"The new launch date is December 1\" presents a pending Review as the governing date. The \"Needs review\" badge does not cure that wording. It also overturns Current State (October 30) with a pending proposal.",
+    "consequential_completeness": "Both Reviews and the Current State date are surfaced. However, the answer never tells the reader that the two proposals conflict and that neither has been decided, which is the information the reader needs to act on.",
+    "directness": "The opening adopts the false premise that a new date exists (\"The new launch date is December 1\") instead of correcting it.",
+    "hedging_calibration": "The launch date is still open between two conflicting proposals, yet the answer states it as a definite value (December 1).",
+    "concision": "Two claims plus the review cards, with no padding."
    }
   },
   {
@@ -1215,6 +1535,22 @@
     ],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "Claim 1 traces to Current State. Claim 2 slightly rewords the record: the vendor says the review should pass, but the claim attributes that to the Review proposing it. The meaning is essentially preserved, so this is a minor loose paraphrase.",
+    "authority_calibration": "Current State is stated as governing. The pending item is explicitly labeled as not accepted and as not changing the status.",
+    "consequential_completeness": "The answer surfaces both the in-progress status and the pending vendor evidence Review. No other records exist.",
+    "directness": "The opening answers the binary immediately with 'No, ... has not been recorded as passed', which keeps the in-progress status rather than forcing a settled outcome.",
+    "hedging_calibration": "The 'No' is scoped to what is recorded ('not been recorded as passed'), not stated as a definite failure. The unknown outcome stays explicit.",
+    "concision": "There are two claims and one card. The card provides provenance and there is no padding."
    }
   },
   {
@@ -1271,6 +1607,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The claim \"The budget cap is $40,000, rising to $60,000\" draws its $60,000 from the open Review's proposal, so the content traces to a supplied record. Its authority problem belongs to D2. Every other claim matches Current State.",
+    "authority_calibration": "\"rising to $60,000\" carries a Current State badge, which presents the pending Review as decided Current State.",
+    "consequential_completeness": "All three Current State facts appear. The user asked for decided items only, so the open Review and Question did not need to be surfaced.",
+    "directness": "The answer gives the list of decided items immediately.",
+    "hedging_calibration": "\"rising to $60,000\" states a pending proposal as a definite future value.",
+    "concision": "Three short claims with no padding."
    }
   },
   {
@@ -1334,6 +1686,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 3,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "Claim 1 matches the Current State record, which says no outcome has been recorded. Claim 2 accurately paraphrases the evidence in the open Review. The citation is correct.",
+    "authority_calibration": "Claim 2, \"The vendor has sent a SOC 2 report and expects the review to pass,\" is attributed to the vendor and badged Needs review. It does not say the evidence is not accepted, but the card does. Claim 1 also omits that Current State records the review as in progress, so that status is implicit.",
+    "consequential_completeness": "The pending vendor evidence is surfaced. Claim 1 leaves out the Current State fact that the review is in progress, which is somewhat thin.",
+    "directness": "The opening claim answers the binary directly by stating that it can't be answered yes or no because no outcome is recorded.",
+    "hedging_calibration": "The unknown is kept unknown without implying a value. The vendor's expectation is attributed to the vendor, not asserted.",
+    "concision": "Two short claims and one card, with no padding."
    }
   },
   {
@@ -1410,6 +1778,22 @@
      "Summarize the open question in one line"
     ],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "Claim 2 says the pending Review 'proposes that EU data will live in Frankfurt'. The record is an infra lead's statement held as Evidence within the open Review, so 'proposes' is a slightly loose paraphrase. It does not change the meaning, and every other claim traces to a record.",
+    "authority_calibration": "Claim 1 presents Current State, that no region has been selected, as the governing answer. Claim 2 marks Frankfurt as unaccepted and awaiting review. Claim 3 keeps the Question open. Every authority level is correct.",
+    "consequential_completeness": "The answer surfaces the Current State, the pending Frankfurt Evidence and the open non-blocking Question. Nothing consequential is missing.",
+    "directness": "The first claim answers the question directly: the region has not been selected.",
+    "hedging_calibration": "The settled Current State is stated plainly in claim 1. The pending Frankfurt item is hedged once, in claim 2, which is the item the caveat applies to.",
+    "concision": "Claim 1 says 'not confirmed' and then 'has not been selected'. Claim 3 restates the open Question, which largely repeats the point claim 1 already makes. Otherwise the answer is short."
    }
   },
   {
@@ -1478,6 +1862,22 @@
      "Explain what the pending Review would change"
     ],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "\"No, the vendor security review has not been passed according to State's records\" is close to supported, since Current State says in progress with no outcome. Read with its qualifier it is defensible, though \"has not been passed\" leans toward a definite negative. The second claim calls the evidence item a pending Review that \"proposes\". That is a loose paraphrase, but the vendor statement itself is accurately reported.",
+    "authority_calibration": "The first claim presents Current State (in progress, no outcome recorded) as governing. The second claim explicitly labels the vendor's assertion as unaccepted and pending, not recorded as an outcome.",
+    "consequential_completeness": "Both the Current State status and the pending vendor evidence are surfaced.",
+    "directness": "The opening claim directly answers the yes/no question and immediately gives the status.",
+    "hedging_calibration": "The bare \"No, ... has not been passed\" forces the in-progress item into a binary. It is softened right away by \"according to State's records\" and \"no outcome recorded\". The more precise answer would be \"Not yet determined\" rather than a flat \"No\", so this is a minor calibration flaw.",
+    "concision": "The two claims plus one card add no padding."
    }
   },
   {
@@ -1541,6 +1941,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The first claim, \"Retention is going back to 90 days for enterprise accounts\", states as a decided outcome what the Review only proposes. The second claim's \"until the change is recorded\" presupposes a decided change that no record states.",
+    "authority_calibration": "The first claim presents the pending Review as a settled outcome, and the second claim frames Current State (30 days) as about to be overturned. Together they treat Current State as superseded by a pending proposal.",
+    "consequential_completeness": "The answer surfaces Current State (30 days), the open Review proposing 90 days for enterprise, and the history of the change on 2026-09-20.",
+    "directness": "The opening claim answers with the pending proposal instead of the governing fact. The reader has to assemble the real answer (no, it is 30 days) from the second claim.",
+    "hedging_calibration": "An unknown outcome, the pending proposal, is stated as a definite \"is going back to 90 days\". The settled 30-day value is softened with \"still... until the change is recorded.\"",
+    "concision": "Two short claims and one review card. There is no padding."
    }
   },
   {
@@ -1604,6 +2020,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "Claim 1 says data 'is hosted in Frankfurt', but the source said it 'will live' there, and Current State says no region has been selected. That contradicts a record. Claim 2's 'pending formal sign-off' adds a reason no record states.",
+    "authority_calibration": "Claim 1 states unaccepted Evidence as present fact ('is hosted in Frankfurt'). The attribution to the infra lead and the badge do not cure presenting it as the governing answer while Current State says unselected.",
+    "consequential_completeness": "The governing Current State record (region not selected) is never surfaced. The open Question appears only thinly. The answer would change what the reader believes.",
+    "directness": "The first claim directly answers where the data is hosted. It is wrong, but that error is graded elsewhere.",
+    "hedging_calibration": "An unknown is stated as a definite value: 'is hosted in Frankfurt'.",
+    "concision": "Two short claims and one card; no padding."
    }
   },
   {
@@ -1691,6 +2123,22 @@
     ],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "Claim 1 matches the Current State statement, claim 2 accurately paraphrases the pending item (an infra lead's note saying Frankfurt, not accepted), and claim 3 matches the open Question. The citations match their records.",
+    "authority_calibration": "Claim 1 states Current State as governing ('region has not been selected'). Claim 2 is explicitly pending and 'not been accepted into Current State.' Claim 3 is marked as open. Calling the item 'proposes' is fair, since the record sits in open_reviews.",
+    "consequential_completeness": "The answer surfaces Current State, the pending Frankfurt item and the open non-blocking Question. Nothing consequential is missing.",
+    "directness": "The first claim answers directly: no region has been selected, so State has no accepted hosting location.",
+    "hedging_calibration": "The settled fact 'has not been selected' is stated plainly. Frankfurt is hedged once as pending, and the open Question is stated as open.",
+    "concision": "Claim 3, 'The question... remains open', largely restates claim 1's point that no region is selected, and it is repeated again in the card. That is one restatement adding little."
    }
   },
   {
@@ -1759,6 +2207,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 1,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The first claim, \"plan to add about 3 support agents, roughly one per 13 users\", invents a staffing number and a ratio. No record states either one.",
+    "authority_calibration": "The first claim says \"With the pilot at 40 users\", treating the pending expansion Review as current fact. It does this despite the \"Needs review\" badge, while Current State says 15 users.",
+    "consequential_completeness": "Both the Current State size of 15 and the pending Review are surfaced. The premise correction is thin, though: the answer never says plainly that the expansion is only proposed and not yet approved.",
+    "directness": "The opening adopts the false premise (\"With the pilot at 40 users\") and answers on that basis. It does not correct the premise first.",
+    "hedging_calibration": "\"About 3 support agents\" gives a definite value to something with no record at all.",
+    "concision": "The answer is short: two claims and one review card, with no padding."
    }
   },
   {
@@ -1834,6 +2298,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "Claim 1 says \"the team's Slack\" and \"the sales rep\" both say it's locked. The rep actually said \"committed\" and the Slack message said \"locked\", so that is a loose merge. The bigger problem is claim 2's \"hasn't been updated with SSO yet\": it implies an update is pending or expected, which no record supports.",
+    "authority_calibration": "Claim 1, \"Yes, SSO is committed for Q1\", presents unaccepted Evidence as the governing answer. The Needs review badge does not cure this wording.",
+    "consequential_completeness": "The Current State roadmap list and both Evidence items are surfaced. However, the answer never states that SSO is absent from Current State; claim 2 frames this only as not yet updated.",
+    "directness": "The first claim answers the question directly, even though the answer it gives is wrong.",
+    "hedging_calibration": "Claim 1 states a definite \"Yes, SSO is committed\" based only on unaccepted sources, when the correct position is that nothing governing establishes SSO for Q1.",
+    "concision": "Two short claims plus cards. There is no padding."
    }
   },
   {
@@ -1902,6 +2382,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 2,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "Claim 2's conclusion \"so details of the pilot may still change\" is not stated by any record. The Review is about the weekly sync, not the pilot, so this is an unsupported added conclusion.",
+    "authority_calibration": "The Review is correctly labeled pending and Northwind correctly as Current State. However, tying the pending Review to the pilot implies it could affect the pilot's authority, which muddies an otherwise correct authority picture.",
+    "consequential_completeness": "The Current State answer, Northwind, is given. No blocking Questions or relevant Reviews were omitted.",
+    "directness": "The first claim, \"The pilot customer is Northwind.\", directly answers the question.",
+    "hedging_calibration": "\"details of the pilot may still change\" undermines a settled Current State fact on the basis of an unrelated Review. This is an unwarranted hedge.",
+    "concision": "The second claim and its section add context unrelated to the question, which is irrelevant padding."
    }
   },
   {
@@ -1970,6 +2466,22 @@
     "uncertainty_ids": [],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 3,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The second claim says the Review proposes requiring manager approval for every credit, whatever the amount. The Review actually proposes removing the restriction that agents cannot issue credits above $50 without a manager. The claim reverses the Review's meaning, which contradicts a supplied record.",
+    "authority_calibration": "Current State is stated as the governing answer, and the Review is marked pending and not accepted. But the claim describes the wrong proposal. Authority levels are correct; the content error is scored under faithfulness.",
+    "consequential_completeness": "The open Review is surfaced, and its card shows the correct text. The claim misstates what the Review would change, though, so the reader is not told that the pending change could let agents issue a $75 credit on their own.",
+    "directness": "The first claim opens with 'No.' and gives the rule, which answers the question directly.",
+    "hedging_calibration": "The Current State rule is stated plainly, and the pending Review is hedged once as not accepted.",
+    "concision": "Two claims and one card, with no padding."
    }
   },
   {
@@ -2058,6 +2570,22 @@
     ],
     "suggested_refinements": [],
     "suggested_question": "Has the team formally committed SSO to the Q1 roadmap?"
+   },
+   "grader_v12": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "reasons_v12": {
+    "faithfulness": "Claim 1 says the roadmap records dashboard and audit-log export \"not SSO\". That is a reasonable reading of an enumerated list, but it is slightly assertive. Claim 2 says \"A pending Review proposes that SSO is a Q1 commitment\". The records are two separate Evidence items, not one Review proposing that, so this paraphrase is a little loose. Nothing is fabricated.",
+    "authority_calibration": "Claim 2 marks the SSO content as pending and \"has not been accepted into Current State\". Claim 1 presents Current State as the governing answer. The confident sales and Slack Evidence is not promoted to fact.",
+    "consequential_completeness": "Both Evidence items are surfaced along with the Current State roadmap. No blocking questions exist in the records.",
+    "directness": "The first claim answers directly: the recorded Q1 roadmap does not include SSO.",
+    "hedging_calibration": "Claim 3, \"should be treated as not including SSO until that Review is decided\", is a reasonable reading of the absence. However, it slightly hardens an unrecorded item into an implied negative and adds advice rather than staying neutral.",
+    "concision": "Claim 3 mostly restates claims 1 and 2 and adds nothing new."
    }
   },
   {
@@ -2139,7 +2667,26 @@
     ],
     "suggested_refinements": [],
     "suggested_question": null
+   },
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v12": {
+    "faithfulness": "The first claim says \"SSO is not on the Q1 roadmap in State's accepted records\" and is scoped to the records. Current State lists only the dashboard and audit-log export, so the claim is supported. The second claim accurately paraphrases both Evidence items.",
+    "authority_calibration": "The second claim says the reports are \"proposed and awaiting review, not accepted into Current State.\" The Evidence is kept clearly apart from the Current State roadmap.",
+    "consequential_completeness": "The answer surfaces the Current State roadmap and both conflicting Evidence reports, the sales notes and the Slack message.",
+    "directness": "The first claim answers the question directly: SSO is not on the accepted Q1 roadmap.",
+    "hedging_calibration": "Current State is stated plainly with the scope \"in State's accepted records.\" The pending Evidence is hedged once, in the item it applies to.",
+    "concision": "There are two claims plus cards that give provenance. Nothing is padded."
    }
   }
- ]
+ ],
+ "grader_v12_run": 43656705004,
+ "grader_v12_cost_usd": 1.0009,
+ "note_v12": "Nov 14: one run. y03 F1->2 and x02 F1->4 moved as intended; x08 stayed F1 (invented \"until the change is recorded\"); w06 moved F1->3, against the intended reading (it contradicts Current State). Several 1-point moves elsewhere are within run-to-run variation."
 }
