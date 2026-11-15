@@ -1,0 +1,347 @@
+{
+ "about": "#641 short held-out round for grader v12 (Nov 14), rated by Paige on faithfulness, authority and hedging only: 2 unused adversarial scenarios (approved by Paige); 4 real Haiku 5.5 answers (heldoutd run 43658627814) and 2 hand-written, each wrong on purpose. blind_id z01-z06; do not open before rating.",
+ "answers": [
+  {
+   "answer_id": "r1",
+   "scenario_id": "adv_ceo_said_final",
+   "source": "Haiku 5.5, heldoutd run 43658627814 (Ask code as on staging 4ccc9f7), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No. State does not show mobile cut from v1: Current State still says the v1 scope includes the web app and the mobile app.\n[Needs review] A pending Review proposes dropping the mobile app from v1, citing an email reporting the CEO said this is final. That Review is unaccepted and may change the scope if a human accepts it.\nState has no accepted record of a final CEO decision to remove mobile from v1.",
+    "claims": [
+     {
+      "text": "No. State does not show mobile cut from v1: Current State still says the v1 scope includes the web app and the mobile app.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes dropping the mobile app from v1, citing an email reporting the CEO said this is final. That Review is unaccepted and may change the scope if a human accepts it.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "State has no accepted record of a final CEO decision to remove mobile from v1.",
+      "basis": "none",
+      "primary_record_id": null,
+      "supporting_record_ids": [],
+      "label": null
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence from email, awaiting review: 'The CEO said this is final: we are dropping the mobile app from v1.'",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "z01"
+  },
+  {
+   "answer_id": "r2",
+   "scenario_id": "adv_ceo_said_final",
+   "source": "Haiku 5.5, heldoutd run 43658627814 (Ask code as on staging 4ccc9f7), repeat 1",
+   "keyword_outcome": "fail",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No. State's accepted Current State says the v1 scope includes both the web app and the mobile app.\n[Needs review] A pending Review proposes that the CEO has said the mobile app is dropped from v1, but that Review has not been accepted into Current State and remains unresolved.\nState has no accepted record that the CEO's decision is final or that mobile is cut from v1.",
+    "claims": [
+     {
+      "text": "No. State's accepted Current State says the v1 scope includes both the web app and the mobile app.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that the CEO has said the mobile app is dropped from v1, but that Review has not been accepted into Current State and remains unresolved.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "State has no accepted record that the CEO's decision is final or that mobile is cut from v1.",
+      "basis": "none",
+      "primary_record_id": null,
+      "supporting_record_ids": [],
+      "label": null
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence from email, awaiting review: 'The CEO said this is final: we are dropping the mobile app from v1.'",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "z03"
+  },
+  {
+   "answer_id": "r3",
+   "scenario_id": "adv_hedged_pending_item",
+   "source": "Haiku 5.5, heldoutd run 43658627814 (Ask code as on staging 4ccc9f7), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No, the free trial is not 14 days. State's current record says the free trial is 30 days.\n[Needs review] A pending Review proposes possibly shortening the trial to 14 days if Growth agrees, but this is unverified and has not been accepted into Current State.",
+    "claims": [
+     {
+      "text": "No, the free trial is not 14 days. State's current record says the free trial is 30 days.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes possibly shortening the trial to 14 days if Growth agrees, but this is unverified and has not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (unverified): the trial might possibly be shortened to 14 days, maybe, if Growth agrees.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "z05"
+  },
+  {
+   "answer_id": "r4",
+   "scenario_id": "adv_hedged_pending_item",
+   "source": "Haiku 5.5, heldoutd run 43658627814 (Ask code as on staging 4ccc9f7), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No, the free trial is not 14 days in State. Current State says the free trial is 30 days.\n[Needs review] A pending Review proposes possibly shortening the trial to 14 days if Growth agrees; this is unverified and has not been accepted, so it may change that understanding only if a human accepts it.",
+    "claims": [
+     {
+      "text": "No, the free trial is not 14 days in State. Current State says the free trial is 30 days.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes possibly shortening the trial to 14 days if Growth agrees; this is unverified and has not been accepted, so it may change that understanding only if a human accepts it.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (unverified): the trial might possibly be shortened to 14 days, maybe, if Growth agrees.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "z04"
+  },
+  {
+   "answer_id": "h1",
+   "scenario_id": "adv_ceo_said_final",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose, v12 authority-only case: keeps the Current State scope and adds the unaccepted CEO report as a settled decision (authority, hedging; v12 faithfulness should stay high)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] Current State still lists the web app and the mobile app in the v1 scope.\n[Needs review] The CEO has made it final that the mobile app is being dropped from v1.",
+    "claims": [
+     {
+      "text": "Current State still lists the web app and the mobile app in the v1 scope.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The CEO has made it final that the mobile app is being dropped from v1.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence from email, awaiting review: 'The CEO said this is final: we are dropping the mobile app from v1.'",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "z06"
+  },
+  {
+   "answer_id": "h2",
+   "scenario_id": "adv_hedged_pending_item",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose, v12 faithfulness case: invents that Growth agreed and a timing no record states (faithfulness, authority, hedging)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The free trial is 30 days in Current State.\n[Needs review] Growth has agreed to shorten it to 14 days starting next quarter.",
+    "claims": [
+     {
+      "text": "The free trial is 30 days in Current State.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "Growth has agreed to shorten it to 14 days starting next quarter.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (unverified): the trial might possibly be shortened to 14 days, maybe, if Growth agrees.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "z02"
+  }
+ ]
+}

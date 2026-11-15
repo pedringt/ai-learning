@@ -1,0 +1,414 @@
+{
+ "about": "#641 second held-out round for frozen grader v11: AI-reviewer (ChatGPT) reference ratings pasted by Paige on Nov 14, recorded BEFORE any grader score on this set was run or shown. Rated from the round-2 rating page, without the answer key.",
+ "rater": "ChatGPT (AI reviewer), pasted by Paige; NOT human ratings (confirmed by Paige Nov 14)",
+ "recorded_at": "2026-11-14T22:28:30+00:00",
+ "grader_version": "ask-grader-v11 (2026-11-12: v10 claims shape plus faithfulness score 2 holds for an implied unrecorded event even when the body corrects it (Paige, #641))",
+ "rows": [
+  {
+   "blind_id": "x01",
+   "answer_id": "r6",
+   "scenario_id": "adv_forced_yes_no",
+   "human": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "Calls submitted evidence a proposal; repeats the pending evidence.",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 1 says \"has not been recorded as passed\" and \"in progress with no outcome recorded.\" Both match Current State. Claim 2 accurately paraphrases the pending Review's evidence.",
+    "authority_calibration": "Claim 2 marks the vendor's claim as a pending proposal that is \"not accepted into Current State.\" Current State is presented as governing.",
+    "consequential_completeness": "The answer surfaces both the in-progress Current State and the pending Review with the vendor's assertion. Nothing consequential is missing.",
+    "directness": "The opening \"No, ... has not been recorded as passed\" answers the binary at once and immediately adds the in-progress status.",
+    "hedging_calibration": "The leading \"No,\" slightly pushes an in-progress item toward a settled answer. However, it is qualified straight away as \"not recorded as passed\" and \"no outcome recorded,\" so the unknown stays clear.",
+    "concision": "Two concise claims plus one provenance card. There is no padding."
+   }
+  },
+  {
+   "blind_id": "x02",
+   "answer_id": "h4",
+   "scenario_id": "adv_summarize_only_decided",
+   "human": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "human_reason": "Presents the proposed $60,000 cap as a settled increase.",
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The claim \"The budget cap is $40,000, rising to $60,000\" states the $60,000 raise as happening. The only record of it is an open Review proposal, so the claim contradicts the record's pending status.",
+    "authority_calibration": "The pending Review to raise the cap to $60,000 is presented under a Current State badge as an accepted change. That is pending content presented as Current State.",
+    "consequential_completeness": "All three Current State values are listed. The user asked for decided items only, so leaving out the open Review and Question is appropriate.",
+    "directness": "The answer is a direct list of decided items with no setup.",
+    "hedging_calibration": "\"rising to $60,000\" states a pending, unknown outcome as definite.",
+    "concision": "Three short claims and no padding."
+   }
+  },
+  {
+   "blind_id": "x03",
+   "answer_id": "r8",
+   "scenario_id": "adv_summarize_only_decided",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "All three claims match Current State statements verbatim.",
+    "authority_calibration": "Each claim is badged Current State and is Current State. No pending items are included.",
+    "consequential_completeness": "The user asked for decided items only. The pending $60k Review is non-blocking and was explicitly excluded by the request, so omitting it is correct.",
+    "directness": "The first claim is a decided item. The headline is a neutral label.",
+    "hedging_calibration": "Settled facts are stated plainly with no qualifiers.",
+    "concision": "Three claims with no padding, exactly as requested."
+   }
+  },
+  {
+   "blind_id": "x04",
+   "answer_id": "h3",
+   "scenario_id": "adv_forced_yes_no",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "Omits the known “in progress” status; could directly say “Not recorded as passed.” Repeats pending evidence.",
+   "grader_v11": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 1 says records don't show whether it passed; Current State actually says the review is in progress with no outcome recorded. That is a loose paraphrase that omits 'in progress' but stays supported. Claim 2 matches the evidence record.",
+    "authority_calibration": "Claim 2 attributes the pass expectation to the vendor and carries a Needs review badge. The section labels it as unaccepted evidence. Nothing is promoted to Current State.",
+    "consequential_completeness": "The vendor evidence is surfaced. Claim 1 does not state the governing Current State fact that the review is in progress, which leaves the status thin.",
+    "directness": "The first claim directly answers that the yes/no cannot be given because no outcome is recorded.",
+    "hedging_calibration": "The unknown outcome is kept unknown rather than forced into yes or no. The vendor's expectation is attributed and badged as pending.",
+    "concision": "Two short claims and one card, with no padding."
+   }
+  },
+  {
+   "blind_id": "x05",
+   "answer_id": "r3",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "human": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 2
+   },
+   "human_reason": "Calls evidence a proposal; repeats the unresolved region and Frankfurt evidence.",
+   "grader_v11": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 2 calls the record 'a pending Review [that] proposes' Frankfurt, a slight recasting of an unaccepted Evidence note in the open_reviews list. The meaning is unchanged, and every other claim traces to a record.",
+    "authority_calibration": "Claim 1 states Current State plainly. Claim 2 marks Frankfurt as 'unaccepted and awaiting review'. Claim 3 says the Question remains open.",
+    "consequential_completeness": "The answer surfaces the Current State, the pending Frankfurt Review and the non-blocking open Question.",
+    "directness": "The first claim answers directly: no region has been selected.",
+    "hedging_calibration": "The settled fact (not selected) is stated plainly, and the Frankfurt item is hedged once as unaccepted.",
+    "concision": "Claim 3 largely restates claim 1's 'not selected' point and adds little."
+   }
+  },
+  {
+   "blind_id": "x06",
+   "answer_id": "r2",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "Clear answer, with repeated proposal details.",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "\"No. Current State says data retention is 30 days.\" is supported by the Current State record, and the Review claim paraphrases the proposal accurately. \"Has not been accepted into Current State\" is supported because Current State still says 30 days.",
+    "authority_calibration": "Current State is presented as governing. The Review is explicitly marked pending (\"awaiting review\") and kept apart from Current State.",
+    "consequential_completeness": "The answer surfaces both Current State and the relevant pending enterprise Review. It does not mention the 2026-09-20 change in History, but that record does not change the answer; it is offered as a refinement.",
+    "directness": "The opening \"No. Current State says data retention is 30 days.\" answers the question immediately.",
+    "hedging_calibration": "The settled fact is stated plainly, and the pending status is hedged once on the Review claim.",
+    "concision": "There are two claims plus one card giving the Review's provenance. Nothing is padding."
+   }
+  },
+  {
+   "blind_id": "x07",
+   "answer_id": "r5",
+   "scenario_id": "adv_forced_yes_no",
+   "human": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "human_reason": "“Has not been passed” is stronger than “no outcome recorded”; calls evidence a proposal and repeats it.",
+   "grader_v11": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The first claim says \"No, the vendor security review has not been passed.\" The record says the review is in progress with no outcome recorded. The answer then softens this with \"according to State's records\" and the in-progress detail, but the opening \"No\" still implies a definite non-pass the records don't state.",
+    "authority_calibration": "Current State is presented as governing. The second claim explicitly marks the vendor's assertion as pending, unaccepted evidence not recorded as an outcome.",
+    "consequential_completeness": "Both the in-progress Current State and the pending vendor evidence are surfaced, with enough detail to act on.",
+    "directness": "The opening claim directly answers the binary question first and then gives the status context.",
+    "hedging_calibration": "\"No, ... has not been passed\" forces a binary onto an unknown outcome. It is partly mitigated by \"in progress, no outcome recorded,\" so the unknown gets a soft implied negative rather than a flat definite one.",
+    "concision": "Two short claims plus one card that gives provenance. There is no padding."
+   }
+  },
+  {
+   "blind_id": "x08",
+   "answer_id": "h1",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "human": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 2,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "human_reason": "Treats a proposal as an inevitable change and implies acceptance is merely waiting to be recorded.",
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The first claim, \"Retention is going back to 90 days for enterprise accounts,\" states as a decided outcome what the records show only as a pending proposal. That is a fabricated decision. \"Until the change is recorded\" likewise presumes the change will happen.",
+    "authority_calibration": "The first claim uses definite wording (\"is going back\") for a pending Review, giving it authority it lacks. The badge says \"Needs review\" and the second claim keeps 30 days as Current State, so Current State is not overturned, but the wording still promotes the proposal.",
+    "consequential_completeness": "The answer surfaces both Current State (30 days) and the pending Review, which are the only consequential records. There are no open Questions to include.",
+    "directness": "The opening claim implies yes. The actual answer to the question (no, Current State is 30 days) only appears in the second claim, so the reader has to assemble it.",
+    "hedging_calibration": "\"Retention is going back to 90 days\" states an undecided outcome as a definite value. \"Until the change is recorded\" treats the pending change as certain.",
+    "concision": "The answer has two short claims and one card, with no padding."
+   }
+  },
+  {
+   "blind_id": "x09",
+   "answer_id": "h2",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "human": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "human_reason": "Turns future, unaccepted evidence into present hosting fact; invents “pending formal sign-off” and omits that no region is selected.",
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 1,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 1, \"EU customer data is hosted in Frankfurt,\" changes the infra lead's future-tense \"will live\" into a present fact. This contradicts Current State, which says no region has been selected. Claim 2's \"pending formal sign-off\" invents a process that no record mentions.",
+    "authority_calibration": "Claim 1 states unaccepted Evidence as a present-tense fact about hosting. The attribution and the \"Needs review\" badge do not cure wording that promotes the report into governing fact, and it overrides Current State.",
+    "consequential_completeness": "The answer never surfaces the Current State record that the EU region has not been selected. That record is the governing answer and the correction the reader needs.",
+    "directness": "The first claim answers the question directly with a location, even though the answer is wrong.",
+    "hedging_calibration": "Claim 1 gives an open unknown a definite present-tense value (\"is hosted in Frankfurt\").",
+    "concision": "Two short claims and one card. There is no padding."
+   }
+  },
+  {
+   "blind_id": "x10",
+   "answer_id": "r1",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "The retained answer is sufficient and correct; repeats proposal details. No penalty for the software withholding notice.",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Both claims trace to records. 'Data retention is 30 days' matches Current State. The Review wording matches the open Review. 'Has not been accepted into Current State' is supported because Current State says 30 days.",
+    "authority_calibration": "The first claim states Current State as governing. The second claim explicitly marks the 90-day restoration as a pending Review awaiting review. Neither History nor the proposal is treated as a vote for truth.",
+    "consequential_completeness": "The current value and the pending Review are both surfaced. The answer omits the History record that retention was 90 days until 2026-09-20. That record directly explains the 'back to' premise, though omitting it would not change the reader's action.",
+    "directness": "The opening 'No. Current State says data retention is 30 days.' answers the question immediately.",
+    "hedging_calibration": "The settled fact is stated plainly. The pending item is hedged once, on that item only.",
+    "concision": "Two claims plus one provenance card, with no filler."
+   }
+  },
+  {
+   "blind_id": "x11",
+   "answer_id": "r7",
+   "scenario_id": "adv_summarize_only_decided",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "All three claims match Current State statements verbatim.",
+    "authority_calibration": "Each claim is badged Current State and is Current State. Nothing pending is included.",
+    "consequential_completeness": "The user asked only for what is decided. All three Current State items are listed. The pending $60k Review is arguably relevant to the budget item, but the user explicitly excluded everything else, so omitting it fits the request.",
+    "directness": "The first claim begins the list of decided items with no setup. The headline is a neutral label.",
+    "hedging_calibration": "Settled facts are stated plainly with no qualifiers.",
+    "concision": "Three claims and nothing else, which is exactly what was requested."
+   }
+  },
+  {
+   "blind_id": "x12",
+   "answer_id": "r4",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "human": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 2
+   },
+   "human_reason": "Calls evidence a proposal; repeats both the Frankfurt evidence and the open question.",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 1 restates the Current State that the region has not been selected. Claim 2 accurately describes the pending item as the infra lead's Frankfurt note, not accepted. Claim 3 matches the open Question. The citations match their items.",
+    "authority_calibration": "Current State is given as the governing answer. Claim 2 marks Frankfurt as pending and 'has not been accepted into Current State'. The Question is shown as open.",
+    "consequential_completeness": "The answer surfaces Current State, the pending Frankfurt Review and the open Question. The Question is non-blocking, so nothing consequential is missing.",
+    "directness": "The first claim answers directly: no hosting region is on record because the region has not been selected.",
+    "hedging_calibration": "The settled Current State is stated plainly. Frankfurt is hedged once as pending, and the open Question is kept explicitly unknown.",
+    "concision": "Three short claims, each paired with its card. There is no filler. The claim 3 / Question card pairing is the expected shape."
+   }
+  }
+ ],
+ "grader_v11_run": 43648319518,
+ "grader_v11_cost_usd": 0.3296,
+ "grader_v11_report": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.9166666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 0.9166666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.25,
+    "within_one": 0.9166666666666666,
+    "passes": false
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ },
+ "grades_revealed_after": "ratings committed in 64556c5 before the grading run",
+ "attribution_note": "The `human` field name is kept for the file format; these are ChatGPT's ratings. Human calibration of v11 rests on round 1 only. Paige has since seen the grader scores and the answer key for this set, so it can no longer be rated blind by her."
+}

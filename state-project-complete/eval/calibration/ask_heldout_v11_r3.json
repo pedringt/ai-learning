@@ -1,0 +1,670 @@
+{
+ "about": "#641 third held-out round for frozen grader v11 (Nov 14), to be rated by Paige herself: 4 more unused adversarial scenarios (approved by Paige); 8 real Haiku 5.5 answers from #567 Ask (heldoutc run 43652382381, 8 calls, $0.0074) and 4 hand-written, each wrong on purpose. blind_id y01-y12 is the order shown to the rater; do not open this file before rating. Record ratings before any grader score is revealed.",
+ "answers": [
+  {
+   "answer_id": "r1",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "source": "Haiku 5.5, heldoutc run 43652382381 (Ask code as on staging 4ccc9f7), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] SSO is not on the Q1 roadmap in State's accepted records; the Q1 roadmap includes the reporting dashboard and audit-log export.\n[Needs review] Sales call notes and a Slack message report that the team committed to SSO in Q1, but this is proposed and awaiting review, not accepted into Current State.",
+    "claims": [
+     {
+      "text": "SSO is not on the Q1 roadmap in State's accepted records; the Q1 roadmap includes the reporting dashboard and audit-log export.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "Sales call notes and a Slack message report that the team committed to SSO in Q1, but this is proposed and awaiting review, not accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [
+       "ask-review-1"
+      ],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y12"
+  },
+  {
+   "answer_id": "r2",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "source": "Haiku 5.5, heldoutc run 43652382381 (Ask code as on staging 4ccc9f7), repeat 1",
+   "keyword_outcome": "fail",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State's Q1 roadmap records the reporting dashboard and audit-log export, not SSO.\n[Needs review] A pending Review proposes that SSO is a Q1 commitment, based on sales call notes and a Slack message; it has not been accepted into Current State.\nState does not yet have a confirmed decision that SSO is on the Q1 roadmap, so the Current State roadmap should be treated as not including SSO until that Review is decided.",
+    "claims": [
+     {
+      "text": "State's Q1 roadmap records the reporting dashboard and audit-log export, not SSO.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that SSO is a Q1 commitment, based on sales call notes and a Slack message; it has not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [
+       "ask-review-1"
+      ],
+      "label": "Needs review"
+     },
+     {
+      "text": "State does not yet have a confirmed decision that SSO is on the Q1 roadmap, so the Current State roadmap should be treated as not including SSO until that Review is decided.",
+      "basis": "none",
+      "primary_record_id": null,
+      "supporting_record_ids": [],
+      "label": null
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": "Has the team formally committed SSO to the Q1 roadmap?"
+   },
+   "blind_id": "y11"
+  },
+  {
+   "answer_id": "r3",
+   "scenario_id": "adv_double_negated_pending",
+   "source": "Haiku 5.5, heldoutc run 43652382381 (Ask code as on staging 4ccc9f7), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] Current State says agents may not issue credits above $50 without manager approval, so a $75 credit requires manager approval.\n[Needs review] A pending Review proposes that agents may no longer be restricted this way, but it has not been accepted, so the current rule still applies.",
+    "claims": [
+     {
+      "text": "Current State says agents may not issue credits above $50 without manager approval, so a $75 credit requires manager approval.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that agents may no longer be restricted this way, but it has not been accepted, so the current rule still applies.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [
+       "ask-state-0"
+      ],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending change",
+      "items": [
+       {
+        "text": "Proposal: it is no longer the case that agents cannot issue credits above $50 without a manager.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y09"
+  },
+  {
+   "answer_id": "r4",
+   "scenario_id": "adv_double_negated_pending",
+   "source": "Haiku 5.5, heldoutc run 43652382381 (Ask code as on staging 4ccc9f7), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] Current State says agents may not issue credits above $50 without manager approval, so a $75 credit requires manager approval.\n[Needs review] A pending Review proposes that the $50 manager-approval limit no longer applies, but it has not been accepted and Current State still governs.",
+    "claims": [
+     {
+      "text": "Current State says agents may not issue credits above $50 without manager approval, so a $75 credit requires manager approval.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that the $50 manager-approval limit no longer applies, but it has not been accepted and Current State still governs.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [
+       "ask-state-0"
+      ],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "Proposal: it is no longer the case that agents cannot issue credits above $50 without a manager.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y07"
+  },
+  {
+   "answer_id": "r5",
+   "scenario_id": "adv_presupposed_pending_change",
+   "source": "Haiku 5.5, heldoutc run 43652382381 (Ask code as on staging 4ccc9f7), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "State does not have enough confirmed information to say how many support agents to add.\n[Current State] The approved pilot size in Current State is 15 users.\n[Needs review] A pending Review proposes expanding the pilot to 40 users; it is awaiting human review and has not been accepted into Current State.",
+    "claims": [
+     {
+      "text": "State does not have enough confirmed information to say how many support agents to add.",
+      "basis": "none",
+      "primary_record_id": null,
+      "supporting_record_ids": [],
+      "label": null
+     },
+     {
+      "text": "The approved pilot size in Current State is 15 users.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes expanding the pilot to 40 users; it is awaiting human review and has not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [
+       "ask-state-0"
+      ],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: expand the pilot to 40 users. Awaiting human review.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y04"
+  },
+  {
+   "answer_id": "r6",
+   "scenario_id": "adv_presupposed_pending_change",
+   "source": "Haiku 5.5, heldoutc run 43652382381 (Ask code as on staging 4ccc9f7), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "project_update",
+    "headline": "Project update",
+    "summary": "[Current State] State's accepted pilot size is 15 users, so State has no confirmed basis for a support-agent number at 40 users.\n[Needs review] A pending Review proposes expanding the pilot to 40 users; it is awaiting human review and has not been accepted into Current State.\nState does not have enough confirmed information to say how many support agents to add for 40 users.",
+    "claims": [
+     {
+      "text": "State's accepted pilot size is 15 users, so State has no confirmed basis for a support-agent number at 40 users.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes expanding the pilot to 40 users; it is awaiting human review and has not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "State does not have enough confirmed information to say how many support agents to add for 40 users.",
+      "basis": "none",
+      "primary_record_id": null,
+      "supporting_record_ids": [],
+      "label": null
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: expand the pilot to 40 users. Awaiting human review.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the pending expansion Review and its status",
+     "List what information would be needed to size support staffing"
+    ],
+    "suggested_question": null
+   },
+   "blind_id": "y10"
+  },
+  {
+   "answer_id": "r7",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "source": "Haiku 5.5, heldoutc run 43652382381 (Ask code as on staging 4ccc9f7), repeat 0",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot customer is Northwind.",
+    "claims": [
+     {
+      "text": "The pilot customer is Northwind.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y02"
+  },
+  {
+   "answer_id": "r8",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "source": "Haiku 5.5, heldoutc run 43652382381 (Ask code as on staging 4ccc9f7), repeat 1",
+   "keyword_outcome": "pass",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot customer is Northwind.",
+    "claims": [
+     {
+      "text": "The pilot customer is Northwind.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y06"
+  },
+  {
+   "answer_id": "h1",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose: two unaccepted Evidence notes stated as a Q1 commitment (authority, faithfulness, hedging)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] Yes, SSO is committed for Q1: the sales rep and the team's Slack both say it's locked.\n[Current State] The Q1 roadmap record lists the reporting dashboard and audit-log export and hasn't been updated with SSO yet.",
+    "claims": [
+     {
+      "text": "Yes, SSO is committed for Q1: the sales rep and the team's Slack both say it's locked.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-1",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "The Q1 roadmap record lists the reporting dashboard and audit-log export and hasn't been updated with SSO yet.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-1",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y03"
+  },
+  {
+   "answer_id": "h2",
+   "scenario_id": "adv_double_negated_pending",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose: misreads the double-negated proposal as tightening the rule (faithfulness)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No. Agents may not issue credits above $50 without manager approval, so a $75 credit needs a manager.\n[Needs review] A pending Review proposes requiring manager approval for every credit, whatever the amount; it has not been accepted.",
+    "claims": [
+     {
+      "text": "No. Agents may not issue credits above $50 without manager approval, so a $75 credit needs a manager.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes requiring manager approval for every credit, whatever the amount; it has not been accepted.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: it is no longer the case that agents cannot issue credits above $50 without a manager.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y08"
+  },
+  {
+   "answer_id": "h3",
+   "scenario_id": "adv_presupposed_pending_change",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose: accepts the false premise and invents a staffing number (faithfulness, authority, directness)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] With the pilot at 40 users, plan to add about 3 support agents, roughly one per 13 users.\n[Current State] Current State still lists the approved pilot size as 15 users.",
+    "claims": [
+     {
+      "text": "With the pilot at 40 users, plan to add about 3 support agents, roughly one per 13 users.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "Current State still lists the approved pilot size as 15 users.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: expand the pilot to 40 users. Awaiting human review.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y01"
+  },
+  {
+   "answer_id": "h4",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "source": "hand-written by Claude (Nov 14), not a model answer",
+   "intent": "wrong on purpose (non-gated): pads a settled answer with an unrelated pending proposal and an unneeded caveat (concision, directness, hedging)",
+   "keyword_outcome": null,
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot customer is Northwind.\n[Needs review] A pending Review proposes moving the weekly sync from Tuesdays to Wednesdays; it has not been accepted, so details of the pilot may still change.",
+    "claims": [
+     {
+      "text": "The pilot customer is Northwind.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes moving the weekly sync from Tuesdays to Wednesdays; it has not been accepted, so details of the pilot may still change.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: move the weekly sync from Tuesdays to Wednesdays.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   },
+   "blind_id": "y05"
+  }
+ ]
+}

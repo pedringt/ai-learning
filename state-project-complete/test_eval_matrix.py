@@ -100,7 +100,7 @@ def test_plan_accepts_sonnet_and_opus_5_5():
 
 
 def test_shards_cover_every_repeat_and_caps_never_exceed_max_calls():
-    max_calls = 30_000
+    max_calls = 40_000
     suites = [s for s in matrix.SUITES if matrix.calls_per_repeat(s)]  # a saved set not yet filled has nothing to plan
     p = matrix.plan(suites, "claude-haiku-5-5", 120, max_calls)
     assert p["refusal"] is None
@@ -575,6 +575,39 @@ def test_assess_suite_grades_the_saved_held_out_set():
     assert matrix.calls_per_repeat("assess") == 12
 
 
+def test_heldoutb_suite_uses_adversarial_scenarios_no_earlier_set_has_seen():
+    assert [s.id for s in matrix._scenarios("heldoutb")] == list(matrix.HELDOUT_V11_R2_SCENARIOS)
+    seen = set(matrix.CALIBRATION_641_SCENARIOS) | set(matrix.HOLDOUT_641_SCENARIOS) | set(matrix.HELDOUT_V11_SCENARIOS)
+    seen |= {a["scenario_id"] for a in json.loads(matrix.CALIBRATION_ANSWERS.read_text())["answers"]}
+    assert not set(matrix.HELDOUT_V11_R2_SCENARIOS) & seen
+    assert matrix.plan(["heldoutb"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
+
+
+def test_assessb_suite_grades_the_saved_second_round():
+    items = matrix._scenarios("assessb")
+    assert len(items) == 12 and {i.scenario.id for i in items} == set(matrix.HELDOUT_V11_R2_SCENARIOS)
+    data = json.loads(matrix.HELDOUT_V11_R2_ANSWERS.read_text())["answers"]
+    assert sorted(a["blind_id"] for a in data) == [f"x{i:02d}" for i in range(1, 13)]
+    assert sum(a["answer_id"].startswith("h") for a in data) == 4
+
+
+def test_heldoutc_suite_uses_adversarial_scenarios_no_earlier_round_has_seen():
+    assert [s.id for s in matrix._scenarios("heldoutc")] == list(matrix.HELDOUT_V11_R3_SCENARIOS)
+    seen = (set(matrix.CALIBRATION_641_SCENARIOS) | set(matrix.HOLDOUT_641_SCENARIOS)
+            | set(matrix.HELDOUT_V11_SCENARIOS) | set(matrix.HELDOUT_V11_R2_SCENARIOS))
+    seen |= {a["scenario_id"] for a in json.loads(matrix.CALIBRATION_ANSWERS.read_text())["answers"]}
+    assert not set(matrix.HELDOUT_V11_R3_SCENARIOS) & seen
+    assert matrix.plan(["heldoutc"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
+
+
+def test_assessc_suite_grades_the_saved_third_round():
+    items = matrix._scenarios("assessc")
+    assert len(items) == 12 and {i.scenario.id for i in items} == set(matrix.HELDOUT_V11_R3_SCENARIOS)
+    data = json.loads(matrix.HELDOUT_V11_R3_ANSWERS.read_text())["answers"]
+    assert sorted(a["blind_id"] for a in data) == [f"y{i:02d}" for i in range(1, 13)]
+    assert sum(a["answer_id"].startswith("h") for a in data) == 4
+
+
 def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
     ids = {i.id for i in matrix.calibration_items(matrix.CALIBRATION_641_ANSWERS)}
     assert {aid for aid, *_ in matrix.CALIBRATION_641_REGRESSIONS} <= ids
@@ -591,10 +624,35 @@ def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
 
 def test_grader_rubric_carries_the_nov_11_rules():
     from eval.ask_grader import GRADER_VERSION, RUBRIC
-    assert GRADER_VERSION.startswith("ask-grader-v11")
+    assert GRADER_VERSION.startswith("ask-grader-v12")
     assert "Absence of a record is not a negative fact" in RUBRIC
     assert "not whether the answer is right" in RUBRIC
     assert "Do not apply a uniform deduction" in RUBRIC
+
+
+def test_recheck_suite_regrades_the_saved_low_faithfulness_or_authority_answers():
+    items = matrix._scenarios("recheck")
+    assert len(items) == 34 and len({i.id for i in items}) == 34
+    assert matrix.calls_per_repeat("recheck") == 34
+
+
+def test_heldoutd_uses_two_scenarios_no_earlier_round_has_seen():
+    assert [s.id for s in matrix._scenarios("heldoutd")] == list(matrix.HELDOUT_V12_SCENARIOS)
+    seen = (set(matrix.CALIBRATION_641_SCENARIOS) | set(matrix.HOLDOUT_641_SCENARIOS) | set(matrix.HELDOUT_V11_SCENARIOS)
+            | set(matrix.HELDOUT_V11_R2_SCENARIOS) | set(matrix.HELDOUT_V11_R3_SCENARIOS))
+    assert not set(matrix.HELDOUT_V12_SCENARIOS) & seen
+    assert matrix.calls_per_repeat("recheckb") == 4
+    data = json.loads(matrix.HELDOUT_V12_ANSWERS.read_text())["answers"]
+    assert sorted(a["blind_id"] for a in data) == [f"z{i:02d}" for i in range(1, 7)]
+    assert matrix.calls_per_repeat("assessd") == 6
+
+
+def test_grader_rubric_carries_the_nov_14_v12_rule():
+    from eval.ask_grader import RUBRIC
+    assert "Faithfulness judges whether the content is in a record, not whether it has authority" in RUBRIC
+    assert "(one that no supplied record states, including Evidence and Reviews)" in RUBRIC
+    assert "in place of a different value that Current State records for the same thing" in RUBRIC
+    assert "does not mention the topic, or that lists other items, does not conflict" in RUBRIC
 
 
 def test_grader_rubric_carries_the_nov_12_v10_rules():

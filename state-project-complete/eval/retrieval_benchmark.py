@@ -87,8 +87,8 @@ OPEN_REVIEWS = [
     ("r-control", "proposed_update", "Should the conformance level move from 2.1 AA to 2.2 AA?",
      "The regulator's guidance was updated.", 2010, ["s-web-access"], []),
     ("r-glossary", "proposed_update", "Should the glossary add the new plan names?", "Sales renamed two plans.", 2020, ["s-glossary"], []),
-    # No State links on r-notify or r-volume: today's trim appends missing Review-linked State items in set order and
-    # keeps 2, so with more than 2 the survivors depend on string hashing per process (a finding; see run() notes).
+    # No State links on r-notify or r-volume, so the control's linked State item always fits in the 2 slots the trim
+    # adds after the 12 best matches (before #664 those were picked in hash order).
     ("r-notify", "state_at_risk", "Is hourly batching still accurate for notifications?", "An engineer mentioned real-time sends.", 2030, [], []),
     ("r-cohorts", "proposed_update", "Should training add a third cohort?", "Hiring grew.", 2040, ["s-agent-cohorts"], []),
     ("r-templates", "missing_understanding", "Who signs off reply templates each quarter?", "No owner is recorded.", 2050, [], []),
@@ -182,16 +182,17 @@ def _history_rows() -> list[tuple[str, str, str, str, str, float]]:
     return rows
 
 
-# Answered Questions: (id, text, answer_evidence_id, created_hours). list_questions('resolved') orders by created_at.
+# Answered Questions: (id, text, answer_evidence_id, created_hours); answered 2 hours after creation. Ask keeps the 30
+# most recently answered (#664).
 KEY_ANSWERED = [
-    ("qa-trainer", "Who runs the onboarding sessions for agents?", "e-trainer-old", 52),
-    ("qa-mobile", "Is the mobile app in scope?", "e-mobile-answer", 62),
-    ("qa-control", "Is the knowledge base in English first?", None, 64),
-    ("qa-escalation-owner", "Who owns vendor escalations?", None, 66),
-    # Created most recently: today's [:30] keeps the 30 OLDEST resolved Questions, so these fall outside it.
-    ("qa-sandbox", "Will agents get a sandbox environment?", None, 3000),
-    ("qa-holiday-cover", "Is there holiday cover for the weekend queues?", None, 3010),
-    ("qa-refund-limit", "What refund amount can Tier 1 approve alone?", None, 3020),
+    ("qa-trainer", "Who runs the onboarding sessions for agents?", "e-trainer-old", 1800),
+    ("qa-mobile", "Is the mobile app in scope?", "e-mobile-answer", 1810),
+    ("qa-control", "Is the knowledge base in English first?", None, 1820),
+    ("qa-escalation-owner", "Who owns vendor escalations?", None, 1830),
+    # Answered first of all 40, so outside the newest-30 window.
+    ("qa-sandbox", "Will agents get a sandbox environment?", None, 1),
+    ("qa-holiday-cover", "Is there holiday cover for the weekend queues?", None, 2),
+    ("qa-refund-limit", "What refund amount can Tier 1 approve alone?", None, 3),
 ]
 _ANSWER_TEXT = {
     "qa-control": "Yes, English ships first and German follows.",
@@ -397,7 +398,12 @@ def _widened_windows(factor: float | None):
     originals = {name: getattr(ask_service, name) for name in ("list_history", "list_evidence", "list_questions")}
 
     def wrap(fn):
-        return lambda *args, **kwargs: _Window(fn(*args, **kwargs), factor)
+        def windowed(*args, **kwargs):
+            # A window given as a SQL limit (answered Questions, #664) is scaled the same way as a slice.
+            if kwargs.get("limit") is not None:
+                kwargs["limit"] = 10 ** 9 if factor is None else int(kwargs["limit"] * factor)
+            return _Window(fn(*args, **kwargs), factor)
+        return windowed
     with mock.patch.multiple(ask_service, **{name: wrap(fn) for name, fn in originals.items()}):
         yield
 
@@ -752,11 +758,9 @@ def run(connection: Any, variants: Iterable[Variant] = VARIANTS) -> dict:
         "skipped_variants": SKIPPED_VARIANTS,
         "rows": rows,
         "notes": [
-            "Today's trim keeps Current State to 12 plus at most 2 Review-linked items, appended from a set. With more "
-            "than 2 missing, which survive depends on PYTHONHASHSEED, so the same question can get different context per "
-            "process (seen in this fixture before r-notify/r-volume lost their State links).",
-            "_compact_candidates takes list_questions(..., 'resolved')[:30], which is ordered oldest-created first: Ask keeps "
-            "the 30 OLDEST answered Questions, and a newer answered Question never reaches the model or changes the cache key.",
+            "Fixed in #664: Review-linked State items were appended from a set (hash-seed dependent), and the answered-"
+            "Question window kept the 30 oldest. The answered-Question cases were re-dated for the newest-30 window, so "
+            "family 4 results from before #664 are not comparable.",
             "Context size is the serialized candidate JSON; tokens are chars/4, an estimate (no tokenizer, no model).",
             "ask_cache_key hashes the windowed candidates and relies on list_history/list_evidence being newest-first; "
             "any retrieval change must reassess cache invalidation, including edits to older records that become retrievable.",

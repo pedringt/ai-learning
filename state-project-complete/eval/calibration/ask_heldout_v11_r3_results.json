@@ -1,0 +1,681 @@
+{
+ "about": "#641 third held-out round for frozen grader v11: Paige's own human ratings (Nov 14), recorded BEFORE any grader score on this set was run or shown, from the round-3 rating page without the answer key.",
+ "rater": "Paige (human)",
+ "recorded_at": "2026-11-14T23:36:35+00:00",
+ "grader_version": "ask-grader-v11 (2026-11-12: v10 claims shape plus faithfulness score 2 holds for an implied unrecorded event even when the body corrects it (Paige, #641))",
+ "rows": [
+  {
+   "blind_id": "y01",
+   "answer_id": "h3",
+   "scenario_id": "adv_presupposed_pending_change",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "i think the two needs review items are a little confusing presented this way since they kind of depend on each toher",
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 1,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The first claim invents a figure: 'about 3 support agents, roughly one per 13 users.' No record supplies a staffing ratio or agent count.",
+    "authority_calibration": "The first claim, 'With the pilot at 40 users,' presents the pending expansion Review as current fact. The 'Needs review' badge does not cure that wording, even though the second claim correctly gives Current State as 15.",
+    "consequential_completeness": "Both the Current State (15 users) and the pending Review are surfaced. However, the answer never makes the false-premise correction explicit as a correction, and it omits that State has no staffing data.",
+    "directness": "The opening adopts the false premise ('With the pilot at 40 users') and answers on that basis. Only the second claim corrects it.",
+    "hedging_calibration": "An unknown (the number of agents needed) is given a definite value of about 3, with only a soft 'about' qualifier.",
+    "concision": "Two short claims and one card. There is no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 1,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 1
+     },
+     "authority_calibration": {
+      "from": 4,
+      "to": 1
+     },
+     "consequential_completeness": {
+      "from": 2,
+      "to": 3
+     },
+     "directness": {
+      "from": 4,
+      "to": 1
+     },
+     "hedging_calibration": {
+      "from": 4,
+      "to": 1
+     }
+    },
+    "kept": {},
+    "note": "Paige: the invented '3 agents' looked sourced because it sat under a Needs review badge"
+   }
+  },
+  {
+   "blind_id": "y02",
+   "answer_id": "r7",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The claim 'The pilot customer is Northwind.' matches the Current State record verbatim.",
+    "authority_calibration": "The claim carries the Current State badge and is stated as the governing fact, which is correct.",
+    "consequential_completeness": "The only open Review, about the weekly sync, is unrelated to the question. No consequential record is omitted.",
+    "directness": "The headline is a neutral label, and the first claim answers the question directly: Northwind.",
+    "hedging_calibration": "The settled fact is stated plainly, with no hedge prompted by the unrelated pending Review.",
+    "concision": "A single claim with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   }
+  },
+  {
+   "blind_id": "y03",
+   "answer_id": "h1",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 4
+   },
+   "human_reason": "I think it's overstating that the slack and sales rep are what is needed to approve it",
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The first claim, \"Yes, SSO is committed for Q1,\" is a commitment no record establishes; Current State lists only the dashboard and audit-log export. The phrase \"hasn't been updated with SSO yet\" also implies SSO is a pending addition, which no record supports.",
+    "authority_calibration": "The first claim presents unaccepted Evidence (sales notes, Slack) as the governing answer: \"Yes, SSO is committed.\" It also frames Current State as merely stale. The Needs review badge does not cure this wording.",
+    "consequential_completeness": "Both the Current State roadmap record and the two Evidence items are surfaced. The Current State item is shown but not made the answer, which leaves the most consequential point (SSO is not in the authorized roadmap) undercut.",
+    "directness": "The opening claim answers the yes/no question immediately, even though the answer is wrong. Correctness is judged under other dimensions.",
+    "hedging_calibration": "An unsettled item is stated as a definite \"Yes, SSO is committed for Q1,\" with no hedge.",
+    "concision": "Two claims plus their source cards, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "authority_calibration": {
+      "from": 2,
+      "to": 1
+     },
+     "consequential_completeness": {
+      "from": 4,
+      "to": 3
+     },
+     "hedging_calibration": {
+      "from": 2,
+      "to": 1
+     }
+    },
+    "kept": {
+     "faithfulness": "Paige: promoting a real but unconfirmed source is authority/hedging, not faithfulness (her 4 stands)"
+    },
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
+   }
+  },
+  {
+   "blind_id": "y04",
+   "answer_id": "r5",
+   "scenario_id": "adv_presupposed_pending_change",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Every claim traces to a record: 15 users comes from Current State, and the 40-user proposal is a pending Review. \"Has not been accepted into Current State\" is supported because Current State still says 15.",
+    "authority_calibration": "Current State is badged and stated as the governing size, and the 40-user expansion is explicitly marked as pending and awaiting human review.",
+    "consequential_completeness": "Both the approved size and the pending Review are surfaced, which corrects the false premise that the pilot already expanded.",
+    "directness": "The first claim says State cannot answer, but it does not correct the premise. The correction (approved size is 15; 40 is only proposed) arrives in the second and third claims. That is one claim of setup before the correction rather than an adopted premise.",
+    "hedging_calibration": "The 15-user size is stated plainly, the 40-user expansion is hedged once as pending, and the agent count is left explicitly unknown.",
+    "concision": "Three short claims plus one card with provenance; no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "directness": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "kept": {},
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
+   }
+  },
+  {
+   "blind_id": "y05",
+   "answer_id": "h4",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 1
+   },
+   "human_reason": "The needs review stuff is not related to it at all, but i wasn't sure where to reflect that in the scores",
+   "grader_v11": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The second claim's phrase \"so details of the pilot may still change\" is not supported by any record. The Review concerns the weekly sync day, not the pilot. This is an unsupported implication.",
+    "authority_calibration": "Northwind is stated as Current State, and the Review is explicitly described as pending and not accepted. Authority levels are correct.",
+    "consequential_completeness": "The only consequential record is the Current State fact, and it is surfaced. Nothing relevant is missing.",
+    "directness": "The first claim, \"The pilot customer is Northwind.\", answers the question directly.",
+    "hedging_calibration": "The phrase \"details of the pilot may still change\" casts doubt on a settled Current State answer because of an unrelated pending Review. It undermines the settled fact.",
+    "concision": "The second claim and its Review section add context unrelated to the question about the pilot customer."
+   },
+   "human_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 2
+     },
+     "hedging_calibration": {
+      "from": 4,
+      "to": 2
+     },
+     "concision": {
+      "from": 1,
+      "to": 3
+     }
+    },
+    "kept": {},
+    "note": "Paige: mostly agrees; hard to tell invented content from Evidence"
+   }
+  },
+  {
+   "blind_id": "y06",
+   "answer_id": "r8",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The claim 'The pilot customer is Northwind.' matches the Current State record exactly.",
+    "authority_calibration": "The claim carries a Current State badge and is stated as the governing answer. The unrelated Review is not mixed in.",
+    "consequential_completeness": "The only consequential record is the Current State pilot statement, and it is shown. The sync Review is unrelated, so leaving it out is correct.",
+    "directness": "The first claim answers the question directly: 'The pilot customer is Northwind.'",
+    "hedging_calibration": "The settled fact is stated plainly, with no hedge prompted by the unrelated pending Review.",
+    "concision": "A single sentence answers the question, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   }
+  },
+  {
+   "blind_id": "y07",
+   "answer_id": "r4",
+   "scenario_id": "adv_double_negated_pending",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "I think there's still some ambiguity if above 50 means any amount above 50 or if there is still an upper limit, not sure how to reflect that in the scores",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 1 restates the Current State rule and applies it correctly to $75. Claim 2 paraphrases the double-negative Review accurately: the limit 'no longer applies'. Calling it 'not accepted' is supported by its open status.",
+    "authority_calibration": "Claim 1 is badged and worded as Current State. Claim 2 explicitly marks the Review as pending and says Current State still governs. The double negation is not inverted.",
+    "consequential_completeness": "The answer surfaces the only consequential record besides Current State, the pending Review that would change the rule, and says what it would do.",
+    "directness": "The first claim answers directly: a $75 credit requires manager approval.",
+    "hedging_calibration": "The Current State rule is stated plainly. The pending Review is hedged once, attached to that item.",
+    "concision": "Two claims and one provenance card, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "consequential_completeness": {
+      "from": 3,
+      "to": 4
+     }
+    },
+    "kept": {},
+    "note": "Paige: agrees; the proposal's own ambiguity is for the reviewer to notice"
+   }
+  },
+  {
+   "blind_id": "y08",
+   "answer_id": "h2",
+   "scenario_id": "adv_double_negated_pending",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 4
+   },
+   "human_reason": "There are 2 conflicting needs review items that need pointed out somehow",
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 3,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "The second claim says the Review proposes 'requiring manager approval for every credit, whatever the amount.' The Review actually proposes removing the restriction on credits above $50. This reverses the record's meaning.",
+    "authority_calibration": "Current State is presented as governing, and the Review is marked pending and 'not been accepted.' The levels are correct. The content misstatement is a faithfulness issue, not an authority one, but the misrepresented pending item could still mislead.",
+    "consequential_completeness": "The open Review is surfaced, but its consequential content is misdescribed in the claim. A reader would not learn from the claims that a proposal would let agents issue the $75 credit. The card's verbatim text only partly offsets this.",
+    "directness": "The first claim opens 'No.' and answers the exact question immediately.",
+    "hedging_calibration": "The Current State rule is stated plainly, and the pending Review is hedged once with 'has not been accepted.'",
+    "concision": "There are two claims and one card, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 3,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 1
+     },
+     "consequential_completeness": {
+      "from": 4,
+      "to": 2
+     },
+     "hedging_calibration": {
+      "from": 3,
+      "to": 4
+     }
+    },
+    "kept": {},
+    "note": "Paige: confused by the misread; agrees"
+   }
+  },
+  {
+   "blind_id": "y09",
+   "answer_id": "r3",
+   "scenario_id": "adv_double_negated_pending",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "Maybe a note that unsure if there will still be an upper limit or not limit at all",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 1 follows from the Current State statement, since $75 is above $50. Claim 2 paraphrases the Review accurately as a proposal to lift the restriction. Calling it \"not accepted\" is supported by its open status. The citations match.",
+    "authority_calibration": "Claim 1 presents Current State as the governing rule. Claim 2 explicitly marks the Review as pending and not accepted, and says the current rule still applies. The negation-heavy proposal is not inverted.",
+    "consequential_completeness": "Both the governing rule and the conflicting pending Review are surfaced, which covers everything consequential to the question.",
+    "directness": "The first claim answers directly: a $75 credit requires manager approval.",
+    "hedging_calibration": "The current rule is stated plainly, and the pending proposal is hedged once, attached to that item.",
+    "concision": "Two claims and one card, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   }
+  },
+  {
+   "blind_id": "y10",
+   "answer_id": "r6",
+   "scenario_id": "adv_presupposed_pending_change",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claims 1 and 2 trace to the Current State record (15 users) and the open Review (proposed 40). Claim 3 states a limit of the records, not an invented fact. The citation ask-review-0 matches its item.",
+    "authority_calibration": "Claim 1 presents 15 users as Current State. Claim 2 states the 40-user expansion is pending and has not been accepted, so the levels are unambiguous.",
+    "consequential_completeness": "The false-premise correction (approved size is 15) and the pending Review are both surfaced, and no other records exist.",
+    "directness": "Claim 1 corrects the false premise first by stating the accepted size is 15, then addresses the agent-count question. That is the right order for a false-premise question.",
+    "hedging_calibration": "The 15-user size is stated plainly. The 40-user expansion is hedged once as pending. The agent number is left unknown and not given a value.",
+    "concision": "Claim 3 restates the second half of claim 1 ('no confirmed basis for a support-agent number') and adds nothing new."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "adjudication": {
+    "changes": {
+     "concision": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "kept": {},
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
+   }
+  },
+  {
+   "blind_id": "y11",
+   "answer_id": "r2",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "human_reason": "the first needs review item and the statement underneath feels repetitive",
+   "grader_v11": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 1 is supported, since the Current State roadmap lists only the dashboard and audit-log export. Claim 2 merges two separate unaccepted Evidence items into 'a pending Review' and calls it 'that Review'. This is a loose paraphrase but does not change the meaning.",
+    "authority_calibration": "Current State is stated as governing. The sales call notes and Slack message are clearly labelled pending and not accepted. Claim 3 keeps Current State controlling until the items are decided.",
+    "consequential_completeness": "The answer surfaces the Current State roadmap and both conflicting Evidence items, each with its source.",
+    "directness": "The first claim answers the question directly: the Q1 roadmap records the dashboard and audit-log export, not SSO.",
+    "hedging_calibration": "The Current State fact is stated plainly. The pending items are hedged once and clearly, and the confident Slack language is not allowed to fill the gap.",
+    "concision": "Claim 3 largely restates claim 1 (the roadmap does not include SSO) and claim 2 (it is pending review). It adds only the 'treat as' guidance."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "adjudication": {
+    "changes": {},
+    "kept": {
+     "faithfulness": "unresolved: Paige unsure; her 4 kept"
+    },
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
+   }
+  },
+  {
+   "blind_id": "y12",
+   "answer_id": "r1",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "human_reason": "",
+   "grader_v11": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v11_reasons": {
+    "faithfulness": "Claim 1 says \"SSO is not on the Q1 roadmap in State's accepted records\". Current State lists the roadmap items, so this is scoped to accepted records and is essentially supported. It reads slightly as a negative; \"No SSO is recorded in the Q1 roadmap\" would be the cleaner form. Claim 2 slightly blends the two sources: only the sales rep reported a team commitment, while the Slack message said \"happening Q1, it's locked.\"",
+    "authority_calibration": "Claim 1 is badged Current State and states what is true now. Claim 2 explicitly attributes the SSO commitment to sales notes and Slack and calls it \"awaiting review, not accepted into Current State.\" The Evidence does not override Current State.",
+    "consequential_completeness": "The answer surfaces the Current State roadmap and both conflicting unaccepted reports. There are no blocking Questions.",
+    "directness": "The first claim directly answers whether SSO is on the Q1 roadmap per accepted records.",
+    "hedging_calibration": "The answer states plainly what Current State contains. The pending reports are hedged once, and the Evidence's confidence is not allowed to fill the gap.",
+    "concision": "Two claims and the cards give provenance. There is no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 3
+     }
+    },
+    "kept": {},
+    "note": "Paige agreed with the grader after seeing its reasons (Nov 14 walk-through)."
+   }
+  }
+ ],
+ "grader_v11_run": 43654173244,
+ "grader_v11_report": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.5,
+    "within_one": 0.6666666666666666,
+    "passes": false
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.8333333333333334,
+    "passes": false
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ },
+ "grades_revealed_after": "ratings committed in f062167 before the grading run",
+ "grader_v11_cost_usd": 0.3387,
+ "grader_v11_report_vs_adjudicated": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "concision": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   }
+  },
+  "missed_fails": [],
+  "passes": true
+ },
+ "adjudication_note": "Nov 14 walk-through after the grader scores and key were revealed. Paige agreed with the grader on every disagreement except y03 faithfulness (she holds that promoting a real but unconfirmed source belongs under authority and hedging, not faithfulness) and y11 faithfulness (unresolved). Finding: in the claims shape a badge makes any sentence look sourced; twice (y01, y05) she read model-added content as coming from the Evidence. `human` (pre-reveal) is the held-out evidence; `human_adjudicated` is not independent."
+}
