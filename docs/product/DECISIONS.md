@@ -472,10 +472,10 @@ Risk acceptances become routine, or a check's class proves wrong in practice.
   - superseded or superseding Evidence.
 - **Answered Questions are ranked like every other record type**, within their limit of 6. The extra "must share a query word" rule is dropped.
 - **Copy Context stays complete (Paige, Nov 15).** It copies every Current State item, and in Working mode every pending Review and open Question. The task text is a label only. Measured first (`docs/evals/copy-context-filter-results.md`): every task-text filter kept 88% of needed records and silently dropped an accepted fact in 2 of 12 tasks, while the full copy is small (about 1,550 tokens for Northstar). If copies grow large, the fallback is to keep all of Current State and filter only Reviews and Questions; on the fixture that kept 100% of needed records at 65% of the size.
+- **Absence relative to what Ask looked at, only when the context was cut (Paige, Nov 15).** When retrieval sent fewer records of some type than the project holds, Ask says "The records I looked at don't show X", never "State has no record of X". A project sent whole keeps "State has no record". The absence suite found the old wording false in 15 of 15 answers whose record existed but was not sent. With the change it was 15 of 15 correct, and true-absence and yes/no answers stayed 40 of 40 (`docs/evals/absence-wording-results.md`).
 
 **Pending**
 - **Paraphrase misses:** research the options and report back.
-- **"Not found" vs "not retrieved" wording:** scope the paid absence-wording run.
 
 **Why**
 On the #653 fixture, the windows caused most misses: A0 recall was 0.48, and 0.80 without windows at the same context size, because the per-type limits, not the windows, bound the context. Link expansion raised the linked-context family from 0.8 to 1.0, for about 1k characters per Ask. The fixture is synthetic; these are benchmark numbers, not production behavior.

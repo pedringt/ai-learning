@@ -32,3 +32,24 @@
 3. **Change it only when the context was cut.** Ask knows when retrieval left records out (the project had more records than the limits). Only then would it use "I couldn't find …" wording, leaving true absence in small projects unchanged.
 
 Which response to take is Paige's decision.
+
+## Decision and change (Paige, Nov 15): word absence relative to what Ask looked at, only when retrieval cut the context
+
+**How it works:**
+- `_context_was_cut` is true when some record type had more records than were sent to the model.
+- Only then does the prompt change:
+  - The base absence sentence and its denial examples say "the records I looked at".
+  - An extra rule forbids "State has no record of X" for things no supplied record mentions.
+- A project sent whole keeps the plain wording.
+
+| Run | No record answers it | Yes/no, nothing settles it | Record exists, not sent | Answers with "State has no record" wording |
+|---|---|---|---|---|
+| Before, run 43745803115 | 25/25 | 15/15 | 0/15 | 55 |
+| Extra rule only, run 43760830372 | 25/25 | 15/15 | 10/15 | 37 |
+| **Base sentence replaced, run 43763944832 (`8841a8d`)** | **25/25** | **15/15** | **15/15** | 3 |
+
+**Each run:** 55 Haiku 5.5 calls, about $0.10. The last run's absence answers read like "The records I looked at don't show a budget for the Japan expansion."
+
+**Production:** Northstar has 25 Current State items against a limit of 24, so some Northstar questions count as cut and get this wording.
+
+**Before promotion:** the Ask quality suite on staging, a prompt change (CLAUDE.md).
