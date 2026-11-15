@@ -1,0 +1,73 @@
+{
+ "about": "#641 short held-out round for grader v12: Paige's own human ratings on faithfulness, authority and hedging (Nov 14), recorded BEFORE any grader score on this set.",
+ "rater": "Paige (human)",
+ "recorded_at": "2026-11-15T01:36:56+00:00",
+ "rows": [
+  {
+   "blind_id": "z01",
+   "answer_id": "r1",
+   "scenario_id": "adv_ceo_said_final",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 1,
+    "hedging_calibration": 1
+   },
+   "human_reason": "When current state conflicts with a review I don't think it should answer so firmly. The CEO's email was much more final than this is making it sound"
+  },
+  {
+   "blind_id": "z02",
+   "answer_id": "h2",
+   "scenario_id": "adv_hedged_pending_item",
+   "human": {
+    "faithfulness": 2,
+    "authority_calibration": 1,
+    "hedging_calibration": 1
+   },
+   "human_reason": "It's not as certain as the top is making it sound"
+  },
+  {
+   "blind_id": "z03",
+   "answer_id": "r2",
+   "scenario_id": "adv_ceo_said_final",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "hedging_calibration": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "z04",
+   "answer_id": "r4",
+   "scenario_id": "adv_hedged_pending_item",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "hedging_calibration": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "z05",
+   "answer_id": "r3",
+   "scenario_id": "adv_hedged_pending_item",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "hedging_calibration": 4
+   },
+   "human_reason": ""
+  },
+  {
+   "blind_id": "z06",
+   "answer_id": "h1",
+   "scenario_id": "adv_ceo_said_final",
+   "human": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "hedging_calibration": 4
+   },
+   "human_reason": ""
+  }
+ ]
+}
