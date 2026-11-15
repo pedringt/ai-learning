@@ -78,7 +78,7 @@ def prepare_answer_raw(answer_raw: Any) -> tuple[Any, int]:
     Supporting references past the second are dropped (they never set the label)."""
     if not isinstance(answer_raw, Mapping):
         return answer_raw, 0
-    data = {key: value for key, value in answer_raw.items() if key not in {"headline", "summary", "withheld_claims", "withheld_items"}}
+    data = {key: value for key, value in answer_raw.items() if key not in {"headline", "summary", "withheld_claims", "withheld_items", "withheld_kinds"}}
     withheld = 0
     raw_claims = answer_raw.get("claims")
     if raw_claims is None:
@@ -245,6 +245,16 @@ class ClaimChecker:
         if not anchors_supported(text, [record_text(record), *(record_text(r) for r in supporting), self.query]):
             return None
         return RECORD_LABELS[record_type]
+
+    def failure_kind(self, claim: Mapping[str, Any]) -> str:
+        """Why check_claim withheld a claim (#662): "reference" when a record it cites isn't among the answer's records,
+        else "figure" (a number or month its records don't contain)."""
+        basis = claim.get("basis") or "none"
+        if any((self.by_id.get(rid) or self.linked.get(rid)) is None for rid in claim.get("supporting_record_ids") or []):
+            return "reference"
+        if basis == "none":
+            return "reference" if claim.get("primary_record_id") else "figure"
+        return "figure" if self.primary(basis, claim.get("primary_record_id")) is not None else "reference"
 
     def card_record(self, record_type: str, record_id: str | None) -> Mapping[str, Any] | None:
         return self.records.get(record_type, {}).get(record_id or "")

@@ -22,6 +22,7 @@ from contextvars import ContextVar
 from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_card, fixed_headline, prepare_answer_raw, record_text
 from ask_display import claim_lines, has_withheld, withheld_line
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
+from ask_withheld_log import record_withheld, withheld_kind
 from db import project_id_of
 from ask_authority_text import (  # noqa: F401  (re-exported: tests import these from ask_service)
     _DEMO_SLUG_ID,
@@ -111,11 +112,9 @@ def ask_cache_key(
     (and a fresh grounding-rules read) once the day rolls over, without
     invalidating same-day repeat questions.
 
-    Depends on ordering defined elsewhere. _compact_candidates truncates
-    history to 18 entries, evidence to 24 and answered Questions to 30, which is
-    only safe because list_history, list_evidence and list_questions(limit=...)
-    in review_service.py all order newest first: the windows hold the newest
-    records, so anything added lands inside them and changes the key (#664). Reorder those queries to ASC and this cache silently starts
+    Since DEC-023 _compact_candidates holds every record in the project (no
+    recency windows), so adding or editing any record, however old, changes the
+    key (#664 relied on newest-first windows instead). Reorder those queries to ASC and this cache silently starts
     serving stale answers -- the tests would still pass, because they add
     records rather than adding 25 of them.
     """
@@ -158,15 +157,23 @@ def _bounded_selection_raw(selection_raw: Mapping[str, Any] | None) -> dict[str,
     return data
 
 
+# DEC-023 (Paige, Nov 14): today's per-type limits doubled, chosen after the paid context-size run (#653).
+_TRIM_LIMITS = {"state": 24, "reviews": 12, "questions": 24, "answered_questions": 12, "history": 20, "evidence": 24}
+_REVIEW_LINKED_STATE_EXTRA = 4     # State items a selected Review affects, kept beyond the State limit (was 2 at 12)
+_LINK_EXPANSION_CAP = 10
+_LINKED_BUCKETS = ("state", "reviews", "questions", "answered_questions", "history", "evidence")
+
+
 def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
     state = list_state(connection)
     reviews = list_reviews(connection, "open")
     questions = list_questions(connection, "open")
-    # #664: the 30 most recently answered. Without a limit list_questions is oldest-created first, so this used to keep
-    # the 30 oldest, and a newly answered Question neither reached Ask nor changed ask_cache_key.
-    answered = list_questions(connection, "resolved", limit=30)
-    history = list_history(connection)[:18]
-    evidence = list_evidence(connection)[:24]
+    # DEC-023 (Nov 14): every record, no recency windows (they were the newest 18 History, 24 Evidence and 30 answered
+    # Questions). Answered Questions newest first, like History and Evidence, so ties in the trim favour recent ones.
+    answered = sorted(list_questions(connection, "resolved"), key=lambda q: str(q.get("id") or ""))
+    answered.sort(key=lambda q: str(q.get("resolved_at") or ""), reverse=True)
+    history = list_history(connection)
+    evidence = list_evidence(connection)
     rules = list_project_rules(connection)
     return {
         "state": [{"id": x["id"], "topic": x["topic"], "statement": x["statement"], "authority": "governing_current_fact"} for x in state],
@@ -199,7 +206,9 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
         } for x in history],
         "evidence": [{
             "id": x["id"], "content": x["content"], "source_type": x["source_type"],
-            "submitted_at": str(x.get("submitted_at") or ""), "authority": "supporting_or_event_evidence"
+            "submitted_at": str(x.get("submitted_at") or ""), "authority": "supporting_or_event_evidence",
+            # DEC-023: the note this one replaces, so link expansion can bring both and the model can tell them apart.
+            **({"supersedes_evidence_id": x["supersedes_evidence_id"]} if x.get("supersedes_evidence_id") else {}),
         } for x in evidence],
         "rules": [{"id": x["id"], "text": x["text"], "category": x["category"], "authority": "interpretation_guardrail"} for x in rules],
     }
@@ -249,8 +258,9 @@ def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]])
         scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
         return [x[2] for x in scored[:limit]]
 
-    reviews = ranked("reviews", 6)
-    state = ranked("state", 12)
+    limits = _TRIM_LIMITS
+    reviews = ranked("reviews", limits["reviews"])
+    state = ranked("state", limits["state"])
     # #664: in the selected Reviews' rank order. This was a set, so with more than 2 missing, which ones survived the
     # cut to 14 below depended on the process's hash seed.
     required_state = list(dict.fromkeys(sid for r in reviews for sid in r.get("affected_state_ids", [])))
@@ -259,17 +269,67 @@ def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]])
         if sid in state_by_id and sid not in {x["id"] for x in state}:
             state.append(state_by_id[sid])
 
-    # Only answered Questions that share a term with the request: an unrelated old answer is not context (#640).
-    answered = [x for x in ranked("answered_questions", 6) if any(term in text(x) for term in terms)]
-    return {
-        "state": state[:14],
+    # DEC-023: answered Questions are ranked like every other type (#640's "must share a word" rule is dropped).
+    trimmed = {
+        "state": state[:limits["state"] + _REVIEW_LINKED_STATE_EXTRA],
         "reviews": reviews,
-        "questions": ranked("questions", 12),
-        "answered_questions": answered,
-        "history": ranked("history", 10),
-        "evidence": ranked("evidence", 12),
+        "questions": ranked("questions", limits["questions"]),
+        "answered_questions": ranked("answered_questions", limits["answered_questions"]),
+        "history": ranked("history", limits["history"]),
+        "evidence": ranked("evidence", limits["evidence"]),
         "rules": list(candidates["rules"]),
     }
+    return _expand_links(trimmed, candidates)
+
+
+def _expand_links(selected: Mapping[str, list[dict]], candidates: Mapping[str, list[dict]]) -> dict[str, list[dict]]:
+    """DEC-023: add the records the selected ones need to be read correctly, from the whole project, capped.
+
+    A Review brings its Evidence, State items and Questions; Evidence brings the open Reviews that cite it and the
+    note it replaces or that replaced it; a History entry brings its State item; an answered Question brings its
+    answer Evidence. Current State brings nothing. In this type order, then rank order, so the result is the same
+    on every process."""
+    where = {r["id"]: (bucket, r) for bucket in _LINKED_BUCKETS for r in candidates.get(bucket, [])}
+    reviews_citing: dict[str, list[str]] = {}
+    for review in candidates.get("reviews", []):
+        for eid in review.get("evidence_ids", []):
+            reviews_citing.setdefault(eid, []).append(review["id"])
+    replaced_by: dict[str, list[str]] = {}
+    for note in candidates.get("evidence", []):
+        if note.get("supersedes_evidence_id"):
+            replaced_by.setdefault(note["supersedes_evidence_id"], []).append(note["id"])
+
+    def evidence_links(eid: str) -> list[str]:
+        note = where.get(eid, ("", {}))[1]
+        return reviews_citing.get(eid, []) + [x for x in [note.get("supersedes_evidence_id")] if x] + replaced_by.get(eid, [])
+
+    def links(bucket: str, record: Mapping[str, Any]) -> list[str]:
+        if bucket == "reviews":
+            return list(record.get("evidence_ids", [])) + list(record.get("affected_state_ids", [])) + list(record.get("question_ids", []))
+        if bucket == "evidence":
+            return evidence_links(record["id"])
+        if bucket == "history":
+            return [x for x in [record.get("state_item_id")] if x]
+        if bucket == "answered_questions":
+            eid = record.get("answer_evidence_id")
+            return [eid, *evidence_links(eid)] if eid else []
+        return []
+
+    out = {bucket: list(records) for bucket, records in selected.items()}
+    have = {r["id"] for records in out.values() for r in records}
+    added = 0
+    for bucket in ("evidence", "answered_questions", "history", "reviews"):
+        for record in selected.get(bucket, []):
+            for rid in links(bucket, record):
+                if added >= _LINK_EXPANSION_CAP:
+                    return out
+                if rid in have or rid not in where:
+                    continue
+                target_bucket, target = where[rid]
+                out[target_bucket].append(target)
+                have.add(rid)
+                added += 1
+    return out
 
 
 def _followup_mode(query: str, previous_answer: Mapping[str, Any] | None) -> str:
@@ -670,8 +730,9 @@ class _AnswerChecks:
         claim.text = self.clean(claim.text) or ""
         label = self.checker.check_claim(claim.model_dump()) if claim.text else None
         if label is None:
+            failed = "reference" if not claim.text else self.checker.failure_kind(claim.model_dump())
             _log_decision("claim", raw_text, claim.basis, claim.primary_record_id, claim.supporting_record_ids,
-                          "withheld", "reference or anchor check failed")
+                          "withheld", f"{'reference' if failed == 'reference' else 'anchor'} check failed")
             return None
         verdict = ask_assertions.check(claim.text, claim.basis, self._authority_records(claim))
         if verdict.ok and self._restates_assumption(claim.text):
@@ -809,6 +870,8 @@ class _AnswerChecks:
                 continue
             if not (item.record_id and item.record_id in self.allowed.get(item.record_type, set())):
                 # #567: a card whose record isn't among the selected records is withheld, and counted.
+                _log_decision("card", item.text, item.record_type, item.record_id, [], "withheld",
+                              "card's record isn't among the answer's records")
                 withheld += 1
                 continue
             # For unresolved decisions/questions, visible wording comes from
@@ -837,6 +900,8 @@ class _AnswerChecks:
                 item.text = self.clean(item.text) or ""
                 item.detail = self.clean(item.detail)
                 if record is None:
+                    _log_decision("card", item.text, item.record_type, item.record_id, [], "withheld",
+                                  "card's record isn't among the answer's records")
                     withheld += 1
                     continue
                 raw_text = item.text
@@ -862,7 +927,32 @@ class _AnswerChecks:
 def _validate_synthesis(
     answer: AskSynthesis, selection: AskSelection, context: Mapping[str, Any],
     candidates: Mapping[str, list[dict]] | None = None, *, query: str = "", today: date | None = None,
-    previous_answer: Mapping[str, Any] | None = None,
+    previous_answer: Mapping[str, Any] | None = None, withheld_units: list[dict] | None = None,
+) -> AskSynthesis:
+    # #662: this pass's check decisions, to count withheld statements by kind (and, through `withheld_units`, keep them
+    # for review). An eval that already collects decisions (UNIT_DECISIONS) keeps its list; this reads what it adds.
+    outer_log = UNIT_DECISIONS.get()
+    log = outer_log if outer_log is not None else []
+    start = len(log)
+    token = UNIT_DECISIONS.set(log) if outer_log is None else None
+    try:
+        answer = _checked_synthesis(answer, context, candidates, query=query, today=today, previous_answer=previous_answer)
+    finally:
+        if token is not None:
+            UNIT_DECISIONS.reset(token)
+    units = [d for d in log[start:] if d.get("decision") == "withheld"]
+    answer.withheld_kinds = {}
+    for unit in units:
+        kind = withheld_kind(unit.get("reason"))
+        answer.withheld_kinds[kind] = answer.withheld_kinds.get(kind, 0) + 1
+    if withheld_units is not None:
+        withheld_units.extend(units)
+    return answer
+
+
+def _checked_synthesis(
+    answer: AskSynthesis, context: Mapping[str, Any], candidates: Mapping[str, list[dict]] | None, *, query: str,
+    today: date | None, previous_answer: Mapping[str, Any] | None,
 ) -> AskSynthesis:
     checks = _AnswerChecks(context, candidates, query=query, today=today, previous_answer=previous_answer)
     shown_claims = []
@@ -1046,6 +1136,7 @@ def _finalize_ask_result(
     first_token_ms: int | None = None,
     today: date | None = None,
     first_validated_ms: int | None = None,
+    connection: Any = None,
 ) -> dict[str, Any]:
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
@@ -1053,8 +1144,11 @@ def _finalize_ask_result(
     prepared, withheld_before = prepare_answer_raw(answer_raw)
     answer = AskSynthesis.model_validate(prepared)
     answer.withheld_claims = withheld_before
+    withheld_units: list[dict] = []
     answer = _validate_synthesis(answer, selection, context, candidates, query=query, today=today,
-                                 previous_answer=previous_answer)
+                                 previous_answer=previous_answer, withheld_units=withheld_units)
+    if connection is not None:
+        record_withheld(connection, query, withheld_units)
     answer = _transform_keeping_drafts(query, _normalize_meeting_prep(answer))
     _finish_display_fields(answer, previous_answer)
     validation_ms = round((time.perf_counter() - validation_started) * 1000)
@@ -1347,7 +1441,7 @@ def stream_ask_events(
         candidates, selection_raw, answer_raw, pipeline="one_call_stream",
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
         query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, first_token_ms=first_token_ms,
-        today=today, first_validated_ms=first_validated_ms,
+        today=today, first_validated_ms=first_validated_ms, connection=connection,
     )
     yield "final", result
 
@@ -1401,5 +1495,5 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
     return _finalize_ask_result(
         candidates, selection_raw, answer_raw, pipeline=pipeline,
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
-        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, today=today,
+        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, today=today, connection=connection,
     )

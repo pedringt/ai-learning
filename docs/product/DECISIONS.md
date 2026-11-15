@@ -454,3 +454,62 @@ Under DEC-013 every miss counted the same. A deterministic defect that reversed 
 **Revisit when**
 Risk acceptances become routine, or a check's class proves wrong in practice.
 
+
+### DEC-023 — Ask retrieval: no recency windows, link expansion, one ranking rule
+
+**Status:** Decided (Paige, Nov 14). Not implemented yet.
+**Date:** 2026-11-14
+**Related:** #653 (benchmark results), #664, #640, DEC-014, DEC-015, DEC-018, R-005, R-007, R-012
+
+**Decision**
+- **No recency windows.** Ask scores every record in the project. Today it scores only the newest 24 Evidence, 18 History and 30 answered Questions.
+- **Context budget: today's per-type limits doubled (Paige, Nov 14, after the paid context-size run).** Current State goes from 12 to 24, Reviews 6 to 12, open Questions 12 to 24, answered Questions 6 to 12, History 10 to 20 and Evidence 12 to 24. On the fixture this gave selection recall 0.96 (0.73 at today's limits, 0.92 with the whole project), at about 14.5k input tokens and $0.0016 per Ask on Haiku 5.5, with first token about 0.9 s (run 43676969245, `docs/evals/ask-context-size-results.md`).
+- **Link expansion by default.** After selection, Ask adds the records the selected ones link to, capped:
+  - a Review's Evidence and State items;
+  - an Evidence note's Review;
+  - a History entry's State item;
+  - an answered Question's answer Evidence;
+  - superseded or superseding Evidence.
+- **Answered Questions are ranked like every other record type**, within their limit of 6. The extra "must share a query word" rule is dropped.
+
+**Pending**
+- **Paraphrase misses:** research the options and report back.
+- **Copy Context by task text:** measure it in the benchmark first.
+- **"Not found" vs "not retrieved" wording:** scope the paid absence-wording run.
+
+**Why**
+On the #653 fixture, the windows caused most misses: A0 recall was 0.48, and 0.80 without windows at the same context size, because the per-type limits, not the windows, bound the context. Link expansion raised the linked-context family from 0.8 to 1.0, for about 1k characters per Ask. The fixture is synthetic; these are benchmark numbers, not production behavior.
+
+**Implementation constraints**
+- `ask_cache_key` must then cover every record that can be retrieved, so editing an old record invalidates cached answers.
+- The Ask-quality eval runs before promotion, because this changes model context.
+
+**Revisit when**
+Projects grow large enough that reading every record on each Ask is slow or costly, or a production miss shows a record that should have been retrieved.
+
+### DEC-024 — Ask says what kind of statement it left out, and keeps withheld statements for review (#662)
+
+**Status:** Decided (Paige, Nov 14)
+**Date:** 2026-11-14
+**Related:** #662, #567, DEC-021, `ask_display.withheld_line`, `ask_withheld_log.py`, `docs/product/DATA_PRIVACY.md`
+
+**Decision**
+- **The withheld line says how many statements were left out and what kind**, from the check's reason, without showing them. For example: "2 statements were left out: 1 said something was settled that State's records don't establish, and 1 cited a record State doesn't have." The kinds are:
+  - a record State doesn't have;
+  - a number or date not in State's records;
+  - something stated as settled, or as allowed to go ahead, that the records don't establish;
+  - a draft's assumption stated as fact;
+  - otherwise, "couldn't be checked".
+- **When every claim is withheld,** the existing line stays.
+- **Withheld statements are kept for review:** the statement and question (each cut to 300 characters), with the reason, kind, record, basis, project, build and time. They are kept in their own table with no page, for 90 days, on every project in production and staging. This is the privacy exception in `DATA_PRIVACY.md`.
+
+**Why**
+A generic "part of this answer couldn't be checked" left both the reader and the team unable to tell what was removed or whether removing it was right.
+
+**Rejected / deferred**
+- Showing the withheld sentence itself: it is exactly the unverified content the check exists to keep out.
+- A review page: State has no login, so anyone could read it.
+
+**Revisit when**
+State gets access control (a review page becomes possible), or the kinds prove too coarse to act on.
+

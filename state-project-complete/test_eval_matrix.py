@@ -100,8 +100,8 @@ def test_plan_accepts_sonnet_and_opus_5_5():
 
 
 def test_shards_cover_every_repeat_and_caps_never_exceed_max_calls():
-    max_calls = 40_000
     suites = [s for s in matrix.SUITES if matrix.calls_per_repeat(s)]  # a saved set not yet filled has nothing to plan
+    max_calls = 2 * 120 * sum(matrix.calls_per_repeat(s) for s in suites)   # room for every suite, headroom included
     p = matrix.plan(suites, "claude-haiku-5-5", 120, max_calls)
     assert p["refusal"] is None
     for suite in suites:
@@ -645,6 +645,13 @@ def test_heldoutd_uses_two_scenarios_no_earlier_round_has_seen():
     data = json.loads(matrix.HELDOUT_V12_ANSWERS.read_text())["answers"]
     assert sorted(a["blind_id"] for a in data) == [f"z{i:02d}" for i in range(1, 7)]
     assert matrix.calls_per_repeat("assessd") == 6
+
+
+def test_survey_suite_covers_every_ask_and_adversarial_scenario_once():
+    ids = [s.id for s in matrix._scenarios("survey")]
+    assert len(ids) == len(set(ids)) == 36
+    assert matrix.plan(["survey"], "claude-haiku-5-5", 1, 40)["total_calls"] == 36
+    assert matrix.calls_per_repeat("surveygrade") == len(json.loads(matrix.SURVEY_665_ANSWERS.read_text())["answers"])
 
 
 def test_grader_rubric_carries_the_nov_14_v12_rule():

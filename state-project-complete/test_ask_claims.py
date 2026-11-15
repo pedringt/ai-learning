@@ -224,7 +224,8 @@ def test_run_ask_shows_checked_claims_with_a_fixed_headline_and_a_labelled_summa
             ("Current State", "The pilot stays read-only."), ("Needs review", "Recording the budget is awaiting review.")]
         assert answer["withheld_claims"] == 1
         assert answer["summary"].split("\n") == [
-            "[Current State] The pilot stays read-only.", "[Needs review] Recording the budget is awaiting review.", WITHHELD_LINE]
+            "[Current State] The pilot stays read-only.", "[Needs review] Recording the budget is awaiting review.",
+            "1 statement was left out: it used a number or date that isn't in State's records."]
         assert "95,000" not in json.dumps(answer)
     finally:
         conn.close()

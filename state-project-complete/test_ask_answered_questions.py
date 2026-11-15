@@ -34,10 +34,15 @@ def test_a_resolved_question_reaches_ask_with_its_answer_and_provenance():
         _close(connection)
 
 
-def test_an_unrelated_request_does_not_pull_in_answered_questions():
+def test_answered_questions_are_ranked_like_other_records_and_keep_their_authority():
+    # DEC-023 (Paige, Nov 14): #640's rule that an answered Question must share a word with the request is dropped; it
+    # is ranked within its own limit like every other type. It still reaches the model as an answered Question.
     connection = _seeded()
     try:
-        assert _trim_candidates_for_query("What is the launch date?", _compact_candidates(connection))["answered_questions"] == []
+        trimmed = _trim_candidates_for_query("What is the launch date?", _compact_candidates(connection))
+        [answered] = trimmed["answered_questions"]
+        assert answered["authority"] == "answered_question"
+        assert answered["id"] not in {s["id"] for s in trimmed["state"]}
     finally:
         _close(connection)
 
