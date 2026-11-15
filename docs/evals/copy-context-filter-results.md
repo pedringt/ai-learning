@@ -32,4 +32,4 @@
 - **The loss is silent.** A Copy Context the person pastes into another tool would carry no sign that a governing fact was left out.
 - **The fixture is synthetic** and the case count is small.
 
-Whether to filter, and if so how (for example, filter only once a copy passes a size threshold, or always keep Current State), is Paige's decision.
+**Decided (Paige, Nov 15):** Copy Context stays complete (DEC-023). Fallback if copies grow large: keep all Current State and filter only Reviews and Questions (100% of needed records kept, 65% of the size, on the fixture).

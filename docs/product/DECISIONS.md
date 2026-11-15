@@ -471,10 +471,10 @@ Risk acceptances become routine, or a check's class proves wrong in practice.
   - an answered Question's answer Evidence;
   - superseded or superseding Evidence.
 - **Answered Questions are ranked like every other record type**, within their limit of 6. The extra "must share a query word" rule is dropped.
+- **Copy Context stays complete (Paige, Nov 15).** It copies every Current State item, and in Working mode every pending Review and open Question. The task text is a label only. Measured first (`docs/evals/copy-context-filter-results.md`): every task-text filter kept 88% of needed records and silently dropped an accepted fact in 2 of 12 tasks, while the full copy is small (about 1,550 tokens for Northstar). If copies grow large, the fallback is to keep all of Current State and filter only Reviews and Questions; on the fixture that kept 100% of needed records at 65% of the size.
 
 **Pending**
 - **Paraphrase misses:** research the options and report back.
-- **Copy Context by task text:** measure it in the benchmark first.
 - **"Not found" vs "not retrieved" wording:** scope the paid absence-wording run.
 
 **Why**
