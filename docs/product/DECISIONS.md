@@ -454,3 +454,35 @@ Under DEC-013 every miss counted the same. A deterministic defect that reversed 
 **Revisit when**
 Risk acceptances become routine, or a check's class proves wrong in practice.
 
+
+### DEC-023 — Ask retrieval: no recency windows, link expansion, one ranking rule
+
+**Status:** Decided (Paige, Nov 14). Not implemented yet.
+**Date:** 2026-11-14
+**Related:** #653 (benchmark results), #664, #640, DEC-014, DEC-015, DEC-018, R-005, R-007, R-012
+
+**Decision**
+- **No recency windows.** Ask scores every record in the project. Today it scores only the newest 24 Evidence, 18 History and 30 answered Questions. The per-type limits that cap what the model receives stay as they are until the budget is decided (below).
+- **Link expansion by default.** After selection, Ask adds the records the selected ones link to, capped:
+  - a Review's Evidence and State items;
+  - an Evidence note's Review;
+  - a History entry's State item;
+  - an answered Question's answer Evidence;
+  - superseded or superseding Evidence.
+- **Answered Questions are ranked like every other record type**, within their limit of 6. The extra "must share a query word" rule is dropped.
+
+**Pending**
+- **Context budget:** measure real cost and latency at each size first, in a paid run with a dry run and Paige's OK.
+- **Paraphrase misses:** research the options and report back.
+- **Copy Context by task text:** measure it in the benchmark first.
+- **"Not found" vs "not retrieved" wording:** scope the paid absence-wording run.
+
+**Why**
+On the #653 fixture, the windows caused most misses: A0 recall was 0.48, and 0.80 without windows at the same context size, because the per-type limits, not the windows, bound the context. Link expansion raised the linked-context family from 0.8 to 1.0, for about 1k characters per Ask. The fixture is synthetic; these are benchmark numbers, not production behavior.
+
+**Implementation constraints**
+- `ask_cache_key` must then cover every record that can be retrieved, so editing an old record invalidates cached answers.
+- The Ask-quality eval runs before promotion, because this changes model context.
+
+**Revisit when**
+Projects grow large enough that reading every record on each Ask is slow or costly, or a production miss shows a record that should have been retrieved.
