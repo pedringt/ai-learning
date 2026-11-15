@@ -481,31 +481,39 @@
       :{kind:'good',label:'Healthy',detail:'Delivery is healthy and no quality issue needs attention.'};
     return {kind:'unknown',label:'Unknown',detail:'There is not enough current evidence to confirm release health.'};
   }
+  // Nov 15: a regression or stability claim needs the same comparability check the Overview cards use, so one pair of
+  // runs is never "Not comparable" on Overview and "regressed" here. A comparable pair recorded before the latest State
+  // behavior change is still reported, labelled as historical.
   function regressionSignal(data){
-    if(data?.project?.quality!=='state'||!data?.quality)return {kind:'unknown',title:'No comparable regression signal yet',detail:'A previous controlled eval run is needed before Project Health can identify a quality regression.'};
+    const none={kind:'unknown',title:'No comparable regression signal yet',detail:'A previous controlled eval run is needed before Project Health can identify a quality regression.'};
+    if(data?.project?.quality!=='state'||!data?.quality)return none;
     const rows=Array.isArray(data.quality.recent)?data.quality.recent:[];
-    const candidates=[];
+    const candidates=[],notComparable=[];
     for(const suite of ['review_interpretation','ask_quality']){
       const suiteRows=rows.filter(item=>item?.suite===suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
       if(suiteRows.length<2)continue;
       const latest=evalScore(suiteRows[0]),previous=evalScore(suiteRows[1]);
       if(latest==null||previous==null)continue;
+      const comparison=runComparability(suiteRows[0],suiteRows[1],data.quality.contractUpdatedAt);
+      if(!comparison.comparable){notComparable.push({suite,text:comparison.text});continue;}
       const delta=Math.round((latest-previous)*1000)/10;
-      candidates.push({suite,delta,latest,when:suiteRows[0].created_at});
+      candidates.push({suite,delta,latest,when:suiteRows[0].created_at,latestBuild:String(suiteRows[0]?.build||'').trim(),previousBuild:String(suiteRows[1]?.build||'').trim()});
     }
-    if(!candidates.length)return {kind:'unknown',title:'No comparable regression signal yet',detail:'A previous controlled eval run is needed before Project Health can identify a quality regression.'};
+    const labelFor=suite=>suite==='review_interpretation'?'Update understanding':'Answer quality';
+    if(!candidates.length){
+      if(!notComparable.length)return none;
+      return {kind:'unknown',title:'No comparable regression signal',detail:notComparable.map(item=>labelFor(item.suite)+': the latest two runs are not comparable ('+item.text+').').join(' ')};
+    }
     candidates.sort((a,b)=>a.delta-b.delta);
     const worst=candidates[0];
-    const label=worst.suite==='review_interpretation'?'Update understanding':'Answer quality';
+    const historical=stateEvalResultsStale(data.quality)?' Historical: these runs predate the latest State behavior change.':'';
     if(worst.delta<0){
-      const suiteRows=rows.filter(item=>item?.suite===worst.suite).slice().sort((a,b)=>(dateMs(b?.created_at)||0)-(dateMs(a?.created_at)||0));
-      const latestBuild=String(suiteRows[0]?.build||'').trim(),previousBuild=String(suiteRows[1]?.build||'').trim();
-      const buildContext=latestBuild&&previousBuild&&latestBuild!==previousBuild
-        ?' Comparable runs used builds '+shortSha(previousBuild)+' → '+shortSha(latestBuild)+'.'
+      const buildContext=worst.latestBuild&&worst.previousBuild&&worst.latestBuild!==worst.previousBuild
+        ?' Comparable runs used builds '+shortSha(worst.previousBuild)+' → '+shortSha(worst.latestBuild)+'.'
         :'';
-      return {kind:'warn',title:label+' regressed '+Math.abs(worst.delta)+' points',detail:'Review the changed scenario evidence and the release or product change that preceded this run.'+buildContext,when:worst.when};
+      return {kind:'warn',title:labelFor(worst.suite)+' regressed '+Math.abs(worst.delta)+' points',detail:'Review the changed scenario evidence and the release or product change that preceded this run.'+buildContext+historical,when:worst.when};
     }
-    return {kind:'good',title:'No recent eval regression detected',detail:'The latest comparable controlled eval runs are stable or improved.',when:worst.when};
+    return {kind:'good',title:'No recent eval regression detected',detail:'The latest comparable controlled eval runs are stable or improved.'+historical,when:worst.when};
   }
   function recurringFailureSignal(data){
     if(data?.project?.quality!=='state'||!data?.quality)return {kind:'unknown',label:'Recurring failures',status:'Not measured',detail:'Recurring scenario failures are only available for State controlled evals.'};
@@ -539,18 +547,13 @@
       const sample=Number(speed?.sample_size||0);
       const p95=Number(speed?.p95_ms);
       if(ai?.available&&sample>0&&Number.isFinite(p95)){
-        const previousP95=Number(data?.previousPlatform?.aiTelemetry?.response_speed?.p95_ms);
-        const hasPrevious=Number.isFinite(previousP95)&&previousP95>0;
-        const delta=hasPrevious?p95-previousP95:null;
-        const changed=hasPrevious&&Math.abs(delta)>=1;
-        const comparison=changed
-          ?' · last saved '+durationLabel(previousP95)+' ('+(delta>0?'+':'')+durationLabel(Math.abs(delta))+(delta<0?' faster':' slower')+')'
-          :'';
+        // Nov 15: no "last saved" delta. The saved value was this browser's previous page load, a different window and
+        // call mix, so the difference read as a trend it could not support.
         const target=Number(data?.project?.responseTargetP95Ms);
         const hasTarget=Number.isFinite(target)&&target>0;
         const overTarget=hasTarget&&p95>target;
         const targetText=hasTarget?(overTarget?' · above the '+durationLabel(target)+' target':' · within the '+durationLabel(target)+' target'):'';
-        signals.push({kind:overTarget?'warn':'available',label:'AI response speed',status:overTarget?'Watch':changed?'Changed':'Measured',detail:'p95 '+durationLabel(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+targetText+comparison+'.'});
+        signals.push({kind:overTarget?'warn':'available',label:'AI response speed',status:overTarget?'Watch':'Measured',detail:'p95 '+durationLabel(p95)+' across '+sample+' '+(sample===1?'recorded call':'recorded calls')+targetText+'.'});
       }
     }
     if(data?.project?.quality==='state'){
@@ -650,7 +653,7 @@
     return [
       {kind:qualityKind,label:'Product quality',status:qualityKind==='bad'?'Needs attention':qualityKind==='warn'?'Watch':qualityKind==='good'?'Healthy':'Unknown',detail:stale?'The recorded State eval result is stale and should be rerun.':(quality?.title||'Quality evidence is not available yet.')},
       userImpact,
-      {kind:gaps.length?'warn':'good',label:'Observability',status:gaps.length?'Watch':'Healthy',detail:gaps.length?gaps.length+' monitoring gap'+(gaps.length===1?'':'s')+' limit what Project Health can confirm.':'No known monitoring gap is limiting this health view.'},
+      {kind:gaps.length?'warn':'good',label:'Observability',status:gaps.length?'Watch':'Healthy',detail:gaps.length?gaps.length+' monitoring gap'+(gaps.length===1?' limits':'s limit')+' what Project Health can confirm.':'No known monitoring gap is limiting this health view.'},
       {kind:delivery?.kind||'unknown',label:'Delivery',status:delivery?.kind==='bad'?'Needs attention':delivery?.kind==='warn'?'Watch':delivery?.kind==='good'?'Healthy':'Unknown',detail:delivery?.title||'Delivery health is unavailable.'},
       ...(consistency.length?[{kind:'bad',label:'Dashboard consistency',status:'Needs attention',detail:consistency[0]}]:[])
     ];
@@ -1202,7 +1205,7 @@
     return sorted;
   }
   function activityDayLabel(when){
-    const date=new Date(when),now=new Date(),yesterday=new Date(now);yesterday.setDate(now.getDate()-1);
+    const date=new Date(dateMs(when)),now=new Date(),yesterday=new Date(now);yesterday.setDate(now.getDate()-1);
     const key=d=>[d.getFullYear(),d.getMonth(),d.getDate()].join('-');
     if(key(date)===key(now))return'Today';
     if(key(date)===key(yesterday))return'Yesterday';
@@ -1210,8 +1213,8 @@
   }
   function activityTimeRange(item){
     const opts={hour:'numeric',minute:'2-digit'};
-    if(!item?.startWhen||!item?.endWhen||dateMs(item.startWhen)===dateMs(item.endWhen))return new Date(item?.when).toLocaleTimeString('en-US',opts);
-    return new Date(item.startWhen).toLocaleTimeString('en-US',opts)+'–'+new Date(item.endWhen).toLocaleTimeString('en-US',opts);
+    if(!item?.startWhen||!item?.endWhen||dateMs(item.startWhen)===dateMs(item.endWhen))return new Date(dateMs(item?.when)).toLocaleTimeString('en-US',opts);
+    return new Date(dateMs(item.startWhen)).toLocaleTimeString('en-US',opts)+'–'+new Date(dateMs(item.endWhen)).toLocaleTimeString('en-US',opts);
   }
   function evalBehaviorBranch(project,environment='production'){
     return environment==='staging'?(project.stagingBranch||project.branch):project.branch;
@@ -1242,7 +1245,6 @@
       qualityCheckedAt:s.qualityCheckedAt||null,
       externalQuality:s.externalQuality||null,
       platform:s.platform||null,
-      previousPlatform:s.platform||null,
       activity:s.activity||null,
       deliveryLoadedAt:s.deliveryLoadedAt||null,
       activityLoadedAt:s.activityLoadedAt||null,
@@ -1351,7 +1353,7 @@
     if(typeof value==='number')return value<1e12?value*1000:value;
     const raw=String(value);
     if(/^\d+$/.test(raw)){const n=Number(raw);return n<1e12?n*1000:n;}
-    const normalized=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)?raw.replace(' ','T')+'Z':raw;
+    const normalized=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?$/.test(raw)?raw.replace(' ','T').replace(/(\.\d{3})\d+$/,'$1')+'Z':raw;
     return new Date(normalized).getTime();
   }
   function fmtDate(value){if(!value)return'Unknown';const d=new Date(Number.isNaN(dateMs(value))?value:dateMs(value));return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
@@ -1402,6 +1404,14 @@
     if(stateEvalBehaviorStale(q))return'The State behavior these checks measure changed after the latest recorded run.';
     if(stateEvalContractStale(q))return'The eval contract changed after the latest recorded run.';
     return'';
+  }
+  // Nov 15: failures from a stale State run stay listed for diagnosis, under one historical label everywhere they appear.
+  function staleFailureContext(data){
+    const q=data?.quality;
+    if(data?.project?.quality!=='state'||!stateEvalResultsStale(q))return null;
+    const latest=[q?.review,q?.ask].map(run=>run?.created_at).filter(value=>Number.isFinite(dateMs(value))).sort((a,b)=>dateMs(a)-dateMs(b)).pop();
+    return {heading:'Failed in the previous run',pill:'Failed in previous run',
+      note:'Historical: recorded '+(latest?fmtDate(latest):'at an unknown time')+', before the latest State behavior change. Not treated as a current product failure.'};
   }
   // Where the quality numbers on screen came from (#597), shared by Overview and AI Evals so their labels agree.
   // resultAt is when the results were recorded (the eval run, or the CI run); confirmedAt is when this page last fetched
@@ -1669,12 +1679,16 @@
     if(neon?.configured&&neon.available) return 'Database connected';
     return 'No extra infra connected';
   }
+  // Nov 15: Vercel's 400 "Web Analytics is not enabled for this project" is a project setting, not a failed query. The
+  // API flags it; the error text is read too, for responses and saved snapshots from before the flag.
+  function analyticsNotEnabled(a){return !!(a?.not_enabled||/not enabled/i.test(String(a?.error||'')));}
   function analyticsConnectionValue(platform,pending=false){
     const a=platform?.analytics;
     if(pending)return'Checking…';
     if(a?.available)return'Connected';
     if(a?.configured&&[401,403].includes(Number(a.status)))return'Access denied';
     if(a?.configured&&Number(a.status)===404)return'Dataset unavailable';
+    if(a?.configured&&analyticsNotEnabled(a))return'Not enabled';
     if(a?.configured)return'Temporarily unavailable';
     return'Not connected';
   }
@@ -1683,6 +1697,7 @@
     if(a.configured===false)return'Not connected yet. This limits trend and adoption context.';
     if([401,403].includes(Number(a.status)))return'Vercel rejected the dashboard token for this project. Update the token scope or permissions.';
     if(Number(a.status)===404)return'Vercel could not return this project’s Web Analytics dataset. Verify project access and analytics availability.';
+    if(analyticsNotEnabled(a))return'Web Analytics not enabled. Vercel Web Analytics is not turned on for this project, so no page views are recorded.';
     return'Vercel Web Analytics is connected, but the latest query failed. Try again before treating this as missing usage.';
   }
   // Cowork, Oct 11: show the signal, not the counts. The API now returns only receiving/recent booleans; an older
@@ -1853,17 +1868,20 @@
     return (change.points>0?'Up ':'Down ')+Math.abs(change.points)+' points vs previous run';
   }
   // The Overview's State cards: score, failures, change and trend all read the card's own field.
+  // Nov 15: once the results are stale the cards still show the old scores, but as the previous run, in neutral colors.
   function stateMetricCards(q,unknownSignal='Not measured'){
-    return STATE_QUALITY_METRICS.map(m=>{
-      const run=q?.[m.run],score=metricScore(run,m.field),severe=failureCheckCount(q,m.check);
-      const kind=score==null?'unknown':severe?'bad':score<1?'warn':'good';
-      const misses=scenarioCounts(run,score)?.failed;
-      // An older run can record failures in high-severity scenarios without per-scenario details; never call those lower-severity.
-      const unattributed=!severe&&Number(run?.high_severity_failures||0)>0&&!(Array.isArray(run?.failure_details)&&run.failure_details.length);
-      if(unattributed&&score!=null&&score<1)return {label:m.label,score,kind:'bad',signal:m.run==='review'?highSeverityFailureText(run.high_severity_failures):'Failures in high-severity scenarios in this suite',sub:scenarioPassLabel(run,score),display:scenarioCountDisplay(run,score),percent:percent(score),delta:mockDelta(q?.recent,m.suite,m.field,q?.contractUpdatedAt),trend:mockTrendValues(q,m.suite,m.field)};
-      const signal=score==null?unknownSignal:severe?highSeverityFailureText(severe):score<1?(misses?misses+' lower-impact miss'+(misses===1?'':'es'):'Lower-impact miss'):'0 failures';
-      return {label:m.label,score,kind,signal,sub:score==null?m.sub:scenarioPassLabel(run,score),display:score==null?null:scenarioCountDisplay(run,score),percent:score==null?null:percent(score),delta:mockDelta(q?.recent,m.suite,m.field,q?.contractUpdatedAt),trend:mockTrendValues(q,m.suite,m.field)};
-    });
+    const stale=stateEvalResultsStale(q);
+    return STATE_QUALITY_METRICS.map(m=>stateMetricCard(q,m,unknownSignal)).map(card=>stale&&card.score!=null?{...card,kind:'unknown',signal:'Previous run: '+card.signal}:card);
+  }
+  function stateMetricCard(q,m,unknownSignal){
+    const run=q?.[m.run],score=metricScore(run,m.field),severe=failureCheckCount(q,m.check);
+    const kind=score==null?'unknown':severe?'bad':score<1?'warn':'good';
+    const misses=scenarioCounts(run,score)?.failed;
+    // An older run can record failures in high-severity scenarios without per-scenario details; never call those lower-severity.
+    const unattributed=!severe&&Number(run?.high_severity_failures||0)>0&&!(Array.isArray(run?.failure_details)&&run.failure_details.length);
+    if(unattributed&&score!=null&&score<1)return {label:m.label,score,kind:'bad',signal:m.run==='review'?highSeverityFailureText(run.high_severity_failures):'Failures in high-severity scenarios in this suite',sub:scenarioPassLabel(run,score),display:scenarioCountDisplay(run,score),percent:percent(score),delta:mockDelta(q?.recent,m.suite,m.field,q?.contractUpdatedAt),trend:mockTrendValues(q,m.suite,m.field)};
+    const signal=score==null?unknownSignal:severe?highSeverityFailureText(severe):score<1?(misses?misses+' lower-impact miss'+(misses===1?'':'es'):'Lower-impact miss'):'0 failures';
+    return {label:m.label,score,kind,signal,sub:score==null?m.sub:scenarioPassLabel(run,score),display:score==null?null:scenarioCountDisplay(run,score),percent:score==null?null:percent(score),delta:mockDelta(q?.recent,m.suite,m.field,q?.contractUpdatedAt),trend:mockTrendValues(q,m.suite,m.field)};
   }
   function stateEvalCard(title,value,description,trend,note){
     return '<div class="eval-card compact"><strong>'+esc(title)+'</strong><div class="score">'+esc(value)+'</div><div class="eval-card-meta">'+
@@ -2243,5 +2261,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,gateEligibility,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,gateEligibility,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,staleFailureContext,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,vercelFromStatus,deliveryHealth,normalizeQuality,percent,failureReason,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,healthySummary,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,loadingCardMarkup,cardMarkup,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,investigationResultHtml,evalRunComplete,externalQualityRunComplete,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,evalScenarioCountsNote,qualityProvenance,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,vercelFromStatus,deliveryHealth,normalizeQuality,percent,failureReason,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,healthySummary,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,loadingCardMarkup,cardMarkup,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,investigationResultHtml,evalRunComplete,externalQualityRunComplete,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,evalScenarioCountsNote,qualityProvenance,staleFailureContext,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -325,14 +325,14 @@
   // #611 (Paige, Nov 4): "Open investigation" opens the drawer with what already exists for the selected project.
   // Before any investigation has run, that is the rules-based assessment the Overview shows. No request, no model call.
   function assessmentDrawerHtml(data){
-    const p=data.project,current=overallAttention(data),failed=[];
+    const p=data.project,current=overallAttention(data),failed=[],staleFailures=staleFailureContext(data);
     const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
     if(liveFailure)failed.push(liveFailure.title);
     (p.quality==='state'?qualityFailureClassSummary(data.quality).details||[]:[]).slice(0,3)
       .forEach(item=>failed.push(item.title||item.scenario_id||'Quality scenario needs review'));
     return '<div class="investigation-result agent-result"><div class="agent-kicker">Assessment from current signals</div>'+
       '<strong>'+esc(current.title)+'</strong><p>'+esc(current.detail||'')+'</p>'+
-      '<h4>What failed</h4>'+(failed.length?'<ul>'+failed.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+
+      '<h4>'+esc(staleFailures&&failed.length&&!liveFailure?staleFailures.heading:'What failed')+'</h4>'+(failed.length?'<ul>'+failed.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>'+(staleFailures&&!liveFailure?'<p class="footnote">'+esc(staleFailures.note)+'</p>':''):'<p>No specific current failure is recorded.</p>')+
       '<h4>Recommended next look</h4><p>'+esc(operationalNextDecision(data))+'</p>'+
       '<p class="footnote">Built by rules from the signals on this page. No AI model was called.</p></div>';
   }
@@ -569,6 +569,7 @@
       const current=overallAttention(data);
       const failureDetails=p.quality==='state'?qualityFailureClassSummary(q).details||[]:[];
       const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
+      const staleFailures=liveFailure?null:staleFailureContext(data);
       const failedItems=[];
       if(liveFailure)failedItems.push(liveFailure.title);
       failureDetails.slice(0,2).forEach(item=>failedItems.push(item.title||item.scenario_id||'Quality scenario needs review'));
@@ -580,8 +581,8 @@
         '</p></div><button class="button small" type="button" data-open-investigation>Open investigation</button></div>'+
         '<div class="mock-investigation-grid">'+
           '<div class="mock-investigation-block"><strong>Current assessment</strong><p>'+esc(current.title)+'. '+esc(current.detail||'')+'</p></div>'+
-          '<div class="mock-investigation-block"><strong>What failed</strong>'+
-            (failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+
+          '<div class="mock-investigation-block"><strong>'+esc(staleFailures&&failedItems.length?staleFailures.heading:'What failed')+'</strong>'+
+            (failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>'+(staleFailures?'<p class="footnote">'+esc(staleFailures.note)+'</p>':''):'<p>No specific current failure is recorded.</p>')+
           '</div>'+
           '<div class="mock-investigation-block"><strong>Recommended next look</strong><p>'+esc(nextLook)+'</p></div>'+
         '</div>';
@@ -638,7 +639,9 @@
       // is the previous assessment, or that no release data is available.
       const releaseNotice=retainedNotice(data,['Delivery'],{hasData:!!d,loadedAt:data.deliveryLoadedAt});
       const latestRelease=d?.message?commitTitle(d.message):releaseNotice?'Release data unavailable':'No recent release data';
-      const currentReleaseStatus=dKind==='good'?'Stable':dKind==='bad'?'Needs attention':dKind==='warn'?'Watch':'Unknown';
+      // Nov 15: this label reads delivery signals only (deploy status, failed checks, deploy failures), so it names a
+      // successful deployment rather than claiming product stability.
+      const currentReleaseStatus=dKind==='good'?'Deployment succeeded':dKind==='bad'?'Needs attention':dKind==='warn'?'Watch':'Unknown';
       const releaseStatus=releaseNotice?.retained?'Previous assessment: '+currentReleaseStatus:releaseNotice?'Unknown':currentReleaseStatus;
       const releaseClass=dKind==='good'?'mock-release-stable':'mock-release-stable';
 
@@ -650,12 +653,13 @@
 
       const failedItems=[];
       const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
+      const staleFailures=liveFailure?null:staleFailureContext(data);
       if(liveFailure)failedItems.push(liveFailure.title);
       (qDetails.details||[]).slice(0,3).forEach(item=>failedItems.push(item.title||item.scenario_id||'Quality scenario needs review'));
       const nextLook=operationalNextDecision(data);
 
       const testRows=(qDetails.details||[]).slice(0,2).map(item=>
-        '<div class="mock-test-row"><strong>'+esc(item.story?.heading||item.title||item.scenario_id||'Quality scenario')+'</strong><span class="status-pill bad">Failed</span><span>'+esc(item.story?'Scenario: '+item.story.title:(item.expected||'Review scenario'))+'</span></div>'
+        '<div class="mock-test-row"><strong>'+esc(item.story?.heading||item.title||item.scenario_id||'Quality scenario')+'</strong>'+(staleFailures?'<span class="status-pill unknown">'+esc(staleFailures.pill)+'</span>':'<span class="status-pill bad">Failed</span>')+'<span>'+esc(item.story?'Scenario: '+item.story.title:(item.expected||'Review scenario'))+'</span></div>'
       ).join('');
 
       // While the only open item is "Still checking", show a neutral loading state instead of an orange warning.
@@ -675,6 +679,8 @@
       // #597: one provenance label for the quality numbers on Overview and AI Evals. Previous results stay visible during a
       // refresh or after a failed one, marked as previous with the time they were recorded.
       const provenance=qualityProvenance(data);
+      // Stale State evals keep their scores on Overview, shown like previous results (Nov 15).
+      const previousLook=provenance.previous||(p.quality==='state'&&stateEvalResultsStale(q));
       const provenanceLine=['refreshing','stale','unavailable','loading'].includes(provenance.status)
         ?'<p class="quality-provenance '+esc(provenance.status)+'" role="status">'+esc(provenance.detail)+'</p>':'';
       mockDashboard.innerHTML=
@@ -683,7 +689,7 @@
           (checking?'':incompleteOnly?'<button class="button small" type="button" data-retry-health>Retry check</button>':actionable.length?'<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>':'')+
         '</section>'+
         provenanceLine+
-        '<div class="mock-kpi-grid'+(provenance.previous?' is-previous':'')+'">'+kpis+'</div>'+
+        '<div class="mock-kpi-grid'+(previousLook?' is-previous':'')+'">'+kpis+'</div>'+
         '<section class="mock-dashboard-section mock-release-card">'+
           '<div class="mock-card-title"><span class="mock-card-title-icon">◇</span><h3>Latest release</h3></div>'+
           '<div class="mock-release-version"><strong>'+esc(latestRelease)+'</strong><span class="'+releaseClass+'">'+esc(releaseStatus)+'</span></div>'+
@@ -704,18 +710,18 @@
             :'<div class="empty compact-empty">'+esc(pending.has('Analytics')?'Checking site analytics…':a?.configured===false?'Site analytics are not connected for this environment.':a?.configured?analyticsGapDetail(a):'Site analytics could not be checked. Refresh to try again.')+'</div>')+
         '</section>'+
         '<section class="mock-dashboard-section mock-quality-detail">'+
-          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3><span class="mock-refreshing-evals'+(provenance.previous?' previous':'')+'">'+esc(provenance.previous?provenance.label+' · '+(provenance.resultAt?'recorded '+fmtDate(provenance.resultAt):'recording time unknown'):provenance.label)+'</span></div><button class="button small" type="button" data-tab-target="ai-quality">'+(p.id==='state'?'View all evaluations':'View all checks')+' →</button></div>'+
-          '<div class="mock-quality-detail-grid'+(provenance.previous?' is-previous':'')+'">'+qualityCards+'</div>'+
+          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3><span class="mock-refreshing-evals'+(previousLook?' previous':'')+'">'+esc(previousLook?(provenance.previous?provenance.label:'Previous results · rerun needed')+' · '+(provenance.resultAt?'recorded '+fmtDate(provenance.resultAt):'recording time unknown'):provenance.label)+'</span></div><button class="button small" type="button" data-tab-target="ai-quality">'+(p.id==='state'?'View all evaluations':'View all checks')+' →</button></div>'+
+          '<div class="mock-quality-detail-grid'+(previousLook?' is-previous':'')+'">'+qualityCards+'</div>'+
           (coverage?'<p class="mock-eval-coverage '+esc(coverage.kind)+'">'+esc(coverage.text)+'</p>':'')+
         '</section>'+
         '<section class="mock-dashboard-section mock-investigation-card">'+
           '<div class="mock-investigation-head"><div><h3>Assessment from current signals</h3><p class="mock-investigation-source">Built by rules from the signals on this page. No AI model was called.</p></div><button class="button small" type="button" data-open-investigation>Open investigation →</button></div>'+
           '<div class="mock-investigation-columns">'+
             '<div class="mock-investigation-column"><strong>Current assessment</strong><p>'+esc(overall.title)+'. '+esc(overall.detail||'')+'</p></div>'+
-            '<div class="mock-investigation-column"><strong>What failed</strong>'+(failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+'</div>'+
+            '<div class="mock-investigation-column"><strong>'+esc(staleFailures&&failedItems.length?staleFailures.heading:'What failed')+'</strong>'+(failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>'+(staleFailures?'<p class="footnote">'+esc(staleFailures.note)+'</p>':''):'<p>No specific current failure is recorded.</p>')+'</div>'+
             '<div class="mock-investigation-column"><strong>Recommended next look</strong><p>'+esc(nextLook)+'</p></div>'+
           '</div>'+
-          (testRows?'<div class="mock-related-tests"><strong style="font-size:11px">Related test scenarios</strong>'+testRows+'</div>':'')+
+          (testRows?'<div class="mock-related-tests"><strong style="font-size:11px">'+(staleFailures?'Related test scenarios · previous run':'Related test scenarios')+'</strong>'+testRows+'</div>':'')+
         '</section>';
     }
 

@@ -529,7 +529,7 @@ function cachedSnapshot(){
         const overview=()=>elements.get('mockDashboardOverview').innerHTML;
         assert.ok(await waitFor(()=>/Release data unavailable/.test(overview())),overview().slice(0,400));
         assert.match(overview(),/Couldn’t refresh · no previously loaded data/);
-        assert.doesNotMatch(overview(),/Previous assessment|>Stable</);
+        assert.doesNotMatch(overview(),/Previous assessment|>Deployment succeeded</);
         assert.match(elements.get('historyPanel').innerHTML,/Deployment activity: Couldn’t refresh · no previously loaded data/);
         assert.doesNotMatch(elements.get('changesPanel').innerHTML,/No meaningful changes/);
       }finally{cleanup();}

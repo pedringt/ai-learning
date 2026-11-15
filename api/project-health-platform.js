@@ -113,7 +113,10 @@ async function vercelAnalytics(project){
     analyticsWindow(project,token,recentSince,until)
   ]);
   if(!currentResult.ok){
-    return {configured:true,available:false,status:currentResult.status,error:currentResult.error||currentResult.payload?.error?.message||currentResult.payload?.message||'Web Analytics unavailable'};
+    const error=currentResult.error||currentResult.payload?.error?.message||currentResult.payload?.message||'Web Analytics unavailable';
+    // Nov 15: Vercel answers 400 "Web Analytics is not enabled for this project" for a project without it. That is a
+    // setting, not a failed query, so say so instead of suggesting a retry.
+    return {configured:true,available:false,status:currentResult.status,error,...(/not enabled/i.test(error)?{not_enabled:true}:{})};
   }
   return analyticsSignal(currentResult.payload,recentResult);
 }
