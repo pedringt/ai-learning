@@ -317,6 +317,14 @@ def _harden_prompt_for_relevance(prompt: str) -> str:
     return _RELEVANCE_GUARD + "\n" + hardened
 
 
+def _stream_snapshot(stream: Any) -> Any:
+    """The Anthropic stream's message so far, or None before its first event."""
+    try:
+        return stream.current_message_snapshot
+    except Exception:  # broad on purpose: the SDK raises when no message has started; telemetry must not fail a cancel
+        return None
+
+
 class LiveAskProvider:
     """Reuse the configured interpretation provider/client for Ask synthesis."""
 
@@ -332,7 +340,7 @@ class LiveAskProvider:
             max_retries=ASK_MAX_RETRIES,
         )
 
-    def _capture_call_metrics(self, started: float, usage: Any = None) -> None:
+    def _capture_call_metrics(self, started: float, usage: Any = None, *, cancelled: bool = False) -> None:
         """Capture metadata only. Never retain prompts, answers, or grounded context."""
         input_tokens = getattr(usage, "input_tokens", None)
         output_tokens = getattr(usage, "output_tokens", None)
@@ -347,6 +355,7 @@ class LiveAskProvider:
             "duration_ms": int(round((time.perf_counter() - started) * 1000)),
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
+            **({"cancelled": True} if cancelled else {}),
         })
         _ASK_CALL_METRICS.set(rows)
 
@@ -369,9 +378,16 @@ class LiveAskProvider:
                 **request_options(self.model_identifier, ASK_ONE_CALL_MAX_TOKENS, {"format": {"type": "json_schema", "schema": ONE_CALL_ASK_JSON_SCHEMA}}),
                 messages=[{"role": "user", "content": prompt}],
             ) as stream:
-                for text in stream.text_stream:
-                    if text:
-                        yield text
+                try:
+                    for text in stream.text_stream:
+                        if text:
+                            yield text
+                except GeneratorExit:
+                    # Paige, Nov 14 (#654 follow-up): a cancelled call still costs, so record what is known when it
+                    # stops: the input tokens from the message start and the output counted so far (the API reports
+                    # output fully only at the end, so this undercounts it).
+                    self._capture_call_metrics(started, getattr(_stream_snapshot(stream), "usage", None), cancelled=True)
+                    raise
                 final_message = stream.get_final_message() if hasattr(stream, "get_final_message") else None
                 self._capture_call_metrics(started, getattr(final_message, "usage", None))
             return
@@ -391,6 +407,9 @@ class LiveAskProvider:
                     text = getattr(chunk.choices[0].delta, "content", None) if getattr(chunk, "choices", None) else None
                     if text:
                         yield text
+            except GeneratorExit:
+                self._capture_call_metrics(started, usage, cancelled=True)     # usage arrives only at the end: None
+                raise
             finally:
                 close = getattr(response, "close", None)    # #654: a cancelled Ask closes the HTTP stream
                 if close is not None:

@@ -62,7 +62,7 @@ def _persist_model_call_metrics(connection: Any, provider: Any) -> None:
                 (
                     f"model_call_{uuid.uuid4().hex[:16]}",
                     project_id,
-                    "ask",
+                    "ask_cancelled" if row.get("cancelled") else "ask",
                     str(row.get("provider") or "unknown"),
                     str(row.get("model_identifier") or "unknown"),
                     int(row.get("duration_ms") or 0),
@@ -1403,6 +1403,7 @@ def stream_ask_events(
     selection_failed = False
     first_validated_ms: int | None = None
     provider_stream = provider.stream(_one_call_prompt(query, candidates, previous_answer, today=today))
+    completed = False
     try:
         for text in provider_stream:
             if cancelled is not None and cancelled.is_set():
@@ -1426,12 +1427,15 @@ def stream_ask_events(
                     if first_validated_ms is None and (event.get("status") == "shown" or event.get("section")):
                         first_validated_ms = round((time.perf_counter() - total_started) * 1000)
                     yield kind, event
+        completed = True
     finally:
         # #654: when this generator is closed early (the person cancelled), close the provider's stream too, so
         # its HTTP connection and the model's generation stop now rather than at garbage collection.
         close = getattr(provider_stream, "close", None)
         if close is not None:
             close()
+        if not completed:
+            _persist_model_call_metrics(connection, provider)      # the cancelled call's known usage (Paige, Nov 14)
     provider_ms = round((time.perf_counter() - provider_started) * 1000)
     _persist_model_call_metrics(connection, provider)
     combined = _parse_streamed_json("".join(chunks))
