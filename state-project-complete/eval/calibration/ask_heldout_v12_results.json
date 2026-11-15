@@ -12,7 +12,23 @@
     "authority_calibration": 1,
     "hedging_calibration": 1
    },
-   "human_reason": "When current state conflicts with a review I don't think it should answer so firmly. The CEO's email was much more final than this is making it sound"
+   "human_reason": "When current state conflicts with a review I don't think it should answer so firmly. The CEO's email was much more final than this is making it sound",
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "grader_v12_reasons": {
+    "faithfulness": "Claim 1 matches Current State, claim 2 accurately paraphrases the pending Review, and claim 3 is a supported absence statement ('no accepted record').",
+    "authority_calibration": "Claim 1 states Current State as governing. Claim 2 labels the CEO report as a pending, unaccepted Review.",
+    "consequential_completeness": "The answer surfaces both the conflicting pending Review and the Current State that contradicts the premise. No other records exist.",
+    "directness": "The opening 'No. State does not show mobile cut from v1' corrects the false premise immediately.",
+    "hedging_calibration": "Current State is stated plainly. The Review's pending status is caveated once, and the reported CEO decision is not denied outright, only noted as unrecorded.",
+    "concision": "Claim 3 largely restates the point already made by claims 1 and 2 and adds no new information."
+   }
   },
   {
    "blind_id": "z02",
@@ -23,7 +39,23 @@
     "authority_calibration": 1,
     "hedging_calibration": 1
    },
-   "human_reason": "It's not as certain as the top is making it sound"
+   "human_reason": "It's not as certain as the top is making it sound",
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 2,
+    "consequential_completeness": 3,
+    "directness": 3,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "grader_v12_reasons": {
+    "faithfulness": "The claim \"Growth has agreed to shorten it to 14 days starting next quarter\" fabricates a decision and a date. The Review only says the trial might be shortened if Growth agrees.",
+    "authority_calibration": "The second claim states Growth's agreement as settled fact. The 'Needs review' badge and the section card do mark it as pending, and Current State is correctly given as 30 days. This is a pending item phrased with authority it lacks in one place.",
+    "consequential_completeness": "Current State (30 days) and the open Review are both surfaced, so the reader sees the premise is wrong. The answer never says plainly that 14 days is not current.",
+    "directness": "The first claim gives the governing 30-day value, which answers the question. It does not explicitly correct the premise ('no, it is 30 days').",
+    "hedging_calibration": "A conditional, tentative possibility is stated as a definite agreement with a definite start time: an unknown given a definite value.",
+    "concision": "Two claims and one card, with no padding."
+   }
   },
   {
    "blind_id": "z03",
@@ -34,7 +66,23 @@
     "authority_calibration": 4,
     "hedging_calibration": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "grader_v12_reasons": {
+    "faithfulness": "Claim 1 matches the Current State text, and claim 2 accurately paraphrases the pending email Review. Claim 3 says no accepted record exists, which is an absence statement and is supported. Citations match their records.",
+    "authority_calibration": "Claim 1 presents Current State as governing. Claim 2 labels the CEO report as pending and not accepted. No item is promoted beyond its authority.",
+    "consequential_completeness": "The answer surfaces both consequential records: the Current State scope and the conflicting pending Review that reports the CEO's statement.",
+    "directness": "Claim 1 opens with 'No.' and corrects the false premise by citing Current State.",
+    "hedging_calibration": "The Current State scope is stated plainly. The pending Review is hedged once, attached to the item it applies to. The unknown is not turned into a definite denial: claim 3 says only that no accepted record exists.",
+    "concision": "Claim 3 restates what claims 1 and 2 already establish and adds nothing new."
+   }
   },
   {
    "blind_id": "z04",
@@ -45,7 +93,23 @@
     "authority_calibration": 4,
     "hedging_calibration": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v12_reasons": {
+    "faithfulness": "Claim 1 matches Current State (30 days). Claim 2 paraphrases the Review accurately: possibly shortened, if Growth agrees, unverified. \"Has not been accepted\" follows from its open status. The citation matches.",
+    "authority_calibration": "Current State is stated as governing. The Review is explicitly pending and unverified, and it changes nothing unless a human accepts it.",
+    "consequential_completeness": "The answer corrects the false premise with Current State and surfaces the only relevant open Review, including its condition (Growth agreeing).",
+    "directness": "The opening \"No, the free trial is not 14 days in State\" corrects the premise immediately.",
+    "hedging_calibration": "The 30 days is stated plainly. The tentative Review is hedged once and attached to that item.",
+    "concision": "There are two claims plus one card giving provenance. The mild restatement in the card is the expected shape, not padding."
+   }
   },
   {
    "blind_id": "z05",
@@ -56,7 +120,23 @@
     "authority_calibration": 4,
     "hedging_calibration": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v12": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "grader_v12_reasons": {
+    "faithfulness": "Claim 1 restates the Current State record that the trial is 30 days. Claim 2 accurately paraphrases the tentative, conditional review.",
+    "authority_calibration": "Current State is stated as governing. The 14-day item is explicitly pending, unverified and not accepted.",
+    "consequential_completeness": "The answer covers both the Current State value and the pending Review, including its Growth condition.",
+    "directness": "The opening 'No, the free trial is not 14 days' corrects the premise immediately.",
+    "hedging_calibration": "The 30-day figure is stated plainly. The 14-day item stays tentative, with the hedge attached only to it. 'Not 14 days' is backed by Current State recording 30 days.",
+    "concision": "Two short claims plus one card. There is no padding."
+   }
   },
   {
    "blind_id": "z06",
@@ -67,7 +147,26 @@
     "authority_calibration": 4,
     "hedging_calibration": 4
    },
-   "human_reason": ""
+   "human_reason": "",
+   "grader_v12": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "grader_v12_reasons": {
+    "faithfulness": "Claim 2, \"The CEO has made it final that the mobile app is being dropped from v1,\" states the source's decision in place of what Current State records. Current State says v1 includes the mobile app, so the claim contradicts it.",
+    "authority_calibration": "Claim 2 asserts the CEO's decision as settled fact with no attribution to the email. The \"Needs review\" badge does not cure wording that promotes a source's report into governing truth, and the claim reads as overturning Current State.",
+    "consequential_completeness": "Both the Current State scope record and the pending email Review are surfaced. Together they show the conflict.",
+    "directness": "Claim 1 implicitly answers the question by stating that mobile is still in scope. It never explicitly says \"no\" or corrects the premise that it is final, and claim 2 then appears to affirm the premise.",
+    "hedging_calibration": "Claim 2 states a pending, unverified report as a definite fact (\"has made it final\") with no hedge.",
+    "concision": "Two short claims and one card. There is no padding."
+   }
   }
- ]
+ ],
+ "grader_version": "ask-grader-v12 (2026-11-14: v11 plus faithfulness judges whether content is in a record, not its authority; a real source's claim presented as settled is scored under authority and hedging, unless it replaces a different Current State value for the same thing (Paige, #641))",
+ "grader_v12_run": 43663974711,
+ "grades_revealed_after": "ratings committed in 5aabe28 before the grading run"
 }
