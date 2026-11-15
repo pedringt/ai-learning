@@ -450,8 +450,21 @@ For a question with several parts, answer each part in its own claim. State a pe
 # Paige, Nov 15 (DEC-023 item 7): when retrieval left records out, "State has no record of X" can be false (the
 # absence run found it said that in 15 of 15 answers whose record existed but was not sent). Only then, Ask words
 # absence relative to what it looked at; a project small enough to send whole keeps the plain wording.
+_ABSENCE_RULE = """When State has no accepted record of something, say it is not recorded or not established in State."""
+_ABSENCE_RULE_CUT = """When none of the supplied records shows something, say the records you looked at don't show it, not that State has no record of it."""
+_DENIAL_EXAMPLES = 'write "State has no confirmed Security approval of the data path" or "State has no recorded leadership decision to remove human review"'
+_DENIAL_EXAMPLES_CUT = 'write "The records I looked at show no confirmed Security approval of the data path" or "The records I looked at show no leadership decision to remove human review"'
 _PARTIAL_CONTEXT_RULE = """
 This project has more records than you were given: the candidates above are the ones most related to the request. So when no supplied record answers something, say what you looked at, not what State holds. Write "I couldn't find a record of X in the records I looked at" or "The records I looked at don't show X". Never write "State has no record of X", "State has no recorded X" or "State does not have information about X" for something no supplied record mentions; this overrides the absence wording above. How you describe a supplied pending Review, open Question or other record does not change."""
+
+
+def _claims_guidance_for(context_cut: bool) -> str:
+    """The claims rules; when the context was cut, their absence sentence says "the records you looked at" instead of
+    "State" (an appended override alone still left 5 of 15 answers opening with "State has no record")."""
+    guidance = claims_guidance()
+    if not context_cut:
+        return guidance
+    return guidance.replace(_ABSENCE_RULE, _ABSENCE_RULE_CUT).replace(_DENIAL_EXAMPLES, _DENIAL_EXAMPLES_CUT)
 
 
 def _context_was_cut(full: Mapping[str, list[dict]], trimmed: Mapping[str, list[dict]]) -> bool:
@@ -520,7 +533,7 @@ Previous answer (for refinement only): {previous}
 Authority-tagged candidate records:
 {json.dumps(candidates, ensure_ascii=False)}
 
-{claims_guidance()}{_PARTIAL_CONTEXT_RULE if context_cut else ""}
+{_claims_guidance_for(context_cut)}{_PARTIAL_CONTEXT_RULE if context_cut else ""}
 
 Return the required JSON object with `selection` first, then `answer`. Every answer record_id, primary_record_id and supporting_record_id must be present in the selection and candidate records. Relevant Reviews must appear visibly in the main answer, not only in source_ids. {meeting_prep_shape_guidance()} Prefer one synthesized opening over many State cards. Do not create a section titled Current State or Open Reviews Qualifying Current State. Keep the full answer comfortably under 500 words.
 Use concise adaptive sections and short suggested refinements."""
