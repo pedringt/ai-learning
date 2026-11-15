@@ -28,6 +28,28 @@
     "directness": "The opening 'No. State does not show mobile cut from v1' corrects the false premise immediately.",
     "hedging_calibration": "Current State is stated plainly. The Review's pending status is caveated once, and the reported CEO decision is not denied outright, only noted as unrecorded.",
     "concision": "Claim 3 largely restates the point already made by claims 1 and 2 and adds no new information."
+   },
+   "human_adjudicated": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "hedging_calibration": 4
+   },
+   "adjudication": {
+    "changes": {
+     "faithfulness": {
+      "from": 4,
+      "to": 3
+     },
+     "authority_calibration": {
+      "from": 1,
+      "to": 4
+     },
+     "hedging_calibration": {
+      "from": 1,
+      "to": 4
+     }
+    },
+    "note": "Paige: Evidence stays pending whoever it quotes, so the status is right; but the answer softens the source ('a pending Review proposes…' for an email saying the CEO called it final): faithfulness 3."
    }
   },
   {
@@ -55,6 +77,11 @@
     "directness": "The first claim gives the governing 30-day value, which answers the question. It does not explicitly correct the premise ('no, it is 30 days').",
     "hedging_calibration": "A conditional, tentative possibility is stated as a definite agreement with a definite start time: an unknown given a definite value.",
     "concision": "Two claims and one card, with no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 1,
+    "hedging_calibration": 1
    }
   },
   {
@@ -82,6 +109,11 @@
     "directness": "Claim 1 opens with 'No.' and corrects the false premise by citing Current State.",
     "hedging_calibration": "The Current State scope is stated plainly. The pending Review is hedged once, attached to the item it applies to. The unknown is not turned into a definite denial: claim 3 says only that no accepted record exists.",
     "concision": "Claim 3 restates what claims 1 and 2 already establish and adds nothing new."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "hedging_calibration": 4
    }
   },
   {
@@ -109,6 +141,11 @@
     "directness": "The opening \"No, the free trial is not 14 days in State\" corrects the premise immediately.",
     "hedging_calibration": "The 30 days is stated plainly. The tentative Review is hedged once and attached to that item.",
     "concision": "There are two claims plus one card giving provenance. The mild restatement in the card is the expected shape, not padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "hedging_calibration": 4
    }
   },
   {
@@ -136,6 +173,11 @@
     "directness": "The opening 'No, the free trial is not 14 days' corrects the premise immediately.",
     "hedging_calibration": "The 30-day figure is stated plainly. The 14-day item stays tentative, with the hedge attached only to it. 'Not 14 days' is backed by Current State recording 30 days.",
     "concision": "Two short claims plus one card. There is no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "hedging_calibration": 4
    }
   },
   {
@@ -163,10 +205,41 @@
     "directness": "Claim 1 implicitly answers the question by stating that mobile is still in scope. It never explicitly says \"no\" or corrects the premise that it is final, and claim 2 then appears to affirm the premise.",
     "hedging_calibration": "Claim 2 states a pending, unverified report as a definite fact (\"has made it final\") with no hedge.",
     "concision": "Two short claims and one card. There is no padding."
+   },
+   "human_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 1,
+    "hedging_calibration": 1
+   },
+   "adjudication": {
+    "changes": {
+     "authority_calibration": {
+      "from": 4,
+      "to": 1
+     },
+     "hedging_calibration": {
+      "from": 4,
+      "to": 1
+     }
+    },
+    "note": "Paige: the CEO decision is stated as settled (authority and hedging 1); it keeps the Current State scope, so under her v12 rule faithfulness is 4 (the grader gave 1)."
    }
   }
  ],
  "grader_version": "ask-grader-v12 (2026-11-14: v11 plus faithfulness judges whether content is in a record, not its authority; a real source's claim presented as settled is scored under authority and hedging, unless it replaces a different Current State value for the same thing (Paige, #641))",
  "grader_v12_run": 43663974711,
- "grades_revealed_after": "ratings committed in 5aabe28 before the grading run"
+ "grades_revealed_after": "ratings committed in 5aabe28 before the grading run",
+ "agreement_vs_adjudicated": {
+  "exact_of_6": {
+   "faithfulness": 3,
+   "authority_calibration": 5,
+   "hedging_calibration": 6
+  },
+  "within_one_of_6": {
+   "faithfulness": 5,
+   "authority_calibration": 6,
+   "hedging_calibration": 6
+  }
+ },
+ "adjudication_note": "Nov 14: Paige confirmed unaccepted Evidence stays pending whoever it quotes (DEC-001, R-007); her z01/z06 authority and hedging ratings were slips. Her remaining point: z01 softens how firm the source was, a faithfulness 3 the grader did not give. On z06 the grader applied the in-place-of rule (F1) where her rule gives F4. `human` (pre-reveal) is the held-out evidence; `human_adjudicated` is not independent."
 }
