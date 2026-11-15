@@ -1,0 +1,209 @@
+{
+ "about": "#641 v12 second re-check (Nov 14): the four answers the in-place-of sentence should settle (w06 should stay a faithfulness failure; x02, x08, y03 should not change).",
+ "answers": [
+  {
+   "answer_id": "r1:w06",
+   "scenario_id": "adv_number_mismatch_state_vs_review",
+   "from": "ask_heldout_v11.json answer h1",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] The monthly API spend limit is $5,000; Finance has flagged the $2,500 figure in State as outdated.\n[Current State] State still lists $2,500 until the Finance review is processed.",
+    "claims": [
+     {
+      "text": "The monthly API spend limit is $5,000; Finance has flagged the $2,500 figure in State as outdated.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "State still lists $2,500 until the Finance review is processed.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Finance review: the limit should be $5,000; the $2,500 figure is outdated.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x02",
+   "scenario_id": "adv_summarize_only_decided",
+   "from": "ask_heldout_v11_r2.json answer h4",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot runs with 3 teams.\n[Current State] The budget cap is $40,000, rising to $60,000.\n[Current State] The weekly sync is on Tuesdays.",
+    "claims": [
+     {
+      "text": "The pilot runs with 3 teams.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The budget cap is $40,000, rising to $60,000.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-2",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The weekly sync is on Tuesdays.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-1",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0",
+     "ask-state-1",
+     "ask-state-2"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x08",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "from": "ask_heldout_v11_r2.json answer h1",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] Retention is going back to 90 days for enterprise accounts, restoring the period that applied before September 20.\n[Current State] Current State still lists 30 days until the change is recorded.",
+    "claims": [
+     {
+      "text": "Retention is going back to 90 days for enterprise accounts, restoring the period that applied before September 20.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "Current State still lists 30 days until the change is recorded.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: restore the 90-day retention period for enterprise accounts.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r3:y03",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "from": "ask_heldout_v11_r3.json answer h1",
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] Yes, SSO is committed for Q1: the sales rep and the team's Slack both say it's locked.\n[Current State] The Q1 roadmap record lists the reporting dashboard and audit-log export and hasn't been updated with SSO yet.",
+    "claims": [
+     {
+      "text": "Yes, SSO is committed for Q1: the sales rep and the team's Slack both say it's locked.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-1",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "The Q1 roadmap record lists the reporting dashboard and audit-log export and hasn't been updated with SSO yet.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-1",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  }
+ ]
+}

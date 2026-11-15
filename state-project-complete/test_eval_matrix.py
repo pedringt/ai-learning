@@ -636,10 +636,19 @@ def test_recheck_suite_regrades_the_saved_low_faithfulness_or_authority_answers(
     assert matrix.calls_per_repeat("recheck") == 34
 
 
+def test_heldoutd_uses_two_scenarios_no_earlier_round_has_seen():
+    assert [s.id for s in matrix._scenarios("heldoutd")] == list(matrix.HELDOUT_V12_SCENARIOS)
+    seen = (set(matrix.CALIBRATION_641_SCENARIOS) | set(matrix.HOLDOUT_641_SCENARIOS) | set(matrix.HELDOUT_V11_SCENARIOS)
+            | set(matrix.HELDOUT_V11_R2_SCENARIOS) | set(matrix.HELDOUT_V11_R3_SCENARIOS))
+    assert not set(matrix.HELDOUT_V12_SCENARIOS) & seen
+    assert matrix.calls_per_repeat("recheckb") == 4
+
+
 def test_grader_rubric_carries_the_nov_14_v12_rule():
     from eval.ask_grader import RUBRIC
     assert "Faithfulness judges whether the content is in a record, not whether it has authority" in RUBRIC
     assert "(one that no supplied record states, including Evidence and Reviews)" in RUBRIC
+    assert "in place of a Current State fact that it conflicts with" in RUBRIC
 
 
 def test_grader_rubric_carries_the_nov_12_v10_rules():
