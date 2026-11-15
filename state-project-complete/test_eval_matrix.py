@@ -100,10 +100,11 @@ def test_plan_accepts_sonnet_and_opus_5_5():
 
 
 def test_shards_cover_every_repeat_and_caps_never_exceed_max_calls():
-    max_calls = 20_000
-    p = matrix.plan(list(matrix.SUITES), "claude-haiku-5-5", 120, max_calls)
+    max_calls = 30_000
+    suites = [s for s in matrix.SUITES if matrix.calls_per_repeat(s)]  # a saved set not yet filled has nothing to plan
+    p = matrix.plan(suites, "claude-haiku-5-5", 120, max_calls)
     assert p["refusal"] is None
-    for suite in matrix.SUITES:
+    for suite in suites:
         shards = [s for s in p["shards"] if s["suite"] == suite]
         covered = [r for s in shards for r in range(s["repeat_start"], s["repeat_start"] + s["repeat_count"])]
         assert covered == list(range(120))
@@ -535,6 +536,94 @@ def test_regrade_suite_grades_the_saved_calibration_answers_without_an_ask_call(
     assert rec["scenario_id"] == items[0].id and rec["outcome"] == "fail" and rec["scores"]["faithfulness"] == 1
     p = matrix.plan(["regrade"], "claude-haiku-5-5", 3, 100)
     assert p["total_calls"] == 75 and 0.5 < p["estimated_cost_usd"] < 4
+
+
+def test_calibration_suite_keeps_whole_answers_for_the_641_scenarios_and_recalibrate_grades_the_saved_set():
+    from eval.quality_harness import AskQualityResult
+    assert [s.id for s in matrix._scenarios("calibration")] == list(matrix.CALIBRATION_641_SCENARIOS)
+    assert "ask_question_answer_no_state_mutation" not in matrix.CALIBRATION_641_SCENARIOS
+    scenario = matrix._scenarios("calibration")[0]
+    rec = matrix.calibration_answer_record(AskQualityResult(scenario, {"headline": "h"}, True, True, True, True, True))
+    assert rec["answer"] == {"headline": "h"} and rec["scenario_id"] == scenario.id
+    assert matrix.plan(["calibration"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
+    items = matrix.calibration_items(matrix.CALIBRATION_641_ANSWERS)
+    assert {i.scenario.id for i in items} <= set(matrix.CALIBRATION_641_SCENARIOS)
+    assert matrix.calls_per_repeat("recalibrate") == len(items)
+
+
+def test_holdout_suite_uses_fresh_scenarios_the_rubric_was_not_tuned_on():
+    assert [s.id for s in matrix._scenarios("holdout")] == list(matrix.HOLDOUT_641_SCENARIOS)
+    assert not set(matrix.HOLDOUT_641_SCENARIOS) & set(matrix.CALIBRATION_641_SCENARIOS)
+    assert "ask_question_answer_no_state_mutation" not in matrix.HOLDOUT_641_SCENARIOS
+    assert matrix.plan(["holdout"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
+
+
+def test_heldout_suite_uses_adversarial_scenarios_no_calibration_set_has_seen():
+    assert [s.id for s in matrix._scenarios("heldout")] == list(matrix.HELDOUT_V11_SCENARIOS)
+    seen = set(matrix.CALIBRATION_641_SCENARIOS) | set(matrix.HOLDOUT_641_SCENARIOS)
+    seen |= {a["scenario_id"] for a in json.loads(matrix.CALIBRATION_ANSWERS.read_text())["answers"]}
+    assert not set(matrix.HELDOUT_V11_SCENARIOS) & seen
+    assert matrix.plan(["heldout"], "claude-haiku-5-5", 2, 10)["total_calls"] == 8
+
+
+def test_assess_suite_grades_the_saved_held_out_set():
+    items = matrix._scenarios("assess")
+    assert len(items) == 12 and {i.scenario.id for i in items} == set(matrix.HELDOUT_V11_SCENARIOS)
+    data = json.loads(matrix.HELDOUT_V11_ANSWERS.read_text())["answers"]
+    assert sorted(a["blind_id"] for a in data) == [f"w{i:02d}" for i in range(1, 13)]
+    assert sum(a["answer_id"].startswith("h") for a in data) == 4
+    assert matrix.calls_per_repeat("assess") == 12
+
+
+def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
+    ids = {i.id for i in matrix.calibration_items(matrix.CALIBRATION_641_ANSWERS)}
+    assert {aid for aid, *_ in matrix.CALIBRATION_641_REGRESSIONS} <= ids
+    good = [{"scenario_id": aid, "grades": {}} for aid in ids]
+    for r in good:
+        for aid, dim, low, _high in matrix.CALIBRATION_641_REGRESSIONS:
+            if aid == r["scenario_id"]:
+                r["grades"][dim] = {"score": low}
+    assert matrix.calibration_641_regressions(good) == []
+    r5 = next(r for r in good if r["scenario_id"] == "r5")
+    r5["grades"]["faithfulness"] = {"score": 3}
+    assert matrix.calibration_641_regressions(good) == ["r5 faithfulness: expected 1-2, got 3"]
+
+
+def test_grader_rubric_carries_the_nov_11_rules():
+    from eval.ask_grader import GRADER_VERSION, RUBRIC
+    assert GRADER_VERSION.startswith("ask-grader-v11")
+    assert "Absence of a record is not a negative fact" in RUBRIC
+    assert "not whether the answer is right" in RUBRIC
+    assert "Do not apply a uniform deduction" in RUBRIC
+
+
+def test_grader_rubric_carries_the_nov_12_v10_rules():
+    from eval.ask_grader import RUBRIC
+    assert "neutral label" in RUBRIC and "judged like a claim" in RUBRIC
+    assert "A withholding notice neither excuses an omission nor proves that one occurred" in RUBRIC
+    assert "A badge never cures wording" in RUBRIC
+    assert "Multiple claims alone are not a directness flaw" in RUBRIC
+    assert "establishes the denial at the same scope" in RUBRIC
+    assert "restates the premise as background" in RUBRIC
+    assert "even when the body corrects it later: the correction creates a contradiction" in RUBRIC
+
+
+def test_grader_sees_the_all_withheld_line_when_no_claim_is_left():
+    from ask_display import ALL_WITHHELD_LINE, WITHHELD_LINE
+    from eval.ask_grader import visible_answer
+    none_left = {"headline": "What State has on record", "claims": [], "withheld_claims": 2, "sections": []}
+    some_left = {"headline": "What State has on record", "claims": [{"text": "c", "label": "Current State"}],
+                 "withheld_claims": 1, "sections": []}
+    assert visible_answer(none_left)["withheld_note"] == ALL_WITHHELD_LINE
+    assert visible_answer(some_left)["withheld_note"] == WITHHELD_LINE
+
+
+def test_641_holdout_regression_examples_name_saved_fresh_set_answers():
+    ids = {i.id for i in matrix.calibration_items(matrix.HOLDOUT_641_ANSWERS)}
+    assert {aid for aid, *_ in matrix.HOLDOUT_641_REGRESSIONS} == {"h6", "r4", "r3"} <= ids
+    results = [{"scenario_id": "r4", "grades": {"directness": {"score": 3}}}]
+    missed = matrix.calibration_641_regressions(results, matrix.HOLDOUT_641_REGRESSIONS)
+    assert "r4 directness: expected 1-2, got 3" in missed
 
 
 def test_grader_is_told_todays_date():

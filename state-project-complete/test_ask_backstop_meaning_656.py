@@ -10,15 +10,14 @@ records (a pending retention Review, Legal's Evidence, and the demo's Current St
 text. Correct sentences must come out unchanged. For an unsupported assertion the requirement is the outcome, not
 the mechanism: it must not reach the user as established fact. No model calls.
 
-On staging since #567 (Nov 12), answers no longer go through the backstop: a claim or card is shown as written or
-withheld (ask_assertions). So the meaning tests call the backstop function directly (what `main` runs until #567
-ships), and the outcome tests run through #567's path, where an unsupported assertion or go-ahead is withheld.
+Since #567 (Nov 12), answers no longer go through the backstop: a claim or card is shown as written or withheld
+(ask_assertions), and the unused backstop was removed on Nov 14. These tests run through #567's path: correct
+sentences are never reworded, and an unsupported assertion or go-ahead is withheld.
 """
 import re
 
 import pytest
 
-from ask_authority_text import _evidence_backing, _governing_state_ngrams, _soften_unearned_settled_prose
 from ask_contract import AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis
 from ask_service import _validate_synthesis
 
@@ -76,12 +75,6 @@ UNCHANGED = [
     "Retention is not resolved, so only work that does not depend on it can proceed.",
     "Retention is not resolved yet, so Security approval cannot proceed.",
 ]
-
-
-@pytest.mark.parametrize("sentence", UNCHANGED)
-def test_the_backstop_keeps_a_correct_sentence_unchanged(sentence):
-    governing = _governing_state_ngrams(STATE.values())
-    assert _soften_unearned_settled_prose(sentence, governing, _evidence_backing([LEGAL])) == sentence
 
 
 # #567: a free-text card cites no record, so one that grants a go-ahead is withheld (Paige, Nov 11: keep withholding a

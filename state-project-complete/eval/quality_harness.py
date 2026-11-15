@@ -17,7 +17,7 @@ from database_migration_backed import get_test_db
 from interpretation_trace import TracePolicy, run_traced_interpretation
 from question_review_service import matching_open_question
 from ask_provider import LiveAskProvider
-from ask_display import answer_lead, displayed_text
+from ask_display import answer_lead, displayed_text, inner_answer
 from ask_service import run_ask, stream_ask_events
 from eval.review_interpretation_scenarios import ReviewInterpretationScenario
 from eval.ask_quality_scenarios import AskQualityScenario
@@ -161,9 +161,13 @@ def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, st
         return "preserve_evidence_only", ""
     placeholders = ",".join("?" for _ in review_ids)
     state_rows = connection.execute(
-        f"SELECT proposed_statement FROM proposed_state_changes WHERE review_id IN ({placeholders}) AND status='pending'",
+        f"SELECT proposed_statement, operation FROM proposed_state_changes WHERE review_id IN ({placeholders}) AND status='pending'",
         tuple(review_ids),
     ).fetchall()
+    # #660 (Nov 14): a retire's proposed_statement holds the old fact being retired, not new wording, so it
+    # is scored as a retire rather than read as a proposal that repeats the old fact.
+    retires = sum(1 for row in state_rows if row["operation"] == "retire")
+    state_rows = [row for row in state_rows if row["operation"] != "retire"]
     state_changes = len(state_rows)
     proposed_state_text = " ".join(str(row["proposed_statement"] or "") for row in state_rows)
     proposed_questions = connection.execute(
@@ -185,6 +189,8 @@ def _observed_review_outcome(connection, review_ids: list[str]) -> tuple[str, st
         return "update_state_and_open_question", proposed_state_text
     if state_changes:
         return "update_state", proposed_state_text
+    if retires:
+        return "retire_state", ""
     if proposed_questions:
         # #477: a suggested Question whose text matches an open one is offered as "Link existing Question".
         texts = connection.execute(
@@ -213,8 +219,10 @@ def _review_prose(connection, review_ids: list[str]) -> str:
             f"SELECT decision_question, why_consequential FROM review_issues WHERE id IN ({placeholders})", tuple(review_ids)).fetchall():
         parts += [str(row["decision_question"] or ""), str(row["why_consequential"] or "")]
     for row in connection.execute(
-            f"SELECT proposed_statement, rationale FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall():
-        parts += [str(row["proposed_statement"] or ""), str(row["rationale"] or "")]
+            f"SELECT proposed_statement, rationale, operation FROM proposed_state_changes WHERE review_id IN ({placeholders})", tuple(review_ids)).fetchall():
+        # #660: a retire's statement is the old fact, not the Review's prose.
+        statement = "" if row["operation"] == "retire" else str(row["proposed_statement"] or "")
+        parts += [statement, str(row["rationale"] or "")]
     return " ".join(p for p in parts if p)
 
 
@@ -449,6 +457,50 @@ def _distinguishes_proposal(text: str) -> bool:
     return "review" in text and _has_uncertainty_language(text)
 
 
+
+def _claims_text(answer: Any) -> str:
+    """The answer's own claims (or summary, on the older shape), without chips, sections or refinements."""
+    return displayed_text({k: v for k, v in inner_answer(answer).items() if k in ("claims", "summary", "headline")},
+                          labels=False)
+
+
+def _has_review_item(answer: Any) -> bool:
+    return any(isinstance(i, dict) and i.get("record_type") == "review"
+               for section in _sections(answer) for i in section.get("items") or [])
+
+
+_WORD = re.compile(r"\$?\d[\d,]*(?:\.\d+)?%?|[a-z][a-z'-]{3,}")
+_COMMON_WORDS = frozenset(("that", "this", "with", "from", "have", "been", "will", "into", "than", "then", "they",
+                           "their", "there", "what", "when", "which", "whether", "should", "would", "could", "about",
+                           "still", "only", "also", "more", "some", "other", "does", "were", "being", "proposal",
+                           "proposed", "pending", "review", "awaiting", "evidence", "accepted", "current", "state"))
+
+
+def _pending_only_words(scenario: AskQualityScenario) -> set[str]:
+    """Words and numbers in the pending Reviews that no governing record (Current State, Questions, History) uses."""
+    governing = _normalize(_flatten_strings([scenario.current_state, scenario.open_questions,
+                                             scenario.closed_questions, scenario.history]))
+    known = set(_WORD.findall(governing))
+    pending = set(_WORD.findall(_normalize(_flatten_strings(scenario.pending_reviews))))
+    return {w.rstrip(",.") for w in pending - known - _COMMON_WORDS}
+
+
+def _authority_ok(scenario: AskQualityScenario, answer: Any, text: str) -> bool:
+    if not scenario.should_distinguish_proposal_from_truth or _distinguishes_proposal(text):
+        return True
+    # Nov 14 (Paige, "Label counts; body must still answer"): a pending claim shown only as a labelled Needs-review
+    # item is separated from governing State. This holds only when every claim the answer makes rests on Current State
+    # or an open Question, and its own words carry none of the pending Reviews' material: pending material in the
+    # body without proposal wording still fails here.
+    claims = inner_answer(answer).get("claims")
+    if not _has_review_item(answer) or not isinstance(claims, list):
+        return False
+    if any(not isinstance(c, dict) or c.get("basis") not in ("current_state", "open_question") for c in claims):
+        return False
+    # The claims, not refinement chips: "Show only the budget question" suggests a follow-up and states nothing.
+    body = set(w.rstrip(",.") for w in _WORD.findall(_normalize(_claims_text(answer))))
+    return not (body & _pending_only_words(scenario))
+
 _NEGATION_BEFORE = re.compile(r"(?:\bnot|\bno longer|n't|\bnever)\s+(?:\w+\s+){0,1}$")
 # Oct 16 (approved by Paige): a negated reporting frame puts the claim further from the negation,
 # e.g. "State does not show that leadership approved removing human review" and "State does not have
@@ -456,7 +508,7 @@ _NEGATION_BEFORE = re.compile(r"(?:\bnot|\bno longer|n't|\bnever)\s+(?:\w+\s+){0
 # failed). Only a frame ending in a reporting verb counts, so "the record says we decided" still asserts.
 # Oct 16 (adversarial suite): "whether SSO is on the Q1 roadmap remains unresolved" asks about the claim
 # rather than making it. A "whether" with no comma or sentence end between it and the claim covers it,
-# the same rule as the Ask backstop (ask_authority_text._soften_match).
+# the same rule the retired Ask word backstop used (removed Nov 14; see #656).
 _INSIDE_WHETHER = re.compile(r"\bwhether\b[^,.;:!?]*$")
 # Oct 19 (adversarial suite): "the premise that the Zendesk integration was approved is not confirmed"
 # names the user's premise to correct it; it is not the claim.
@@ -610,6 +662,13 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
         for fact in scenario.required_facts
         if not any(_normalize(phrase) in text for phrase in ((fact,) if isinstance(fact, str) else fact))
     )
+    if scenario.body_required_facts:
+        claims = _normalize(_claims_text(scored))
+        missing += tuple(
+            f"{fact if isinstance(fact, str) else ' / '.join(fact)} (in the answer itself)"
+            for fact in scenario.body_required_facts
+            if not any(_normalize(phrase) in claims for phrase in ((fact,) if isinstance(fact, str) else fact))
+        )
     if scenario.hypothetical_draft and not marked_draft(answer):
         missing += (HYPOTHETICAL_DRAFT_UNMARKED,)
     asserted = tuple(claim for claim in scenario.forbidden_claims if _asserts(text, _normalize(claim)))
@@ -618,7 +677,7 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
     forbidden_ok = not asserted
     uncertainty_ok = (not scenario.should_express_uncertainty) or _expresses_uncertainty(text)
     open_item_ok = (not scenario.should_reference_open_item) or _has_open_item_language(text)
-    authority_ok = (not scenario.should_distinguish_proposal_from_truth) or _distinguishes_proposal(text)
+    authority_ok = _authority_ok(scenario, scored, text)
     return AskQualityResult(
         scenario=scenario,
         answer=answer,

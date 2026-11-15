@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 SCHEMA = "state-eval-matrix/v1"
-SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade")
+SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade", "calibration", "recalibrate", "holdout", "validate", "heldout", "assess")
 MODEL_ID_PATTERN = re.compile(r"^claude-[a-z0-9.-]+$")
 
 # USD per million tokens, Anthropic first-party API. Source: the claude-api skill's model table
@@ -61,6 +61,12 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
     # About 1,600 tokens of rubric plus records and the answer; output includes low-effort thinking.
     "graded": {"input": 3_500, "output": 1_000, "max_output": 9_500},
     "regrade": {"input": 3_500, "output": 1_000, "max_output": 9_500},
+    "calibration": {"input": 4_000, "output": 900, "max_output": 2_400},
+    "recalibrate": {"input": 3_500, "output": 1_000, "max_output": 9_500},
+    "holdout": {"input": 4_000, "output": 900, "max_output": 2_400},
+    "heldout": {"input": 4_000, "output": 900, "max_output": 2_400},
+    "assess": {"input": 3_500, "output": 1_000, "max_output": 9_500},
+    "validate": {"input": 3_500, "output": 1_000, "max_output": 9_500},
     "consequentiality": {"input": 3_500, "output": 700, "max_output": 2_000},
     "baseline": {"input": 7_500, "output": 900, "max_output": 2_000},
 }
@@ -69,7 +75,7 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
 # review 35-40s (16 cases; State AI quality check runs 38195077931, 38199551242, 38299891763, 38411808397),
 # ask 27.6-28.3s (10 cases; same workflow), consequentiality 67-77s (36 cases; State QA Release runs
 # 38078551511, 38079304500, 38271757236), baseline 119-126s per 6 repeats of 5 sources per route (run 38187113539).
-SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "regrade": 30, "consequentiality": 80, "baseline": 22}
+SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "regrade": 30, "calibration": 12, "recalibrate": 30, "holdout": 12, "validate": 30, "heldout": 12, "assess": 30, "consequentiality": 80, "baseline": 22}
 # Other models are unmeasured here; plan shards as if they were this much slower.
 MODEL_SLOWDOWN: dict[str, float] = {"claude-haiku-5-5": 1.0, "claude-haiku-4-5": 2.0}
 DEFAULT_SLOWDOWN = 3.0
@@ -140,6 +146,18 @@ def scenario_ids(suite: str) -> list[str]:
         from eval.ask_quality_scenarios import SCENARIOS
     elif suite == "regrade":
         SCENARIOS = calibration_items()
+    elif suite == "calibration":
+        SCENARIOS = calibration_scenarios()
+    elif suite == "recalibrate":
+        SCENARIOS = calibration_items(CALIBRATION_641_ANSWERS)
+    elif suite == "holdout":
+        SCENARIOS = calibration_scenarios(HOLDOUT_641_SCENARIOS)
+    elif suite == "validate":
+        SCENARIOS = calibration_items(HOLDOUT_641_ANSWERS)
+    elif suite == "heldout":
+        SCENARIOS = calibration_scenarios(HELDOUT_V11_SCENARIOS)
+    elif suite == "assess":
+        SCENARIOS = calibration_items(HELDOUT_V11_ANSWERS)
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     elif suite == "baseline":
@@ -166,11 +184,90 @@ class CalibrationItem:
 
 
 def calibration_items(path: Path = CALIBRATION_ANSWERS) -> list[CalibrationItem]:
+    from eval.ask_adversarial_scenarios import SCENARIOS as ADVERSARIAL
     from eval.ask_quality_scenarios import SCENARIOS as ASK
 
-    by_id = {s.id: s for s in ASK}
+    by_id = {s.id: s for s in (*ASK, *ADVERSARIAL)}
     data = json.loads(Path(path).read_text())
     return [CalibrationItem(a["answer_id"], by_id[a["scenario_id"]], a["answer"]) for a in data["answers"]]
+
+
+# #641 blind calibration (Nov 9, set approved by Paige): two real answers per scenario, plus one hand-written answer
+# each, graded blind by a reference reviewer and then by the grader. The Nov 11 reference grades came from ChatGPT,
+# not Paige: human calibration is still pending. ask_question_answer_no_state_mutation is left out because
+# production Ask does not see resolved Questions yet (#640) while the grader does.
+CALIBRATION_641_SCENARIOS = ("ask_evidence_backed_approval_qualified", "ask_source_words_not_demoted",
+                             "ask_compound_question_keeps_governing_state", "ask_pending_review_not_truth")
+CALIBRATION_641_ANSWERS = Path(__file__).resolve().parent / "calibration" / "ask_calibration_641.json"
+
+
+# Regression examples from the Nov 11 AI-reviewer check (#641): what grader v9 must do on the saved 641 answers.
+# Each entry is (answer_id, dimension, lowest allowed score, highest allowed score).
+CALIBRATION_641_REGRESSIONS = (
+    ("r5", "faithfulness", 1, 2),          # reverses the Review's "approved" to "not yet approved"
+    ("r5", "hedging_calibration", 1, 2),   # an unknown stated as a definite "no"
+    ("r8", "faithfulness", 1, 2),          # "leadership has not approved" when only no decision is recorded
+    ("r8", "hedging_calibration", 1, 2),
+    ("h2", "authority_calibration", 1, 1), # wrong on purpose: source treated as governing Current State
+    ("h2", "directness", 3, 4),            # ...but it answers first: directness ignores correctness
+    ("h3", "authority_calibration", 1, 1), # wrong on purpose: the pending Review gates planning
+    ("h3", "directness", 3, 4),
+    ("h1", "faithfulness", 3, 4),          # correct attributed paraphrase
+    ("h1", "authority_calibration", 3, 4),
+    ("h4", "faithfulness", 3, 4),          # correct, differently worded
+    ("h4", "authority_calibration", 3, 4),
+)
+
+
+# v10 (Nov 12): the fresh-set answers v9 missed against the adjudicated reference, kept as regression examples for
+# `validate` runs. From now on these are calibration material, not held-out evidence.
+HOLDOUT_641_REGRESSIONS = (
+    ("h6", "faithfulness", 1, 2),         # blind v06: "we didn't decide that" from a record about the first implementation only
+    ("h6", "hedging_calibration", 1, 2),  # ...a narrower-scope record stated as a definite denial
+    ("r4", "directness", 1, 2),           # blind v07: opening restates the false premise as background
+    ("r4", "faithfulness", 1, 2),         # ...and implies an unrecorded decision
+    ("r3", "directness", 1, 2),           # blind v11, the same flaw
+    ("r3", "faithfulness", 1, 2),
+)
+
+
+def calibration_641_regressions(results: list[dict[str, Any]],
+                                examples: tuple[tuple[str, str, int, int], ...] = CALIBRATION_641_REGRESSIONS) -> list[str]:
+    """The regression examples a recalibrate (or, with HOLDOUT_641_REGRESSIONS, validate) run missed, as readable
+    lines (empty when all hold)."""
+    by_id = {r["scenario_id"]: r for r in results}
+    missed = []
+    for answer_id, dim, low, high in examples:
+        grade = (by_id.get(answer_id, {}).get("grades") or {}).get(dim)
+        score = grade["score"] if grade else None
+        if score is None or not low <= score <= high:
+            missed.append(f"{answer_id} {dim}: expected {low}-{high}, got {score}")
+    return missed
+
+
+# Fresh blind set (Nov 11) for validating grader v9: four scenarios the rubric was not tuned on, chosen to exercise
+# the v9 rules (unsupported negatives and invented reasons, a false premise, a pending Review against Current State).
+# `holdout` generates its real answers; `validate` grades the saved set.
+HOLDOUT_641_SCENARIOS = ("ask_unknown_stays_unknown", "ask_false_premise", "ask_conflicting_evidence",
+                         "ask_known_outcome_unknown_reason")
+HOLDOUT_641_ANSWERS = Path(__file__).resolve().parent / "calibration" / "ask_holdout_641.json"
+
+
+# Held-out test for the frozen grader v11 (Nov 13, scenarios approved by Paige): four adversarial scenarios no grader
+# calibration set has used, answered by #567 Ask as on staging 67592bc. Human ratings are recorded before any grader
+# score is revealed; if these answers lead to a rubric change, they become calibration material. `heldout`
+# generates the real answers; `assess` grades the saved set (8 real, 4 hand-written) once the human ratings are in.
+HELDOUT_V11_ANSWERS = Path(__file__).resolve().parent / "calibration" / "ask_heldout_v11.json"
+HELDOUT_V11_SCENARIOS = ("adv_number_mismatch_state_vs_review", "adv_conflicting_pending_proposals",
+                         "adv_mixed_settled_and_open_in_one_question", "adv_control_settled_fact_no_hedge")
+
+
+def calibration_scenarios(ids: tuple[str, ...] = CALIBRATION_641_SCENARIOS) -> list[Any]:
+    from eval.ask_adversarial_scenarios import SCENARIOS as ADVERSARIAL
+    from eval.ask_quality_scenarios import SCENARIOS as ASK
+
+    by_id = {s.id: s for s in (*ASK, *ADVERSARIAL)}
+    return [by_id[sid] for sid in ids]
 
 
 def estimated_call_cost(suite: str, model: str, output_key: str = "output") -> float:
@@ -181,10 +278,10 @@ def estimated_call_cost(suite: str, model: str, output_key: str = "output") -> f
 
         ask, grade = TOKENS_PER_CALL["ask"], TOKENS_PER_CALL["graded"]
         return (call_cost(model, ask["input"], ask[output_key]) + call_cost(GRADER_MODEL, grade["input"], grade[output_key])) / 2
-    if suite == "regrade":
+    if suite in ("regrade", "recalibrate", "validate", "assess"):
         from eval.ask_grader import GRADER_MODEL
 
-        grade = TOKENS_PER_CALL["regrade"]
+        grade = TOKENS_PER_CALL[suite]
         return call_cost(GRADER_MODEL, grade["input"], grade[output_key])
     tokens = TOKENS_PER_CALL[suite]
     return call_cost(model, tokens["input"], tokens[output_key])
@@ -229,6 +326,8 @@ def plan(suites: Iterable[str], model: str, repeats: int, max_calls: int) -> dic
     total = 0
     for suite in suites:
         per_repeat = calls_per_repeat(suite)
+        if not per_repeat:
+            raise ValueError(f"suite {suite} has no scenarios yet")
         calls = per_repeat * repeats
         total += calls
         per_suite.append({
@@ -563,6 +662,14 @@ def graded_record(r, grade) -> dict[str, Any]:
     return record
 
 
+def calibration_answer_record(r) -> dict[str, Any]:
+    """An Ask result kept whole for Paige's blind grading (#641): every scenario is synthetic. No grading call."""
+    record = ask_record(r)
+    if r.answer:
+        record["answer"] = r.answer
+    return record
+
+
 def regrade_record(item: CalibrationItem, grade) -> dict[str, Any]:
     """The LLM grader's scores for one saved calibration answer (no Ask call)."""
     from eval.ask_grader import GRADER_VERSION, gates
@@ -654,6 +761,18 @@ def _scenarios(suite: str) -> list[Any]:
         from eval.ask_quality_scenarios import SCENARIOS
     elif suite == "regrade":
         SCENARIOS = calibration_items()
+    elif suite == "calibration":
+        SCENARIOS = calibration_scenarios()
+    elif suite == "recalibrate":
+        SCENARIOS = calibration_items(CALIBRATION_641_ANSWERS)
+    elif suite == "holdout":
+        SCENARIOS = calibration_scenarios(HOLDOUT_641_SCENARIOS)
+    elif suite == "validate":
+        SCENARIOS = calibration_items(HOLDOUT_641_ANSWERS)
+    elif suite == "heldout":
+        SCENARIOS = calibration_scenarios(HELDOUT_V11_SCENARIOS)
+    elif suite == "assess":
+        SCENARIOS = calibration_items(HELDOUT_V11_ANSWERS)
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
     else:
@@ -663,10 +782,10 @@ def _scenarios(suite: str) -> list[Any]:
 
 def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: float) -> Callable[[Any], dict[str, Any]]:
     """A function that runs one scenario once and returns its record (without usage/latency)."""
-    if suite == "regrade":
+    if suite in ("regrade", "recalibrate", "validate", "assess"):
         from eval.ask_grader import grade_answer
         return lambda item: regrade_record(item, grade_answer)
-    if suite in ("review", "ask", "adversarial", "graded", "consequentiality"):
+    if suite in ("review", "ask", "adversarial", "graded", "consequentiality", "calibration", "holdout", "heldout"):
         from anthropic_provider import AnthropicProvider
 
         provider = AnthropicProvider(model_identifier=model)
@@ -676,6 +795,9 @@ def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: fl
         if suite in ("ask", "adversarial"):
             from eval.quality_harness import run_ask_quality_scenario
             return lambda s: ask_record(run_ask_quality_scenario(s, provider))
+        if suite in ("calibration", "holdout", "heldout"):
+            from eval.quality_harness import run_ask_quality_scenario
+            return lambda s: calibration_answer_record(run_ask_quality_scenario(s, provider))
         if suite == "graded":
             from eval.ask_grader import grade_answer
             from eval.quality_harness import run_ask_quality_scenario

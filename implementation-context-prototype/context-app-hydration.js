@@ -215,6 +215,9 @@ window.STATE_APP_HYDRATION=Object.freeze({install(ctx){
       byKey.open.status==='fulfilled'?payloadOf(byKey.open).items||[]:null,
       byKey.resolved.status==='fulfilled'?payloadOf(byKey.resolved).items||[]:null
     );
+    // Nov 14: when Evidence fails to load, keep only real drafts. Otherwise the static Northstar fixture notes
+    // (context-data.js) stayed on the Notes page, shown as if they were this project's Evidence.
+    else state.data.notes=state.data.notes.filter(n=>n.backendDraft);
     if(byKey.history.status==='fulfilled') syncApiHistory(payloadOf(byKey.history).items||[]);
     if(byKey.questions.status==='fulfilled'){
       syncApiQuestions(payloadOf(byKey.questions).items||[]);

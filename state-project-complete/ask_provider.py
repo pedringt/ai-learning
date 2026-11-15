@@ -384,12 +384,17 @@ class LiveAskProvider:
                 stream=True,
             )
             usage = None
-            for chunk in response:
-                if getattr(chunk, "usage", None) is not None:
-                    usage = chunk.usage
-                text = getattr(chunk.choices[0].delta, "content", None) if getattr(chunk, "choices", None) else None
-                if text:
-                    yield text
+            try:
+                for chunk in response:
+                    if getattr(chunk, "usage", None) is not None:
+                        usage = chunk.usage
+                    text = getattr(chunk.choices[0].delta, "content", None) if getattr(chunk, "choices", None) else None
+                    if text:
+                        yield text
+            finally:
+                close = getattr(response, "close", None)    # #654: a cancelled Ask closes the HTTP stream
+                if close is not None:
+                    close()
             self._capture_call_metrics(started, usage)
             return
         raise RuntimeError(f"Configured provider {self.name!r} does not support streaming Ask")

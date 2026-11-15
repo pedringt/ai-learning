@@ -234,6 +234,12 @@ function cachedSnapshot(){
     assert.doesNotMatch(different.observed.text,/kept this as Evidence/,'the drafted text would misdescribe this run');
     assert.match(different.observed.text,/proposed a new Question/);
   });
+  await check('a retired fact reads as a retire, not as a raw code (#660)',()=>{
+    const story=M.failureStory({scenario_id:'review_partial_reversal',severity:'high',expected:'update_state',observed:'retire_state',failed_checks:['interpretation']},review());
+    assert.match(story.observed.text,/proposed retiring the Current State fact with no replacement/);
+    assert.match(story.heading,/proposed retiring the fact, not a proposed Current State change/);
+    assert.doesNotMatch(story.observed.text+story.heading,/retire_state/);
+  });
   await check('the targeted investigation is built from recorded evidence and says so',()=>{
     const data=stateData({quality:{...quality(),contractUpdatedAt:'2026-10-30T00:00:00Z'}});
     const investigation=M.qualityInvestigation(data,plannedFailure.scenario_id);

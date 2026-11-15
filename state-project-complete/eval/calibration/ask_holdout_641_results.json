@@ -1,0 +1,1165 @@
+{
+ "about": "#641 validation of grader v9 on the fresh blind set (Nov 11). Reference grades: ChatGPT. Grader v9 run 43122994577 (12 calls, $0.2855). The first grading sheet omitted Question metadata (blocking: false); corrected, and the affected reference scores reassessed. Originals kept in reference_original and report_original; corrections are listed per answer. Grader scores are the existing v9 scores, not re-run.",
+ "reference_source": "ChatGPT (AI reviewer); confirmed by Paige Nov 11",
+ "run": 43122994577,
+ "results": [
+  {
+   "blind_id": "v01",
+   "answer_id": "r2",
+   "scenario": "ask_unknown_stays_unknown",
+   "intent": null,
+   "reference_note": "\"Non-blocking\" is not established by the supplied records. Prose repeats the missing percentage and adds an unnecessary no-Review statement.",
+   "grader_v9": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "The headline, the summary and both items trace to the Current State statement and the open Question. The claim 'No open Review proposes a figure' is supported, because open_reviews is empty. Citations match their items.",
+    "authority_calibration": "Current State is labeled as Current State, and the Question is labeled as open and non-blocking. 'Confirmed' is used only in the negative ('does not have a confirmed figure'), so nothing pending is given authority it lacks.",
+    "consequential_completeness": "The answer surfaces the only consequential records: the Current State statement and the open non-blocking Question. No other records exist.",
+    "directness": "The headline and first sentence answer the question directly: no figure has been established.",
+    "hedging_calibration": "The unknown is kept unknown. It is not turned into zero or an invented target, and the settled Current State statement is stated plainly.",
+    "concision": "The answer is short. The summary briefly names what the cards show and adds the open-Question status, which is the expected shape and not padding."
+   },
+   "reference_original": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 2
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 2
+   },
+   "corrections": [
+    {
+     "dimension": "faithfulness",
+     "from": 2,
+     "to": 4,
+     "why": "Sheet defect: the only faithfulness reason was 'non-blocking is not established', but the grader's records mark the Question blocking: false. With the corrected sheet the claim is supported. (Adjudicated by Claude for Paige's review.)"
+    }
+   ],
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline, the summary and both items trace to the Current State record and the open Question. 'No open Review proposes a figure' matches the empty open_reviews list.",
+    "authority_calibration": "The 'not established' statement is correctly presented as Current State. The question is marked open and non-blocking. Nothing pending is promoted.",
+    "consequential_completeness": "Both the Current State statement and the open Question are surfaced. No other records exist.",
+    "directness": "The headline 'No safe autonomous-resolution percentage has been established' answers the question immediately.",
+    "hedging_calibration": "The percentage is kept unknown rather than turned into zero or an invented target. The settled Current State is stated plainly.",
+    "concision": "The summary states the 'not established' point twice: 'does not have a confirmed figure' and then the Current State sentence. The headline and the card repeat it again, so one restatement adds nothing."
+   },
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v11": {
+    "faithfulness": "The headline, the summary and both items trace directly to the Current State statement and the open Question, and the citations match. \"No open Review proposes a figure\" is supported because open_reviews is empty.",
+    "authority_calibration": "The Current State item is labeled Current State and the Question is labeled open and non-blocking. Nothing pending is promoted to fact.",
+    "consequential_completeness": "The answer surfaces the Current State record and the open non-blocking Question, which are the only relevant records.",
+    "directness": "The headline and first sentence answer directly: no percentage has been established.",
+    "hedging_calibration": "The unknown is kept unknown. No zero and no invented target appears, and the unknown is stated plainly once.",
+    "concision": "The headline already says no percentage is established. The summary's first two sentences then say the same thing twice more, so the summary adds one restatement with nothing new."
+   }
+  },
+  {
+   "blind_id": "v02",
+   "answer_id": "r7",
+   "scenario": "ask_known_outcome_unknown_reason",
+   "intent": null,
+   "reference_note": "Correctly distinguishes the known pause from its unknown reason. Body largely restates the opening.",
+   "grader_v9": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "The headline's pause date traces to the Current State record, and its claim that the reason is not recorded is correct absence wording. Nothing is invented.",
+    "authority_calibration": "The single item is badged Current State and stated as established. The missing reason is framed as not recorded rather than given any status it lacks.",
+    "consequential_completeness": "The only relevant record is surfaced. There are no blocking Questions or open Reviews to include.",
+    "directness": "The headline answers the why question in its first sentence: the reason is not recorded, with the pause date given alongside.",
+    "hedging_calibration": "The pause date is stated plainly. The unknown reason is stated once, explicitly, and is not given a value.",
+    "concision": "The summary briefly restates what the card shows, which is the expected shape. The suggested refinement is a minor extra but not padding."
+   },
+   "reference_original": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "corrections": [
+    {
+     "dimension": "concision",
+     "from": 3,
+     "to": 4,
+     "why": "Paige (Nov 11): ChatGPT's deduction for a brief summary restating the opening is inconsistent with the approved v9 concision allowance."
+    }
+   ],
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline, the summary and the single item all trace to the Current State record. The answer invents no reason.",
+    "authority_calibration": "The pause is presented as Current State, matching its badge. No pending content exists.",
+    "consequential_completeness": "The only relevant record is surfaced, and the missing reason is stated explicitly.",
+    "directness": "The headline answers the 'why' question immediately: the reason is not recorded.",
+    "hedging_calibration": "The pause date is stated plainly, and the reason is clearly marked as unknown without implying a value.",
+    "concision": "The summary restates the headline's fact and adds a somewhat wordy enumeration of record types. That is a minor restatement that adds little."
+   },
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v11": {
+    "faithfulness": "The headline, the summary and the established item all trace to the Current State record about the September 28 pause. The statement that the reason is not recorded is accurate.",
+    "authority_calibration": "The pause is stated as Current State with a correct badge. The answer makes no claim to a reason.",
+    "consequential_completeness": "The only record is surfaced. No reviews, questions or evidence exist to omit.",
+    "directness": "The headline directly answers the why: the reason is not recorded, and it gives the known fact alongside.",
+    "hedging_calibration": "The pause is stated plainly as fact. The reason is explicitly left unknown without inventing one.",
+    "concision": "The summary repeats the headline almost verbatim, adding only a list of record types. The suggested refinement adds little."
+   }
+  },
+  {
+   "blind_id": "v03",
+   "answer_id": "r8",
+   "scenario": "ask_known_outcome_unknown_reason",
+   "intent": null,
+   "reference_note": "Same sound distinction as v02. Additional supporting card is not itself a concision fault; prose restatement remains.",
+   "grader_v9": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "The pause date is cited to Current State, and the claim that the reason is not recorded accurately reflects the absence of any record. No reason is invented.",
+    "authority_calibration": "The pause is presented as Current State. The unknown reason is presented as unknown.",
+    "consequential_completeness": "There are no other records. The answer surfaces the only record and the gap.",
+    "directness": "The headline immediately says the pause happened and that the reason is not recorded.",
+    "hedging_calibration": "The settled date is stated plainly, and the unknown reason is stated explicitly without implying any value.",
+    "concision": "The 'unknown reason' card repeats the headline mildly, which is acceptable shape. There is no filler."
+   },
+   "reference_original": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "corrections": [
+    {
+     "dimension": "concision",
+     "from": 3,
+     "to": 4,
+     "why": "Paige (Nov 11): same as v02."
+    }
+   ],
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The pause date traces to Current State. The statement that the reason is not recorded is supported by the absence of any record giving one. No reason is invented.",
+    "authority_calibration": "The pause is presented as Current State. The reason is presented as unknown and is not given a record badge. Every authority level is correct.",
+    "consequential_completeness": "There are no open Reviews or Questions to surface. The answer covers the known pause and states that the reason is missing.",
+    "directness": "The headline answers the why question in its first line by saying the reason is not recorded.",
+    "hedging_calibration": "The pause is stated plainly and the reason is marked as unknown. No soft cause is implied.",
+    "concision": "The point that the reason is not recorded appears in the headline, the summary and the 'Unknown reason' item, three times with nothing added. The suggested question also just repeats the original question."
+   },
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v11": {
+    "faithfulness": "The pause date traces to Current State. The 'reason not recorded' item correctly reports an absence and asserts no cause.",
+    "authority_calibration": "The pause is badged as Current State. The unknown reason is presented as unknown and given no authority.",
+    "consequential_completeness": "The only record is surfaced. No reviews, questions or evidence exist that would change the answer.",
+    "directness": "The headline immediately says the pilot was paused but the reason is not recorded, which answers the 'why' question directly.",
+    "hedging_calibration": "The pause date is stated plainly and the reason is marked unknown once. There is no implied cause.",
+    "concision": "The 'Unknown reason' section restates the summary's statement that the reason is not established, adding nothing. The suggested question nearly duplicates the user's question."
+   }
+  },
+  {
+   "blind_id": "v04",
+   "answer_id": "r5",
+   "scenario": "ask_conflicting_evidence",
+   "intent": null,
+   "reference_note": "Reports the governing terms, surfaces the challenge, and explains that the pending Review has not changed Current State.",
+   "grader_v9": {
+    "faithfulness": 4,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "The Current State statement and the Review text are both quoted accurately, and the citations match their records. \"The answer is not yet settled\" is a reasonable characterization of an open Review that may contradict the current interpretation.",
+    "authority_calibration": "Current State and the Review are labeled correctly. However, the summary's \"the answer is not yet settled\" slightly weakens Current State as the governing answer. A pending Review does not unsettle what is authorized now.",
+    "consequential_completeness": "The answer surfaces the conflicting open Review alongside Current State. No other consequential records exist.",
+    "directness": "The headline answers immediately: the approved terms say customer content is not used for training, with a pending challenge noted.",
+    "hedging_calibration": "\"The answer is not yet settled\" adds an unnecessary qualifier to settled Current State. Otherwise the hedging is attached to the Review.",
+    "concision": "The summary and cards are brief and each adds something. The mild redundancy fits the expected shape."
+   },
+   "reference_original": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "corrections": [],
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 4
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline, summary and items all trace to the Current State statement and the open Review. The citations match their records.",
+    "authority_calibration": "The summary says \"the answer is not yet settled,\" which slightly undercuts Current State as the governing answer, even though Current State and the Review are otherwise labeled correctly.",
+    "consequential_completeness": "The answer surfaces both Current State and the conflicting open Review.",
+    "directness": "The headline answers the question directly with the Current State terms, then flags the Review.",
+    "hedging_calibration": "\"the answer is not yet settled\" hedges the settled Current State more than it should. Current State is authorized, and only the Review is pending.",
+    "concision": "The claim appears once in the summary, with one card per record and a short pending-status note. There is no padding."
+   },
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 3,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 3,
+    "concision": 3
+   },
+   "reasons_v11": {
+    "faithfulness": "Each claim, the Current State statement and the Review's wording, traces to a supplied record, and the citations match.",
+    "authority_calibration": "Current State and the pending Review are labeled correctly. However, the summary's phrase \"the answer is not yet settled\" somewhat undercuts Current State, which is the governing answer. The authority levels are still correct.",
+    "consequential_completeness": "The conflicting open Review is surfaced alongside Current State.",
+    "directness": "The headline answers the question directly with what the approved terms say, then notes the challenge.",
+    "hedging_calibration": "The summary's \"the answer is not yet settled\" adds an unnecessary qualifier to a settled Current State fact. The pending Review is otherwise hedged appropriately.",
+    "concision": "The headline, summary and cards repeat the Current State statement three times. That repetition is a padding concern even though the format is expected."
+   }
+  },
+  {
+   "blind_id": "v05",
+   "answer_id": "h5",
+   "scenario": "ask_unknown_stays_unknown",
+   "intent": "wrong on purpose: an unknown stated as a definite negative (v9 unsupported-negative rule)",
+   "reference_note": "Invents a decision ruling out autonomy, contradicts the unknown percentage, and misrepresents the Question. Both records remain visible in cards.",
+   "grader_v9": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "The headline \"None: fully autonomous resolution has been ruled out\" and the summary \"The team has decided that no tickets will be resolved fully autonomously\" invent a decision. The summary also mischaracterizes the open Question as covering only 'assistance', which contradicts its actual wording.",
+    "authority_calibration": "The open Question is an unknown, but the headline and summary present a fabricated settled decision as Current State. That contradicts the cited Current State, which says the percentage has not been established.",
+    "consequential_completeness": "The Current State record and the open Question are both surfaced as cards. However, the summary misdescribes the Question's scope, so it is thinly and wrongly characterized.",
+    "directness": "The headline answers the exact question immediately, even though the answer is wrong.",
+    "hedging_calibration": "An unknown percentage is stated as a definite value: \"None\" (zero). This is exactly the failure the rubric forbids.",
+    "concision": "The answer is short. The headline, summary and two cards carry no padding."
+   },
+   "reference_original": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reference_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "corrections": [],
+   "grader_v10": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline \"ruled out for this pilot\" and the summary \"The team has decided that no tickets will be resolved fully autonomously\" assert a decision no record contains. The Question's scope is also misdescribed: the records ask about the autonomous-resolution percentage, not \"how much assistance\".",
+    "authority_calibration": "An invented team decision is presented as established fact, and the headline contradicts the Current State that the percentage has not been established. This misrepresents what the authorized truth is.",
+    "consequential_completeness": "The cards surface both the Current State and the open Question. However, the summary mischaracterizes the Question, so its relevance to this exact question is muddied.",
+    "directness": "The headline answers the question immediately (\"None\"). It is wrong, but it is delivered first.",
+    "hedging_calibration": "An unknown is stated as a definite zero (\"None\", \"no tickets\"). This is exactly the failure the task warns against.",
+    "concision": "Short, with no padding; the cards give provenance."
+   },
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v11": {
+    "faithfulness": "The headline \"None: fully autonomous resolution has been ruled out\" and the summary \"The team has decided that no tickets will be resolved fully autonomously\" invent a decision. The summary also misdescribes the Question as covering \"assistance\" rather than the autonomous-resolution percentage.",
+    "authority_calibration": "The summary presents an invented decision as established fact. It contradicts Current State, which says no percentage has been established, and it treats the open Question as unknown only about a different topic.",
+    "consequential_completeness": "The Current State record and the open Question are both surfaced as cards. The Question is distorted by the summary, but it is present.",
+    "directness": "The headline answers the percentage question immediately (\"None\"). It is wrong, but it is direct.",
+    "hedging_calibration": "An unknown is stated as a definite value: \"None\", meaning zero percent. This contradicts the record, which says no percentage has been established.",
+    "concision": "The answer is short: a headline, two summary sentences and two cards. There is no padding."
+   }
+  },
+  {
+   "blind_id": "v06",
+   "answer_id": "h6",
+   "scenario": "ask_false_premise",
+   "intent": "correct and short: corrects the false premise first",
+   "reference_note": "\"We didn't decide that\" overstates the supported correction: no such decision is recorded. Human review for the first implementation does not rule out every broader or future decision.",
+   "grader_v9": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "\"We didn't decide that\" is supported because Current State says the first implementation remains human-reviewed, which contradicts full automation. The summary is careful: \"No record shows a decision.\" Both citations match their records.",
+    "authority_calibration": "The human-review statement is presented as Current State and the automation question is labeled as open. Every authority level is correct.",
+    "consequential_completeness": "The answer corrects the false premise and surfaces the open, non-blocking Question about how much automation is safe. Nothing consequential is missing.",
+    "directness": "The headline corrects the false premise immediately, before any context.",
+    "hedging_calibration": "Current State is stated plainly and the post-pilot automation level is explicitly left as an open Question.",
+    "concision": "The answer is brief, and the headline, summary and cards each add something."
+   },
+   "reference_original": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reference_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "corrections": [],
+   "adjudication_note": "Unchanged. Paige (Nov 11): a false-premise correction must say no such decision is recorded ('No decision to fully automate support is recorded; the first implementation remains human-reviewed'); 'We didn't decide that' is an unsupported negative. The reference's F=2, H=1 stand; the hand-written answer's intent label 'correct' was wrong.",
+   "grader_v10": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline \"We didn't decide that\" is a definite denial. The records only cover a narrower scope (the first implementation remains human-reviewed), so they do not establish that no decision was made. The summary's \"No record shows a decision\" is supported.",
+    "authority_calibration": "Current State is stated as the governing fact, and the automation question is clearly marked as an open Question.",
+    "consequential_completeness": "The answer corrects the premise and surfaces both the Current State and the open automation Question.",
+    "directness": "The headline corrects the false premise immediately.",
+    "hedging_calibration": "\"We didn't decide that\" states a definite negative when the records only show nothing recorded at the broader scope.",
+    "concision": "The answer is short. The cards give provenance, and there is no padding."
+   },
+   "grader_v11": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v11": {
+    "faithfulness": "The headline \"We didn't decide that\" is a definite denial. The only support is a narrower-scope record (the first implementation remains human-reviewed), which does not establish that no broader decision was made. The summary itself says correctly that \"no record shows\" a decision.",
+    "authority_calibration": "Current State is badged and stated as governing. The open Question is clearly labeled open. No pending content is promoted.",
+    "consequential_completeness": "The answer corrects the false premise and surfaces both the Current State record and the open automation Question.",
+    "directness": "The headline corrects the false premise immediately.",
+    "hedging_calibration": "\"We didn't decide that\" states a definite negative when the records only cover a narrower scope. The open question about post-pilot automation leaves the broader matter unknown.",
+    "concision": "The summary and cards are short. Repeating points between the summary and the cards fits the expected format."
+   }
+  },
+  {
+   "blind_id": "v07",
+   "answer_id": "r4",
+   "scenario": "ask_false_premise",
+   "intent": null,
+   "reference_note": "Heading implies automation was decided; body corrects that premise. \"Not blocking\" is unsupported. The extra status adds unnecessary context.",
+   "grader_v9": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "Every claim traces to a record. The Current State statement and the open Question are cited correctly. \"No supplied record establishes a decision\" is an absence claim, not an invented negative fact.",
+    "authority_calibration": "Current State is labeled as governing. The Question is marked open and non-blocking. Nothing pending is presented as fact.",
+    "consequential_completeness": "The answer corrects the false premise, cites the human-review Current State that conflicts with it, and surfaces the open automation Question.",
+    "directness": "The headline addresses the premise, but its wording ('no record explains why automation was decided') partly echoes the premise rather than flatly correcting it. The summary does correct it clearly by saying no record establishes a full-automation decision.",
+    "hedging_calibration": "Current State is stated plainly. The unknown is kept as 'cannot confirm' rather than turned into a definite no. The Question is hedged once.",
+    "concision": "The summary briefly names what the cards show, with no filler."
+   },
+   "reference_original": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "reference_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "corrections": [
+    {
+     "dimension": "authority_calibration",
+     "from": 2,
+     "to": 4,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "The defect is an unsupported event implication and a misleading opening (faithfulness, directness). It does not promote pending material into governing authority."
+    },
+    {
+     "dimension": "hedging_calibration",
+     "from": 2,
+     "to": 4,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "The same opening does not mishandle an explicit uncertainty claim; no distinct hedging reason is established."
+    }
+   ],
+   "adjudication_note": "Reassessed after the sheet fix, unchanged: faithfulness 2 still stands on the headline implying an automation decision the body says is unestablished; authority/directness/hedging deductions rest on that headline too. The 'not blocking is unsupported' reason no longer applies. Concision 3 was for unnecessary context, not unsupported content.",
+   "grader_v10": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline \"no record explains why automation was decided\" implies that an automation decision happened, and no record shows that. The summary is accurate: it says no record establishes such a decision. The Current State and Question citations match their items.",
+    "authority_calibration": "Current State is labeled as governing. The Question is shown as open and unanswered. No pending content is promoted.",
+    "consequential_completeness": "The premise is corrected in the summary. Both relevant records are surfaced: the human-reviewed Current State and the non-blocking open Question.",
+    "directness": "The headline \"no record explains why automation was decided\" restates the premise as background. Only the summary corrects it.",
+    "hedging_calibration": "The Current State fact is stated plainly. Whether a decision was made is left unknown: \"cannot confirm that such a decision was made\". There is no definite denial.",
+    "concision": "The answer is short. The summary names the cards with their status and contains no filler."
+   },
+   "reference_adjudicated_nov11": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 2,
+    "concision": 3
+   },
+   "grader_v11": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v11": {
+    "faithfulness": "The headline says \"no record explains why automation was decided\". That implies a decision to automate exists when no record shows one. The summary corrects this later, but the correction creates a contradiction rather than erasing the implication. The other items and citations are supported.",
+    "authority_calibration": "Current State is labeled as the governing fact, and the Question is labeled as open and unanswered. No pending content is promoted.",
+    "consequential_completeness": "The answer surfaces the Current State fact that corrects the premise and the only related open Question, including that it is non-blocking.",
+    "directness": "The headline's \"no record explains why automation was decided\" restates the false premise as background. Only the summary's second sentence corrects it.",
+    "hedging_calibration": "The settled fact is stated plainly. The answer says State \"cannot confirm\" a decision rather than issuing a definite denial, and the open Question is marked unanswered.",
+    "concision": "The answer is short. Its claims are paired with provenance cards and there is no filler."
+   }
+  },
+  {
+   "blind_id": "v08",
+   "answer_id": "h7",
+   "scenario": "ask_conflicting_evidence",
+   "intent": "wrong on purpose: a pending Review presented as overturning Current State",
+   "reference_note": "Converts \"may contradict\" into a definite contradiction and treats the pending Review as overturning Current State. Both records are shown, but their relationship is distorted.",
+   "grader_v9": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "The headline says 'new legal evidence contradicts the approved enterprise terms', but the Review only says it 'may contradict'. The summary instruction to 'treat customer content as usable for vendor training' is an invented conclusion. Together these contradict Current State.",
+    "authority_calibration": "The pending Review is presented as overturning Current State: the headline 'Probably yes' and the 'Previous position' title relegate Current State to the past.",
+    "consequential_completeness": "Both the Current State record and the open Review are surfaced.",
+    "directness": "The headline answers the question immediately, even though the answer it gives is wrong.",
+    "hedging_calibration": "Settled Current State is undermined with 'Probably yes', and the uncertain Review ('may contradict') is stated as a definite contradiction.",
+    "concision": "The answer is short, with no padding."
+   },
+   "reference_original": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reference_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "corrections": [],
+   "grader_v10": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline says new legal evidence \"contradicts\" the approved terms, but the Review only says it \"may contradict\" them. Telling readers to \"treat customer content as usable for vendor training\" adds a conclusion no record supports. Both contradict the supplied records.",
+    "authority_calibration": "The pending Review is presented as overturning Current State. The headline says \"Probably yes\", the summary uses the past tense \"said\", and the Current State item is titled \"Previous position\".",
+    "consequential_completeness": "Both the Current State record and the open Review conflicting with it are surfaced.",
+    "directness": "The headline answers the yes/no question immediately, even though the answer it gives is wrong.",
+    "hedging_calibration": "The unknown from the Review is stated as a definite contradiction, and the reader is told to act on it. Meanwhile the settled Current State is undermined by being relabeled \"Previous position\".",
+    "concision": "The answer is short. The summary and cards add provenance and do not pad."
+   },
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 1,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v11": {
+    "faithfulness": "The headline says \"Probably yes: new legal evidence contradicts the approved enterprise terms.\" The Review only says the evidence \"may contradict\" them, so dropping \"may\" turns a possibility into a fact. The summary's \"treat customer content as usable for vendor training\" is invented guidance with no supporting record.",
+    "authority_calibration": "The headline and summary present a pending Review as overturning Current State. Current State is labeled \"Previous position\", and the summary instructs the reader to act against it.",
+    "consequential_completeness": "Both consequential records are surfaced: the Current State statement and the open Review describing the possible conflict.",
+    "directness": "The headline \"Probably yes...\" answers the question immediately. It is the wrong answer, but directness does not judge correctness.",
+    "hedging_calibration": "The Review's \"may contradict\" is hardened into \"contradicts\", and an unknown is given a soft implied value (\"Probably yes\", \"treat as usable\"). Meanwhile the settled Current State is undermined as merely the \"Previous position\".",
+    "concision": "The answer is short, with no padding beyond the expected claims and their cards."
+   }
+  },
+  {
+   "blind_id": "v09",
+   "answer_id": "h8",
+   "scenario": "ask_known_outcome_unknown_reason",
+   "intent": "wrong on purpose: an invented cause for a recorded outcome",
+   "reference_note": "Fabricates the missed-threshold cause. The supplied Current State item is accurately represented; the invented cause fails faithfulness and hedging. Body repeats the opening.",
+   "grader_v9": {
+    "faithfulness": 1,
+    "authority_calibration": 2,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "The headline and summary state the pause followed the pilot missing its high-risk failure thresholds. No supplied record gives any reason, so this is a fabricated cause.",
+    "authority_calibration": "The invented reason is presented as an established fact next to Current State in the headline ('after the pilot missed...'). The Current State card itself is correctly labeled.",
+    "consequential_completeness": "The answer never says that no reason for the pause is recorded. That is the key fact for a 'why' question, and the reader is not told the rationale is unknown.",
+    "directness": "The headline immediately addresses the 'why' question.",
+    "hedging_calibration": "The reason is unknown in the records, yet it is stated as a definite value: 'after the pilot missed its high-risk failure thresholds.'",
+    "concision": "The answer is short, with no padding."
+   },
+   "reference_original": {
+    "faithfulness": 1,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "reference_adjudicated": {
+    "faithfulness": 1,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 3
+   },
+   "corrections": [],
+   "adjudication_note": "Unchanged, disagreement kept for review: ChatGPT authority 4, grader v9 authority 2 (the grader also lowered completeness to 2) for an answer whose only flaw is an invented cause.",
+   "grader_v10": {
+    "faithfulness": 1,
+    "authority_calibration": 2,
+    "consequential_completeness": 2,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline and summary claim the pause followed the pilot missing its high-risk failure thresholds. No supplied record gives a reason, so this is a fabricated cause.",
+    "authority_calibration": "The invented reason is placed alongside the Current State fact and phrased with the same authority, as if it were established. The cited Current State item itself is presented correctly.",
+    "consequential_completeness": "The answer never says that State records no reason for the pause. That is the key fact a reader needs to answer a 'why' question. No blocking items exist.",
+    "directness": "The headline answers the why question immediately. Its correctness is judged under faithfulness, not here.",
+    "hedging_calibration": "The reason is unknown, yet the summary states it as definite: 'The pause followed the pilot missing its agreed thresholds.'",
+    "concision": "The answer is short, and its only overlap is the claim plus its provenance card, which is the expected shape."
+   },
+   "grader_v11": {
+    "faithfulness": 1,
+    "authority_calibration": 2,
+    "consequential_completeness": 3,
+    "directness": 4,
+    "hedging_calibration": 1,
+    "concision": 4
+   },
+   "reasons_v11": {
+    "faithfulness": "The headline and summary claim the pause followed the pilot \"missing its agreed thresholds for high-risk failures.\" No supplied record states this cause, so it is a fabricated reason.",
+    "authority_calibration": "The invented cause appears in the headline next to the Current State fact and carries the same settled tone, giving it authority it lacks. No pending Review is misrepresented. The section card itself correctly labels the date as Current State.",
+    "consequential_completeness": "The paused status and date are surfaced. The answer fails to state that no reason is recorded, and that is the key correction for a 'why' question.",
+    "directness": "The headline answers the 'why' immediately. The answer is wrong, but directness grades only placement.",
+    "hedging_calibration": "An unknown, the reason for the pause, is stated as a definite cause: \"after the pilot missed its high-risk failure thresholds.\"",
+    "concision": "The answer is short, and the headline, summary and card fit the expected shape without padding."
+   }
+  },
+  {
+   "blind_id": "v10",
+   "answer_id": "r1",
+   "scenario": "ask_unknown_stays_unknown",
+   "intent": null,
+   "reference_note": "Clear unknown, accurate Current State attribution, and the relevant open Question. Brief summary plus supporting cards is acceptable.",
+   "grader_v9": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "The headline, summary and both items trace directly to the Current State statement and the open Question. The citations match the records they point to.",
+    "authority_calibration": "The Current State item is labeled established. The question item is labeled Open question. No pending item is given authority it lacks.",
+    "consequential_completeness": "The only consequential records are the Current State statement and the non-blocking open Question, and both are surfaced.",
+    "directness": "The headline answers immediately: no safe percentage has been established. The summary's first sentence restates that directly.",
+    "hedging_calibration": "The unknown is kept unknown. The answer gives no zero and no invented target, and the settled Current State is stated plainly.",
+    "concision": "Short summary plus two cards. The headline, summary and card overlap only mildly, which is the expected shape."
+   },
+   "reference_original": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "corrections": [],
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline, summary and items all trace to the Current State statement and the open Question, and the citations match.",
+    "authority_calibration": "Current State is stated as governing (\"Current State records that...\"), and the Question is labeled open.",
+    "consequential_completeness": "Both relevant records, the Current State entry and the non-blocking open Question, are surfaced.",
+    "directness": "The headline \"No safe autonomous-resolution percentage has been established\" answers the question immediately.",
+    "hedging_calibration": "The unknown stays unknown. No zero or target is invented, and \"State does not have a confirmed percentage\" is properly framed.",
+    "concision": "The summary's first sentence and the headline restate the same point, and the Current State point then appears again in the summary's second sentence. That is one restatement that adds nothing."
+   },
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v11": {
+    "faithfulness": "The headline, the summary and both items trace directly to the Current State statement and the open Question, and their citations match. Saying 'State does not have a confirmed percentage' is an accurate paraphrase of the Current State statement.",
+    "authority_calibration": "The 'not established' statement is shown as Current State, and the unknown percentage is shown as an open question. Every authority level is correct and unambiguous.",
+    "consequential_completeness": "Both relevant records are surfaced: the Current State statement and the non-blocking open Question. No other consequential records exist.",
+    "directness": "The headline 'No safe autonomous-resolution percentage has been established' answers the question immediately.",
+    "hedging_calibration": "The unknown stays an unknown. No zero or invented target is given, and the settled Current State is stated plainly.",
+    "concision": "The summary states the 'not established' point twice ('does not have a confirmed percentage' and 'has not been established') on top of the headline and the card, which is one restatement that adds nothing."
+   }
+  },
+  {
+   "blind_id": "v11",
+   "answer_id": "r3",
+   "scenario": "ask_false_premise",
+   "intent": null,
+   "reference_note": "Opening presupposes a full-automation decision; body corrects it. \"Non-blocking\" is unsupported. Multiple prose statements repeat the absence of a decision or reason.",
+   "grader_v9": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 3,
+    "hedging_calibration": 4,
+    "concision": 4
+   },
+   "reasons_v9": {
+    "faithfulness": "Every claim traces to a record. The summary sentence \"No Review or History record supports a full-automation decision\" describes an absence of records rather than asserting a negative fact. Both citations match their items.",
+    "authority_calibration": "The human-reviewed statement is presented as the governing Current State, and the automation item is labeled an open, non-blocking Question. No authority level is misstated.",
+    "consequential_completeness": "The answer corrects the false premise, cites the Current State record that conflicts with it, and surfaces the open Question on post-pilot automation.",
+    "directness": "The headline opens with \"State does not record why support was decided to be fully automated,\" which partly echoes the premise before correcting it. The correction becomes explicit only in the summary's first sentence, so the reader gets one step of indirection.",
+    "hedging_calibration": "The settled human-reviewed fact is stated plainly. The unknown about how much automation is safe is hedged once and attached to that Question.",
+    "concision": "Headline, summary and cards each add something. Repeating the main point across them is the expected Ask shape, and there is no filler."
+   },
+   "reference_original": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 2,
+    "concision": 2
+   },
+   "reference_adjudicated": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 4,
+    "concision": 2
+   },
+   "corrections": [
+    {
+     "dimension": "authority_calibration",
+     "from": 2,
+     "to": 4,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "The defect is an unsupported event implication and a misleading opening (faithfulness, directness). It does not promote pending material into governing authority."
+    },
+    {
+     "dimension": "hedging_calibration",
+     "from": 2,
+     "to": 4,
+     "date": "2026-11-12",
+     "by": "ChatGPT reviewer's revision, chosen in chat by Paige, Nov 12",
+     "why": "The same opening does not mishandle an explicit uncertainty claim; no distinct hedging reason is established."
+    }
+   ],
+   "adjudication_note": "Reassessed after the sheet fix, unchanged: the opening presupposes a full-automation decision (faithfulness, authority, directness, hedging 2); 'non-blocking is unsupported' no longer applies but is not the only reason. Concision 2 is for repeated prose statements.",
+   "grader_v10": {
+    "faithfulness": 3,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline phrase \"why support was decided to be fully automated\" loosely implies that a decision event occurred. The summary immediately says the records do not establish such a decision, so the implication is undercut. Every other claim traces to a supplied record and the citations match.",
+    "authority_calibration": "Current State is stated as the governing fact, and the post-pilot item is presented as an open, non-blocking Question. No pending item is promoted.",
+    "consequential_completeness": "The answer corrects the false premise (\"The supplied records do not establish a decision to fully automate support\"). It also surfaces both the Current State record and the open Question on post-pilot automation.",
+    "directness": "The headline, \"State does not record why support was decided to be fully automated\", restates the premise as background. Only the summary's first sentence corrects it.",
+    "hedging_calibration": "The Current State fact is stated plainly. The unknown about post-pilot automation is hedged once, on that item. The answer makes no definite denial beyond what the records cover.",
+    "concision": "The summary makes the 'no decision recorded' point twice. \"No Review or History record supports a full-automation decision...\" largely restates the opening sentence."
+   },
+   "reference_adjudicated_nov11": {
+    "faithfulness": 2,
+    "authority_calibration": 2,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 2,
+    "concision": 2
+   },
+   "grader_v11": {
+    "faithfulness": 2,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 2,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v11": {
+    "faithfulness": "The headline 'State does not record why support was decided to be fully automated' implies a decision event that no record shows. The summary later corrects this, but the correction creates a contradiction rather than removing the unsupported implication. The rest traces to the records.",
+    "authority_calibration": "Current State is labeled as governing, and the post-pilot automation item is clearly an open, non-blocking Question. No pending item is promoted.",
+    "consequential_completeness": "The answer surfaces the premise correction, the Current State fact and the open Question on post-pilot automation.",
+    "directness": "The opening restates the premise as background ('why support was decided to be fully automated'). Only the summary corrects it.",
+    "hedging_calibration": "Current State is stated plainly, and absence is worded as 'not established' rather than as a definite denial. The open Question is hedged once.",
+    "concision": "The summary restates the missing-decision point twice ('do not establish a decision' and 'No Review or History record supports... cannot be determined'), adding little."
+   }
+  },
+  {
+   "blind_id": "v12",
+   "answer_id": "r6",
+   "scenario": "ask_conflicting_evidence",
+   "intent": null,
+   "reference_note": "Correctly preserves Current State and the pending challenge. The separate caveat about future vendor practices is unrelated to the question.",
+   "grader_v9": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v9": {
+    "faithfulness": "The headline, summary and both items trace to the supplied state and review records. The sentence about future practices states only an absence of records, which is supported.",
+    "authority_calibration": "Current State is presented as governing. The Review is explicitly 'proposed and awaiting review and has not changed Current State.'",
+    "consequential_completeness": "The conflicting open Review is surfaced in the headline, the summary and its own card.",
+    "directness": "The headline opens with the answer from Current State, then adds the caveat.",
+    "hedging_calibration": "The settled fact is stated plainly. The pending challenge is hedged once, with 'may challenge'.",
+    "concision": "The closing summary sentence about 'future practices' answers a question the user did not ask and adds no fact."
+   },
+   "reference_original": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reference_adjudicated": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "corrections": [],
+   "grader_v10": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v10": {
+    "faithfulness": "The headline, the summary and both items trace to the state record and the review record. The line \"No supplied record addresses... future practices\" is a supported absence statement.",
+    "authority_calibration": "Current State is presented as governing. The Review is explicitly described as \"proposed and awaiting review and has not changed Current State.\"",
+    "consequential_completeness": "The answer surfaces both the Current State record and the conflicting open Review that may contradict it.",
+    "directness": "The headline answers immediately: the approved terms say customer content is not used for training. The pending challenge follows as context.",
+    "hedging_calibration": "The Current State fact is stated plainly. The \"may challenge\" caveat is attached only to the pending Review.",
+    "concision": "The final summary sentence about the vendor's future practices is an unprompted, irrelevant context item. It adds nothing to the question asked."
+   },
+   "grader_v11": {
+    "faithfulness": 4,
+    "authority_calibration": 4,
+    "consequential_completeness": 4,
+    "directness": 4,
+    "hedging_calibration": 4,
+    "concision": 3
+   },
+   "reasons_v11": {
+    "faithfulness": "Headline, summary and items all trace to the Current State record and the open Review. The line 'No supplied record addresses future practices' is a supported absence statement.",
+    "authority_calibration": "Current State is stated as governing. The Review is explicitly 'proposed and awaiting review and has not changed Current State'.",
+    "consequential_completeness": "The conflicting open Review is surfaced alongside Current State, which is the only consequential record.",
+    "directness": "The headline answers immediately: the approved terms say customer content is not used for training, with the pending challenge noted.",
+    "hedging_calibration": "The Current State fact is stated plainly. The uncertainty is attached only to the pending Review ('may challenge').",
+    "concision": "The closing summary sentence about the vendor's future practices is extra context the question did not ask for. The headline and summary also both restate the same content."
+   }
+  }
+ ],
+ "report_original": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.6666666666666666,
+    "passes": false
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.75,
+    "passes": false
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.75,
+    "passes": false
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.5,
+    "within_one": 0.8333333333333334,
+    "passes": false
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ },
+ "report_adjudicated": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 0.75,
+    "passes": false
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.75,
+    "passes": false
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.75,
+    "passes": false
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.8333333333333334,
+    "passes": false
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ },
+ "label": "Calibration material (Nov 12): this set informed v10 and v11 rubric development, so it is not held-out validation. AI-reviewer comparison; human calibration still pending.",
+ "grader_v10_run": 43343516922,
+ "grader_v10_report": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.9166666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.6666666666666666,
+    "within_one": 0.75,
+    "passes": false
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.75,
+    "within_one": 0.8333333333333334,
+    "passes": false
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.4166666666666667,
+    "within_one": 1.0,
+    "passes": false
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ },
+ "grader_v10_regression_misses": [
+  "r3 faithfulness: expected 1-2, got 3"
+ ],
+ "grader_v10_note": "Nov 12: v06, v07 and v11 became v10 regression examples, so this set is calibration material from v10 on, not held-out evidence. Earlier scores are kept unchanged.",
+ "reference_note_nov12": "Nov 12: v07 and v11 authority and hedging revised 2 → 4 (one flaw belongs in faithfulness and directness). `reference_original` keeps ChatGPT's first grades, `reference_adjudicated_nov11` the Nov 11 adjudication for changed rows; v09's authority disagreement stays open.",
+ "grader_v10_report_vs_nov12_reference": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 0.9166666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.9166666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.4166666666666667,
+    "within_one": 1.0,
+    "passes": false
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ },
+ "grader_v11_run": 43347015175,
+ "grader_v11_report": {
+  "dimensions": {
+   "faithfulness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "authority_calibration": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 0.9166666666666666,
+    "passes": true
+   },
+   "consequential_completeness": {
+    "n": 12,
+    "exact": 0.8333333333333334,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "directness": {
+    "n": 12,
+    "exact": 1.0,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "hedging_calibration": {
+    "n": 12,
+    "exact": 0.9166666666666666,
+    "within_one": 1.0,
+    "passes": true
+   },
+   "concision": {
+    "n": 12,
+    "exact": 0.3333333333333333,
+    "within_one": 1.0,
+    "passes": false
+   }
+  },
+  "missed_fails": [],
+  "passes": false
+ },
+ "grader_v11_regression_misses": []
+}

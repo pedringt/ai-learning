@@ -109,15 +109,10 @@
   function stateStatement(item){return item.statement || item.current_statement || item.text || item.value || '';}
   function reviewText(item){return item.decision_question || item.title || item.summary || item.why_consequential || item.proposed || 'Review pending';}
   function questionText(item){return item.text || item.question || item.title || 'Open question';}
-  function fallbackContext(){
-    return {
-      state:(DATA.knowledge||[]).filter(x=>x.state==='current'),
-      reviews:(DATA.reviews||[]).filter(x=>x.status==='pending'),
-      questions:(DATA.questions||[]).filter(x=>x.status==='open')
-    };
-  }
+  // Nov 14: no fallback. Copy Context once fell back to the static Northstar fixture (context-data.js) when the
+  // API failed, and copied those placeholder facts as "accepted project understanding" for any project.
   async function loadCopyContext(){
-    if(!API) return fallbackContext();
+    if(!API) return null;
     try{
       const [stateRaw,reviewsRaw,questionsRaw] = await Promise.all([API.getState(),API.getReviews('open'),API.getQuestions('open')]);
       return {
@@ -125,10 +120,10 @@
         reviews:asList(reviewsRaw,['reviews','items','results']),
         questions:asList(questionsRaw,['questions','items','results'])
       };
-    }catch(_){return fallbackContext();}
+    }catch(_){return null;}
   }
   function buildContextText(mode,task){
-    const data=ui.copyContextData || fallbackContext();
+    const data=ui.copyContextData;
     // QA follow-up (2026-09-14): DATA is window.PROJECT_CONTEXT_DATA, the
     // static pre-hydration fixture (context-data.js) -- its project.name
     // was always literally "Northstar" and, being truthy, always won over
@@ -136,7 +131,7 @@
     // "Northstar" even on Juniper (confirmed live). #projectSwitcher's own
     // dataset.name is kept in sync with the real active project by
     // syncProjectMenu() and is present on every view, so it's tried first now.
-    const project=document.getElementById('projectSwitcher')?.dataset?.name || document.querySelector('.project-title-line h2')?.textContent?.trim() || DATA.project?.name || 'Project';
+    const project=document.getElementById('projectSwitcher')?.dataset?.name || document.querySelector('.project-title-line h2')?.textContent?.trim() || 'Project';
     const lines=['PROJECT CONTEXT FROM STATE',`Project: ${project}`];
     if(task) lines.push(`Task: ${task}`);
     lines.push('', 'Use this as maintained project context. CURRENT STATE is accepted project understanding. PENDING REVIEWS and OPEN QUESTIONS are not accepted facts. If another source conflicts with this context, call out the conflict instead of smoothing it over.', '', 'CURRENT STATE');
@@ -161,6 +156,12 @@
     loadCopyContext().then(data=>{
       ui.copyContextData=data;
       const button=document.querySelector('[data-review-batch-action="copy-context-confirm"]');
+      if(!data){
+        if(button)button.textContent='Unavailable';
+        const status=document.getElementById('copyContextStatus');
+        if(status)status.textContent='Current State could not be loaded, so there is nothing to copy. Close this and try again.';
+        return;
+      }
       if(button){button.disabled=false;button.textContent='Copy to clipboard';}
     });
   }

@@ -400,3 +400,59 @@ def test_an_unattributed_denial_fails_the_qualified_scenario():
             "summary": "A Review is pending; the budget is not in Current State."}
     assert not score_ask_answer(scenario, bare).passed
     assert not score_ask_answer(scenario, LIVE_BUDGET_ANSWER).passed
+
+
+def _seed_reversal_review(connection, operations):
+    """The review_direct_reversal setup (#660), with one pending proposal per operation."""
+    connection.execute("INSERT INTO current_state_items(id, topic, statement, version) VALUES "
+                       "('quality-state-0', 'automation', 'Password-reset tickets are approved for automation.', 1)")
+    connection.execute("INSERT INTO review_issues(id,review_type,decision_question,why_consequential,status) "
+                       "VALUES ('r1','proposed_update','Should password-reset automation change?','Security paused it','open')")
+    statements = {"retire": "Password-reset tickets are approved for automation.",
+                  "update": "Password-reset automation is paused after a security incident."}
+    for idx, operation in enumerate(operations):
+        connection.execute(
+            "INSERT INTO proposed_state_changes(id, review_id, state_item_id, proposed_statement, rationale, "
+            "expected_state_version, status, operation) VALUES (?, 'r1', 'quality-state-0', ?, "
+            "'Security paused password-reset automation after an incident.', 1, 'pending', ?)",
+            (f"p{idx}", statements[operation], operation))
+    connection.commit()
+
+
+def test_a_retire_is_scored_as_a_retire_not_as_the_old_fact():
+    """#660: a retire's proposed_statement holds the fact being retired. It used to be read as the proposal,
+    so a retire failed as "proposed state lacks paused" and would also have matched the forbidden old wording."""
+    from eval.quality_harness import _close, _new_test_connection, _review_prose
+    from eval.review_interpretation_scenarios import SCENARIOS
+    scenario = [s for s in SCENARIOS if s.id == "review_direct_reversal"][0]
+    connection = _new_test_connection()
+    try:
+        _seed_reversal_review(connection, ["retire"])
+        observed, proposed = _observed_review_outcome(connection, ["r1"])
+        assert (observed, proposed) == ("retire_state", "")
+        assert "approved for automation" not in _review_prose(connection, ["r1"])
+    finally:
+        _close(connection)
+    result = ReviewQualityResult(scenario=scenario, review_recommended=True, observed_action=observed,
+                                 processing_status="processed", proposed_state_text=proposed)
+    # Paige, Nov 12: a bare retire is not an acceptable reading of an authority-backed reversal.
+    assert not result.passed
+    assert result.interpretation_problems == ["action retire_state not in update_state"]
+
+
+def test_an_update_beside_a_retire_is_scored_on_the_update_wording_only():
+    from eval.quality_harness import _close, _new_test_connection
+    from eval.review_interpretation_scenarios import SCENARIOS
+    scenario = [s for s in SCENARIOS if s.id == "review_direct_reversal"][0]
+    connection = _new_test_connection()
+    try:
+        _seed_reversal_review(connection, ["retire", "update"])
+        observed, proposed = _observed_review_outcome(connection, ["r1"])
+    finally:
+        _close(connection)
+    assert observed == "update_state"
+    assert proposed == "Password-reset automation is paused after a security incident."
+    result = ReviewQualityResult(scenario=scenario, review_recommended=True, observed_action=observed,
+                                 processing_status="processed", proposed_state_text=proposed,
+                                 rationale_text="Security paused password-reset automation after an incident.")
+    assert result.interpretation_problems == []

@@ -163,6 +163,53 @@ When a real failure reveals a missing behavior case, add it to the cheapest laye
 - **Human review** (`eval/review_sample_567.py`): builds a packet of 12 after and 6 before saved answers covering the known failure types, adversarial ones included, shown as displayed beside the records the scenario seeded. Every `ask`, `adversarial` and `graded` matrix record keeps its full answer, displayed text and seeded records in the run's repeat files (synthetic scenarios only; `aggregate_matrix` reads none of these fields). The review is **shuffled and version-unlabelled, not blinded**: codes hide the scenario and run, and the key is a separate file, but the two answer formats reveal the version.
 - **Scoring-version boundary (Nov 10).** The keyword checks read the answer's words without chips, the fixed headline or the withheld line, so a label can never satisfy a required fact; `eval/scorer_checks.py` holds a correctly-labelled-but-wrong, a label-only, an all-withheld and a correct claims-shape answer. The scoring version now fingerprints `ask_display.py` as well: Ask suite runs scored before this carry a different version and are not comparable. The before and after #567 runs must report the same version: on Nov 10 both the baseline ref (`eval/567-baseline`, staging `25a25d1` Ask code with the #567 eval harness and scorer) and the candidate (`feature/567-claim-authority`) compute `ask-13-c5a17ea88dc6`.
 - **Scoring version `ask-13-f3e94ccb5f61` (Nov 13, Paige).** The Ask scorer accepts the record-first wording #567's denial-opening rule asks for: "has no established" as a required-fact phrasing for `ask_unknown_stays_unknown`, and "does not confirm" and "has no confirmed" as uncertainty signals. The exact staging answers from run 43532212042 pass; answers that omit the blocker, call it cleared or state the unknown as known still fail (`test_scorer_phrasings_567.py`). Ask runs scored under earlier versions are not comparable.
+- **Scoring versions `review-16-24d86495df57` and `ask-13-e13d400d0ed5` (Nov 14, #660).** The Review scorer reads each proposal with its operation. A retire's `proposed_statement` is the old fact being retired, so it no longer counts as proposed wording or Review prose. A Review that only retires a fact scores as `retire_state`, which no scenario accepts (Paige, Nov 12: an authority-backed reversal must propose the new state). Before this, the retire in `review_direct_reversal` failed as "proposed state lacks paused". It still fails, but as the action it is. The Ask version changes only because the scoring version fingerprints the whole harness file; Ask scoring itself is unchanged. Runs scored under earlier versions of either suite are not comparable.
+- **Scoring versions `ask-13-beef0c53300f` and `review-16-38831291d59c` (Nov 14, Paige).** Two Ask scorer decisions from matrix run 43635193846:
+  - **"Add both phrasings."** `ask_unknown_stays_unknown` accepts "has no confirmed" and "has no accepted" beside "has no established".
+  - **"Label counts; body must still answer."** A pending claim shown only as a labelled Needs-review item now passes the authority check. This applies only when every claim rests on Current State or an open Question and no claim uses a word that only the pending Reviews contain. Pending material in the answer's own claims still needs proposal wording, or authority fails. `ask_compound_question_keeps_governing_state` gains `body_required_facts=("budget",)`, so an answer that leaves the budget to the Review item fails as a missing fact (quality, not a DEC-022 trust failure).
+  - **Effect, rescored offline:** all 3,486 saved Ask and adversarial answers in this session's runs were scored with the old and new scorer. 8 changed: 3 unknown answers now pass, 4 compound answers move from an authority failure to a missing fact, and 1 adversarial answer (every claim withheld, pending item only in the labelled item) now passes authority and still fails a fact. Tests: `test_ask_scorer_nov14.py`.
+  - The Review version changes only because the fingerprint covers the whole harness file. Ask runs scored under earlier versions are not comparable.
+- **Scoring version `ask-13-a28ffe959a81` (Nov 14, Paige: "yeah let's include it").** `ask_compound_question_keeps_governing_state` also requires "$40,000" in the answer's own claims (`body_required_facts=("budget", "$40,000")`), the literal form this scenario's required facts already use. The authority rules above still apply, so "The pilot budget is $40,000." in the body without pending wording fails authority. Offline rescore of run 43635193846: 126/130. Repeat 1, which covers the budget but leaves the figure to the Review item, now fails as a missing fact (quality); it is the only change among the 3,486 saved answers. The Review version is unchanged.
+
+### Ask retrieval benchmark (#653, Nov 14)
+
+**What it measures.** Whether the record a question needs survives Ask's two narrowing steps before any model sees it: the recency windows in `_compact_candidates`, then word matching in `_trim_candidates_for_query`. It makes no model calls and changes no product code.
+
+**How to run it.**
+- Library: `eval/retrieval_benchmark.py`. Script: `python -m eval.run_retrieval_benchmark [--out file.json]`.
+- `test_retrieval_benchmark_653.py` runs in `qa-fast` on SQLite and on Postgres. It asserts invariants, not recall.
+
+**Fixture.**
+- A synthetic project larger than every window: 30 State, 8 open Reviews, 12 open Questions, 40 answered Questions, 40 History and 113 Evidence.
+- A twin project with identically worded key records, for the isolation check.
+- 31 cases: at least 5 in each of the four #653 families, plus the negative controls. Gold ids are true by construction.
+
+**A0 (today), Nov 14:**
+- **Overall:** recall 0.446.
+- **By family:** windows 0.0, paraphrase 0.33, links 0.6, answered Questions 0.4.
+- **Context:** about 12.2k characters (roughly 3k tokens, an estimate).
+- **Isolation and authority:** isolation violations 0; authority preserved in 100% of cases.
+
+**Alternatives, measured on the same cases (benchmark-only):**
+
+| Variant | Recall | Mean context (chars) |
+|---|---|---|
+| A1: no windows, today's matching | 0.804 | 12.3k |
+| A2: windows ×2 | 0.589 | 12.3k |
+| A2: windows ×4 | 0.661 | 12.4k |
+| A3: today's windows + stemming | 0.411 | 11.9k |
+| A4: no windows + BM25 | 0.786 | 12.1k |
+| A4 + A5 (link expansion) | 0.821 | 13.1k |
+
+What the comparison shows:
+- **Paraphrase stays at 0.33** for every deterministic variant.
+- **Limits, not windows, bound context size.** Removing the windows doesn't grow what the model receives.
+- **A6 and A7 were not run.** The reasons are in `SKIPPED_VARIANTS`.
+
+**Findings about today's code, recorded and not fixed here (#653 changes no product code):**
+- **Current State Review links are nondeterministic.** `_trim_candidates_for_query` appends a selected Review's missing State items from a `set` and keeps 2. With more than 2 missing, which ones survive depends on `PYTHONHASHSEED`, so the same question on the same data can get different context per process. Reproduced with seeds 0–5.
+- **The answered-Question window keeps the oldest.** `list_questions(connection, "resolved")[:30]` is ordered oldest-created first. Ask therefore keeps the 30 oldest answered Questions, not the newest. A newer answered Question neither reaches the model nor changes `ask_cache_key`.
+- **Cache dependency.** `ask_cache_key` hashes the windowed candidates. Any retrieval change must reassess cache invalidation, including edits to older records that become retrievable.
 
 ## Minimum behavior families to retain
 

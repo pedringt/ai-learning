@@ -5,6 +5,7 @@ import json
 import hashlib
 import logging
 import re
+import threading
 import time
 import uuid
 from datetime import date
@@ -22,27 +23,12 @@ from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_ca
 from ask_display import claim_lines, has_withheld, withheld_line
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from db import project_id_of
-from ask_authority_text import (  # noqa: F401  (re-exported: tests and callers import these from ask_service)
-    _evidence_backing,
+from ask_authority_text import (  # noqa: F401  (re-exported: tests import these from ask_service)
     _DEMO_SLUG_ID,
     _INTERNAL_JSON_FIELD_NAMES,
-    _NEGATION_RE,
-    _PENDING_HEDGE_PHRASES,
-    _SENTENCE_SPLIT_RE,
-    _SETTLED_TARGET_WORD_RE,
-    _SETTLED_WORD_REPLACEMENTS,
-    _UNEARNED_SETTLED_PROSE_REPLACEMENTS,
-    _WORD_RE,
-    _already_hedged,
     _candidate_pool_ids,
     _clean_visible_ask_text,
     _source_type_labels,
-    _governing_state_ngrams,
-    _match_case,
-    _quotes_governing_state,
-    _soften_unearned_settled_prose,
-    _soften_unearned_settled_words,
-    _words,
 )
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_state, question_source_evidence
 # Ask sees the Review list people see (an extension point; Baseline hides routine
@@ -665,8 +651,8 @@ class _AnswerChecks:
         self.canonical_questions = {x["id"]: x for x in context.get("questions", [])}
         self.canonical_answered = {x["id"]: x for x in context.get("answered_questions", [])}
 
-        # #567 (Nov 11): the word backstop (_soften_unearned_settled_*) no longer runs on answers. Claims, cards and
-        # titles are shown as written, withheld, or replaced by record text (ask_assertions), never reworded.
+        # #567 (Nov 11): software never rewords an answer. Claims, cards and titles are shown as written, withheld, or
+        # replaced by record text (ask_assertions).
         self.checker = ClaimChecker(context, query=query, today=today)
 
     def clean(self, value: str | None) -> str | None:
@@ -1275,8 +1261,12 @@ def stream_ask_events(
     query: str,
     previous_answer: Mapping[str, Any] | None = None,
     today: date | None = None,
+    cancelled: threading.Event | None = None,
 ) -> Iterator[tuple[str, dict[str, Any]]]:
-    """Yield grounded-context status, real provider deltas, then a validated final Ask payload."""
+    """Yield grounded-context status, real provider deltas, then a validated final Ask payload.
+
+    When `cancelled` is set (the person left), stop at the provider's next chunk and close its stream (#654).
+    """
     total_started = time.perf_counter()
 
     # A hypothetical draft is refined by the model (keeping its assumption), not by the deterministic transforms.
@@ -1314,26 +1304,36 @@ def stream_ask_events(
     stream_checks: _StreamChecks | None = None
     selection_failed = False
     first_validated_ms: int | None = None
-    for text in provider.stream(_one_call_prompt(query, candidates, previous_answer, today=today)):
-        if not text:
-            continue
-        if first_token_ms is None:
-            first_token_ms = round((time.perf_counter() - provider_started) * 1000)
-        chunks.append(text)
-        for kind, raw in scanner.feed(text):
-            if selection_failed:
-                break
-            if stream_checks is None:
-                try:
-                    stream_checks = _StreamChecks(scanner.selection, candidates, query, today, previous_answer)
-                except ValueError:
-                    selection_failed = True     # it fails the finished answer too; nothing is shown
+    provider_stream = provider.stream(_one_call_prompt(query, candidates, previous_answer, today=today))
+    try:
+        for text in provider_stream:
+            if cancelled is not None and cancelled.is_set():
+                return
+            if not text:
+                continue
+            if first_token_ms is None:
+                first_token_ms = round((time.perf_counter() - provider_started) * 1000)
+            chunks.append(text)
+            for kind, raw in scanner.feed(text):
+                if selection_failed:
                     break
-            event = stream_checks.claim_event(raw) if kind == "claim" else stream_checks.section_event(raw)
-            if event is not None:
-                if first_validated_ms is None and (event.get("status") == "shown" or event.get("section")):
-                    first_validated_ms = round((time.perf_counter() - total_started) * 1000)
-                yield kind, event
+                if stream_checks is None:
+                    try:
+                        stream_checks = _StreamChecks(scanner.selection, candidates, query, today, previous_answer)
+                    except ValueError:
+                        selection_failed = True     # it fails the finished answer too; nothing is shown
+                        break
+                event = stream_checks.claim_event(raw) if kind == "claim" else stream_checks.section_event(raw)
+                if event is not None:
+                    if first_validated_ms is None and (event.get("status") == "shown" or event.get("section")):
+                        first_validated_ms = round((time.perf_counter() - total_started) * 1000)
+                    yield kind, event
+    finally:
+        # #654: when this generator is closed early (the person cancelled), close the provider's stream too, so
+        # its HTTP connection and the model's generation stop now rather than at garbage collection.
+        close = getattr(provider_stream, "close", None)
+        if close is not None:
+            close()
     provider_ms = round((time.perf_counter() - provider_started) * 1000)
     _persist_model_call_metrics(connection, provider)
     combined = _parse_streamed_json("".join(chunks))
