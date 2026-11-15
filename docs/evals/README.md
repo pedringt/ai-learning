@@ -210,6 +210,11 @@ What the comparison shows:
 - **Current State Review links were nondeterministic.** `_trim_candidates_for_query` appended a selected Review's missing State items from a `set` and kept 2. With more than 2 missing, which ones survived depended on `PYTHONHASHSEED`, so the same question on the same data could get different context per process. They are now appended in Review rank order.
 - **The answered-Question window kept the oldest.** `list_questions(connection, "resolved")[:30]` was ordered oldest-created first, so a newer answered Question neither reached Ask nor changed `ask_cache_key`. It is now `limit=30`, which keeps the 30 most recently answered. The benchmark's answered-Question cases were re-dated for the new window, so family 4 numbers from before #664 aren't comparable. A0 after #664: recall 0.482.
 - **Cache dependency.** `ask_cache_key` hashes the windowed candidates (History, Evidence and answered Questions, all newest first). Any retrieval change must reassess cache invalidation, including edits to older records that become retrievable.
+- **DEC-023 built (Nov 14).**
+  - What changed: no windows, the per-type limits doubled, link expansion (capped at 10), and answered Questions ranked like other types.
+  - Benchmark A0 on the same fixture: recall 0.482 before and **0.964** after, at about 26k characters of candidates (about 12k before). Isolation is still 0 and authority 100%.
+  - The context-size run (`docs/evals/ask-context-size-results.md`) measured the model's selection at these sizes.
+  - In a project as small as Northstar today, nearly every record now reaches the model.
 
 ## Minimum behavior families to retain
 

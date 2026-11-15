@@ -309,11 +309,15 @@ def test_r92_security_meeting_context_is_bounded_and_omits_demo_noise(tmp_path):
     try:
         full = _compact_candidates(conn)
         trimmed = _trim_candidates_for_query("Prep me for the security meeting.", full)
-        assert len(trimmed["state"]) <= 14
-        assert len(trimmed["questions"]) <= 12
-        assert len(trimmed["evidence"]) <= 12
-        assert not any(x["id"] == "ask-evidence-demo-noise" for x in trimmed["evidence"])
-        assert any(x["id"] == "ask-evidence-security-meeting" for x in trimmed["evidence"])
+        # DEC-023 limits; link expansion may add up to its cap on top.
+        from ask_service import _LINK_EXPANSION_CAP, _REVIEW_LINKED_STATE_EXTRA, _TRIM_LIMITS
+        assert len(trimmed["state"]) <= _TRIM_LIMITS["state"] + _REVIEW_LINKED_STATE_EXTRA + _LINK_EXPANSION_CAP
+        assert len(trimmed["questions"]) <= _TRIM_LIMITS["questions"] + _LINK_EXPANSION_CAP
+        assert len(trimmed["evidence"]) <= _TRIM_LIMITS["evidence"] + _LINK_EXPANSION_CAP
+        # Since DEC-023's doubled limits a project this small sends all of its Evidence, so the noise note is no
+        # longer cut; it must still rank below the relevant one.
+        evidence_ids = [x["id"] for x in trimmed["evidence"]]
+        assert evidence_ids.index("ask-evidence-security-meeting") < evidence_ids.index("ask-evidence-demo-noise")
         assert any(x["id"] == "demo-review-retention" for x in trimmed["reviews"])
     finally:
         conn.close()

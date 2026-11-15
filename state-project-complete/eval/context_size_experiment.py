@@ -3,7 +3,7 @@
 Each #653 benchmark question is asked through the real streaming Ask (`stream_ask_events`) on the benchmark fixture,
 under five retrieval conditions that change only what the model receives:
 
-- `today`: the current code (recency windows + word matching).
+- `today`: the current code (since DEC-023: no windows, doubled limits, link expansion; before: recency windows).
 - `x1`, `x1_5`, `x2`: no windows (DEC-023), today's word matching, per-type limits scaled 1, 1.5 and 2 times.
 - `whole`: no windows and no trimming: every record in the project.
 
@@ -30,6 +30,8 @@ from eval import retrieval_benchmark as rb
 
 CONDITIONS: dict[str, float | None] = {"today": None, "x1": 1.0, "x1_5": 1.5, "x2": 2.0, "whole": 0.0}
 CHARS_PER_TOKEN = 3.5      # the matrix's estimate (eval/matrix.py)
+# The per-type limits before DEC-023, which the x1/x1_5/x2 conditions scale (run 43676969245 used these).
+BASE_LIMITS = {"state": 12, "reviews": 6, "questions": 12, "answered_questions": 6, "history": 10, "evidence": 12}
 
 
 @dataclass(frozen=True)
@@ -71,7 +73,7 @@ def _whole(query: str, candidates: Any) -> dict:
 
 
 def _scaled(scale: float):
-    limits = {k: max(1, round(v * scale)) for k, v in rb.TRIM_LIMITS.items()}
+    limits = {k: max(1, round(v * scale)) for k, v in BASE_LIMITS.items()}
     # Today's scoring, mirrored; at scale 1 it selects exactly what the real trim does with no windows (#653: A1).
     return lambda query, candidates: rb._rank_and_limit(query, candidates, rb._today_score, limits, rb._today_terms(query))
 

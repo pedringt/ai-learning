@@ -13,22 +13,27 @@ from test_project_isolation import db  # noqa: F401  (SQLite + Postgres connecti
 
 
 def _candidates() -> dict:
-    """14 unrelated State items fill the 12 slots; 6 matching Reviews each affect a different State item outside them."""
+    """Unrelated State items fill every State slot; 12 matching Reviews each affect a different State item outside them."""
+    from ask_service import _TRIM_LIMITS
     state = [{"id": f"s-{n:02d}", "topic": f"Topic {n:02d}", "statement": "Unrelated.", "authority": "governing_current_fact"}
-             for n in range(14)]
-    state += [{"id": f"s-linked-{n}", "topic": f"Zz linked {n}", "statement": "Linked fact.", "authority": "governing_current_fact"}
-              for n in range(6)]
-    reviews = [{"id": f"r-{n}", "review_type": "proposed_update", "decision_question": "Should the conformance level change?",
-                "why_consequential": "x", "authority": "qualifies_current_state", "affected_state_ids": [f"s-linked-{n}"],
-                "evidence_ids": [], "question_ids": []} for n in range(6)]
+             for n in range(_TRIM_LIMITS["state"] + 2)]
+    state += [{"id": f"s-linked-{n:02d}", "topic": f"Zz linked {n:02d}", "statement": "Linked fact.", "authority": "governing_current_fact"}
+              for n in range(12)]
+    reviews = [{"id": f"r-{n:02d}", "review_type": "proposed_update", "decision_question": "Should the conformance level change?",
+                "why_consequential": "x", "authority": "qualifies_current_state", "affected_state_ids": [f"s-linked-{n:02d}"],
+                "evidence_ids": [], "question_ids": []} for n in range(12)]
     empty = {"questions": [], "answered_questions": [], "history": [], "evidence": [], "rules": []}
     return {"state": state, "reviews": reviews, **empty}
 
 
 def test_review_linked_state_items_are_kept_in_review_rank_order():
+    from ask_service import _LINK_EXPANSION_CAP, _REVIEW_LINKED_STATE_EXTRA, _TRIM_LIMITS
     trimmed = _trim_candidates_for_query("Is the conformance level changing?", _candidates())
-    # 12 best-matching State items, then the 2 linked to the highest-ranked Reviews (all tie, so list order).
-    assert [s["id"] for s in trimmed["state"][12:]] == ["s-linked-0", "s-linked-1"]
+    # The best-matching State items, then those linked to the highest-ranked Reviews (all tie, so list order); link
+    # expansion (DEC-023) then adds the rest of the Reviews' State items, up to its cap, also in Review order.
+    limit, extra = _TRIM_LIMITS["state"], _REVIEW_LINKED_STATE_EXTRA
+    expected = [f"s-linked-{n:02d}" for n in range(min(12, extra + _LINK_EXPANSION_CAP))]
+    assert [s["id"] for s in trimmed["state"][limit:]] == expected
 
 
 def test_review_linked_state_items_do_not_depend_on_the_hash_seed():
@@ -43,13 +48,13 @@ def test_review_linked_state_items_do_not_depend_on_the_hash_seed():
     assert len(outputs) == 1, outputs
 
 
-def test_ask_keeps_the_newest_answered_questions_and_a_new_answer_changes_the_cache_key(db):
+def test_ask_keeps_every_answered_question_newest_first_and_a_new_answer_changes_the_cache_key(db):
     rb.build_fixture(db)
     db.project_id = rb.PROJECT
-    answered = [q["id"] for q in _compact_candidates(db)["answered_questions"]]
-    assert len(answered) == 30
-    assert {"qa-trainer", "qa-mobile", "qa-control", "qa-escalation-owner"} <= set(answered)   # answered most recently
-    assert not {"qa-sandbox", "qa-holiday-cover", "qa-refund-limit"} & set(answered)          # answered first of 40
+    answered = _compact_candidates(db)["answered_questions"]
+    assert len(answered) == 40                                                 # DEC-023: no window
+    resolved = [q["resolved_at"] for q in answered]
+    assert resolved == sorted(resolved, reverse=True)                          # newest first, as #664 intended
 
     query, today = "Are sandboxes ready?", date(2026, 11, 14)
     before = ask_cache_key(db, query, today=today)

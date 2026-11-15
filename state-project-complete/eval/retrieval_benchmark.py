@@ -32,8 +32,9 @@ AUTHORITY = {
     "answered_questions": "answered_question", "history": "accepted_past_transition",
     "evidence": "supporting_or_event_evidence", "rules": "interpretation_guardrail",
 }
-# Today's per-type limits in _trim_candidates_for_query (state 12, plus Review-linked items up to 14).
-TRIM_LIMITS = {"state": 12, "reviews": 6, "questions": 12, "answered_questions": 6, "history": 10, "evidence": 12}
+# The per-type limits _trim_candidates_for_query uses (DEC-023 doubled them on Nov 14; before, state 12 (+2 linked),
+# reviews 6, questions 12, answered 6, history 10, evidence 12). The alternatives below use the same limits.
+TRIM_LIMITS = dict(ask_service._TRIM_LIMITS)
 
 _T0 = datetime(2026, 1, 5, 9, 0, 0)
 
@@ -460,7 +461,7 @@ def _rank_and_limit(query: str, candidates: Mapping[str, list[dict]], score: Cal
             state.append(state_by_id[sid])
     answered, scores = ranked("answered_questions", limits["answered_questions"])
     return {
-        "state": state[: limits["state"] + 2], "reviews": reviews, "questions": ranked("questions", limits["questions"])[0],
+        "state": state[: limits["state"] + ask_service._REVIEW_LINKED_STATE_EXTRA], "reviews": reviews, "questions": ranked("questions", limits["questions"])[0],
         "answered_questions": [x for x in answered if scores[id(x)] > 0],
         "history": ranked("history", limits["history"])[0], "evidence": ranked("evidence", limits["evidence"])[0],
         "rules": list(candidates["rules"]),

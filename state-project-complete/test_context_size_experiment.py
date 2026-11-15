@@ -15,8 +15,8 @@ def test_every_case_runs_under_every_condition():
 def test_conditions_change_only_how_much_the_model_receives():
     case = next(c for c in rb.CASES if c.id == "w1")
     size = {name: cse.prompt_chars(cse.Scenario(f"w1@{name}", case, name)) for name in cse.CONDITIONS}
-    assert size["today"] < size["x1_5"] < size["x2"] < size["whole"]
-    assert abs(size["x1"] - size["today"]) < 0.05 * size["today"]     # no windows at today's limits: about the same size
+    assert size["x1"] < size["x1_5"] < size["x2"] < size["whole"]
+    assert size["x2"] <= size["today"] < size["whole"]          # today (DEC-023) is x2 plus link expansion
 
 
 def test_a_call_is_recorded_without_crashing_the_run():
