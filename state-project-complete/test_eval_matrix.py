@@ -647,6 +647,12 @@ def test_heldoutd_uses_two_scenarios_no_earlier_round_has_seen():
     assert matrix.calls_per_repeat("assessd") == 6
 
 
+def test_survey_suite_covers_every_ask_and_adversarial_scenario_once():
+    ids = [s.id for s in matrix._scenarios("survey")]
+    assert len(ids) == len(set(ids)) == 36
+    assert matrix.plan(["survey"], "claude-haiku-5-5", 1, 40)["total_calls"] == 36
+
+
 def test_grader_rubric_carries_the_nov_14_v12_rule():
     from eval.ask_grader import RUBRIC
     assert "Faithfulness judges whether the content is in a record, not whether it has authority" in RUBRIC
