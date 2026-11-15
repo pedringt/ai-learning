@@ -206,10 +206,10 @@ What the comparison shows:
 - **Limits, not windows, bound context size.** Removing the windows doesn't grow what the model receives.
 - **A6 and A7 were not run.** The reasons are in `SKIPPED_VARIANTS`.
 
-**Findings about today's code, recorded and not fixed here (#653 changes no product code):**
-- **Current State Review links are nondeterministic.** `_trim_candidates_for_query` appends a selected Review's missing State items from a `set` and keeps 2. With more than 2 missing, which ones survive depends on `PYTHONHASHSEED`, so the same question on the same data can get different context per process. Reproduced with seeds 0–5.
-- **The answered-Question window keeps the oldest.** `list_questions(connection, "resolved")[:30]` is ordered oldest-created first. Ask therefore keeps the 30 oldest answered Questions, not the newest. A newer answered Question neither reaches the model nor changes `ask_cache_key`.
-- **Cache dependency.** `ask_cache_key` hashes the windowed candidates. Any retrieval change must reassess cache invalidation, including edits to older records that become retrievable.
+**Findings about the code (fixed in #664, Nov 14):**
+- **Current State Review links were nondeterministic.** `_trim_candidates_for_query` appended a selected Review's missing State items from a `set` and kept 2. With more than 2 missing, which ones survived depended on `PYTHONHASHSEED`, so the same question on the same data could get different context per process. They are now appended in Review rank order.
+- **The answered-Question window kept the oldest.** `list_questions(connection, "resolved")[:30]` was ordered oldest-created first, so a newer answered Question neither reached Ask nor changed `ask_cache_key`. It is now `limit=30`, which keeps the 30 most recently answered. The benchmark's answered-Question cases were re-dated for the new window, so family 4 numbers from before #664 aren't comparable. A0 after #664: recall 0.482.
+- **Cache dependency.** `ask_cache_key` hashes the windowed candidates (History, Evidence and answered Questions, all newest first). Any retrieval change must reassess cache invalidation, including edits to older records that become retrievable.
 
 ## Minimum behavior families to retain
 
