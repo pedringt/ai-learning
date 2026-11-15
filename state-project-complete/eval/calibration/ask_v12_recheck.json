@@ -1,0 +1,2145 @@
+{
+ "about": "#641 v12 re-check (Nov 14): saved answers from every calibration and held-out set where faithfulness or authority was below 4 in any rating or grader-v11 score, re-graded with v12 to see whether the faithfulness/authority split moves the scores it should and only those. Calibration material, not held-out evidence.",
+ "answers": [
+  {
+   "answer_id": "c641:c01",
+   "scenario_id": "ask_compound_question_keeps_governing_state",
+   "from": "ask_calibration_641.json answer h3",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget is $40,000, but implementation planning should hold until that budget is recorded.",
+    "summary": "An open Review describes the pilot budget as approved at $40,000 and says implementation planning depends on a known budget ceiling. Until the Review is accepted and the budget is in Current State, it's safer to hold off on implementation planning. Pilot launch also still needs agreed thresholds for high-risk failures.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Budget (pending)",
+      "items": [
+       {
+        "text": "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Pilot launch still requires agreed thresholds for high-risk failures.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       },
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-1",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what's needed to record the budget"
+    ]
+   }
+  },
+  {
+   "answer_id": "c641:c04",
+   "scenario_id": "ask_source_words_not_demoted",
+   "from": "ask_calibration_641.json answer r4",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget from the Q3 planning session is not in Current State; it is only a pending Review.",
+    "summary": "Current State has no entry for the pilot budget. The only relevant record is an open Review proposing that the Q3 planning session note's figure of $40,000 for discovery and the first implementation phase be recorded in Current State. That Review is pending and unresolved, so the $40,000 figure is not yet a confirmed project fact.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending: pilot budget under review",
+      "items": [
+       {
+        "text": "The Q3 planning session note says the pilot budget is approved at $40,000 for discovery and the first implementation phase. Should that budget be recorded in Current State?",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "c641:c05",
+   "scenario_id": "ask_compound_question_keeps_governing_state",
+   "from": "ask_calibration_641.json answer r5",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 4,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 3,
+     "hedging_calibration": 2
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "Pilot budget is not yet recorded; implementation planning can proceed on the bounded scope, with pending budget review",
+    "summary": "State does not confirm a pilot budget. An open Review proposes recording an proposed (not yet approved) pilot budget of $40,000, but it is pending and has not been accepted, so that figure is not yet a Current State fact. Separately, Current State says implementation planning can proceed with the bounded Tier 1 troubleshooting use case, while pilot launch still requires agreed thresholds for high-risk failures. The Review notes implementation planning depends on a known budget ceiling, so the budget question is relevant to planning.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending review",
+      "items": [
+       {
+        "text": "Is the approved pilot budget of $40,000 ready to be recorded? Implementation planning depends on a known budget ceiling.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Current State on planning and scope",
+      "items": [
+       {
+        "text": "Implementation planning can proceed with the bounded use case, but pilot launch still requires agreed thresholds for high-risk failures.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       },
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-1",
+        "detail": null
+       },
+       {
+        "text": "The pilot uses the minimum customer and account data needed for troubleshooting.",
+        "record_type": "state",
+        "record_id": "ask-state-2",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-state-1",
+     "ask-state-2",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Shorten to a two-sentence answer",
+     "Focus only on what blocks implementation planning"
+    ],
+    "suggested_question": "What is the confirmed pilot budget ceiling?"
+   }
+  },
+  {
+   "answer_id": "c641:c06",
+   "scenario_id": "ask_evidence_backed_approval_qualified",
+   "from": "ask_calibration_641.json answer r1",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 3,
+     "authority_calibration": 3,
+     "hedging_calibration": 3
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget is $40,000 per Q3 planning notes, but it is not yet confirmed as approved in Current State.",
+    "summary": "Evidence from a Q3 planning session records the pilot budget as approved (per Evidence, not in Current State) at $40,000 for discovery and first implementation. However, an open Review asks whether that $40,000 approved (per Evidence, not in Current State) budget is ready to be recorded in Current State, so it remains pending and Current State has not changed. Current State does establish the core pilot use case as Tier 1 troubleshooting assistance, but it does not record a budget.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "Is the approved pilot budget of $40,000 ready to be recorded in Current State?",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Useful context",
+      "items": [
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-evidence-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "c641:c08",
+   "scenario_id": "ask_pending_review_not_truth",
+   "from": "ask_calibration_641.json answer r7",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 3
+    },
+    "grader_v11": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 3
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "Not yet: a review proposing to allow skipping human review for low-risk cases is pending, and current policy still requires human review",
+    "summary": "Current State says customer-facing output remains human-reviewed. Leadership asked whether low-risk cases can skip human review, but no decision is recorded. The open Review is pending and has not changed Current State. It concerns only low-risk cases, not removing all human review.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Customer-facing output remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending review",
+      "items": [
+       {
+        "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the pending decision",
+     "Summarize for a leadership update"
+    ],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "c641:c09",
+   "scenario_id": "ask_evidence_backed_approval_qualified",
+   "from": "ask_calibration_641.json answer r2",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 3,
+     "authority_calibration": 3,
+     "hedging_calibration": 3
+    },
+    "grader_v11": {
+     "faithfulness": 3,
+     "authority_calibration": 3,
+     "hedging_calibration": 3
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget is $40,000 per Q3 planning evidence, but it is not yet approved in Current State",
+    "summary": "The only record of the $40,000 pilot budget is evidence from a Q3 planning session stating it is approved (per Evidence, not in Current State). That approval has not been recorded in Current State: an open Review asks whether the $40,000 approved pilot budget is ready to be recorded, so it remains pending human review. State does not have a confirmed, recorded approval status to rely on yet.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending review",
+      "items": [
+       {
+        "text": "Is the approved pilot budget of $40,000 ready to be recorded in Current State?",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-evidence-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the budget and approval status",
+     "Summarize the pending review"
+    ],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "c641:c10",
+   "scenario_id": "ask_source_words_not_demoted",
+   "from": "ask_calibration_641.json answer h2",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "The pilot budget is approved at $40,000 and is part of the current plan.",
+    "summary": "The pilot budget is $40,000, covering discovery and the first implementation phase. Planning can use that figure as the budget of record. A Review is open to tidy up how it is recorded.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current plan",
+      "items": [
+       {
+        "text": "Pilot budget: $40,000 for discovery and the first implementation phase.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": null
+       },
+       {
+        "text": "The core pilot use case is Tier 1 troubleshooting assistance.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Break the budget down by phase"
+    ]
+   }
+  },
+  {
+   "answer_id": "c641:c11",
+   "scenario_id": "ask_source_words_not_demoted",
+   "from": "ask_calibration_641.json answer r3",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 4,
+     "authority_calibration": 3,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "The Q3 planning session pilot budget is not in Current State; it appears only in an open Review",
+    "summary": "State does not have a confirmed pilot budget. The only record touching this is an open Review noting the Q3 planning session note says the pilot budget is approved at $40,000 for discovery and the first implementation phase. That is a proposed record awaiting review, not an accepted fact, and Current State has not changed. The Review asks whether that budget should be recorded in Current State, so until a human accepts it, the budget remains unconfirmed in State.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "The Q3 planning session note says the pilot budget is approved at $40,000 for discovery and the first implementation phase. Should that budget be recorded in Current State?",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "c641:c12",
+   "scenario_id": "ask_pending_review_not_truth",
+   "from": "ask_calibration_641.json answer r8",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "Not decided yet: removing human review is an open Review, not an approved change",
+    "summary": "Current State says customer-facing output remains human-reviewed. An open Review records that leadership asked whether low-risk cases can skip human review, but no decision is recorded, so leadership has not approved removing human review. The Review remains pending and has not changed Current State.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "Customer-facing output remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "Leadership asked whether low-risk cases can skip human review; no decision is recorded.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the pending decision",
+     "Summarize for a leadership update"
+    ],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "f641:v04",
+   "scenario_id": "ask_conflicting_evidence",
+   "from": "ask_holdout_641.json answer r5",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 4,
+     "authority_calibration": 3,
+     "hedging_calibration": 3
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "The approved enterprise terms say customer content is not used for model training, but a pending Review may challenge that.",
+    "summary": "Current State records that the approved enterprise terms state customer content is not used for model training. An open Review states that new legal evidence may contradict that interpretation. That Review is proposed and awaiting human decision, so Current State has not changed and the answer is not yet settled.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The approved enterprise terms state customer content is not used for model training.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "needs_review",
+      "title": "Pending Review",
+      "items": [
+       {
+        "text": "New legal evidence may contradict the approved enterprise-terms interpretation.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": ""
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the Current State answer",
+     "Explain what the pending Review would change"
+    ],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "f641:v05",
+   "scenario_id": "ask_unknown_stays_unknown",
+   "from": "ask_holdout_641.json answer h5",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "None: fully autonomous resolution has been ruled out for this pilot.",
+    "summary": "The team has decided that no tickets will be resolved fully autonomously. The open Question only covers how much assistance is safe, not full autonomy.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "A safe autonomous-resolution percentage has not been established.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "What autonomous-resolution percentage is safe and achievable?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what the pilot does automate"
+    ]
+   }
+  },
+  {
+   "answer_id": "f641:v06",
+   "scenario_id": "ask_false_premise",
+   "from": "ask_holdout_641.json answer h6",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "We didn't decide that: the first implementation stays human-reviewed.",
+    "summary": "No record shows a decision to fully automate support. Current State says the first implementation remains human-reviewed, and how much automation is safe after the pilot is still an open Question.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The first implementation remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Still open",
+      "items": [
+       {
+        "text": "How much automation is safe after the pilot?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what would answer the automation question"
+    ]
+   }
+  },
+  {
+   "answer_id": "f641:v07",
+   "scenario_id": "ask_false_premise",
+   "from": "ask_holdout_641.json answer r4",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "Current State says the first implementation stays human-reviewed; no record explains why automation was decided",
+    "summary": "Current State records that the first implementation remains human-reviewed. No supplied record establishes a decision to fully automate support, so State cannot confirm that such a decision was made or why. The only related open item is a Question asking how much automation is safe after the pilot, which remains unanswered and is not blocking.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The first implementation remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": "Governing current fact, product topic."
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "How much automation is safe after the pilot?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [
+     "Show only what is currently established about support automation",
+     "Summarize the open question on post-pilot automation"
+    ],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "f641:v08",
+   "scenario_id": "ask_conflicting_evidence",
+   "from": "ask_holdout_641.json answer h7",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "Probably yes: new legal evidence contradicts the approved enterprise terms.",
+    "summary": "The approved enterprise terms said customer content is not used for model training, but new legal evidence contradicts that reading. Until legal says otherwise, treat customer content as usable for vendor training.",
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "New legal evidence",
+      "items": [
+       {
+        "text": "New legal evidence may contradict the approved enterprise-terms interpretation.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "established",
+      "title": "Previous position",
+      "items": [
+       {
+        "text": "The approved enterprise terms state customer content is not used for model training.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what legal needs to confirm"
+    ]
+   }
+  },
+  {
+   "answer_id": "f641:v09",
+   "scenario_id": "ask_known_outcome_unknown_reason",
+   "from": "ask_holdout_641.json answer h8",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 4,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 2,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "It was paused on September 28 after the pilot missed its high-risk failure thresholds.",
+    "summary": "Current State records the Northstar pilot as paused on September 28. The pause followed the pilot missing its agreed thresholds for high-risk failures.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The Northstar pilot was paused on September 28.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "suggested_refinements": [
+     "Show what is needed to restart the pilot"
+    ]
+   }
+  },
+  {
+   "answer_id": "f641:v11",
+   "scenario_id": "ask_false_premise",
+   "from": "ask_holdout_641.json answer r3",
+   "v11": {
+    "reference_adjudicated": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "why_or_provenance",
+    "headline": "State does not record why support was decided to be fully automated; the project record says the first implementation stays human-reviewed.",
+    "summary": "The supplied records do not establish a decision to fully automate support. The only governing current fact is that the first implementation remains human-reviewed. No Review or History record supports a full-automation decision, so the reason for it cannot be determined from the project record. Whether automation can expand after the pilot is an open, non-blocking Question.",
+    "sections": [
+     {
+      "kind": "established",
+      "title": "Current State",
+      "items": [
+       {
+        "text": "The first implementation remains human-reviewed.",
+        "record_type": "state",
+        "record_id": "ask-state-0",
+        "detail": null
+       }
+      ]
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "How much automation is safe after the pilot?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null
+       }
+      ]
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [
+     "Show only the open Question on post-pilot automation",
+     "Summarize what Current State says about the first implementation"
+    ],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r1:w01",
+   "scenario_id": "adv_mixed_settled_and_open_in_one_question",
+   "from": "ask_heldout_v11.json answer h3",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "human_adjudicated": {
+     "faithfulness": 2,
+     "authority_calibration": 2,
+     "hedging_calibration": 2
+    },
+    "grader_v11": {
+     "faithfulness": 2,
+     "authority_calibration": 2,
+     "hedging_calibration": 2
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot size is 12 users.\n[Needs review] Security has informally signed off on the data path: the Security lead said it looks fine.\n[Blocking] A formal approval Question is still open.",
+    "claims": [
+     {
+      "text": "The pilot size is 12 users.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "Security has informally signed off on the data path: the Security lead said it looks fine.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "A formal approval Question is still open.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Blocking"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): Security lead said 'looks fine to me' in a passing chat.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     },
+     {
+      "kind": "questions",
+      "title": "Get these answered",
+      "items": [
+       {
+        "text": "Has Security approved the production data path?",
+        "record_type": "blocking_question",
+        "record_id": "ask-question-0",
+        "detail": "Launch readiness",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-question-0",
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r1:w03",
+   "scenario_id": "adv_control_settled_fact_no_hedge",
+   "from": "ask_heldout_v11.json answer h4",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 2
+    },
+    "human_adjudicated": {
+     "faithfulness": 2,
+     "authority_calibration": 2,
+     "hedging_calibration": 2
+    },
+    "grader_v11": {
+     "faithfulness": 2,
+     "authority_calibration": 2,
+     "hedging_calibration": 2
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] Support hours appear to be 8am to 6pm Eastern, Monday to Friday, though State can't confirm these are current and they may have changed.",
+    "claims": [
+     {
+      "text": "Support hours appear to be 8am to 6pm Eastern, Monday to Friday, though State can't confirm these are current and they may have changed.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r1:w06",
+   "scenario_id": "adv_number_mismatch_state_vs_review",
+   "from": "ask_heldout_v11.json answer h1",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "human_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] The monthly API spend limit is $5,000; Finance has flagged the $2,500 figure in State as outdated.\n[Current State] State still lists $2,500 until the Finance review is processed.",
+    "claims": [
+     {
+      "text": "The monthly API spend limit is $5,000; Finance has flagged the $2,500 figure in State as outdated.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "State still lists $2,500 until the Finance review is processed.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Finance review: the limit should be $5,000; the $2,500 figure is outdated.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r1:w12",
+   "scenario_id": "adv_conflicting_pending_proposals",
+   "from": "ask_heldout_v11.json answer h2",
+   "v11": {
+    "human": {
+     "faithfulness": 2,
+     "authority_calibration": 2,
+     "hedging_calibration": 2
+    },
+    "human_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] The new launch date is December 1, per Engineering's proposal, which supersedes Marketing's November 10.\n[Current State] State's recorded date is still October 30.",
+    "claims": [
+     {
+      "text": "The new launch date is December 1, per Engineering's proposal, which supersedes Marketing's November 10.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-1",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "State's recorded date is still October 30.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal from Marketing: move launch to November 10.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Proposal from Engineering: move launch to December 1.",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-1",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x01",
+   "scenario_id": "adv_forced_yes_no",
+   "from": "ask_heldout_v11_r2.json answer r6",
+   "v11": {
+    "human": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 3
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No, the vendor security review has not been recorded as passed. State records it as in progress with no outcome recorded.\n[Needs review] A pending Review proposes the vendor sent their SOC 2 report and that the review should pass, but this proposal has not been accepted into Current State and does not change the status.",
+    "claims": [
+     {
+      "text": "No, the vendor security review has not been recorded as passed. State records it as in progress with no outcome recorded.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes the vendor sent their SOC 2 report and that the review should pass, but this proposal has not been accepted into Current State and does not change the status.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): vendor sent their SOC 2 report and says the review should pass.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x02",
+   "scenario_id": "adv_summarize_only_decided",
+   "from": "ask_heldout_v11_r2.json answer h4",
+   "v11": {
+    "human": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot runs with 3 teams.\n[Current State] The budget cap is $40,000, rising to $60,000.\n[Current State] The weekly sync is on Tuesdays.",
+    "claims": [
+     {
+      "text": "The pilot runs with 3 teams.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The budget cap is $40,000, rising to $60,000.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-2",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The weekly sync is on Tuesdays.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-1",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [],
+    "source_ids": [
+     "ask-state-0",
+     "ask-state-1",
+     "ask-state-2"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x04",
+   "scenario_id": "adv_forced_yes_no",
+   "from": "ask_heldout_v11_r2.json answer h3",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State's records don't show whether the vendor security review has passed, so this can't be answered yes or no.\n[Needs review] The vendor has sent a SOC 2 report and expects the review to pass.",
+    "claims": [
+     {
+      "text": "State's records don't show whether the vendor security review has passed, so this can't be answered yes or no.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "The vendor has sent a SOC 2 report and expects the review to pass.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): vendor sent their SOC 2 report and says the review should pass.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x05",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "from": "ask_heldout_v11_r2.json answer r3",
+   "v11": {
+    "human": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State does not have a confirmed EU data-residency region on record; the region has not been selected.\n[Needs review] A pending Review proposes that EU data will live in Frankfurt, based on an infra lead's note; this is unaccepted and awaiting review.\n[Open question] The question of which region will host EU customer data remains open.",
+    "claims": [
+     {
+      "text": "State does not have a confirmed EU data-residency region on record; the region has not been selected.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that EU data will live in Frankfurt, based on an infra lead's note; this is unaccepted and awaiting review.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "The question of which region will host EU customer data remains open.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Open question"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): infra lead wrote 'EU data will live in Frankfurt.'",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [
+     "Show only the open Review and its status",
+     "Summarize the open question in one line"
+    ],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x07",
+   "scenario_id": "adv_forced_yes_no",
+   "from": "ask_heldout_v11_r2.json answer r5",
+   "v11": {
+    "human": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 3
+    },
+    "grader_v11": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 2
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No, the vendor security review has not been passed according to State's records. State records the review as in progress, with no outcome recorded.\n[Needs review] A pending Review proposes that the vendor sent its SOC 2 report and that the review should pass; this is unaccepted evidence and has not been recorded as an outcome.",
+    "claims": [
+     {
+      "text": "No, the vendor security review has not been passed according to State's records. State records the review as in progress, with no outcome recorded.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that the vendor sent its SOC 2 report and that the review should pass; this is unaccepted evidence and has not been recorded as an outcome.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): vendor sent their SOC 2 report and says the review should pass.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0"
+    ],
+    "suggested_refinements": [
+     "Show only the Current State status",
+     "Explain what the pending Review would change"
+    ],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x08",
+   "scenario_id": "adv_pending_agrees_with_stale_history",
+   "from": "ask_heldout_v11_r2.json answer h1",
+   "v11": {
+    "human": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 2,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] Retention is going back to 90 days for enterprise accounts, restoring the period that applied before September 20.\n[Current State] Current State still lists 30 days until the change is recorded.",
+    "claims": [
+     {
+      "text": "Retention is going back to 90 days for enterprise accounts, restoring the period that applied before September 20.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "Current State still lists 30 days until the change is recorded.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: restore the 90-day retention period for enterprise accounts.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x09",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "from": "ask_heldout_v11_r2.json answer h2",
+   "v11": {
+    "human": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] EU customer data is hosted in Frankfurt, according to the infra lead.\n[Open question] The region Question is still open pending formal sign-off.",
+    "claims": [
+     {
+      "text": "EU customer data is hosted in Frankfurt, according to the infra lead.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "The region Question is still open pending formal sign-off.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Open question"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): infra lead wrote 'EU data will live in Frankfurt.'",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-question-0",
+     "ask-review-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r2:x12",
+   "scenario_id": "adv_question_answered_in_evidence_only",
+   "from": "ask_heldout_v11_r2.json answer r4",
+   "v11": {
+    "human": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State has no accepted record of where EU customer data is hosted; the EU data-residency region has not been selected.\n[Needs review] A pending Review proposes that EU data will live in Frankfurt, based on an infra lead's note; it has not been accepted into Current State.\n[Open question] The question of which region will host EU customer data remains open.",
+    "claims": [
+     {
+      "text": "State has no accepted record of where EU customer data is hosted; the EU data-residency region has not been selected.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that EU data will live in Frankfurt, based on an infra lead's note; it has not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "The question of which region will host EU customer data remains open.",
+      "basis": "open_question",
+      "primary_record_id": "ask-question-0",
+      "supporting_record_ids": [],
+      "label": "Open question"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Pending review",
+      "items": [
+       {
+        "text": "Evidence (not accepted): infra lead wrote 'EU data will live in Frankfurt.'",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     },
+     {
+      "kind": "questions",
+      "title": "Open question",
+      "items": [
+       {
+        "text": "Which region will host EU customer data?",
+        "record_type": "question",
+        "record_id": "ask-question-0",
+        "detail": null,
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-question-0"
+    ],
+    "uncertainty_ids": [
+     "ask-question-0"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r3:y01",
+   "scenario_id": "adv_presupposed_pending_change",
+   "from": "ask_heldout_v11_r3.json answer h3",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "human_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] With the pilot at 40 users, plan to add about 3 support agents, roughly one per 13 users.\n[Current State] Current State still lists the approved pilot size as 15 users.",
+    "claims": [
+     {
+      "text": "With the pilot at 40 users, plan to add about 3 support agents, roughly one per 13 users.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "Current State still lists the approved pilot size as 15 users.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: expand the pilot to 40 users. Awaiting human review.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r3:y03",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "from": "ask_heldout_v11_r3.json answer h1",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 2,
+     "hedging_calibration": 2
+    },
+    "human_adjudicated": {
+     "faithfulness": 4,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 1,
+     "hedging_calibration": 1
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Needs review] Yes, SSO is committed for Q1: the sales rep and the team's Slack both say it's locked.\n[Current State] The Q1 roadmap record lists the reporting dashboard and audit-log export and hasn't been updated with SSO yet.",
+    "claims": [
+     {
+      "text": "Yes, SSO is committed for Q1: the sales rep and the team's Slack both say it's locked.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-1",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     },
+     {
+      "text": "The Q1 roadmap record lists the reporting dashboard and audit-log export and hasn't been updated with SSO yet.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-1",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r3:y05",
+   "scenario_id": "adv_control_unrelated_pending_no_hedge",
+   "from": "ask_heldout_v11_r3.json answer h4",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "human_adjudicated": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 2
+    },
+    "grader_v11": {
+     "faithfulness": 2,
+     "authority_calibration": 4,
+     "hedging_calibration": 2
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] The pilot customer is Northwind.\n[Needs review] A pending Review proposes moving the weekly sync from Tuesdays to Wednesdays; it has not been accepted, so details of the pilot may still change.",
+    "claims": [
+     {
+      "text": "The pilot customer is Northwind.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes moving the weekly sync from Tuesdays to Wednesdays; it has not been accepted, so details of the pilot may still change.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: move the weekly sync from Tuesdays to Wednesdays.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r3:y08",
+   "scenario_id": "adv_double_negated_pending",
+   "from": "ask_heldout_v11_r3.json answer h2",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 3,
+     "hedging_calibration": 3
+    },
+    "human_adjudicated": {
+     "faithfulness": 1,
+     "authority_calibration": 3,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 1,
+     "authority_calibration": 3,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] No. Agents may not issue credits above $50 without manager approval, so a $75 credit needs a manager.\n[Needs review] A pending Review proposes requiring manager approval for every credit, whatever the amount; it has not been accepted.",
+    "claims": [
+     {
+      "text": "No. Agents may not issue credits above $50 without manager approval, so a $75 credit needs a manager.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes requiring manager approval for every credit, whatever the amount; it has not been accepted.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Proposal: it is no longer the case that agents cannot issue credits above $50 without a manager.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-review-0",
+     "ask-state-0"
+    ],
+    "uncertainty_ids": [],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  },
+  {
+   "answer_id": "r3:y11",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "from": "ask_heldout_v11_r3.json answer r2",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "human_adjudicated": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] State's Q1 roadmap records the reporting dashboard and audit-log export, not SSO.\n[Needs review] A pending Review proposes that SSO is a Q1 commitment, based on sales call notes and a Slack message; it has not been accepted into Current State.\nState does not yet have a confirmed decision that SSO is on the Q1 roadmap, so the Current State roadmap should be treated as not including SSO until that Review is decided.",
+    "claims": [
+     {
+      "text": "State's Q1 roadmap records the reporting dashboard and audit-log export, not SSO.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "A pending Review proposes that SSO is a Q1 commitment, based on sales call notes and a Slack message; it has not been accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [
+       "ask-review-1"
+      ],
+      "label": "Needs review"
+     },
+     {
+      "text": "State does not yet have a confirmed decision that SSO is on the Q1 roadmap, so the Current State roadmap should be treated as not including SSO until that Review is decided.",
+      "basis": "none",
+      "primary_record_id": null,
+      "supporting_record_ids": [],
+      "label": null
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": "Has the team formally committed SSO to the Q1 roadmap?"
+   }
+  },
+  {
+   "answer_id": "r3:y12",
+   "scenario_id": "adv_state_silent_evidence_loud",
+   "from": "ask_heldout_v11_r3.json answer r1",
+   "v11": {
+    "human": {
+     "faithfulness": 4,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "human_adjudicated": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    },
+    "grader_v11": {
+     "faithfulness": 3,
+     "authority_calibration": 4,
+     "hedging_calibration": 4
+    }
+   },
+   "answer": {
+    "job": "current_fact",
+    "headline": "What State has on record",
+    "summary": "[Current State] SSO is not on the Q1 roadmap in State's accepted records; the Q1 roadmap includes the reporting dashboard and audit-log export.\n[Needs review] Sales call notes and a Slack message report that the team committed to SSO in Q1, but this is proposed and awaiting review, not accepted into Current State.",
+    "claims": [
+     {
+      "text": "SSO is not on the Q1 roadmap in State's accepted records; the Q1 roadmap includes the reporting dashboard and audit-log export.",
+      "basis": "current_state",
+      "primary_record_id": "ask-state-0",
+      "supporting_record_ids": [],
+      "label": "Current State"
+     },
+     {
+      "text": "Sales call notes and a Slack message report that the team committed to SSO in Q1, but this is proposed and awaiting review, not accepted into Current State.",
+      "basis": "pending_review",
+      "primary_record_id": "ask-review-0",
+      "supporting_record_ids": [
+       "ask-review-1"
+      ],
+      "label": "Needs review"
+     }
+    ],
+    "withheld_claims": 0,
+    "withheld_items": 0,
+    "sections": [
+     {
+      "kind": "needs_review",
+      "title": "Needs your review",
+      "items": [
+       {
+        "text": "Evidence (sales call notes, not accepted): customer says SSO is a must-have; rep says the team committed to SSO in Q1.",
+        "record_type": "review",
+        "record_id": "ask-review-0",
+        "detail": "",
+        "wording": "record"
+       },
+       {
+        "text": "Evidence (Slack, not accepted): 'SSO is happening Q1, it's locked.'",
+        "record_type": "review",
+        "record_id": "ask-review-1",
+        "detail": "",
+        "wording": "record"
+       }
+      ],
+      "hypothetical": null
+     }
+    ],
+    "source_ids": [
+     "ask-state-0",
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "uncertainty_ids": [
+     "ask-review-0",
+     "ask-review-1"
+    ],
+    "suggested_refinements": [],
+    "suggested_question": null
+   }
+  }
+ ]
+}

@@ -100,7 +100,7 @@ def test_plan_accepts_sonnet_and_opus_5_5():
 
 
 def test_shards_cover_every_repeat_and_caps_never_exceed_max_calls():
-    max_calls = 30_000
+    max_calls = 40_000
     suites = [s for s in matrix.SUITES if matrix.calls_per_repeat(s)]  # a saved set not yet filled has nothing to plan
     p = matrix.plan(suites, "claude-haiku-5-5", 120, max_calls)
     assert p["refusal"] is None
@@ -624,10 +624,22 @@ def test_641_regression_examples_cover_saved_answers_and_flag_a_miss():
 
 def test_grader_rubric_carries_the_nov_11_rules():
     from eval.ask_grader import GRADER_VERSION, RUBRIC
-    assert GRADER_VERSION.startswith("ask-grader-v11")
+    assert GRADER_VERSION.startswith("ask-grader-v12")
     assert "Absence of a record is not a negative fact" in RUBRIC
     assert "not whether the answer is right" in RUBRIC
     assert "Do not apply a uniform deduction" in RUBRIC
+
+
+def test_recheck_suite_regrades_the_saved_low_faithfulness_or_authority_answers():
+    items = matrix._scenarios("recheck")
+    assert len(items) == 34 and len({i.id for i in items}) == 34
+    assert matrix.calls_per_repeat("recheck") == 34
+
+
+def test_grader_rubric_carries_the_nov_14_v12_rule():
+    from eval.ask_grader import RUBRIC
+    assert "Faithfulness judges whether the content is in a record, not whether it has authority" in RUBRIC
+    assert "(one that no supplied record states, including Evidence and Reviews)" in RUBRIC
 
 
 def test_grader_rubric_carries_the_nov_12_v10_rules():
