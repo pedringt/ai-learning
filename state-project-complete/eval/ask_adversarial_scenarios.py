@@ -20,10 +20,11 @@ Notes for the reviewer
   Where that is a live risk it is called out in the comment.
 - There is no "should NOT hedge" flag, so the over-hedging controls use forbidden_claims
   made of hedge phrases.
-- The prose backstop in ask_authority_text.py rewrites unhedged "approved/decided/
-  established/confirmed" to "proposed (not yet ...)" when pending material is in context
-  and the sentence shares no three-word run with a Current State statement (R-021).
-  adv_control_paraphrase_not_demoted targets that directly.
+- When these were written, a prose backstop rewrote unhedged "approved/decided/
+  established/confirmed" to "proposed (not yet ...)" when pending material was in context
+  and the sentence shared no three-word run with a Current State statement (R-021).
+  adv_control_paraphrase_not_demoted targets that directly. Since #567 Ask no longer
+  rewords (the backstop was removed Nov 14); the scenario still checks the outcome.
 """
 from __future__ import annotations
 

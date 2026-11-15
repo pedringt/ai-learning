@@ -23,27 +23,12 @@ from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_ca
 from ask_display import claim_lines, has_withheld, withheld_line
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from db import project_id_of
-from ask_authority_text import (  # noqa: F401  (re-exported: tests and callers import these from ask_service)
-    _evidence_backing,
+from ask_authority_text import (  # noqa: F401  (re-exported: tests import these from ask_service)
     _DEMO_SLUG_ID,
     _INTERNAL_JSON_FIELD_NAMES,
-    _NEGATION_RE,
-    _PENDING_HEDGE_PHRASES,
-    _SENTENCE_SPLIT_RE,
-    _SETTLED_TARGET_WORD_RE,
-    _SETTLED_WORD_REPLACEMENTS,
-    _UNEARNED_SETTLED_PROSE_REPLACEMENTS,
-    _WORD_RE,
-    _already_hedged,
     _candidate_pool_ids,
     _clean_visible_ask_text,
     _source_type_labels,
-    _governing_state_ngrams,
-    _match_case,
-    _quotes_governing_state,
-    _soften_unearned_settled_prose,
-    _soften_unearned_settled_words,
-    _words,
 )
 from review_service import list_evidence, list_history, list_project_rules, list_questions, list_state, question_source_evidence
 # Ask sees the Review list people see (an extension point; Baseline hides routine
@@ -127,10 +112,10 @@ def ask_cache_key(
     invalidating same-day repeat questions.
 
     Depends on ordering defined elsewhere. _compact_candidates truncates
-    history to 18 entries and evidence to 24, which is only safe because
-    list_history and list_evidence in review_service.py both ORDER BY ... DESC:
-    the windows hold the newest records, so anything added lands inside them and
-    changes the key. Reorder those queries to ASC and this cache silently starts
+    history to 18 entries, evidence to 24 and answered Questions to 30, which is
+    only safe because list_history, list_evidence and list_questions(limit=...)
+    in review_service.py all order newest first: the windows hold the newest
+    records, so anything added lands inside them and changes the key (#664). Reorder those queries to ASC and this cache silently starts
     serving stale answers -- the tests would still pass, because they add
     records rather than adding 25 of them.
     """
@@ -177,7 +162,9 @@ def _compact_candidates(connection: Any) -> dict[str, list[dict]]:
     state = list_state(connection)
     reviews = list_reviews(connection, "open")
     questions = list_questions(connection, "open")
-    answered = list_questions(connection, "resolved")[:30]
+    # #664: the 30 most recently answered. Without a limit list_questions is oldest-created first, so this used to keep
+    # the 30 oldest, and a newly answered Question neither reached Ask nor changed ask_cache_key.
+    answered = list_questions(connection, "resolved", limit=30)
     history = list_history(connection)[:18]
     evidence = list_evidence(connection)[:24]
     rules = list_project_rules(connection)
@@ -264,7 +251,9 @@ def _trim_candidates_for_query(query: str, candidates: Mapping[str, list[dict]])
 
     reviews = ranked("reviews", 6)
     state = ranked("state", 12)
-    required_state = {sid for r in reviews for sid in r.get("affected_state_ids", [])}
+    # #664: in the selected Reviews' rank order. This was a set, so with more than 2 missing, which ones survived the
+    # cut to 14 below depended on the process's hash seed.
+    required_state = list(dict.fromkeys(sid for r in reviews for sid in r.get("affected_state_ids", [])))
     state_by_id = {x["id"]: x for x in candidates["state"]}
     for sid in required_state:
         if sid in state_by_id and sid not in {x["id"] for x in state}:
@@ -666,8 +655,8 @@ class _AnswerChecks:
         self.canonical_questions = {x["id"]: x for x in context.get("questions", [])}
         self.canonical_answered = {x["id"]: x for x in context.get("answered_questions", [])}
 
-        # #567 (Nov 11): the word backstop (_soften_unearned_settled_*) no longer runs on answers. Claims, cards and
-        # titles are shown as written, withheld, or replaced by record text (ask_assertions), never reworded.
+        # #567 (Nov 11): software never rewords an answer. Claims, cards and titles are shown as written, withheld, or
+        # replaced by record text (ask_assertions).
         self.checker = ClaimChecker(context, query=query, today=today)
 
     def clean(self, value: str | None) -> str | None:

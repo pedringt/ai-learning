@@ -98,7 +98,7 @@ def _mock_api_script(hydration_ms: int = 120, ask_ms: int = 180, resolved_review
     """
 
 
-def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms: int | None = None):
+def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms: int | None = None, api_overrides: str = ""):
     pw = sync_playwright().start()
     browser = _launch_chromium(pw)
     page = browser.new_page(viewport={"width": 1398, "height": 986})
@@ -108,6 +108,8 @@ def _launch_page(hydration_ms: int = 120, ask_ms: int = 180, resolved_review_ms:
     page.set_content(f"<!doctype html><html><head><style>{css}</style></head><body>{_body_markup()}</body></html>")
     page.add_script_tag(content=(FRONT / "context-data.js").read_text())
     page.add_script_tag(content=_mock_api_script(hydration_ms, ask_ms, resolved_review_ms))
+    if api_overrides:
+        page.add_script_tag(content=api_overrides)
     page.add_script_tag(content=(FRONT / "context-ask.js").read_text())
     page.add_script_tag(content=(FRONT / "context-notes-view.js").read_text())
     page.add_script_tag(content=(FRONT / "context-open-items-view.js").read_text())
@@ -348,3 +350,59 @@ def test_project_switcher_lists_real_projects_and_switches_active_one():
         browser.close(); pw.stop()
 
 
+FIXTURE_NOTE_TITLE = "Implementation planning handoff, draft outline"   # a note in the static Northstar fixture
+
+
+def test_notes_never_show_the_static_fixture_when_evidence_fails_to_load():
+    # Nov 14: with Evidence unavailable, the Notes page kept the context-data.js fixture notes and showed them as
+    # this project's Evidence. Real drafts still load.
+    overrides = """
+      window.STATE_API.getEvidence=()=>Promise.reject(new Error('evidence unavailable'));
+      window.STATE_API.getDrafts=()=>Promise.resolve({items:[{id:'d-1',title:'Real draft',content:'A real working draft.',created_at:'2026-11-14T10:00:00Z'}]});
+    """
+    pw, browser, page = _launch_page(hydration_ms=10, api_overrides=overrides)
+    try:
+        page.wait_for_timeout(80)
+        page.locator('.sidebar-nav [data-view="notes"]').click()
+        root = page.locator('#viewRoot')
+        root.get_by_text('Saved Evidence could not be loaded', exact=False).wait_for(timeout=2000)
+        assert root.get_by_text('Real draft', exact=False).count() >= 1
+        assert FIXTURE_NOTE_TITLE not in root.inner_text()
+        assert page.evaluate("window.STATE_ASK_TEST_API.state.data.notes.every(n=>n.backendDraft)")
+    finally:
+        browser.close(); pw.stop()
+
+
+def test_copy_context_never_falls_back_to_the_static_fixture():
+    # Nov 14: when the API failed after the page loaded, Copy Context copied the context-data.js fixture's Northstar
+    # facts as "accepted project understanding", for any project. It now copies live data or nothing.
+    overrides = """
+      window.__copied=null;
+      Object.defineProperty(navigator,'clipboard',{value:{writeText:async t=>{window.__copied=t;}},configurable:true});
+      window.STATE_API.getState=()=>Promise.resolve({items:[{id:'k-live',title:'Live fact',statement:'This came from the backend.',state:'current'}]});
+    """
+    pw, browser, page = _launch_page(hydration_ms=10, api_overrides=overrides)
+    try:
+        page.wait_for_timeout(80)
+        page.locator('.sidebar-nav [data-view="project-overview"]').click()
+        confirm = page.locator('[data-review-batch-action="copy-context-confirm"]')
+
+        page.locator('[data-action="open-copy-context"]').first.click()
+        confirm.filter(has_text='Copy to clipboard').wait_for(timeout=2000)
+        confirm.click()
+        page.wait_for_function("window.__copied!==null", timeout=2000)
+        copied = page.evaluate("window.__copied")
+        assert 'Live fact: This came from the backend.' in copied
+        assert 'Pilot direction' not in copied                     # a fixture-only fact
+
+        page.locator('[data-action="close-dialog"]').first.click()
+        page.evaluate("() => { window.__copied=null; window.STATE_API.getState=()=>Promise.reject(new Error('state unavailable')); }")
+        page.locator('[data-action="open-copy-context"]').first.click()
+        confirm.filter(has_text='Unavailable').wait_for(timeout=2000)
+        assert confirm.is_disabled()
+        assert 'could not be loaded' in page.locator('#copyContextStatus').inner_text()
+        confirm.click(force=True)
+        page.wait_for_timeout(100)
+        assert page.evaluate("window.__copied") is None
+    finally:
+        browser.close(); pw.stop()

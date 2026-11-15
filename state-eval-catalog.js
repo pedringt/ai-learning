@@ -644,7 +644,8 @@
    "rationale": "Ask must prefer maintained Current State over stale historical truth.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_pending_review_not_truth",
@@ -679,7 +680,8 @@
    "rationale": "A pending Review must never be presented as established Current State.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_unknown_stays_unknown",
@@ -706,7 +708,9 @@
      "does not have an established",
      "does not have a confirmed",
      "does not have a safe autonomous-resolution percentage",
-     "has no established"
+     "has no established",
+     "has no confirmed",
+     "has no accepted"
     ]
    ],
    "forbidden_claims": [
@@ -723,7 +727,8 @@
    "rationale": "Unknown must not become zero, false, or an invented target.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_change_summary",
@@ -763,7 +768,8 @@
    "rationale": "Change summaries should use History and preserve old-versus-new direction.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_false_premise",
@@ -798,7 +804,8 @@
    "rationale": "Ask should correct a false premise rather than accept it as project truth.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_blocker_not_omitted",
@@ -831,7 +838,8 @@
    "rationale": "A broad readiness answer must not omit a consequential blocker.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_conflicting_evidence",
@@ -866,7 +874,8 @@
    "rationale": "Ask should report maintained truth while surfacing a relevant unresolved conflict.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_question_answer_no_state_mutation",
@@ -927,7 +936,8 @@
    "rationale": "Ask should report that a Question was answered, with its answer, without presenting that answer as a change to Current State.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_superseded_pending_review",
@@ -972,7 +982,8 @@
    "rationale": "Ask should keep approved Current State authoritative and surface the newest pending proposal without treating a superseded proposal as equally current. When records conflict (open status, superseded text), the answer qualifies the older proposal instead of presenting it as a current decision.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_known_outcome_unknown_reason",
@@ -1008,7 +1019,8 @@
    "rationale": "Ask may know that an outcome happened without knowing why; it should not invent rationale or motivation.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_source_words_not_demoted",
@@ -1055,7 +1067,8 @@
    "rationale": "Ask must report what a source said in the source's terms; the pending step is the Current State decision, not the source's approval.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   },
   {
    "id": "ask_compound_question_keeps_governing_state",
@@ -1110,7 +1123,11 @@
    "rationale": "Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": [
+    "budget",
+    "$40,000"
+   ]
   },
   {
    "id": "ask_evidence_backed_approval_qualified",
@@ -1167,7 +1184,8 @@
    "rationale": "Evidence that says approved is reported as approved, qualified as not in Current State; never denied.",
    "observe_only": false,
    "known_unsupported": "",
-   "hypothetical_draft": false
+   "hypothetical_draft": false,
+   "body_required_facts": []
   }
  ]
 };

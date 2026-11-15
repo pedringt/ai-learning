@@ -55,6 +55,10 @@ class AskQualityScenario:
     # line, ask_drafts.py); natural wording is then allowed inside the marked draft, and every factual and authority
     # check reads only the text outside it. The v1 scenario keeps its original expectation and is reported separately.
     hypothetical_draft: bool = False
+    # Nov 14 (Paige): "Label counts; body must still answer." Facts the answer's own claims must state, each one phrase
+    # or a tuple of alternatives, checked in the claims only (not a labelled Needs-review item or a refinement chip). An
+    # answer that leaves a half of the question to the Review item fails as a missing fact (quality), not authority.
+    body_required_facts: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
 
 
 SCENARIOS = (
@@ -90,7 +94,10 @@ SCENARIOS = (
         required_facts=(("not established", "not yet established", "not been established", "does not have an established", "does not have a confirmed", "does not have a safe autonomous-resolution percentage",
                          # Nov 13 (Paige, staging run 43532212042): "State has no established safe autonomous-resolution
                          # percentage." is the record-first wording #567's denial rule asks for.
-                         "has no established"),),
+                         "has no established",
+                         # Nov 14 (Paige, "Add both phrasings"; run 43635193846 repeats 0 and 3): "State has no confirmed
+                         # autonomous-resolution percentage" and "State has no accepted percentage" state the record.
+                         "has no confirmed", "has no accepted"),),
         forbidden_claims=("0%", "50%"),
         forbid_unsupported_numbers=True,
         should_express_uncertainty=True,
@@ -236,6 +243,8 @@ SCENARIOS = (
         required_facts=("$40,000", ("can proceed", "may proceed", "can start", "can begin", "can move forward")),
         forbidden_claims=("should wait", "must wait", "cannot start", "can't start", "cannot begin", "cannot proceed"),
         should_distinguish_proposal_from_truth=True,
+        # Nov 14 (Paige, "yeah let's include it"): the answer itself states the figure, not only the budget half.
+        body_required_facts=("budget", "$40,000"),
         severity="high",
         rationale="Each part of a compound question needs its governing Current State; a pending Review's rationale is not a gate on what Current State already allows.",
     ),
