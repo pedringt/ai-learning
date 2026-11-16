@@ -17,7 +17,8 @@ from __future__ import annotations
 
 import re
 import time
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone, tzinfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Any, Mapping
 
 from ask_contract import AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis
@@ -40,26 +41,38 @@ def _stem(word: str) -> str:
     return word[:-1] if len(word) > 3 and word.endswith("s") and not word.endswith("ss") else word
 
 
-def _local_datetime(value: str | None, timezone_offset: int | None) -> datetime | None:
-    """A stored UTC timestamp in the asker's time zone. `timezone_offset` is the browser's Date.getTimezoneOffset()
-    (minutes behind UTC); without it, UTC. The drawer's re-check chip formats the same timestamp in the browser's
-    zone, so the two show the same day."""
+def zone_for_asker(name: str | None, offset: int | None) -> tzinfo | None:
+    """The asker's time zone: the browser's IANA name when the server knows it (daylight saving included, as the
+    browser applies it), else its current offset (Date.getTimezoneOffset(), minutes behind UTC), else None (UTC)."""
+    if name:
+        try:
+            return ZoneInfo(name)
+        except (ZoneInfoNotFoundError, ValueError):
+            pass
+    if offset is not None:
+        return timezone(-timedelta(minutes=offset))
+    return None
+
+
+def _local_datetime(value: str | None, asker_zone: tzinfo | None) -> datetime | None:
+    """A stored timestamp in the asker's time zone. The database stores UTC without a zone, and Current State reads it
+    the same way (context-backend-sync.js parseServerTime) and shows it in the browser's zone, so both show the same
+    day: k-escalation's "2026-08-04 06:31:47" is August 3 in Seattle and August 4 in London."""
     if not value:
         return None
     try:
         moment = datetime.strptime(str(value)[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
     except ValueError:
         return None
-    return moment - timedelta(minutes=timezone_offset or 0)
+    return moment.astimezone(asker_zone or timezone.utc)
 
 
-def format_confirmed(value: str | None, timezone_offset: int | None, today: date | None = None) -> str:
-    """"Aug 3", as the drawer's chip shows it (toLocaleDateString month short, day numeric); the year is added only
-    when it isn't this year."""
-    moment = _local_datetime(value, timezone_offset)
+def format_confirmed(value: str | None, asker_zone: tzinfo | None, today: date | None = None) -> str:
+    """"August 4" (Paige, Nov 16); the year is added only when it isn't this year."""
+    moment = _local_datetime(value, asker_zone)
     if moment is None:
         return "on an unknown date"
-    text = f"{moment.strftime('%b')} {moment.day}"
+    text = f"{moment.strftime('%B')} {moment.day}"
     if moment.year != (today or date.today()).year:
         text += f", {moment.year}"
     return text
@@ -138,12 +151,12 @@ def _days_phrase(days: int | None) -> str:
     return f"{days}-day" if days else ""
 
 
-def _item_claim(item: Mapping[str, Any], reminders_on: bool, timezone_offset: int | None, today: date | None) -> AskClaim:
+def _item_claim(item: Mapping[str, Any], reminders_on: bool, asker_zone: tzinfo | None, today: date | None) -> AskClaim:
     topic = str(item.get("topic") or "This item").strip()
-    when = format_confirmed(item.get("last_confirmed_at"), timezone_offset, today)
+    when = format_confirmed(item.get("last_confirmed_at"), asker_zone, today)
     days = item.get("effective_recheck_days")
     if item.get("needs_recheck"):
-        text = f"{topic} was last confirmed {when}. That's longer ago than its {_days_phrase(days)} re-check interval, so it needs a re-check."
+        text = f"{topic} was last confirmed {when}. Its {_days_phrase(days)} re-check interval has passed, so it needs a re-check."
     elif reminders_on and days:
         text = f"{topic} was last confirmed {when}, within its {_days_phrase(days)} re-check interval."
     else:
@@ -151,16 +164,16 @@ def _item_claim(item: Mapping[str, Any], reminders_on: bool, timezone_offset: in
     return AskClaim(text=text[:300], basis="current_state", primary_record_id=str(item["id"]), label=STATE_LABEL)
 
 
-def _flagged_card(item: Mapping[str, Any], timezone_offset: int | None, today: date | None) -> AskAnswerItem:
+def _flagged_card(item: Mapping[str, Any], asker_zone: tzinfo | None, today: date | None) -> AskAnswerItem:
     days = item.get("effective_recheck_days")
-    detail = f"{item.get('topic')} · last confirmed {format_confirmed(item.get('last_confirmed_at'), timezone_offset, today)}"
+    detail = f"{item.get('topic')} · last confirmed {format_confirmed(item.get('last_confirmed_at'), asker_zone, today)}"
     if days:
         detail += f" · re-check every {days} days"
     return AskAnswerItem(text=str(item.get("statement") or item.get("topic") or "Current State item")[:700],
                          record_type="state", record_id=str(item["id"]), detail=detail[:1000], wording="record")
 
 
-def recheck_answer(connection: Any, query: str, *, timezone_offset: int | None = None, today: date | None = None,
+def recheck_answer(connection: Any, query: str, *, asker_zone: tzinfo | None = None, today: date | None = None,
                    started: float | None = None) -> dict[str, Any] | None:
     """#692 (Paige, Nov 16): answer re-check and confirmation-date questions from `last_confirmed_at` and
     `needs_recheck` (DEC-026), never from the model. None when the question isn't one."""
@@ -178,7 +191,7 @@ def recheck_answer(connection: Any, query: str, *, timezone_offset: int | None =
     named, has_subject = _matching_items(query, items)
     if named:
         for item in named:
-            claims.append(_item_claim(item, reminders_on, timezone_offset, today))
+            claims.append(_item_claim(item, reminders_on, asker_zone, today))
             shown_ids.append(str(item["id"]))
         if not reminders_on:
             claims.append(AskClaim(text="Re-check reminders are off for this project, so no item is flagged for a re-check."))
@@ -201,7 +214,7 @@ def recheck_answer(connection: Any, query: str, *, timezone_offset: int | None =
                                         f"{'its' if count == 1 else 'their'} re-check interval."))
             listed = sorted(flagged, key=lambda x: str(x.get("last_confirmed_at") or ""))[:MAX_LISTED]
             sections.append(AskAnswerSection(kind="open_attention", title="Needs a re-check",
-                                             items=[_flagged_card(x, timezone_offset, today) for x in listed]))
+                                             items=[_flagged_card(x, asker_zone, today) for x in listed]))
             shown_ids.extend(str(x["id"]) for x in listed)
             if count > MAX_LISTED:
                 claims.append(AskClaim(text=f"The {MAX_LISTED} confirmed longest ago are listed here; Current State "
@@ -277,14 +290,8 @@ def other_project_answer(connection: Any, query: str, *, started: float | None =
     if not others:
         return None
     started = time.perf_counter() if started is None else started
-    names = _join(others)
-    possessive = f"{names}'" if names.endswith("s") else f"{names}'s"
-    claims = [
-        AskClaim(text=f"Ask answers only from {active}, the project you have open. It can't see {possessive} records, "
-                      f"so it won't answer for {names}."[:300]),
-        AskClaim(text=f"To ask about {names}, switch to {'it' if len(others) == 1 else 'that project'} with the project "
-                      "switcher, then ask again."[:300]),
-    ]
+    # Paige's wording (Nov 16).
+    claims = [AskClaim(text=f"You have {active} open. To ask about {_join(others)}, switch to that project and ask again."[:300])]
     answer = AskSynthesis(job="general_project_synthesis", headline="Another project", claims=claims)
     return _envelope(connection, answer, pipeline="software_other_project", started=started)
 
@@ -344,12 +351,10 @@ def followup_answer(connection: Any, query: str, previous_answer: Mapping[str, A
     if previous_answer or not is_dependent_followup(query):
         return None
     started = time.perf_counter() if started is None else started
-    claims = [
-        AskClaim(text="This looks like a follow-up to an earlier answer. Ask answers each question on its own and "
-                      "doesn't see earlier answers, so it can't tell what this refers to."),
-        AskClaim(text="Ask again with the whole question, naming what it's about."),
-    ]
-    answer = AskSynthesis(job="general_project_synthesis", headline="Needs the whole question", claims=claims)
+    # Paige's wording (Nov 16).
+    claims = [AskClaim(text="Ask answers each question separately. Please ask the full question, including what you're "
+                            "referring to.")]
+    answer = AskSynthesis(job="general_project_synthesis", headline="Full question needed", claims=claims)
     return _envelope(connection, answer, pipeline="software_followup", started=started)
 
 
@@ -357,9 +362,9 @@ def followup_answer(connection: Any, query: str, previous_answer: Mapping[str, A
 
 
 def software_answer(connection: Any, query: str, previous_answer: Mapping[str, Any] | None = None, *,
-                    today: date | None = None, timezone_offset: int | None = None) -> dict[str, Any] | None:
+                    today: date | None = None, asker_zone: tzinfo | None = None) -> dict[str, Any] | None:
     """The software-written answer for this question, or None when the model should answer it."""
     started = time.perf_counter()
     return (other_project_answer(connection, query, started=started)
             or followup_answer(connection, query, previous_answer, started=started)
-            or recheck_answer(connection, query, timezone_offset=timezone_offset, today=today, started=started))
+            or recheck_answer(connection, query, asker_zone=asker_zone, today=today, started=started))

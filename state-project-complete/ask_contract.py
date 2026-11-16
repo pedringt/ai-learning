@@ -18,8 +18,10 @@ class AskRequest(BaseModel):
     # #476: the asker's local calendar day, so "today" is not the server's UTC day.
     # Used only when within a day of the server's date (see ask_service.ask_today).
     client_date: date | None = None
-    # #692: the browser's Date.getTimezoneOffset() (minutes behind UTC), so dates Ask writes in software (when an item
-    # was last confirmed) fall on the same day as the chips beside them. Same retry-without rule as client_date.
+    # #692: the browser's time zone, so a date Ask writes in software (when an item was last confirmed) is the day
+    # Current State shows (it formats the stored UTC time in the browser's zone). The IANA name is used when the
+    # server knows it, else the offset (Date.getTimezoneOffset(), minutes behind UTC). Same retry-without as client_date.
+    client_timezone: str | None = Field(default=None, max_length=64)
     client_timezone_offset: int | None = Field(default=None, ge=-840, le=840)
 
 class AskSelection(BaseModel):

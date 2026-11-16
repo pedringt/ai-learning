@@ -76,8 +76,10 @@
   // backend without the field answers 422 (it rejects unknown fields); during a deploy the
   // frontend can be live first, so Ask retries once without it instead of failing.
   const localDateISO = () => { const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
-  // #692: and its time-zone offset, so a date Ask writes in software falls on the day the chips beside it show.
-  const askBody = (query, previousAnswer, withDate = true) => ({query, ...(previousAnswer ? {previous_answer: previousAnswer} : {}), ...(withDate ? {client_date: localDateISO(), client_timezone_offset: new Date().getTimezoneOffset()} : {})});
+  // #692: and its time zone (IANA name, plus the current offset as a fallback), so a date Ask writes in software is
+  // the day Current State shows for the same stored time.
+  const browserZone = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch (_) { return null; } };
+  const askBody = (query, previousAnswer, withDate = true) => ({query, ...(previousAnswer ? {previous_answer: previousAnswer} : {}), ...(withDate ? {client_date: localDateISO(), ...(browserZone() ? {client_timezone: browserZone()} : {}), client_timezone_offset: new Date().getTimezoneOffset()} : {})});
 
   const jsonPost = (path, body, signal) => request(path, {
     method: 'POST',

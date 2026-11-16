@@ -126,7 +126,7 @@ def test_refinement_without_a_previous_answer_is_not_a_shortcut(tmp_path):
     try:
         result = run_ask(conn, FakeOneCallAskProvider(), "make this 3 bullets", None)
         assert result["timing"]["pipeline"] == "software_followup"
-        assert result["answer"]["claims"][0]["text"].startswith("This looks like a follow-up to an earlier answer.")
+        assert result["answer"]["claims"][0]["text"].startswith("Ask answers each question separately.")
     finally:
         conn.close()
 

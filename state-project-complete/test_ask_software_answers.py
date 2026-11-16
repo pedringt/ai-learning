@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 
 from api import Settings, create_app
 from ask_display import displayed_text
-from ask_software_answers import format_confirmed, is_recheck_question
+from ask_software_answers import format_confirmed, is_recheck_question, zone_for_asker
 from test_area_identity import db_url  # noqa: F401  (SQLite + Postgres database URL fixture)
 from test_baseline_setup_lifecycle import BaselineFixtureProvider
 
@@ -104,14 +104,15 @@ def test_when_was_an_item_last_confirmed_names_its_date_and_flag(db_url):
     showed the date."""
     with _client(db_url) as client:
         item = _state(client)["k-escalation"]
-        result = _ask(client, "When was the escalation path last formally confirmed, and by whom?", client_timezone_offset=0)
+        result = _ask(client, "When was the escalation path last formally confirmed, and by whom?", client_timezone="UTC")
         claims = result["answer"]["claims"]
         assert claims[0]["primary_record_id"] == "k-escalation" and claims[0]["basis"] == "current_state"
         assert claims[0]["label"] == "Current State"
-        when = format_confirmed(item["last_confirmed_at"], 0)
-        assert claims[0]["text"] == (f"Escalation path was last confirmed {when}. That's longer ago than its 60-day "
-                                     "re-check interval, so it needs a re-check.")
+        when = format_confirmed(item["last_confirmed_at"], zone_for_asker("UTC", None))
+        assert claims[0]["text"] == (f"Escalation path was last confirmed {when}. Its 60-day re-check interval has "
+                                     "passed, so it needs a re-check.")
         assert claims[-1]["text"] == "State records when an item was last confirmed, not who confirmed it."
+        assert result["answer"]["headline"] == "Re-check dates"
         assert result["answer"]["suggested_question"] is None      # never "Track this unknown?" for a recorded date
         assert result["selection"]["state_ids"] == ["k-escalation"]
 
@@ -154,11 +155,28 @@ def test_reminders_off_says_so(db_url):
         assert claims[0]["text"].startswith("Re-check reminders are off for this project")
 
 
-def test_dates_follow_the_askers_time_zone():
-    # 2026-08-04 02:00 UTC is Aug 3 in Seattle (offset 420 in summer), as the chip shows it there.
-    assert format_confirmed("2026-08-04 02:00:00", 420, date(2026, 11, 16)) == "Aug 3"
-    assert format_confirmed("2026-08-04 02:00:00", None, date(2026, 11, 16)) == "Aug 4"
-    assert format_confirmed("2025-12-30 12:00:00", 0, date(2026, 11, 16)) == "Dec 30, 2025"
+def test_dates_are_the_day_current_state_shows_for_the_same_stored_time():
+    """Paige, Nov 16: use the stored date as Current State shows it. Current State reads the stored UTC time
+    (context-backend-sync.js parseServerTime) and shows it in the browser's zone. Production's k-escalation is
+    "2026-08-04 06:31:47": 11:31 pm on August 3 in Seattle (daylight time in August), August 4 in London."""
+    today = date(2026, 11, 16)
+    stored = "2026-08-04 06:31:47"
+    assert format_confirmed(stored, zone_for_asker("America/Los_Angeles", 480), today) == "August 3"
+    assert format_confirmed(stored, zone_for_asker("Europe/London", 0), today) == "August 4"
+    assert format_confirmed(stored, None, today) == "August 4"                         # no zone sent: UTC
+    # The IANA name wins over the offset: in November Seattle's offset is 480 (standard time), which would put
+    # 07:30 UTC on August 4 at 11:30 pm August 3; the browser shows 12:30 am August 4 (daylight time), and so does Ask.
+    assert format_confirmed("2026-08-04 07:30:00", zone_for_asker("America/Los_Angeles", 480), today) == "August 4"
+    assert format_confirmed("2026-08-04 07:30:00", zone_for_asker(None, 480), today) == "August 3"
+    assert format_confirmed("2026-08-04 07:30:00", zone_for_asker("Not/AZone", 480), today) == "August 3"
+    assert format_confirmed("2025-12-30 12:00:00", None, today) == "December 30, 2025"
+
+
+def test_the_askers_zone_reaches_the_answer(db_url):
+    with _client(db_url) as client:
+        item = _state(client)["k-escalation"]
+        claims = _ask(client, "When was the escalation path last confirmed?", client_timezone="Pacific/Kiritimati")["answer"]["claims"]
+        assert format_confirmed(item["last_confirmed_at"], zone_for_asker("Pacific/Kiritimati", None)) in claims[0]["text"]
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -180,9 +198,9 @@ def test_juniper_declines_questions_about_northstar(db_url, query):
         for result in (_ask(client, query, JUNIPER), _stream_final(client, query, JUNIPER)):
             answer = result["answer"]
             assert result["timing"]["pipeline"] == "software_other_project"
-            assert answer["claims"][0]["text"] == ("Ask answers only from Juniper Office Move, the project you have open. "
-                                                   "It can't see Northstar's records, so it won't answer for Northstar.")
-            assert "switch to it with the project switcher" in answer["claims"][1]["text"]
+            assert [c["text"] for c in answer["claims"]] == [
+                "You have Juniper Office Move open. To ask about Northstar, switch to that project and ask again."]
+            assert answer["headline"] == "Another project"
             assert answer["suggested_question"] is None and answer["sections"] == []
             assert all(not c["primary_record_id"] for c in answer["claims"])
             assert result["selection"]["review_ids"] == [] and result["selection"]["state_ids"] == []
@@ -192,8 +210,8 @@ def test_northstar_declines_questions_about_juniper_by_id_or_full_name(db_url):
     with _client(db_url) as client:
         for query in ("What is Juniper's move date?", "Who is the moving vendor for the juniper office move?"):
             claims = _ask(client, query)["answer"]["claims"]
-            assert claims[0]["text"].startswith("Ask answers only from Northstar, the project you have open. "
-                                                "It can't see Juniper Office Move's records")
+            assert claims[0]["text"] == ("You have Northstar open. To ask about Juniper Office Move, switch to that "
+                                         "project and ask again.")
 
 
 def test_a_project_named_with_a_word_the_active_project_uses_is_not_a_reference(db_url):
@@ -244,8 +262,9 @@ def test_a_followup_without_the_earlier_answer_asks_for_the_whole_question(db_ur
             for result in (_ask(client, query), _stream_final(client, query)):
                 answer = result["answer"]
                 assert result["timing"]["pipeline"] == "software_followup"
-                assert answer["claims"][0]["text"].startswith("This looks like a follow-up to an earlier answer.")
-                assert answer["claims"][1]["text"] == "Ask again with the whole question, naming what it's about."
+                assert [c["text"] for c in answer["claims"]] == [
+                    "Ask answers each question separately. Please ask the full question, including what you're referring to."]
+                assert answer["headline"] == "Full question needed"
                 assert answer["sections"] == [] and answer["suggested_question"] is None
                 assert all(not c["primary_record_id"] for c in answer["claims"])
 

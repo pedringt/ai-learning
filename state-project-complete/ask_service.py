@@ -8,7 +8,7 @@ import re
 import threading
 import time
 import uuid
-from datetime import date
+from datetime import date, tzinfo
 from typing import Any, Iterator, Mapping, Protocol
 
 from ask_contract import (  # noqa: I001
@@ -94,7 +94,7 @@ def ask_cache_key(
     connection: Any,
     query: str,
     previous_answer: Mapping[str, Any] | None = None, today: date | None = None,
-    timezone_offset: int | None = None) -> str:
+    asker_zone: tzinfo | None = None) -> str:
     """Fingerprint an Ask request against every authority-bearing input.
 
     Reusing a prior answer is safe only while Current State, open Reviews,
@@ -130,7 +130,7 @@ def ask_cache_key(
         # #692: software answers re-check questions from confirmation dates the model never sees, and writes those
         # dates in the asker's time zone. A "Still true" changes only these.
         "confirmations": confirmation_fingerprint(connection),
-        "timezone_offset": timezone_offset,
+        "asker_zone": str(asker_zone) if asker_zone else None,
         # #693: a question naming another project is declined in software; a new or renamed project changes that.
         "projects": [list(row) for row in connection.execute("SELECT id, name FROM projects ORDER BY id").fetchall()],
     }
@@ -1394,7 +1394,7 @@ def stream_ask_events(
     previous_answer: Mapping[str, Any] | None = None,
     today: date | None = None,
     cancelled: threading.Event | None = None,
-    timezone_offset: int | None = None,
+    asker_zone: tzinfo | None = None,
 ) -> Iterator[tuple[str, dict[str, Any]]]:
     """Yield grounded-context status, real provider deltas, then a validated final Ask payload.
 
@@ -1403,7 +1403,7 @@ def stream_ask_events(
     total_started = time.perf_counter()
 
     # Nov 16 (#692): questions software answers from the record, with no model call (ask_software_answers.py).
-    written = software_answer(connection, query, previous_answer, today=today, timezone_offset=timezone_offset)
+    written = software_answer(connection, query, previous_answer, today=today, asker_zone=asker_zone)
     if written is not None:
         yield "final", written
         return
@@ -1429,7 +1429,7 @@ def stream_ask_events(
     }
 
     if not hasattr(provider, "stream"):
-        result = run_ask(connection, provider, query, previous_answer, today=today, timezone_offset=timezone_offset)
+        result = run_ask(connection, provider, query, previous_answer, today=today, asker_zone=asker_zone)
         yield "final", result
         return
 
@@ -1493,11 +1493,11 @@ def stream_ask_events(
 
 
 def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None,
-            today: date | None = None, timezone_offset: int | None = None) -> dict[str, Any]:
+            today: date | None = None, asker_zone: tzinfo | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
 
     # Nov 16 (#692): questions software answers from the record, with no model call (ask_software_answers.py).
-    written = software_answer(connection, query, previous_answer, today=today, timezone_offset=timezone_offset)
+    written = software_answer(connection, query, previous_answer, today=today, asker_zone=asker_zone)
     if written is not None:
         return written
 
