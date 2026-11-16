@@ -63,12 +63,35 @@
   // Older Baseline confirmations stored this setup-process text as an area description. It is not
   // project truth, so it is never rendered as Current State content (#450, from context-baseline-polish.js).
   const LEGACY_BASELINE_AREA_DESCRIPTION='Baseline section created from human-authorized project material.';
-  function projectOutlineSection(area,items,pendingFor,history){
+  // #678 / DEC-026: Current State keeps its prose; items past their re-check interval are listed in a box under
+  // their area (Paige, Nov 15: layout B). "Show dates" lists every item with its date, its own interval and
+  // "Still true". Nothing here changes an item.
+  const RECHECK_CHOICES=[30,60,90,180];
+  function recheckChip(k){return `<span class="recheck-chip">Needs re-check · last confirmed ${esc(k.lastConfirmed||'')}</span>`;}
+  function recheckActions(k,{suggest=true}={}){
+    return `<button type="button" class="text-button" data-action="state-still-true" data-state-id="${esc(k.id)}">Still true</button>${suggest?`<button type="button" class="text-button" data-action="suggest-recheck-question" data-state-id="${esc(k.id)}">Suggest a re-check question</button>`:''}`;
+  }
+  function recheckBox(items){
+    const flagged=items.filter(k=>k.needsRecheck);
+    if(!flagged.length) return '';
+    return `<div class="recheck-box"><p class="recheck-box-head">${flagged.length} ${flagged.length===1?'item needs':'items need'} a re-check</p><ul>${flagged.map(k=>`<li data-state-id="${esc(k.id)}"><p class="recheck-statement">“${esc(k.statement)}”</p>${recheckChip(k)}<div class="recheck-actions">${recheckActions(k)}</div></li>`).join('')}</ul></div>`;
+  }
+  function intervalSelect(k){
+    const current=k.recheckDays??'';
+    return `<label class="recheck-interval">Re-check every <select data-action="set-item-recheck" data-state-id="${esc(k.id)}"><option value=""${current===''?' selected':''}>Project default</option>${RECHECK_CHOICES.map(d=>`<option value="${d}"${current===d?' selected':''}>${d} days</option>`).join('')}</select></label>`;
+  }
+  function datedItems(items){
+    return `<ul class="current-state-dated">${items.map(k=>`<li data-state-id="${esc(k.id)}"><p>${esc(k.statement)}</p>${k.needsRecheck?recheckChip(k):`<p class="state-date-line">Confirmed ${esc(k.lastConfirmed||'')}</p>`}<div class="recheck-actions">${recheckActions(k,{suggest:!!k.needsRecheck})}${intervalSelect(k)}</div></li>`).join('')}</ul>`;
+  }
+  function recheckCount(knowledge){return knowledge.filter(k=>k.state==='current'&&k.needsRecheck).length;}
+
+  function projectOutlineSection(area,items,pendingFor,history,view={}){
     if(!items.length) return '';
+    if(view.recheckOnly&&!items.some(k=>k.needsRecheck)) return '';
     const paragraphs=projectWikiParagraphs(items);
     // Hidden: the prose above is the Current State reading surface (#450, from context-feedback-pass-3.js / context-quickwins.js).
     const maintained=`<details class="project-maintained-facts" hidden><summary>See ${items.length} maintained Current State ${items.length===1?'fact':'facts'}</summary><ul>${items.map(k=>projectFact(k,pendingFor,history)).join('')}</ul></details>`;
-    return `<section class="project-outline-section project-wiki-section" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${area.description&&area.description.trim()!==LEGACY_BASELINE_AREA_DESCRIPTION?`<p class="project-outline-description">${esc(area.description)}</p>`:''}<div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${maintained}</section>`;
+    return `<section class="project-outline-section project-wiki-section" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${area.description&&area.description.trim()!==LEGACY_BASELINE_AREA_DESCRIPTION?`<p class="project-outline-description">${esc(area.description)}</p>`:''}${view.showDates?datedItems(items):`<div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${recheckBox(items)}`}${maintained}</section>`;
   }
 
   // Universal facts are matched by topic label (see UNIVERSAL_TOPICS), not a
@@ -96,7 +119,7 @@
   // responsible for the decorateProjectProvenance()/updateProjectSubnavActive()
   // follow-up calls afterward (DOM side effects that stay in context-app.js).
   function render(props){
-    const {backendState,projectName,knowledge,history,pendingFor}=props;
+    const {backendState,projectName,knowledge,history,pendingFor,recheckDays=null,showDates=false,recheckOnly=false}=props;
     if(backendState==='loading'){
       return `<article class="page project-page project-document"><div class="empty-state unavailable-state"><h2>Loading Current State…</h2><p>Opening the authoritative project understanding.</p></div></article>`;
     }
@@ -105,8 +128,14 @@
     }
     const areas=visibleAreas(knowledge);
     const orientation=projectOrientation(knowledge);
-    return `<article class="page project-page project-document"><header class="page-head project-page-head current-state-page-head" id="project-top"><div><span class="eyebrow">Maintained project understanding</span><h2>Current State</h2><p class="project-document-summary">The team’s current shared understanding of ${esc(projectName)}: what is settled enough to use, what remains constrained, and what should not be treated as decided yet.</p></div><div class="current-state-page-actions"><button class="btn secondary project-head-copy-context" data-action="open-copy-context">Copy context</button></div></header><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div></dl><div class="something-changed-cta"><div><strong>Something changed?</strong><span>Add new information and State will review whether Current State should change.</span></div><button class="btn secondary" data-action="something-changed">Add Evidence</button></div><div class="project-outline">${areas.map(area=>projectOutlineSection(area,currentKnowledge(knowledge,area.id),pendingFor,history)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
+    const needing=recheckCount(knowledge);
+    const view={showDates,recheckOnly:recheckOnly&&needing>0};
+    const datesToggle=`<button type="button" class="btn secondary" data-action="toggle-show-dates" aria-pressed="${showDates?'true':'false'}">${showDates?'Hide dates':'Show dates'}</button>`;
+    const recheckPointer=recheckDays?'':`<p class="recheck-pointer">Re-check reminders are off. <button type="button" class="text-button" data-action="open-recheck-settings">Turn them on in Settings.</button></p>`;
+    const recheckMeta=needing?`<div><dt>Re-check</dt><dd>${needing} ${needing===1?'item needs':'items need'} a re-check</dd></div>`:'';
+    const recheckFilter=view.recheckOnly?`<div class="recheck-filter-banner"><span>Showing the ${needing} ${needing===1?'item that needs':'items that need'} a re-check</span><button type="button" class="text-button" data-action="clear-recheck-filter">Show all Current State</button></div>`:'';
+    return `<article class="page project-page project-document"><header class="page-head project-page-head current-state-page-head" id="project-top"><div><span class="eyebrow">Maintained project understanding</span><h2>Current State</h2><p class="project-document-summary">The team’s current shared understanding of ${esc(projectName)}: what is settled enough to use, what remains constrained, and what should not be treated as decided yet.</p></div><div class="current-state-page-actions">${datesToggle}<button class="btn secondary project-head-copy-context" data-action="open-copy-context">Copy context</button>${recheckPointer}</div></header><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div>${recheckMeta}</dl>${recheckFilter}<div class="something-changed-cta"><div><strong>Something changed?</strong><span>Add new information and State will review whether Current State should change.</span></div><button class="btn secondary" data-action="something-changed">Add Evidence</button></div><div class="project-outline">${areas.map(area=>projectOutlineSection(area,currentKnowledge(knowledge,area.id),pendingFor,history,view)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
   }
 
-  window.STATE_PROJECT_VIEW = Object.freeze({render, visibleAreas});
+  window.STATE_PROJECT_VIEW = Object.freeze({render, visibleAreas, recheckCount});
 })();

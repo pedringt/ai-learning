@@ -134,15 +134,22 @@
   const withheldKindsLine=a=>{const order=Object.keys(WITHHELD_KIND_PHRASES),counts={};for(const [k,v] of Object.entries(a.withheld_kinds||{}))if(order.includes(k)&&Number(v)>0)counts[k]=Number(v);const known=Object.values(counts).reduce((x,y)=>x+y,0),rest=Number(a.withheld_claims||0)+Number(a.withheld_items||0)-known;if(rest>0)counts.other=(counts.other||0)+rest;const sorted=Object.entries(counts).sort((x,y)=>y[1]-x[1]||order.indexOf(x[0])-order.indexOf(y[0])),total=sorted.reduce((t,[,n])=>t+n,0);if(total===1)return`1 statement was left out: it ${WITHHELD_KIND_PHRASES[sorted[0][0]]}.`;if(sorted.length===1)return`${total} statements were left out: ${total===2?'both':`all ${total}`} ${WITHHELD_KIND_PHRASES[sorted[0][0]]}.`;const parts=sorted.map(([k,n])=>`${n} ${WITHHELD_KIND_PHRASES[k]}`);return`${total} statements were left out: ${parts.slice(0,-1).join(', ')}, and ${parts[parts.length-1]}.`;};
   const withheldLine=a=>!a?.streaming&&Array.isArray(a?.claims)&&a.withheld_claims&&!a.claims.some(c=>c?.text)?ALL_WITHHELD_LINE:(!a?.streaming&&a?.withheld_kinds&&typeof a.withheld_kinds==='object'?withheldKindsLine(a):WITHHELD_LINE);
   const labelled=(label,text)=>label?`[${label}] ${text}`:text;
+  // #678 / DEC-026: when a claim's primary record is a Current State item past its re-check interval, software adds
+  // a note beside its chip, on screen and in Copy. The app supplies the lookup (window.STATE_RECHECK_LOOKUP).
+  function recheckNote(c){
+    if(c.basis!=='current_state'||!c.primary_record_id)return '';
+    const k=window.STATE_RECHECK_LOOKUP?.(c.primary_record_id);
+    return k?.needsRecheck?`needs re-check · last confirmed ${k.lastConfirmed||''}`:'';
+  }
   // #567: claims replace the summary; each keeps its chip, on screen and in copied text. An answer without claims
   // (a software-written starter answer) still shows its summary.
   function leadHtml(a){
     if(!Array.isArray(a.claims))return `<p class="result-lede">${esc(a.summary||'')}</p>`;
-    const claims=a.claims.map(c=>`<li class="ask-claim">${c.label?`<span class="ask-record-badge ask-claim-${esc(c.basis||'none')}">${esc(c.label)}</span>`:''}<span class="ask-claim-text">${esc(c.text)}</span></li>`).join('');
+    const claims=a.claims.map(c=>`<li class="ask-claim">${c.label?`<span class="ask-record-badge ask-claim-${esc(c.basis||'none')}">${esc(c.label)}</span>`:''}${recheckNote(c)?`<span class="ask-recheck-note">${esc(recheckNote(c))}</span>`:''}<span class="ask-claim-text">${esc(c.text)}</span></li>`).join('');
     return `${claims?`<ul class="ask-claims">${claims}</ul>`:''}${hasWithheld(a)?`<p class="ask-withheld-note">${esc(withheldLine(a))}</p>`:''}`;
   }
   // Copy, in the same form as ask_display.displayed_lines: chips stay with the text they label.
-  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,''];if(Array.isArray(a.claims)){for(const c of a.claims)lines.push(labelled(c.label,c.text));if(hasWithheld(a))lines.push(withheldLine(a));}else lines.push(a.summary);for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length&&!s.hypothetical)continue;lines.push('',s.title,...hypotheticalLines(s));for(const i of items){lines.push(`- ${labelled(labelFor(i.record_type),i.text)}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
+  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,''];if(Array.isArray(a.claims)){for(const c of a.claims)lines.push(labelled(c.label&&recheckNote(c)?`${c.label} · ${recheckNote(c)}`:c.label,c.text));if(hasWithheld(a))lines.push(withheldLine(a));}else lines.push(a.summary);for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length&&!s.hypothetical)continue;lines.push('',s.title,...hypotheticalLines(s));for(const i of items){lines.push(`- ${labelled(labelFor(i.record_type),i.text)}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
 
   // #567: the browser never draws the model's raw text. The server sends each claim and each section only after it
   // has passed the same checks as the finished answer ({claims:[claim events], sections:[section events]}); the

@@ -547,9 +547,10 @@ Records pile up as noise, a summary needs more redaction, or a non-State warning
 
 **Decision**
 - **Only a person confirms.** "Last confirmed" moves when someone accepts a Review that changes or re-states an item, or uses a new "Still true" action, which adds a History entry.
-- **Agreeing evidence gets its own, weaker date.** Evidence that matches an item ("No review needed") records "last mentioned in evidence". It never moves "last confirmed".
+- **Agreeing evidence gets its own, weaker date.** Evidence that matches an item ("No review needed") records "last mentioned in evidence". It never moves "last confirmed". *Deferred (Nov 15):* intake does not record which item a no-Review note agreed with, so this date waits on a follow-up (#680).
+- **Review decisions that confirm (Nov 15):** accepting a Review, "Leave unchanged" on a proposed change, and "Dismiss concern" on an at-risk Review confirm the items the Review is about. "Keep tracking" does not. This keys on the decision made, not on the stored resolution (the database stores "Keep tracking" as `confirmed_current`). Existing items start from their last change date.
 - **Expiry is a per-project setting, off by default.** Individual items can override the project threshold. The seeded demo projects use 60 days and seed a deliberate mix of old and recent items, and the UI says expiry can be turned on in Settings.
-- **An old item is flagged, never changed.** Current State marks it "Needs re-check · last confirmed <date>"; a "Show dates" toggle (off by default) shows dates on every item. State suggests a re-check Question for a person to add, the overview counts items needing a re-check, and the Review queue gets one bundled entry that opens Current State filtered to them.
+- **An old item is flagged, never changed.** Current State keeps its prose; a box under each area lists its old items with "Needs re-check · last confirmed <date>", "Still true" and "Suggest a re-check question" (Nov 15: layout B). A "Show dates" toggle (off by default) lists every item with its date, its own re-check interval and "Still true". "Still true" takes an optional note saved to History. "Suggest a re-check question" opens the Add question dialog prefilled. Item intervals are set in the dates view and listed in Settings. The overview counts items needing a re-check, and Open Items gets one bundled entry after the Reviews (counted as one) that opens Current State filtered to them.
 - **Ask notes it in software.** When a claim's primary record is flagged, software adds the note beside its chip. No prompt change.
 
 **Why**
@@ -563,3 +564,25 @@ Stale "true" items are the next trust failure once the authority boundary holds:
 
 **Revisit when**
 State gets logins (an owner to notify becomes possible), or the bundled Review entry is routinely ignored.
+
+### DEC-027 — Reviews are ordered by impact, show why they matter, and can be left unchanged in bulk (#679)
+
+**Status:** Decided (Paige, Nov 15).
+**Date:** 2026-11-15
+**Related:** #679, #592, DEC-026
+
+**Decision**
+- **Order:** Reviews that answer or link a blocking Question first, then "at risk" Reviews, then Reviews that remove or change an existing Current State item, then the rest (adding an item, suggesting a Question). Within a tier, Reviews touching more Current State items first, then oldest first. This replaces "at risk first" everywhere Reviews are listed, Ask included.
+- **Why this matters:** the collapsed Review row shows the Review's existing "why this matters" line (model-written `why_consequential`).
+- **Bulk "Leave unchanged":** any Reviews can be selected and left unchanged together. Under DEC-026 this confirms the items those Reviews are about, the same as leaving each one unchanged.
+
+**Why**
+Northstar opens with 7 Reviews and 3 blocking Questions; the order put the oldest first, not the most consequential, and the reason to care was hidden inside each card.
+
+**Rejected / deferred**
+- At risk first (Paige chose blocking first: unblocking work comes first).
+- A software-written ranking reason on the row instead of the model's line.
+- Bulk limited to Reviews that only add, or bulk decisions that don't confirm.
+
+**Revisit when**
+Bulk leave-unchanged is used to clear Reviews nobody read (bulk confirmations with no prior card opens), or the order hides an at-risk Review people needed to see.

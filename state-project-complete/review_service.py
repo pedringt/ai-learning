@@ -8,6 +8,7 @@ from typing import Literal
 from db import Connection, project_id_of
 from extension_points import ExtensionPoint
 from interpretation_pipeline_integrated import new_id
+from state_confirmations import annotate_state_items, confirm_items, confirms_on_decision, review_confirmation_targets
 from question_review_service import (
     QuestionReviewConflictError, create_or_find_question, matching_open_question,
     normalized_question_text, question_proposal_read_model, resolve_question_proposal,
@@ -415,6 +416,10 @@ def resolve_review(connection: Connection, review_id: str, decision: Decision, n
             "WHERE review_id=? AND status='pending'",
             (proposal_status, review_id),
         )
+        # #678 / DEC-026: a person's accept, Leave unchanged or Dismiss concern confirms the items this Review is
+        # about (Keep tracking returned above and confirms nothing).
+        if confirms_on_decision(review["review_type"], decision):
+            confirm_items(connection, review_confirmation_targets(connection, review_id))
         connection.execute(
             "UPDATE review_issues SET status='resolved', resolution=?, resolution_note=?, "
             "resolved_at=CURRENT_TIMESTAMP WHERE id=?",
@@ -590,8 +595,14 @@ def list_state(connection: Connection) -> list[dict]:
     """
     connection.row_factory = sqlite3.Row
     pid = project_id_of(connection)
-    return [dict(row) for row in connection.execute(
+    # #678: re-check fields exist from migration 026; a database stopped before it (the migration tests' snapshots)
+    # is read without them. Checked, not caught: a failed query would abort a Postgres transaction.
+    confirmations = connection.execute(
+        "SELECT 1 FROM schema_migrations WHERE version='026_state_confirmations'"
+    ).fetchone() is not None
+    items = [dict(row) for row in connection.execute(
         "SELECT s.id, s.topic, s.statement, s.status, s.version, s.effective_date, s.created_at, s.updated_at, "
+        + ("s.last_confirmed_at, s.recheck_days, " if confirmations else "") +
         "COALESCE(s.area_id, 'general') AS area_id, COALESCE(a.name, 'General') AS area_name, "
         "COALESCE(a.description, 'Reviewed facts that do not yet belong to a more specific part of the project.') AS area_description, "
         "COALESCE(a.sort_order, 999) AS area_sort_order "
@@ -600,6 +611,7 @@ def list_state(connection: Connection) -> list[dict]:
         "WHERE s.status='active' AND s.project_id=? ORDER BY s.topic, s.created_at, s.id",
         (pid,),
     )]
+    return annotate_state_items(connection, items) if confirmations else items
 
 
 def list_project_areas(connection: Connection) -> list[dict]:
@@ -675,12 +687,11 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
     Ordering is the single shared consequentiality ranking every consumer
     (Workspace's attention list, Open Items, and Ask's deterministic starter
     answers) inherits by taking the first N reviews returned here -- none of
-    them re-rank independently. state_at_risk reviews sort first regardless
-    of age: unlike a proposed_update, a state_at_risk review means Current
-    State may already be wrong, which QA found could otherwise get pushed
-    out of a `.slice(0, N)` cut by older, lower-stakes reviews. Added
-    2026-09-07 after live QA found a "Current State may be at risk" review
-    that led Workspace's attention list disappear from some Ask briefings.
+    them re-rank independently. Open Reviews follow DEC-027's impact order
+    (_impact_key): blocking Question, then at risk, then changes to existing
+    items, then the rest. At-risk Reviews were first from 2026-09-07, after
+    live QA found one pushed out of a `.slice(0, N)` cut by older,
+    lower-stakes Reviews; they still rank above every ordinary change.
     """
     connection.row_factory = sqlite3.Row
     rows = connection.execute(
@@ -723,7 +734,28 @@ def list_reviews(connection: Connection, status: str = "open") -> list[dict]:
         if item["review_type"] == "open_question":
             item["question_to_create"] = question_proposal_read_model(connection, row["id"])
         result.append(item)
+    if status == "open":
+        result.sort(key=lambda item: _impact_key(connection, item))
     return result
+
+
+def _impact_key(connection: Connection, item: dict) -> tuple:
+    """#679 / DEC-027: answers or links a blocking Question, then at risk, then removes or changes an existing
+    item, then the rest; within a tier, more Current State items first, then oldest. The SQL order above (created_at,
+    id) breaks the remaining ties, since the sort is stable."""
+    question_ids = list(item.get("resolves_question_ids") or [])
+    linked = (item.get("question_to_create") or {}).get("existing_question_id")
+    if linked:
+        question_ids.append(linked)
+    blocking = bool(question_ids) and connection.execute(
+        f"SELECT 1 FROM questions WHERE blocking=1 AND status='open' AND id IN ({','.join('?' for _ in question_ids)}) LIMIT 1",
+        tuple(question_ids),
+    ).fetchone() is not None
+    proposals = item.get("proposals") or []
+    changes_existing = any((p.get("operation") or "update") in ("update", "retire") and p.get("state_item_id") for p in proposals)
+    tier = 0 if blocking else 1 if item["review_type"] == "state_at_risk" else 2 if changes_existing else 3
+    touched = {s["id"] for s in item.get("affected_state_items") or []} | {p["state_item_id"] for p in proposals if p.get("state_item_id")}
+    return (tier, -len(touched))
 
 
 # Extension point (#502): the Review list as presented to people -- API

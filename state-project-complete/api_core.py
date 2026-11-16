@@ -52,6 +52,8 @@ from api_models import (  # noqa: F401  (re-exported for existing importers)
     DraftNoteUpdate,
     SlackChannelUpdate,
     QuestionBlockingInput,
+    RecheckDaysInput,
+    StillTrueInput,
     QuestionInput,
 )
 from ask_provider import LiveAskProvider
@@ -118,6 +120,14 @@ from review_service import (
     update_question_blocking,
 )
 from review_service import resolve_review as _review_service_resolve_review
+from state_confirmations import (
+    StateItemNotFoundError,
+    confirm_still_true,
+    list_still_true_confirmations,
+    project_recheck_days,
+    set_item_recheck_days,
+    set_project_recheck_days,
+)
 # The presented Review list (an extension point; Baseline hides routine Starting
 # State creates from it). Raw rows stay in review_service.list_reviews.
 from review_service import list_presented_reviews as list_reviews
@@ -510,6 +520,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 "questions": with_linked_evidence(connection, list_questions(connection, "open")),
                 "rules": list_project_rules(connection),
                 "drafts": list_draft_notes(connection),
+                # #678 / DEC-026
+                "recheck_days": project_recheck_days(connection),
+                "confirmations": list_still_true_confirmations(connection),
             }
 
     @app.get("/api/projects")
@@ -805,7 +818,32 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @app.get("/api/state")
     def get_state() -> dict:
         with get_connection() as connection:
-            return {"items": list_state(connection)}
+            return {"items": list_state(connection), "recheck_days": project_recheck_days(connection)}
+
+    # #678 / DEC-026: "Still true", an item's own re-check interval, and the project's re-check reminders.
+    @app.post("/api/state/{state_id}/confirm")
+    def post_state_confirm(state_id: str, payload: StillTrueInput) -> dict:
+        with get_connection() as connection:
+            try:
+                confirmation = confirm_still_true(connection, state_id, payload.note)
+            except StateItemNotFoundError as exc:
+                raise HTTPException(status_code=404, detail="Current State item not found") from exc
+            return {"confirmation": confirmation, "state": list_state(connection)}
+
+    @app.patch("/api/state/{state_id}/recheck")
+    def patch_state_recheck(state_id: str, payload: RecheckDaysInput) -> dict:
+        with get_connection() as connection:
+            try:
+                set_item_recheck_days(connection, state_id, payload.days)
+            except StateItemNotFoundError as exc:
+                raise HTTPException(status_code=404, detail="Current State item not found") from exc
+            return {"state": list_state(connection)}
+
+    @app.patch("/api/project/recheck")
+    def patch_project_recheck(payload: RecheckDaysInput) -> dict:
+        with get_connection() as connection:
+            set_project_recheck_days(connection, payload.days)
+            return {"recheck_days": project_recheck_days(connection), "state": list_state(connection)}
 
     @app.get("/api/project-areas")
     def get_project_areas() -> dict:
@@ -942,7 +980,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     @app.get("/api/history")
     def get_history() -> dict:
         with get_connection() as connection:
-            return {"items": list_history(connection)}
+            return {"items": list_history(connection), "confirmations": list_still_true_confirmations(connection)}
 
 
     @app.post("/api/ask/stream")

@@ -129,6 +129,18 @@ class QuestionBlockingInput(BaseModel):
         return value or None
 
 
+class StillTrueInput(BaseModel):
+    """#678: a person's "Still true" on a Current State item, with an optional note for History."""
+    model_config = ConfigDict(extra="forbid")
+    note: str | None = Field(default=None, max_length=500)
+
+
+class RecheckDaysInput(BaseModel):
+    """#678: a re-check interval in days; null turns it off (project) or falls back to the project's (item)."""
+    model_config = ConfigDict(extra="forbid")
+    days: Literal[30, 60, 90, 180] | None = None
+
+
 class QuestionInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str = Field(min_length=1, max_length=2_000)

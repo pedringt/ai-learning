@@ -80,7 +80,9 @@ window.STATE_APP_NAVIGATION=Object.freeze({install(ctx){
     const projectToggle=document.querySelector('.project-nav-toggle'); if(projectToggle) projectToggle.classList.toggle('active',projectActive);
     syncProjectSubnav();
     document.querySelectorAll('#projectSubnav, #mobileProjectSubnav').forEach(sub=>{sub.hidden=!projectActive;});
-    const openItemsCount=uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length;
+    // #678: the re-check entry counts as one item in the badge (DEC-026).
+    const recheckEntry=(state.data.knowledge||[]).some(k=>k.state==='current'&&k.needsRecheck)?1:0;
+    const openItemsCount=uiPendingReviews().length+recheckEntry+openQuestions().filter(q=>q.blocking).length;
     document.querySelectorAll('#openItemsActionCount, #mobileOpenItemsCount').forEach(actionCount=>{actionCount.textContent=openItemsCount;actionCount.hidden=!openItemsCount;actionCount.setAttribute('aria-label',`${openItemsCount} items need attention`);});
     syncProjectMenu();
     const pm=document.getElementById('projectMenu'), ps=document.getElementById('projectSwitcher'); if(pm)pm.hidden=!state.projectMenuOpen; if(ps)ps.setAttribute('aria-expanded',state.projectMenuOpen?'true':'false');
@@ -154,6 +156,7 @@ window.STATE_APP_NAVIGATION=Object.freeze({install(ctx){
     if(announcer&&VIEW_NAMES[view])announcer.textContent=VIEW_NAMES[view];
   }
   function navigateTo(view,{preserveHistoryTopic=false,preserveHistoryEvidence=false}={}){
+    if(view!=='project-overview')state.recheckOnly=false;
     state.view=view;
     window.StateAnalytics?.track(VIEW_ANALYTICS_EVENTS[view]||'view_changed',{view});
     if(view==='history'){

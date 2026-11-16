@@ -9,6 +9,7 @@ R7 fixture cleanup.
 from __future__ import annotations
 
 import os
+from datetime import datetime, timedelta, timezone
 from database_migration_backed import initialize_db
 from db import DB_ERRORS, connect
 from question_review_service import persist_question_proposal
@@ -472,9 +473,36 @@ def _seed_accepted_history(connection) -> int:
     return seeded
 
 
+# #678 / DEC-026 (Paige, Nov 15): the demo projects show re-check reminders at 60 days, with a few items
+# deliberately old and the rest recent, relative to when they are seeded, so the demo always shows the feature.
+DEMO_RECHECK_DAYS = 60
+NORTHSTAR_OLD_CONFIRMATIONS = {"k-escalation": 104, "k-vip": 78}
+JUNIPER_OLD_CONFIRMATIONS = {"j-storage": 90}
+
+
+def _seed_recheck(connection, project_id: str, items, old_confirmations: dict[str, int]) -> None:
+    """Turn on reminders for a demo project that has none set, and give its untouched seeded items a confirmation
+    date: the listed ones past 60 days, the rest within the last month. Untouched means never confirmed and still
+    the seed's wording: version 1, or version 2 with the seeded History's accepted wording (HISTORY_SCENARIOS moved
+    those to fixed August dates, which would otherwise all read as old)."""
+    if connection.execute("SELECT 1 FROM schema_migrations WHERE version='026_state_confirmations'").fetchone() is None:
+        return
+    connection.execute("UPDATE projects SET recheck_days=? WHERE id=? AND recheck_days IS NULL", (DEMO_RECHECK_DAYS, project_id))
+    now = datetime.now(timezone.utc)
+    seeded_history = {state_id: after for _slug, state_id, _before, after, *_rest in HISTORY_SCENARIOS}
+    for index, (item_id, _topic, statement, _area) in enumerate(items):
+        stamp = (now - timedelta(days=old_confirmations.get(item_id, 3 + (index * 7) % 26))).strftime("%Y-%m-%d %H:%M:%S")
+        connection.execute(
+            "UPDATE current_state_items SET last_confirmed_at=? WHERE id=? AND project_id=? AND last_confirmed_at IS NULL "
+            "AND ((version=1 AND statement=?) OR (version=2 AND statement=?))",
+            (stamp, item_id, project_id, statement, seeded_history.get(item_id)),
+        )
+
+
 def _bootstrap_project(connection, *, project_id: str, project_name: str, areas, items, questions, reviews, resolved_reviews,
                         questions_created_at: str | None = None,
-                        manage_transaction: bool = True, seed_history=None, ask_evidence=(), ask_rules=()) -> dict[str, int]:
+                        manage_transaction: bool = True, seed_history=None, ask_evidence=(), ask_rules=(),
+                        old_confirmations=None) -> dict[str, int]:
     """state.md #114: the shared engine behind bootstrap_demo_data() (Northstar)
     and bootstrap_juniper_demo_data() (Juniper Office Move) -- same insertion
     logic, parameterized by project_id and that project's own AREAS/ITEMS/
@@ -744,6 +772,8 @@ def _bootstrap_project(connection, *, project_id: str, project_name: str, areas,
                 connection.execute("INSERT OR IGNORE INTO review_evidence(review_id,evidence_id) VALUES ('demo-review-retention','ask-evidence-vendor-retention')")
                 connection.execute("INSERT OR IGNORE INTO review_state_items(review_id,state_item_id) VALUES ('demo-review-retention','k-data')")
                 connection.execute("INSERT OR IGNORE INTO review_questions(review_id,question_id) VALUES ('demo-review-retention','q-retention')")
+        if old_confirmations is not None:
+            _seed_recheck(connection, project_id, items, old_confirmations)
         if manage_transaction:
             connection.execute("COMMIT")
     except Exception:  # broad on purpose: rollback then re-raise
@@ -759,6 +789,7 @@ def bootstrap_demo_data(connection, *, manage_transaction: bool = True) -> dict[
         connection, project_id="northstar", project_name="Northstar", areas=AREAS, items=ITEMS, questions=QUESTIONS,
         reviews=REVIEWS, resolved_reviews=RESOLVED_REVIEWS, manage_transaction=manage_transaction,
         seed_history=_seed_accepted_history, ask_evidence=ASK_EVIDENCE, ask_rules=ASK_RULES,
+        old_confirmations=NORTHSTAR_OLD_CONFIRMATIONS,
         questions_created_at="2026-08-18 09:00:00",  # the morning of Northstar's first demo note
     )
 
@@ -771,7 +802,7 @@ def bootstrap_juniper_demo_data(connection, *, manage_transaction: bool = True) 
     return _bootstrap_project(
         connection, project_id="juniper", project_name="Juniper Office Move", areas=JUNIPER_AREAS, items=JUNIPER_ITEMS,
         questions=JUNIPER_QUESTIONS, reviews=JUNIPER_REVIEWS, resolved_reviews=JUNIPER_RESOLVED_REVIEWS,
-        manage_transaction=manage_transaction,
+        manage_transaction=manage_transaction, old_confirmations=JUNIPER_OLD_CONFIRMATIONS,
         questions_created_at="2026-09-04 09:00:00",  # the morning of Juniper's first demo note
     )
 
@@ -783,6 +814,7 @@ _PROJECT_DEPENDENT_TABLES = (
     # so its rows go first (formerly prepended by baseline_dogfood_fixes, #502).
     ("baseline_evidence_coverage", "evidence_id IN (SELECT id FROM evidence WHERE project_id=?)"),
     ("history_transitions", "state_item_id IN (SELECT id FROM current_state_items WHERE project_id=?)"),
+    ("state_confirmations", "project_id=?"),
     ("proposed_questions", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),
     ("review_questions", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),
     ("review_state_items", "review_id IN (SELECT id FROM review_issues WHERE project_id=?)"),

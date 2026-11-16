@@ -116,6 +116,21 @@ window.STATE_APP_REVIEW_ACTIONS=Object.freeze({install(ctx){
     try{await hydrateBackend();}catch(error){console.warn('Review saved; refresh needed.',error);}
   }
 
+  // #679 / DEC-027: "Leave unchanged" on several Reviews, one request each (the same decision as each card's own
+  // button, so each confirms its items under DEC-026). A failure leaves that Review open and is reported.
+  async function bulkLeaveUnchanged(ids){
+    const picked=ids.map(id=>state.data.reviews.find(r=>r.id===id)).filter(r=>r&&r.status==='pending'&&r.backendReviewId);
+    let done=0;const failed=[];
+    for(const r of picked){
+      try{await API.resolveReview(r.backendReviewId,'keep',{});r.status='keep-current';done+=1;}
+      catch(error){failed.push(r.summary);}
+    }
+    try{await hydrateBackend();}catch(error){console.warn('Reviews saved; refresh needed.',error);}
+    document.dispatchEvent(new Event('state-project-record-changed'));
+    window.StateAnalytics?.track('review_bulk_kept',{count:done,failed:failed.length});
+    showToast(failed.length?`${done} left unchanged. ${failed.length} could not be saved and stay open.`:`${done} ${done===1?'Review':'Reviews'} left unchanged. Current State was not changed.`);
+  }
+
   async function executeReviewDecision(id,decision,checkOnly,adjustments){
     const r=state.data.reviews.find(x=>x.id===id);
     if(!r||r.status!=='pending')return;
@@ -201,5 +216,5 @@ window.STATE_APP_REVIEW_ACTIONS=Object.freeze({install(ctx){
     const line=primary?truncateText(primary.statement,180):'The reviewed change is now part of Current State.';
     showDialog(`<span class="eyebrow">Review complete</span><h2 id="dialogTitle">Current State updated</h2><p>${esc(line)}</p><div class="dialog-actions"><button class="btn primary" data-action="review-receipt-project" data-project-area="${esc(primary?.area||'general')}" data-state-id="${esc(primary?.id||'')}">View Current State</button>${primary?.id?`<button class="btn secondary" data-action="view-topic-history" data-knowledge-id="${esc(primary.id)}">View History</button>`:'<button class="btn secondary" data-view="history">View History</button>'}</div>`);
   }
-  return {decideReview,openAdjustDialog,executeReviewDecision,confirmReviewAdjust};
+  return {decideReview,openAdjustDialog,executeReviewDecision,confirmReviewAdjust,bulkLeaveUnchanged};
 }});

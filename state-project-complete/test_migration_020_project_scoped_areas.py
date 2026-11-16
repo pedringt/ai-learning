@@ -24,6 +24,7 @@ from review_service import list_history, list_project_areas, list_state, resolve
 from seed_demo import bootstrap_demo_data, bootstrap_juniper_demo_data
 
 MIGRATION = "020_project_scoped_areas"
+_RECHECK_FIELDS = {"last_confirmed_at", "recheck_days", "effective_recheck_days", "needs_recheck"}
 TABLES = ("projects", "project_areas", "current_state_items", "history_transitions", "review_issues",
           "proposed_state_changes", "questions", "evidence", "project_rules")
 
@@ -96,7 +97,8 @@ def _snapshot(connection):
     for project in ("northstar", "juniper", "project_0a1b2c3d4e5f"):
         connection.project_id = project
         snapshot[project] = {
-            "state": list_state(connection),
+            # #678's re-check fields arrive with migration 026, after this one; the comparison is about 020.
+            "state": [{k: v for k, v in s.items() if k not in _RECHECK_FIELDS} for s in list_state(connection)],
             "areas": list_project_areas(connection),
             "history": [(h["id"], h["state_item_id"], h["new_statement"]) for h in list_history(connection)],
         }

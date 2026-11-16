@@ -281,8 +281,7 @@
         k.areaName=item.area_name||'General';
         k.areaDescription=item.area_description||'';
         k.areaSortOrder=item.area_sort_order??999;
-        k.lastConfirmed=formatBackendDate(item.updated_at||item.created_at);
-        k.lastConfirmedISO=item.updated_at||item.created_at||todayISO();
+        applyConfirmation(k,item);
       }else{
         knowledge.push({
           id:item.id,
@@ -295,12 +294,21 @@
           statement:item.statement,
           support:[],
           state:'current',
-          lastConfirmed:formatBackendDate(item.updated_at||item.created_at),
-          lastConfirmedISO:item.updated_at||item.created_at||todayISO(),
           backendManaged:true
         });
+        applyConfirmation(knowledge[knowledge.length-1],item);
       }
     }
+  }
+  // #678 / DEC-026: when a person last confirmed the item (the backend falls back to its last accepted change), its
+  // own re-check interval, the interval in effect, and whether it is past it. The backend decides needs_recheck.
+  function applyConfirmation(k,item){
+    const confirmed=item.last_confirmed_at||item.updated_at||item.created_at;
+    k.lastConfirmed=formatBackendDate(confirmed);
+    k.lastConfirmedISO=confirmed||todayISO();
+    k.recheckDays=item.recheck_days??null;
+    k.effectiveRecheckDays=item.effective_recheck_days??null;
+    k.needsRecheck=!!item.needs_recheck;
   }
 
   function questionTextKey(value){ return norm(value); }

@@ -73,7 +73,7 @@
   const {showToast,showDemoHelp,showDialog,closeDialog,showProjectSettings,addDialogHtml,showAddDialog,analyzingDialog,startAnalysisClock,stopAnalysisClock}=window.STATE_APP_DIALOGS.install({baselineSetupActive,dialogBody,esc,overlay,state});
   const {updateNav,updateProjectSubnavActive,render,navigateTo,scrollProjectTarget}=window.STATE_APP_NAVIGATION.install({ASK,PROJECT_VIEW,announceView,esc,openQuestions,renderHistory,renderNotes,renderOpenItems,renderOverview,renderProjectOverview,root,state,uiPendingReviews});
   const {upsertBackendReview,replaceBackendOpenReviews,mapApiReview,refreshOpenReviews,formatBackendDate,sourceLabel,historyType,syncApiHistory,syncApiState,syncApiQuestions,createBackendQuestion,submitEvidence,retryEvidenceAnalysis,activateProject,hydrateBackend}=window.STATE_APP_HYDRATION.install({announceView,API,BACKEND_SYNC,currentProjectStage,renderWorkspaceAttentionOnly,renderWorkspaceBelowGridOnly,root,state,workspaceAttentionHtml,closeDialog,updateNav,render});
-  const {decideReview,openAdjustDialog,executeReviewDecision,confirmReviewAdjust}=window.STATE_APP_REVIEW_ACTIONS.install({API,OPEN_ITEMS_VIEW,clone,esc,norm,questionDialogHtml,state,todayISO,todayLabel,truncateText,showToast,showDialog,closeDialog,updateNav,render,replaceBackendOpenReviews,syncApiState,syncApiQuestions,hydrateBackend});
+  const {decideReview,openAdjustDialog,executeReviewDecision,confirmReviewAdjust,bulkLeaveUnchanged}=window.STATE_APP_REVIEW_ACTIONS.install({API,OPEN_ITEMS_VIEW,clone,esc,norm,questionDialogHtml,state,todayISO,todayLabel,truncateText,showToast,showDialog,closeDialog,updateNav,render,replaceBackendOpenReviews,syncApiState,syncApiQuestions,hydrateBackend});
 
   // #113: "Project stage"/"Project outcome" are matched by topic label, not
   // a fixed id, so a different project's own universal facts are excluded
@@ -136,7 +136,7 @@
   }
 
   function renderProjectOverview(){
-    paintView(PROJECT_VIEW.render({backendState:state.backendStatus.state,projectName:state.data.project.name,knowledge:state.data.knowledge,history:state.data.history,pendingFor}));
+    paintView(PROJECT_VIEW.render({backendState:state.backendStatus.state,projectName:state.data.project.name,knowledge:state.data.knowledge,history:state.data.history,pendingFor,recheckDays:state.data.recheckDays??null,showDates:!!state.showDates,recheckOnly:!!state.recheckOnly}));
     decorateProjectProvenance();
     requestAnimationFrame(()=>updateProjectSubnavActive());
   }
@@ -537,15 +537,21 @@
     const evidence=(h.evidenceItems||h.evidence_items||[]).map(e=>e.content||'').join(' ');
     return `${h.type||''} ${h.before??h.old_statement??''} ${h.after??h.new_statement??''} ${h.reason||''} ${h.decision_question||''} ${h.proposal_rationale||''} ${h.why_consequential||''} ${evidence}`;
   }
+  // #678 / DEC-026: a "Still true" confirmation is a History entry beside the accepted changes. It changed nothing,
+  // so it never counts as a change, and it has no Evidence to filter by.
+  function confirmationEntries(){
+    return (state.data.confirmations||[]).map(c=>({kind:'confirmation',knowledgeId:c.state_item_id,statement:c.statement||'',note:c.note||'',dateISO:String(c.confirmed_at||'').replace(' ','T'),date:formatBackendDate(c.confirmed_at)}));
+  }
   function historyEntries(){
-    const all=state.data.history.slice().sort(sortDateDesc);
     const topic=state.historyTopic;
     const evidenceId=state.historyEvidenceId;
+    const all=state.data.history.concat(evidenceId?[]:confirmationEntries()).sort(sortDateDesc);
     let scoped=topic?all.filter(h=>h.knowledgeId===topic):all;
     if(evidenceId) scoped=scoped.filter(h=>(h.evidenceItems||h.evidence_items||[]).some(e=>e.id===evidenceId));
     const q=norm(state.historySearch);
-    return q?scoped.filter(h=>norm(historySearchText(h)).includes(q)):scoped;
+    return q?scoped.filter(h=>norm(h.kind==='confirmation'?`${h.statement} ${h.note} confirmed still true`:historySearchText(h)).includes(q)):scoped;
   }
+  const changeCount=entries=>entries.filter(h=>h.kind!=='confirmation').length;
   function historyHighlight(value){
     const raw=String(value??'');
     const query=state.historySearch.trim();
@@ -563,6 +569,7 @@
     return `<details class="history-sources"><summary>Source notes · ${items.length}</summary><div class="history-source-list">${items.map(e=>`<article><span>${esc(formatBackendDate(evidenceDisplayTimestamp(e)))} · ${esc(sourceLabel(e.source_type))}</span><p>${historyHighlight(e.content)}</p></article>`).join('')}</div></details>`;
   }
   function historyEntry(h, topicMode=false){
+    if(h.kind==='confirmation') return `<article class="history-entry history-confirmation"><div class="history-entry-date">${esc(h.date)}</div><div class="history-entry-body"><h3>Confirmed still true${h.note?` · “${historyHighlight(h.note)}”`:''}</h3><p>${historyHighlight(h.statement)}</p></div></article>`;
     // QA follow-up (2026-09-14): a whole History-list card used to be
     // clickable (styled as a button, with a "View this topic ->" footer)
     // to filter the list down to just that topic. On review, that added no
@@ -591,7 +598,7 @@
     if(list){ list.innerHTML=entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>'); announceView(state.view); }
     const count=document.getElementById('historyResultCount');
     const total=(state.historyEvidenceId?state.data.history.filter(h=>(h.evidenceItems||h.evidence_items||[]).some(e=>e.id===state.historyEvidenceId)):state.historyTopic?state.data.history.filter(h=>h.knowledgeId===state.historyTopic):state.data.history).length;
-    if(count) count.textContent=`${entries.length} of ${total} changes`;
+    if(count) count.textContent=`${changeCount(entries)} of ${total} changes`;
     const clear=document.getElementById('clearHistorySearch'); if(clear) clear.hidden=!state.historySearch.trim();
   }
 
@@ -609,7 +616,7 @@
     const topicKnowledge=topic?state.data.knowledge.find(k=>k.id===topic):null;
     const evidenceNote=state.historyEvidenceId?state.data.notes.find(n=>n.evidenceId===state.historyEvidenceId):null;
     const total=(state.historyEvidenceId?state.data.history.filter(h=>(h.evidenceItems||h.evidence_items||[]).some(e=>e.id===state.historyEvidenceId)):topic?state.data.history.filter(h=>h.knowledgeId===topic):state.data.history).length;
-    paintView(`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">Changes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'Every accepted change to Current State, whether it came from Notes, Starting State setup, or a direct edit. This is the bridge between what came in and what the Project says now.'}</p></div></div>${evidenceNote?`<div class="history-context"><strong>From note: ${esc(evidenceNote.title)}</strong><span>${total} accepted change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-evidence">View all history →</button></div>`:topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${total} recorded change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}<div class="history-toolbar"><input class="history-search" id="historySearch" type="search" placeholder="Search history" aria-label="Search accepted project changes" value="${esc(state.historySearch)}"><span class="history-result-count" id="historyResultCount" aria-live="polite">${entries.length} of ${total} changes</span><button class="text-button" id="clearHistorySearch" data-action="clear-history-search"${state.historySearch?'':' hidden'}>Clear search</button></div><div class="history-list" id="historyList">${entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>')}</div></section>`);
+    paintView(`<section class="page collection-page history-page"><div class="page-head"><div><span class="eyebrow">Changes to Current State</span><h2>History</h2><p>${topicKnowledge?`How project evidence changed the maintained understanding of ${esc(topicKnowledge.title)}.`:'Every accepted change to Current State, whether it came from Notes, Starting State setup, or a direct edit. This is the bridge between what came in and what the Project says now.'}</p></div></div>${evidenceNote?`<div class="history-context"><strong>From note: ${esc(evidenceNote.title)}</strong><span>${total} accepted change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-evidence">View all history →</button></div>`:topicKnowledge?`<div class="history-context"><strong>${esc(topicKnowledge.title)}</strong><span>${total} recorded change${total===1?'':'s'}</span><button class="text-button" data-action="clear-history-topic">View all history →</button></div>`:''}<div class="history-toolbar"><input class="history-search" id="historySearch" type="search" placeholder="Search history" aria-label="Search accepted project changes" value="${esc(state.historySearch)}"><span class="history-result-count" id="historyResultCount" aria-live="polite">${changeCount(entries)} of ${total} changes</span><button class="text-button" id="clearHistorySearch" data-action="clear-history-search"${state.historySearch?'':' hidden'}>Clear search</button></div><div class="history-list" id="historyList">${entries.length?entries.map(h=>historyEntry(h,!!topicKnowledge)).join(''):(state.historySearch?'<div class="empty-state"><h3>No matching changes.</h3><p>Try a broader History search.</p></div>':'<div class="empty-state"><h3>No Current State changes yet.</h3><p>When reviewed Notes change the Project, that transition will appear here.</p></div>')}</div></section>`);
   }
 
   /* ----------------------------------------------------------------------
@@ -671,6 +678,7 @@
     return {
       reviewsStatus:state.backendStatus.reviews,questionsStatus:state.backendStatus.questions,draftsStatus:state.backendStatus.drafts,
       reviews:uiPendingReviews(),questions:openQuestions(),
+      recheckCount:PROJECT_VIEW.recheckCount(state.data.knowledge||[]),selectedReviewIds:state.selectedReviewIds||new Set(),
       // #482: a project still in setup has no Current State to be "up to date".
       hasCurrentState:!baselineSetupActive()&&(state.data.knowledge||[]).some(k=>k.state!=='retired'),
       draftNotes:state.data.notes.filter(n=>n.status==='working'||n.status==='draft'||!!n.backendDraft),
@@ -1085,6 +1093,18 @@
     else if(act==='review-acknowledge-risk'||act==='review-dismiss-risk')decideReview(a.dataset.review,act==='review-acknowledge-risk'?'acknowledge-risk':'dismiss-risk');
     else if(act==='open-adjust-review')openAdjustDialog(a.dataset.review);
     else if(act==='confirm-review-adjust')confirmReviewAdjust(a.dataset.review);
+    // #678 / DEC-026: re-check actions on Current State. "Still true" takes an optional note saved to History;
+    // a re-check Question goes through the ordinary Add question dialog, prefilled for the person to edit.
+    // #679 / DEC-027: leave the selected Reviews unchanged, after a confirm naming them.
+    else if(act==='bulk-leave-unchanged'){const ids=[...(state.selectedReviewIds||[])];const picked=uiPendingReviews().filter(r=>ids.includes(r.id)&&OPEN_ITEMS_VIEW.bulkEligible(r));if(picked.length)showDialog(`<span class="eyebrow">Leave unchanged</span><h2 id="dialogTitle">Leave ${picked.length} ${picked.length===1?'Review':'Reviews'} unchanged?</h2><p>Current State stays as it is, and the items these Reviews are about count as confirmed.</p><ul class="bulk-review-list">${picked.map(r=>`<li>${esc(r.summary)}</li>`).join('')}</ul><div class="dialog-actions"><button class="btn primary" data-action="confirm-bulk-leave-unchanged">Leave unchanged</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
+    else if(act==='confirm-bulk-leave-unchanged'){const ids=[...(state.selectedReviewIds||[])];closeDialog();await bulkLeaveUnchanged(ids);state.selectedReviewIds=new Set();updateNav();render();}
+    else if(act==='toggle-show-dates'){state.showDates=!state.showDates;renderProjectOverview();}
+    else if(act==='clear-recheck-filter'){state.recheckOnly=false;renderProjectOverview();}
+    else if(act==='open-recheck-items'){state.recheckOnly=true;state.showDates=false;navigateTo('project-overview');}
+    else if(act==='open-recheck-settings'){navigateTo('settings');setTimeout(()=>document.getElementById('settings-recheck')?.scrollIntoView({block:'start'}),60);}
+    else if(act==='state-still-true'){const k=state.data.knowledge.find(x=>x.id===a.dataset.stateId);if(k)showDialog(`<span class="eyebrow">Current State</span><h2 id="dialogTitle">Still true?</h2><p>“${esc(k.statement)}”</p><input id="stillTrueNote" class="dialog-input" maxlength="500" aria-label="Note" placeholder="Add a note (optional)"/><div class="dialog-actions"><button class="btn primary" data-action="confirm-still-true" data-state-id="${esc(k.id)}">Confirm</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
+    else if(act==='confirm-still-true'){const note=document.getElementById('stillTrueNote')?.value||'';a.disabled=true;try{const result=await API.confirmStateItem(a.dataset.stateId,note.trim());syncApiState(result.state||[]);if(result.confirmation)state.data.confirmations=[{...result.confirmation,confirmed_at:new Date().toISOString().slice(0,19).replace('T',' '),statement:state.data.knowledge.find(x=>x.id===a.dataset.stateId)?.statement||''},...(state.data.confirmations||[])];closeDialog();render();showToast('Confirmed still true. Current State was not changed.');}catch(error){a.disabled=false;showToast('Could not confirm this item. Try again.');}}
+    else if(act==='suggest-recheck-question'){const k=state.data.knowledge.find(x=>x.id===a.dataset.stateId);if(k){showDialog(`<span class="eyebrow">Known unknown</span><h2 id="dialogTitle">Add a question</h2><input id="manualQuestion" class="dialog-input" aria-label="New project question" placeholder="What does the project still need to establish?"/><div class="dialog-actions"><button class="btn primary" data-action="save-question">Track question</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);const input=document.getElementById('manualQuestion');if(input)input.value=`Is this still true: “${k.statement}”?`;}}
     else if(act==='add-question')showDialog(`<span class="eyebrow">Known unknown</span><h2 id="dialogTitle">Add a question</h2><input id="manualQuestion" class="dialog-input" aria-label="New project question" placeholder="What does the project still need to establish?"/><div class="dialog-actions"><button class="btn primary" data-action="save-question">Track question</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);
     else if(act==='save-question'){const t=document.getElementById('manualQuestion')?.value;closeDialog();addQuestion(t);}
     else if(act==='confirm-stop-question'){const q=state.data.questions.find(q=>q.id===a.dataset.questionId);if(q)showDialog(`<span class="eyebrow">Open question</span><h2 id="dialogTitle">Stop tracking this question?</h2><p>It will be removed from the open questions list. This does not change any reviewed project understanding.</p><div class="dialog-actions"><button class="btn primary" data-action="stop-question" data-question-id="${q.id}">Stop tracking</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
@@ -1092,6 +1112,23 @@
     else if(act==='copy-note'){const n=state.data.notes.find(x=>x.id===a.dataset.noteId);if(n){navigator.clipboard?.writeText(n.text);a.textContent='Copied';}}
   });
 
+  // #679: selecting Reviews for bulk "Leave unchanged".
+  document.addEventListener('change',e=>{
+    const box=e.target.closest?.('[data-review-select]');if(!box)return;
+    state.selectedReviewIds=state.selectedReviewIds||new Set();
+    if(box.checked)state.selectedReviewIds.add(box.dataset.reviewSelect);else state.selectedReviewIds.delete(box.dataset.reviewSelect);
+    renderOpenItems();
+  });
+  window.STATE_RECHECK_LOOKUP=id=>{const k=state.data.knowledge.find(x=>x.id===id&&x.state==='current');return k?{needsRecheck:!!k.needsRecheck,lastConfirmed:k.lastConfirmed}:null;};
+  // #678: Settings changed the project's reminders or cleared an item's interval.
+  document.addEventListener('state:recheck-changed',e=>{if(e.detail?.state)syncApiState(e.detail.state);if(e.detail&&'recheckDays' in e.detail&&e.detail.recheckDays!==undefined)state.data.recheckDays=e.detail.recheckDays;});
+  // #678: an item's own re-check interval, from the "Show dates" view.
+  document.addEventListener('change',async e=>{
+    const select=e.target.closest?.('[data-action="set-item-recheck"]');if(!select)return;
+    const days=select.value?Number(select.value):null;select.disabled=true;
+    try{const result=await API.setItemRecheckDays(select.dataset.stateId,days);syncApiState(result.state||[]);renderProjectOverview();}
+    catch(error){select.disabled=false;showToast('Could not change the re-check interval. Try again.');}
+  });
   document.addEventListener('change',e=>{ if(e.target.id==='notesStatusFilter'){state.notesFilter=e.target.value;renderNotes();} else if(e.target.id==='uploadInfoFile'){const file=e.target.files&&e.target.files[0]; e.target.value=''; if(file)uploadInformation(file);} });
 
   document.addEventListener('input',e=>{

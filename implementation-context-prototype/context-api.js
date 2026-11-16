@@ -186,6 +186,10 @@
     getEvidence: () => request('/api/evidence'),
     getReviews: status => request(`/api/reviews?status=${encodeURIComponent(status)}`),
     getHistory: () => request('/api/history'),
+    // #678 / DEC-026: "Still true" (optional note), an item's own re-check interval, the project's reminders.
+    confirmStateItem: (stateId, note) => jsonPost(`/api/state/${encodeURIComponent(stateId)}/confirm`, {note: note || null}),
+    setItemRecheckDays: (stateId, days) => request(`/api/state/${encodeURIComponent(stateId)}/recheck`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({days})}),
+    setProjectRecheckDays: days => request('/api/project/recheck', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({days})}),
     getQuestions: status => request(`/api/questions?status=${encodeURIComponent(status)}`),
     // #640 Draft 1: one page of Questions (newest resolved first) and one Question by id, scoped to the project.
     getQuestionPage: (status,limit,offset) => request(`/api/questions?status=${encodeURIComponent(status)}&limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`),
