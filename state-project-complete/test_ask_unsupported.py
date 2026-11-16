@@ -155,7 +155,9 @@ def test_a_freshness_verdict_is_withheld_with_the_existing_line(northstar, bad):
     for result in (run_ask(northstar, Scripted([GROUNDED, bad]), query), _streamed(northstar, Scripted([GROUNDED, bad]), query)):
         assert _shown(result) == [GROUNDED["text"]]
         assert result["answer"]["withheld_claims"] == 1
-        assert result["answer"]["withheld_kinds"] == {"other": 1}         # the existing line, no new wording
+        assert result["answer"]["withheld_kinds"] == {"freshness": 1}
+        assert ("1 statement was left out: it said whether something is out of date, which only its confirmation date "
+                "shows.") in result["answer"]["summary"]
 
 
 def test_a_false_absence_is_withheld_when_the_model_was_sent_the_record(northstar):
@@ -164,6 +166,9 @@ def test_a_false_absence_is_withheld_when_the_model_was_sent_the_record(northsta
     query = "Does the VIP carve-out still hold?"
     for result in (run_ask(northstar, Scripted([GROUNDED, bad]), query), _streamed(northstar, Scripted([GROUNDED, bad]), query)):
         assert _shown(result) == [GROUNDED["text"]] and result["answer"]["withheld_claims"] == 1
+        assert result["answer"]["withheld_kinds"] == {"absence": 1}
+        assert ("1 statement was left out: it said State has no record of something it does have."
+                in result["answer"]["summary"])
 
 
 def test_a_false_absence_is_withheld_when_retrieval_cut_the_record(northstar, monkeypatch):

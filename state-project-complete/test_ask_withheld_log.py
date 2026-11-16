@@ -26,6 +26,8 @@ def test_each_check_reason_maps_to_a_kind():
     assert withheld_kind("status ('approved') not carried by a pending review basis") == "settled"
     assert withheld_kind("detail line: permission ('can proceed') with no Current State record that grants one") == "permission"
     assert withheld_kind("restates the draft's assumption as fact") == "draft"
+    assert withheld_kind("freshness verdict ('stale') without confirmation data") == "freshness"
+    assert withheld_kind("says no record covers what k-vip covers") == "absence"
     assert withheld_kind("empty") == withheld_kind(None) == "other"
 
 

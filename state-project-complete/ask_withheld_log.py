@@ -37,6 +37,10 @@ def withheld_kind(reason: str | None) -> str:
         return "settled"
     if reason.startswith("restates the draft's assumption"):
         return "draft"
+    if reason.startswith("freshness verdict"):           # #703 (DEC-029)
+        return "freshness"
+    if reason.startswith("says no record covers"):       # #704 (DEC-029)
+        return "absence"
     return "other"
 
 

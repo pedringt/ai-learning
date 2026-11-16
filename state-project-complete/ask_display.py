@@ -25,6 +25,9 @@ WITHHELD_KIND_PHRASES = {
     "settled": "said something was settled that State's records don't establish",
     "permission": "said something could go ahead without a record that allows it",
     "draft": "stated the draft's assumption as fact",
+    # #703/#704 (Paige, Nov 16, DEC-029)
+    "freshness": "said whether something is out of date, which only its confirmation date shows",
+    "absence": "said State has no record of something it does have",
     "other": "couldn't be checked against State's records",
 }
 # #567 (Nov 11, draft copy for Paige's review): when every claim was withheld, the line says so without implying the

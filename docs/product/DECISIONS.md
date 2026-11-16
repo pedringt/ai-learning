@@ -630,7 +630,7 @@ The citation-coverage or fallback work lands (re-measure "Tier 1"-type misses), 
 
 ### DEC-029 — Ask never gives a freshness verdict without confirmation data, and never turns a missing record into an absence (#703, #704)
 
-**Status:** Decided (Paige, Nov 16); built on `fix/703-704-freshness`, not yet on staging.
+**Status:** Decided (Paige, Nov 16); built on `fix/703-704-freshness` (eval/703-704), not yet on staging.
 **Date:** 2026-11-16
 **Related:** #703, #704, #692, #701, DEC-021, DEC-022, DEC-023, DEC-026, QA.md invariant 6
 
@@ -639,7 +639,8 @@ The citation-coverage or fallback work lands (re-measure "Tier 1"-type misses), 
 - **Backstop: no freshness verdict without confirmation data.** The model never receives DEC-026 data, so any freshness verdict it gives about Current State ("not stale", "up to date", "needs/doesn't need a re-check") is withheld. An open phrasing ("don't show whether it is stale") is not a verdict.
 - **A failure to retrieve never becomes evidence that something doesn't exist.** An existence claim (no record of a kind covers, mentions or is about X) is checked against every record in the project, including records retrieval did not send. It is withheld when a record of that kind shares X's distinctive words.
 - **Existence claims only (#701 scope, Nov 16).** Record-first denials ("no record establishes/confirms X", "State has no confirmed/established/recorded X", "I couldn't find a record of X") describe the record they are about and are never checked by this rule.
-- **Withheld with the existing line, no new wording** (Paige, Nov 16): the statement counts as "couldn't be checked against State's records".
+- **Withheld with the existing withheld line** (Paige, Nov 16: no software sentence naming the missed record). **Two new DEC-024 kinds** say why (Paige, Nov 16, option b, wording approved as written): freshness, "said whether something is out of date, which only its confirmation date shows"; absence, "said State has no record of something it does have". This amends DEC-024's list of kinds.
+- **A freshness word Ask reports from a record is not its own verdict** (Nov 16 replay): after a reporting verb ("says", "arguing", "treats … as") or a pending/proposal frame in the same clause it is shown, unless Current State is the one said to report it.
 
 **Why**
 Nov 16 production QA: "Is the VIP exception stale?" got "…not stale in Current State" under a "needs re-check" chip (#703), and "Is the VIP carve-out out of date?" got "no Current State record covers it" while k-vip exists (#704). For #704, retrieval had sent k-vip and the retire-VIP Review (checked on the seeded Northstar, which matches production): the model ignored them. A prompt rule asking for relative absence wording was already in place (DEC-023); only a software check removes the path.
