@@ -1256,8 +1256,17 @@
   // contact, percentages, Tier-1/support/security narrative templates) was
   // dead code, unreachable from any live UI, and has been deleted rather
   // than generalized.
+  // #693 (Nov 16): a question that names another project ("What open Reviews does the Northstar project have?" asked
+  // in Juniper) must not get this project's counts. Leave it to the backend, which says which project Ask answers
+  // from and declines (ask_software_answers.py). Names by full name, or by id when the id is a plain word.
+  function namesOtherProject(raw){
+    const words=s=>String(s||'').toLowerCase().replace(/[’']s\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+    const q=` ${words(raw)} `;const active=state.data.project?.id;
+    return (state.data.projects||[]).some(p=>p&&p.id!==active&&[p.name,/^[a-z]{4,}$/.test(String(p.id||''))?p.id:''].some(n=>{const w=words(n);return w&&q.includes(` ${w} `);}));
+  }
   window.STATE_ASK_ROUTING=Object.freeze({
     askRoutingCardHtml(raw){
+      if(namesOtherProject(raw))return null;
       const kind=detectAskIntent(raw)?.kind;
       if(kind!=='pending'&&kind!=='open'&&kind!=='blockers')return null;
       return intentAskHtml({kind});
