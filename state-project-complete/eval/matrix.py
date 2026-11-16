@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 SCHEMA = "state-eval-matrix/v1"
-SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade", "calibration", "recalibrate", "holdout", "validate", "heldout", "assess", "heldoutb", "assessb", "heldoutc", "assessc", "recheck", "recheckb", "heldoutd", "assessd", "contextsize", "survey", "surveygrade", "absence", "contextnow")
+SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade", "calibration", "recalibrate", "holdout", "validate", "heldout", "assess", "heldoutb", "assessb", "heldoutc", "assessc", "recheck", "recheckb", "heldoutd", "assessd", "contextsize", "survey", "surveygrade", "absence", "contextnow", "premise", "compound")
 MODEL_ID_PATTERN = re.compile(r"^claude-[a-z0-9.-]+$")
 
 # USD per million tokens, Anthropic first-party API. Source: the claude-api skill's model table
@@ -86,6 +86,10 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
     "absence": {"input": 17_000, "output": 600, "max_output": 2_400},
     # DEC-023 after side: `today` only. 42.3k-character prompts at the 2.5 characters per token run 43676969245 measured.
     "contextnow": {"input": 17_000, "output": 600, "max_output": 2_400},
+    # Release-QA premise repro (Nov 16): intake on the demo project plus one Ask, per call averaged (estimate).
+    "premise": {"input": 9_000, "output": 800, "max_output": 2_400},
+    # #701: the Ask suite's compound scenario alone, for rare-event rates ("should wait", withheld "Tier 1").
+    "compound": {"input": 7_300, "output": 450, "max_output": 2_400},
 }
 
 # Wall-clock seconds per repeat on Haiku 5.5, from past runs of the existing workflows:
@@ -93,7 +97,7 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
 # ask 27.6-28.3s (10 cases; same workflow), consequentiality 67-77s (36 cases; State QA Release runs
 # 38078551511, 38079304500, 38271757236), baseline 119-126s per 6 repeats of 5 sources per route (run 38187113539).
 SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "regrade": 30, "calibration": 12, "recalibrate": 30, "holdout": 12, "validate": 30, "heldout": 12, "assess": 30, "heldoutb": 12, "assessb": 30, "heldoutc": 12, "assessc": 30, "recheck": 30, "recheckb": 30, "heldoutd": 12, "assessd": 30, "survey": 12, "surveygrade": 30, "consequentiality": 80, "baseline": 22,
-                                     "contextsize": 1_100, "absence": 90, "contextnow": 220}  # 155 streamed Asks, not yet measured: about 7 s each
+                                     "contextsize": 1_100, "absence": 90, "contextnow": 220, "premise": 40, "compound": 3}  # 155 streamed Asks, not yet measured: about 7 s each
 # Other models are unmeasured here; plan shards as if they were this much slower.
 MODEL_SLOWDOWN: dict[str, float] = {"claude-haiku-5-5": 1.0, "claude-haiku-4-5": 2.0}
 DEFAULT_SLOWDOWN = 3.0
@@ -206,6 +210,12 @@ def scenario_ids(suite: str) -> list[str]:
     elif suite == "absence":
         from eval.absence_wording import CASES
         SCENARIOS = list(CASES)
+    elif suite == "premise":
+        from eval.premise_repro import CASES
+        SCENARIOS = list(CASES)
+    elif suite == "compound":
+        from eval.ask_quality_scenarios import SCENARIOS as ASK
+        SCENARIOS = [x for x in ASK if x.id == "ask_compound_question_keeps_governing_state"]
     else:
         raise PlanError(f"Unknown suite {suite!r}")
     return [s.id for s in (graded_subset(list(SCENARIOS)) if suite == "graded" else SCENARIOS)]
@@ -213,7 +223,8 @@ def scenario_ids(suite: str) -> list[str]:
 
 def calls_per_repeat(suite: str) -> int:
     """Planned model calls for one repeat of a suite: one per scenario (graded: an Ask call plus a grading call)."""
-    return len(scenario_ids(suite)) * (2 if suite == "graded" else 1)
+    # premise: intake (up to three tries) plus one Ask.
+    return len(scenario_ids(suite)) * (2 if suite == "graded" else 4 if suite == "premise" else 1)
 
 
 CALIBRATION_ANSWERS = Path(__file__).resolve().parent / "calibration" / "ask_calibration_answers.json"
@@ -883,6 +894,12 @@ def _scenarios(suite: str) -> list[Any]:
     elif suite == "absence":
         from eval.absence_wording import CASES
         SCENARIOS = list(CASES)
+    elif suite == "premise":
+        from eval.premise_repro import CASES
+        SCENARIOS = list(CASES)
+    elif suite == "compound":
+        from eval.ask_quality_scenarios import SCENARIOS as ASK
+        SCENARIOS = [x for x in ASK if x.id == "ask_compound_question_keeps_governing_state"]
     else:
         from eval.baseline_decomposition import SCENARIOS
     return graded_subset(list(SCENARIOS)) if suite == "graded" else list(SCENARIOS)
@@ -897,6 +914,12 @@ def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: fl
 
         absence_provider = LiveAskProvider(AnthropicProvider(model_identifier=model))
         return lambda s: absence_run_one(s, absence_provider)
+    if suite == "premise":
+        from anthropic_provider import AnthropicProvider
+        from eval.premise_repro import run_one as premise_run_one
+
+        premise_provider = AnthropicProvider(model_identifier=model)
+        return lambda s: premise_run_one(s, premise_provider)
     if suite in ("contextsize", "contextnow"):
         from anthropic_provider import AnthropicProvider
         from ask_provider import LiveAskProvider
@@ -907,14 +930,14 @@ def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: fl
     if suite in ("regrade", "recalibrate", "validate", "assess", "assessb", "assessc", "recheck", "recheckb", "assessd", "surveygrade"):
         from eval.ask_grader import grade_answer
         return lambda item: regrade_record(item, grade_answer)
-    if suite in ("review", "ask", "adversarial", "graded", "consequentiality", "calibration", "holdout", "heldout", "heldoutb", "heldoutc", "heldoutd", "survey"):
+    if suite in ("review", "ask", "adversarial", "compound", "graded", "consequentiality", "calibration", "holdout", "heldout", "heldoutb", "heldoutc", "heldoutd", "survey"):
         from anthropic_provider import AnthropicProvider
 
         provider = AnthropicProvider(model_identifier=model)
         if suite == "review":
             from eval.quality_harness import run_review_quality_scenario
             return lambda s: review_record(run_review_quality_scenario(s, provider))
-        if suite in ("ask", "adversarial"):
+        if suite in ("ask", "adversarial", "compound"):
             from eval.quality_harness import run_ask_quality_scenario
             return lambda s: ask_record(run_ask_quality_scenario(s, provider))
         if suite in ("calibration", "holdout", "heldout", "heldoutb", "heldoutc", "heldoutd", "survey"):
