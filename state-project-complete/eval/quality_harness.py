@@ -439,6 +439,9 @@ _ANSWER_UNCERTAINTY_SIGNALS = (
     # approved the production data path". "does not show" was left out: answer-wide, an unrelated "does not show any
     # change" would satisfy it.
     "does not have confirmed", "blocking question is open",
+    # Nov 16 (Paige, #701): ask_unknown_stays_unknown's own required facts already accept these (Nov 13/14), e.g.
+    # "State has no established safe autonomous-resolution percentage" and "does not have a confirmed figure".
+    "has no established", "does not have a confirmed",
 )
 
 

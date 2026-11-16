@@ -189,3 +189,35 @@ def test_the_premise_check_accepts_not_settled_but_not_a_change_of_subject():
     assert PREMISE_CORRECTED.search("The retention premise is not settled: retention terms are not yet confirmed.")
     assert not PREMISE_CORRECTED.search("The premise that retention is resolved is not the main issue.")
     assert not PREMISE_CORRECTED.search("The premise is correct, so Security approval can proceed.")
+
+
+# --- #701 (Paige, Nov 16): #700 option (b) and DEC-028's V1 rule in the premise test ---------------------------------
+
+def test_the_premise_check_accepts_dec023_cut_context_wording_narrowly():
+    for text in ("The records I looked at don't show that retention is resolved: the retention question remains open.",
+                 "The records I looked at do not show that retention is resolved.",
+                 "The records I looked at do not show retention as resolved: the Review has not been accepted.",
+                 "Retention cannot be treated as resolved: the retention terms are not in Current State."):
+        assert PREMISE_CORRECTED.search(text), text
+    for text in ("The records I looked at don't show the launch thresholds.",
+                 "The records I looked at show that retention is resolved.",
+                 "The records I looked at don't show that Security approval is blocked."):
+        assert not PREMISE_CORRECTED.search(text), text
+
+
+def test_a_settled_word_describing_a_pending_reviews_proposal_in_the_same_clause_passes():
+    # Captured in the premise suite (runs 43937942943 r13, 43948461354 r17 and r24).
+    for text in ("A Review proposing Legal-confirmed retention terms (30 days for pilot prompts and outputs, deletion on "
+                 "request) is pending and has not been accepted into Current State.",
+                 "Retention is not resolved in State's records: a pending Review proposes recording a Legal-confirmed "
+                 "30-day retention term, but it has not been accepted into Current State.",
+                 "Pending Review proposes recording Legal's confirmed 30-day vendor retention for pilot prompts and "
+                 "outputs, with deletion on request, as Current State;"):
+        assert not unhedged(text, "confirmed"), text
+    # The pending frame must be in the word's own clause, describe the Review's content, and not make it the predicate.
+    for text in ("Retention is confirmed at 30 days and the pending Review records it.",
+                 "Legal confirmed 30-day retention and the pending Review records it.",
+                 "Legal-confirmed 30-day retention applies to pilot prompts and outputs.",
+                 "Confirmed retention terms are 30 days, and a pending review proposes recording them.",
+                 "Legal confirmed 30-day retention for pilot prompts and outputs, but the review is pending."):
+        assert unhedged(text, "confirmed"), text
