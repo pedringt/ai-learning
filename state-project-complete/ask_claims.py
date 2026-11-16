@@ -226,12 +226,25 @@ class ClaimChecker:
                 return record_type, record
         return None
 
+    def _review_evidence(self, records: Iterable[Mapping[str, Any] | None]) -> list[Mapping[str, Any]]:
+        """#701 candidate V3: the selected Evidence a cited Review links to (its evidence_ids). A Review rests on that
+        Evidence, so a number the claim takes from it is still traceable through the cited Review."""
+        out = []
+        for record in records:
+            for eid in (record or {}).get("evidence_ids") or []:
+                evidence = self.records["evidence"].get(eid)
+                if evidence is not None:
+                    out.append(evidence)
+        return out
+
     def check_claim(self, claim: Mapping[str, Any]) -> str | None:
         """The claim's chip label ("" for an unlabelled `none` claim) when it may be shown, or None to withhold it."""
         basis = claim.get("basis") or "none"
         supporting = [self.by_id.get(rid) or self.linked.get(rid) for rid in claim.get("supporting_record_ids") or []]
         if any(record is None for record in supporting):
             return None
+        supporting = supporting + self._review_evidence(
+            [r for r in supporting if r is not None] + [self.records["review"].get(claim.get("primary_record_id") or "")])
         text = str(claim.get("text") or "")
         if basis == "none":
             if claim.get("primary_record_id"):
