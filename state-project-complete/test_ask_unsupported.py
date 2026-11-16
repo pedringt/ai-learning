@@ -46,6 +46,8 @@ def project(northstar):
     "The VIP carve-out is out of date.",
     "The VIP exception is still current.",
     "The VIP exception doesn't need a re-check.",
+    "Current State says the VIP exception is up to date.",          # Current State holds no freshness verdict to report
+    "Finance confirmed it, so the VIP exception is not stale in Current State.",
     "The escalation path needs a recheck.",
 ])
 def test_a_freshness_verdict_on_current_state_is_recognised(text):
@@ -58,6 +60,13 @@ def test_a_freshness_verdict_on_current_state_is_recognised(text):
     ("The vendor notice says the help article is outdated.", False),                    # content of an Evidence note
     ("VIP accounts continue through manual support workflows.", True),
     ("The VIP exception is not yet stale in the vendor's list.", False),                  # not about Current State
+    # Nov 16 replay (adv_number_mismatch_state_vs_review): a freshness word reported from a pending Review is the
+    # Review's argument, not Ask's verdict.
+    ("A pending Finance review proposes that the limit should be $5,000, saying the $2,500 figure is outdated; this "
+     "has not been accepted into Current State, which still sets the limit at $2,500.", True),
+    ("Current State sets the limit at $2,500; a pending Finance review is arguing the $2,500 figure is outdated.", True),
+    ("A Finance review treats the $2,500 figure as outdated, but it has not been accepted into Current State.", True),
+    ("Finance says the $2,500 figure is outdated; Current State still sets the limit at $2,500.", True),
 ])
 def test_wording_that_is_not_a_freshness_verdict_on_current_state_is_left_alone(text, about_state):
     assert freshness_verdict(text, about_state=about_state) is None

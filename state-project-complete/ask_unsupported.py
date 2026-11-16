@@ -28,6 +28,19 @@ _FRESHNESS = re.compile(
 )
 # "…don't show whether it is stale", "if it's out of date": not a verdict.
 _OPEN = re.compile(r"\b(?:whether|if)\b[^.;:]*$", re.IGNORECASE)
+# Nov 16 replay (adv_number_mismatch_state_vs_review): a freshness word Ask reports from a record is the record's
+# argument, not Ask's verdict. "A pending Finance review proposes…, saying the $2,500 figure is outdated", "arguing the
+# $2,500 figure is outdated", "treats the $2,500 figure as outdated". Earlier in the same clause: a reporting verb
+# (ask_assertions._REPORTING, plus arguing and treats … as) or a pending/proposal frame (as DEC-028's V1). Never when
+# Current State is the one said to report it: Current State holds no freshness verdicts.
+_REPORTED = re.compile(
+    r"\b(?:argu(?:e|es|ed|ing)|contend(?:s|ed|ing)?|treat(?:s|ed|ing)?\b[^.;]*\bas|"
+    r"call(?:s|ed|ing)?|consider(?:s|ed|ing)?|saying|claiming|stating|noting|describing|reporting)\b"
+    r"|\b(?:pending|propos(?:e|es|ed|al|ing)|awaiting|suggest(?:s|ed|ing)?|under\s+review|not\s+(?:yet\s+)?(?:been\s+)?accepted)\b",
+    re.IGNORECASE,
+)
+_STATE_REPORTS = re.compile(r"\bcurrent\s+state\s+(?:\w+\s+){0,2}?(?:says|said|states?|shows?|records?|notes?|lists?|treats?)\b",
+                            re.IGNORECASE)
 _ABOUT_STATE = re.compile(r"\bcurrent\s+state\b", re.IGNORECASE)
 
 
@@ -37,9 +50,15 @@ def freshness_verdict(text: str, *, about_state: bool) -> str | None:
     State"."""
     if not (about_state or _ABOUT_STATE.search(text or "")):
         return None
+    from ask_assertions import _REPORTING
     for match in _FRESHNESS.finditer(text or ""):
-        if not _OPEN.search(text[:match.start()]):
-            return match.group(0)
+        before = re.split(r"[.;!?]", text[:match.start()])[-1]
+        if _OPEN.search(before):
+            continue
+        framed = _ABOUT_STATE.sub(" ", before)         # "State" in "Current State" is not the reporting verb "states"
+        if (_REPORTING.search(framed) or _REPORTED.search(framed)) and not _STATE_REPORTS.search(before):
+            continue
+        return match.group(0)
     return None
 
 
