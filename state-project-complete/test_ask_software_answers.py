@@ -211,3 +211,51 @@ def test_a_project_named_with_a_word_the_active_project_uses_is_not_a_reference(
             assert other_projects_named(connection, "Compare Juniper with Northstar")[1] == ["Northstar"]
         finally:
             connection.close()
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# #687
+
+from ask_software_answers import is_dependent_followup  # noqa: E402
+
+
+@pytest.mark.parametrize("query", [
+    "What source supports that?", "Make this shorter", "Why?", "Is that approved?", "Who owns it?",
+    "Can you explain that?", "Where did you get that?", "Make it 3 bullets", "Tell me more", "How so?",
+])
+def test_dependent_followups_are_recognised(query):
+    assert is_dependent_followup(query)
+
+
+@pytest.mark.parametrize("query", [
+    "Is the pilot budget approved?", "What does that mean for the pilot budget?", "What is this project about?",
+    "What changed this week?", "Is that budget approved?", "Tell me more about the escalation path",
+    "Summarize the project", "What evidence do we have?", "Focus only on blockers", "What needs my attention?",
+])
+def test_questions_with_their_own_subject_are_answered_as_asked(query):
+    assert not is_dependent_followup(query)
+
+
+def test_a_followup_without_the_earlier_answer_asks_for_the_whole_question(db_url):
+    """QA Nov 16: "What source supports that?" got confident provenance for an unrelated record; "Make this shorter"
+    got an unrelated project summary."""
+    with _client(db_url) as client:
+        for query in ("What source supports that?", "Make this shorter", "Why?"):
+            for result in (_ask(client, query), _stream_final(client, query)):
+                answer = result["answer"]
+                assert result["timing"]["pipeline"] == "software_followup"
+                assert answer["claims"][0]["text"].startswith("This looks like a follow-up to an earlier answer.")
+                assert answer["claims"][1]["text"] == "Ask again with the whole question, naming what it's about."
+                assert answer["sections"] == [] and answer["suggested_question"] is None
+                assert all(not c["primary_record_id"] for c in answer["claims"])
+
+
+def test_a_followup_with_the_earlier_answer_keeps_the_existing_handling(db_url):
+    """A caller that sends the previous answer still gets the deterministic refinement (no model call either)."""
+    with _client(db_url) as client:
+        previous = {"job": "current_fact", "headline": "What State has on record", "summary": "",
+                    "claims": [{"text": "Human review remains required for the pilot.", "basis": "current_state",
+                                "primary_record_id": "k-security"}],
+                    "sections": [], "source_ids": [], "uncertainty_ids": [], "suggested_refinements": []}
+        result = _ask(client, "Make this shorter", previous_answer=previous)
+        assert result["timing"]["pipeline"] == "deterministic_refinement"

@@ -7,6 +7,8 @@ Each one replaces a model answer for a kind of question the model answered badly
   same fields Current State shows.
 - #693 another project by name: asked from Juniper about Northstar, the model presented Juniper's records as
   Northstar's. Software says which project Ask is answering from and declines.
+- #687 follow-ups without the earlier answer: "What source supports that?" was answered about unrelated records.
+  Software asks for the whole question; earlier answers are still not passed through (a separate product change).
 
 Every answer here is an ordinary Ask envelope (claims and sections citing real records of the active project), so the
 drawer, Copy and the eval scorers read it like any other answer. `timing.pipeline` says which software answer it was.
@@ -288,6 +290,70 @@ def other_project_answer(connection: Any, query: str, *, started: float | None =
 
 
 # --------------------------------------------------------------------------------------------------------------------
+# #687: follow-ups that depend on an earlier answer Ask doesn't have
+
+# Whole questions that only make sense after an earlier answer.
+_FOLLOWUP_EXACT = {
+    "why", "why not", "how", "how so", "how come", "really", "are you sure", "is that right", "is that true",
+    "is that correct", "says who", "who says", "tell me more", "more", "more detail", "more details", "go on",
+    "continue", "elaborate", "explain", "explain more", "expand", "and", "so", "what else", "who else", "anything else",
+    "such as", "for example", "like what", "source", "sources", "proof", "shorter", "longer", "simpler",
+}
+# Words that point back at an earlier answer.
+_DEICTIC = re.compile(r"\b(that|this|it|those|these|them|they|above|previous|earlier|you said|your answer)\b", re.IGNORECASE)
+_NOT_POINTING = re.compile(r"\b(?:this|that|the)\s+(?:project|week|month|quarter|year|morning|afternoon|time)\b")
+# Words that carry no subject of their own: function words, and what a follow-up asks to do with an earlier answer.
+_FOLLOWUP_FILLER = {
+    "a", "an", "the", "and", "or", "but", "of", "for", "in", "on", "to", "by", "at", "with", "from", "about", "as",
+    "is", "are", "was", "were", "be", "been", "being", "do", "does", "did", "has", "have", "had", "can", "could",
+    "would", "should", "will", "may", "might", "must", "it", "its", "this", "that", "these", "those", "them", "they",
+    "their", "above", "previous", "earlier", "you", "your", "said", "say", "says", "me", "my", "i", "we", "us", "our",
+    "what", "which", "who", "whom", "whose", "why", "how", "when", "where", "there", "here", "so", "then", "just",
+    "please", "make", "give", "tell", "show", "put", "turn", "into", "more", "less", "again", "also", "really", "sure",
+    "right", "true", "correct", "mean", "means", "meant", "source", "sources", "support", "supports", "supported",
+    "supporting", "backs", "back", "evidence", "proof", "come", "came", "from", "know", "shorter", "longer",
+    "simpler", "shorten", "simplify", "summarize", "summarise", "rephrase", "reword", "rewrite", "explain",
+    "expand", "elaborate", "detail", "details", "version", "bullet", "bullets", "points", "one", "s", "t", "not",
+    "no", "yes", "ok", "okay", "thanks", "thank", "all", "any", "some", "else", "other", "only", "first", "part",
+}
+
+
+def is_dependent_followup(query: str) -> bool:
+    """A question that needs an earlier answer to mean anything: "Why?", "What source supports that?", "Make this
+    shorter". It points back ("that", "this", "it") and names at most one subject word of its own, or it is one of
+    the bare follow-ups above. A question that names its subject ("What does that mean for the pilot budget?" names
+    two) is answered as asked."""
+    words = _words(query)
+    if not words:
+        return False
+    if " ".join(words) in _FOLLOWUP_EXACT:
+        return True
+    # "this project", "this week": a subject, not a pointer back at an earlier answer.
+    pointing = _NOT_POINTING.sub(" ", (query or "").lower())
+    if not _DEICTIC.search(pointing):
+        return False
+    subject = [w for w in words if w not in _FOLLOWUP_FILLER]
+    return len(subject) <= 1
+
+
+def followup_answer(connection: Any, query: str, previous_answer: Mapping[str, Any] | None, *,
+                    started: float | None = None) -> dict[str, Any] | None:
+    """#687 (Paige, Nov 16): a follow-up asked without the earlier answer gets a request for the complete question,
+    never an answer about unrelated records. Ask does not carry earlier answers forward (the drawer sends each
+    question alone); when a caller does send the previous answer, the existing follow-up handling applies."""
+    if previous_answer or not is_dependent_followup(query):
+        return None
+    started = time.perf_counter() if started is None else started
+    claims = [
+        AskClaim(text="This looks like a follow-up to an earlier answer. Ask answers each question on its own and "
+                      "doesn't see earlier answers, so it can't tell what this refers to."),
+        AskClaim(text="Ask again with the whole question, naming what it's about."),
+    ]
+    answer = AskSynthesis(job="general_project_synthesis", headline="Needs the whole question", claims=claims)
+    return _envelope(connection, answer, pipeline="software_followup", started=started)
+
+
+# --------------------------------------------------------------------------------------------------------------------
 
 
 def software_answer(connection: Any, query: str, previous_answer: Mapping[str, Any] | None = None, *,
@@ -295,4 +361,5 @@ def software_answer(connection: Any, query: str, previous_answer: Mapping[str, A
     """The software-written answer for this question, or None when the model should answer it."""
     started = time.perf_counter()
     return (other_project_answer(connection, query, started=started)
+            or followup_answer(connection, query, previous_answer, started=started)
             or recheck_answer(connection, query, timezone_offset=timezone_offset, today=today, started=started))

@@ -120,16 +120,13 @@ def test_conversational_followup_is_not_treated_as_a_refinement(tmp_path):
 
 
 def test_refinement_without_a_previous_answer_is_not_a_shortcut(tmp_path):
-    """No previous answer means there is nothing to reshape -- must go through the model."""
+    """No previous answer means there is nothing to reshape. Since #687 (Paige, Nov 16) Ask asks for the whole
+    question instead of sending it to the model as a new one (ask_software_answers.followup_answer)."""
     conn = seeded_connection(tmp_path)
     try:
-        provider = FakeOneCallAskProvider()
-        try:
-            run_ask(conn, provider, "make this 3 bullets", None)
-        except AssertionError as exc:
-            assert "Provider.run was called" in str(exc)
-        else:
-            raise AssertionError("Expected the fake provider to be called (and raise) with no previous answer")
+        result = run_ask(conn, FakeOneCallAskProvider(), "make this 3 bullets", None)
+        assert result["timing"]["pipeline"] == "software_followup"
+        assert result["answer"]["claims"][0]["text"].startswith("This looks like a follow-up to an earlier answer.")
     finally:
         conn.close()
 
