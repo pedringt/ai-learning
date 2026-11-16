@@ -112,12 +112,29 @@ _RECHECK_FILLER = {
     "checked", "checking", "still", "true", "past", "interval", "intervals", "reminder", "reminders", "formally",
     "time", "project", "so", "far", "yet", "now", "right", "currently", "explicitly", "marked", "as", "being",
     "most", "recent", "recently", "ever", "one", "ones", "some", "where", "from", "with", "about", "s",
+    # #703: freshness wording
+    "stale", "outdated", "out", "up", "getting", "gone", "become", "becoming", "look", "looks", "seem", "seems",
+    "considered", "anymore", "already",
 }
 _WHO = re.compile(r"\b(who|whom|by whom)\b", re.IGNORECASE)
 
 
+# #703 (Nov 16): freshness wording asks the same thing. "Is the VIP exception stale?", "Is anything in Current State
+# outdated?", "Which items are out of date?", "Is the escalation path up to date?" went to the model, which has no
+# confirmation data (DEC-026) and answered "not stale" under a "needs re-check" chip. The word must be the predicate
+# (after "is/are/any/which...", and ending the clause), so "How do we handle stale tickets?" or "Is the stale-ticket
+# policy approved?" are still ordinary questions.
+_FRESH = r"(?:stale|outdated|out[\s-]+of[\s-]+date|up[\s-]+to[\s-]+date)"
+_FRESHNESS_QUESTION = re.compile(
+    r"\b(?:is|are|was|were|be|been|being|getting|gone|become|becoming|look|looks|seem|seems|considered|anything|"
+    r"any|which|what['’]?s)\b[^.?!;]{0,80}?\b" + _FRESH +
+    r"(?=\s*(?:[?.!,;:)]|$|\b(?:or|and|in|now|yet|anymore|any\s+more|at\s+this\s+point|by\s+now|already)\b))",
+    re.IGNORECASE,
+)
+
+
 def is_recheck_question(query: str) -> bool:
-    return bool(_RECHECK_QUESTION.search(query or ""))
+    return bool(_RECHECK_QUESTION.search(query or "") or _FRESHNESS_QUESTION.search(query or ""))
 
 
 def _subject_words(query: str) -> set[str]:

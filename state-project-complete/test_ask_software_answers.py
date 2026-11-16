@@ -85,6 +85,64 @@ def test_other_questions_are_left_to_the_model(query):
     assert not is_recheck_question(query)
 
 
+# #703 (Nov 16): the same question in freshness words takes the same route. Ordinary synonyms must; a freshness word
+# that isn't the question's predicate must not.
+FRESHNESS_ABOUT_VIP = ["Is the VIP exception stale?", "Is the VIP exception outdated?", "Is the VIP exception out of date?",
+                       "Is the VIP exception out-of-date now?", "Is the VIP exception still up to date?",
+                       "Does the VIP exception look stale?", "Has the VIP exception gone stale?"]
+FRESHNESS_LISTS = ["Is anything in Current State outdated?", "Is anything in Current State stale?",
+                   "Which Current State items are out of date?", "What's stale in Current State?",
+                   "Are any Current State facts outdated?", "Which items are stale or need a re-check?"]
+FRESHNESS_NEAR_MISSES = ["How do we handle stale tickets?", "Draft a note about the outdated FAQ.",
+                         "Is the stale-ticket policy approved?", "Is the out-of-date pricing page fixed?",
+                         "Was the pricing data stale when the report ran?", "Is the VIP carve-out still in place?",
+                         "Has the VIP exception carve-out been retired?", "Who keeps the FAQ up to date with release notes?",
+                         "Should we update the date of the launch?"]
+
+
+@pytest.mark.parametrize("query", FRESHNESS_ABOUT_VIP + FRESHNESS_LISTS + ["Is the VIP carve-out out of date?"])
+def test_freshness_questions_are_recheck_questions(query):
+    assert is_recheck_question(query)
+
+
+@pytest.mark.parametrize("query", FRESHNESS_NEAR_MISSES)
+def test_freshness_words_that_are_not_the_question_are_left_to_the_model(query):
+    assert not is_recheck_question(query)
+
+
+def test_a_freshness_question_about_a_flagged_item_gets_its_date_and_flag(db_url):
+    """QA Nov 16 (#703): "…so the exception is not yet stale in Current State" under a "needs re-check" chip."""
+    with _client(db_url) as client:
+        for query in FRESHNESS_ABOUT_VIP:
+            result = _ask(client, query)
+            assert result["timing"]["pipeline"] == "software_recheck", query
+            claim = result["answer"]["claims"][0]
+            assert (claim["primary_record_id"], claim["basis"]) == ("k-vip", "current_state"), query
+            assert claim["text"].endswith("so it needs a re-check."), query
+        streamed = _stream_final(client, "Is the VIP exception stale?")
+        assert streamed["answer"]["claims"][0]["primary_record_id"] == "k-vip"
+
+
+def test_a_freshness_question_about_current_state_lists_the_flagged_items(db_url):
+    with _client(db_url) as client:
+        for query in FRESHNESS_LISTS:
+            result = _ask(client, query)
+            assert result["timing"]["pipeline"] == "software_recheck", query
+            listed = sorted(i["record_id"] for s in result["answer"]["sections"] for i in s["items"])
+            assert listed == ["k-escalation", "k-vip"], query
+
+
+def test_the_carve_out_wording_reaches_the_flagged_vip_item(db_url):
+    """#704's question: whatever the subject matching makes of "carve-out", the answer shows k-vip's flag, never an
+    absence."""
+    with _client(db_url) as client:
+        result = _ask(client, "Is the VIP carve-out out of date?")
+        assert result["timing"]["pipeline"] == "software_recheck"
+        cited = {c.get("primary_record_id") for c in result["answer"]["claims"]}
+        cited |= {i["record_id"] for s in result["answer"]["sections"] for i in s["items"]}
+        assert "k-vip" in cited
+
+
 def test_which_items_need_a_recheck_lists_the_flagged_items_not_reviews(db_url):
     """QA Nov 16: the model listed five pending Reviews as 'items needing a re-check' and left out k-escalation."""
     with _client(db_url) as client:
