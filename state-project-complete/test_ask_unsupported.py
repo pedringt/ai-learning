@@ -87,6 +87,10 @@ def test_wording_that_is_not_a_freshness_verdict_on_current_state_is_left_alone(
     ("Current State is up to date and the Review is pending.", False),
     ("The limit is $2,500; it is up to date even though a Review suggests $5,000.", True),
     ("Current State says the $2,500 figure is outdated.", False),
+    # Replay of 69f86a1 (adversarial run 43948455983, r25): Ask concluding from a pending proposal, even hedged with
+    # "may", is its own verdict (Paige, Nov 16).
+    ("A pending Finance review proposes that the limit should be $5,000 instead, so the $2,500 figure may be outdated; "
+     "that proposal is unresolved.", True),
 ])
 def test_ask_own_verdict_after_a_clause_break_is_withheld(text, about_state):
     assert freshness_verdict(text, about_state=about_state)
