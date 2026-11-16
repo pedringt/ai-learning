@@ -527,7 +527,7 @@ Paige made these choices after the Nov 15 review of an outside Project Health re
 - **A record holds** the project, what triggered it, the evidence source names, a one-line summary and the times. The summary of an AI-investigated failure is the first line of the AI report, redacted like the investigator's evidence and cut to 300 characters; the State eval summary is written by the backend from the recorded run. Browsers never send summary text.
 - **Four outcomes:** Awaiting evidence, Investigating, Accepted limitation, Resolved, with an optional note (at most 500 characters). Only Paige sets them, with `PROJECT_HEALTH_DECISION_KEY`. A new record has no outcome. Accepted limitation and Resolved close a record.
 - **Nothing closes on its own.** When a project reads Healthy while a record is still open, the record shows a hint to record an outcome. The old automatic "resolved" is removed.
-- **Next decision:** when a project-quality signal needs attention, the dashboard shows that warning's own next action (for example NARC's first-run playtest) instead of a generic line. When nothing needs attention, it shows the project's own next decision from the registry, used as written.
+- **Next decision:** when a project-quality signal needs attention, the dashboard shows that warning's own next action (for example NARC's first-run playtest) instead of a generic line. When nothing needs attention, it shows the project's own next decision from the registry, used as written. Open pull requests do not replace it.
 - **Authority Lab Web Analytics stays off.** The card says it is not enabled.
 
 **Why**

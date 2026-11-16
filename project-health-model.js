@@ -694,7 +694,7 @@
     if(delivery.kind==='bad')return 'Decide whether to retry the failed release or supersede it with the current branch.';
     const infra=infrastructureAttention(data?.platform);
     if(infra?.kind==='bad')return 'Confirm user impact and assign the infrastructure response.';
-    if(Array.isArray(data?.openPullRequests)&&data.openPullRequests.length)return 'Decide whether the current open work is ready for the next release.';
+    // Nov 15 (Paige): open pull requests no longer replace the project's own next decision.
     // Missing data does not support carrying on unchanged (Paige, Nov 3): with no more specific finding, restore the checks.
     if(['Delivery','Quality','Activity','Production backend','Quality behavior'].some(label=>signalRefreshFailure(data,[label])))return 'Restore the missing checks before assessing project health.';
     // DEC-025: with nothing needing attention, the project's own next decision from the registry.

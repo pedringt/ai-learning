@@ -69,6 +69,7 @@ const ok=(status,body)=>({ok:status>=200&&status<300,status,json:async()=>body})
     assert.strictEqual(M.operationalNextDecision(noAction),'Decide whether the watched quality signal needs action before expanding scope.');
     const calm={...narc,externalQuality:{attention:[{kind:'good',title:'Healthy'}]}};
     assert.strictEqual(M.operationalNextDecision(calm),project('narc').nextDecision);
+    assert.strictEqual(M.operationalNextDecision({...calm,openPullRequests:[{number:12,title:'Open work'}]}),project('narc').nextDecision,'open pull requests do not replace it');
     assert.strictEqual(project('narc').nextDecision,'Decide whether the first-play flow is clear enough before adding more branches and mechanics.');
   });
   await check('every project-quality warning carries a next action',()=>{
