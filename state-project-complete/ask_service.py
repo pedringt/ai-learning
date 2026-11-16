@@ -743,7 +743,7 @@ class _AnswerChecks:
 
         # #567 (Nov 11): software never rewords an answer. Claims, cards and titles are shown as written, withheld, or
         # replaced by record text (ask_assertions).
-        self.checker = ClaimChecker(context, query=query, today=today)
+        self.checker = ClaimChecker(context, query=query, today=today, state_pool=(candidates or {}).get("state"))
 
     def clean(self, value: str | None) -> str | None:
         return _clean_visible_ask_text(value, self.all_internal_ids, self.labels)

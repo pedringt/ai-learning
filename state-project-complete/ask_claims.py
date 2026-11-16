@@ -204,8 +204,11 @@ class ClaimChecker:
     """Checks claims against the records Ask selected for this request. The same checker runs while a streamed
     answer arrives and on the final answer, so a claim is shown during streaming only if the final answer keeps it."""
 
-    def __init__(self, context: Mapping[str, Any], *, query: str = "", today: date | None = None):
+    def __init__(self, context: Mapping[str, Any], *, query: str = "", today: date | None = None,
+                 state_pool: Iterable[Mapping[str, Any]] | None = None):
         self.records = selected_records(context)
+        # #682 candidate V2: every active Current State record the model was shown, selected or not.
+        self.state_texts = [record_text(r) for r in (state_pool if state_pool is not None else self.records["state"].values())]
         self.by_id: dict[str, Mapping[str, Any]] = {rid: rec for bucket in self.records.values() for rid, rec in bucket.items()}
         # An answered Question's resolving Review and answer Evidence are not selected records, but the Question
         # carries the answer. Citing one as support counts as citing the Question (Paige, Nov 11).
@@ -242,7 +245,11 @@ class ClaimChecker:
         if found is None:
             return None
         record_type, record = found
-        if not anchors_supported(text, [record_text(record), *(record_text(r) for r in supporting), self.query]):
+        # #682 candidate V2: a Current State claim may name numbers from any Current State record shown ("can
+        # proceed with the bounded Tier 1 use case" citing the launch record, with "Tier 1" in the scope record).
+        # Only Current State: a pending Review's figure still never passes on a Current State claim.
+        peers = self.state_texts if record_type == "state" else []
+        if not anchors_supported(text, [record_text(record), *(record_text(r) for r in supporting), *peers, self.query]):
             return None
         return RECORD_LABELS[record_type]
 
