@@ -291,7 +291,7 @@
     const holder=document.querySelector('.ask-state-starters');
     if(holder)holder.innerHTML=starterButtonsHtml(starters);
   }
-  window.STATE_ASK_UI={resetForProjectSwitch,closeAskDrawer};
+  window.STATE_ASK_UI={resetForProjectSwitch,closeAskDrawer,relatedResolvedDecisions};
   function syncLauncherVisibility(){
     const launcher=document.getElementById('askStateLauncher');if(!launcher)return;
     const hide=ui.drawerOpen;
@@ -325,17 +325,26 @@
       });
     }catch(_){return null;}
   }
-  function queryTerms(query){
-    const stop=new Set(['what','when','where','which','would','could','should','about','this','that','with','from','have','been','were','they','project','state','review','reviewed','decision','decided','evidence']);
-    return [...new Set(String(query||'').toLowerCase().match(/[a-z0-9]+/g)||[])].filter(x=>x.length>3&&!stop.has(x));
+  // #688 (Nov 16): "Relevant prior decisions" attached the same Security-discovery decision to unrelated answers. It
+  // matched any one query word as a substring of the Review's question, reason or whole Evidence text ("need" in
+  // "needed", "launch" in a passing mention in the Evidence). Now: whole words (light stemming), the Review's own
+  // question and reason only, and at least two shared words, unless the question asks about past decisions.
+  const PRIOR_STOP=new Set(['what','when','where','which','would','could','should','about','this','that','with','from','have','been','were','they','them','their','there','these','those','does','into','than','then','also','just','only','still','more','most','very','what','your','will','project','state','review','reviewed','decision','decided','evidence','current','item','items','need','needs','needed','mean','means','make','give','tell','show','know','right','owns','final','prepare','brief','check','decide','against','already','anything','previous','past','reject','rejected','considered','unchanged','leave','left','why']);
+  const priorStem=w=>{w=String(w).replace(/'s$/,'');if(w.length>5&&w.endsWith('ing'))return w.slice(0,-3);if(w.length>4&&w.endsWith('ed'))return w.slice(0,-2);if(w.length>3&&w.endsWith('s')&&!w.endsWith('ss'))return w.slice(0,-1);return w;};
+  const priorWords=text=>new Set((String(text||'').toLowerCase().match(/[a-z0-9']+/g)||[]).filter(w=>!PRIOR_STOP.has(w)).map(priorStem).filter(w=>w.length>3&&!PRIOR_STOP.has(w)));
+  function relatedResolvedDecisions(reviews,query){
+    const terms=priorWords(query);
+    const asksPast=/\b(reject|rejected|considered|reviewed|leave unchanged|left unchanged|decided against|why (?:did|do|is|was).*not|did we already|previous decision|past decision)\b/i.test(query);
+    const needed=asksPast?(terms.size?1:0):2;
+    return (reviews||[]).filter(r=>['confirmed_current','not_applied'].includes(r.resolution))
+      .map((r,index)=>{const body=priorWords(`${r.decision_question||''} ${r.why_consequential||''}`);let score=0;for(const t of terms)if(body.has(t))score++;return {r,score,index};})
+      .filter(x=>x.score>=needed).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,3).map(x=>x.r);
   }
   async function relevantResolvedDecisions(query){
     if(!API?.getReviews) return [];
     try{
-      const raw=await API.getReviews('resolved');const reviews=asList(raw,['reviews','items','results']).filter(r=>['confirmed_current','not_applied'].includes(r.resolution));
-      const terms=queryTerms(query);const asksPast=/\b(reject|rejected|considered|reviewed|leave unchanged|left unchanged|decided against|why (?:did|do|is|was).*not|did we already|previous decision|past decision)\b/i.test(query);
-      const scored=reviews.map((r,index)=>{const body=`${r.decision_question||''} ${r.why_consequential||''} ${(r.evidence_items||[]).map(e=>e.content||'').join(' ')}`.toLowerCase();const score=terms.reduce((n,t)=>n+(body.includes(t)?1:0),0);return {r,score,index};}).filter(x=>x.score>0||asksPast).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,3);
-      return scored.map(x=>x.r);
+      const raw=await API.getReviews('resolved');
+      return relatedResolvedDecisions(asList(raw,['reviews','items','results']),query);
     }catch(_){return [];}
   }
   function resolvedDecisionMarkup(items){
