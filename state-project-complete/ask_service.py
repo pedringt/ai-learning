@@ -785,8 +785,12 @@ class _AnswerChecks:
         negation, condition or attribution) is withheld: the assumption never becomes current fact (Nov 11)."""
         if not self.draft or self.draft.ambiguous:
             return False
-        words = ask_drafts._content(self.draft.assumption)
-        if not words or len(words & ask_drafts._content(text)) * 3 < len(words) * 2:
+        # Most of its content words. #694 (Nov 16): an assumption with fewer than two ("the $40,000 budget is approved")
+        # counts its figures and status words too, so a unit that only mentions the budget isn't taken for it.
+        words, mine = ask_drafts._content(self.draft.assumption), ask_drafts._content(text)
+        if len(words) < 2:
+            words, mine = ask_drafts.assumption_terms(self.draft.assumption), ask_drafts.assumption_terms(text)
+        if not words or len(words & mine) * 3 < len(words) * 2:
             return False
         return not (ask_assertions._NEGATION.search(text) or ask_assertions._NOT_ASSERTED.search(text)
                     or ask_assertions._REPORTING.search(text))

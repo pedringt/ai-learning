@@ -31,6 +31,9 @@ REQ = hypothetical_request(QUERY)
     ("Write an email to customers as if the migration finished on time.", "email", "the migration finished on time"),
     ("Draft an announcement assuming the price goes up and assuming Legal signs off.", "announcement",
      "the price goes up and Legal signs off"),
+    # #694 (Nov 16): one content word, plus a figure and a status word, is a clear assumption.
+    ("Draft a short announcement assuming the $40,000 budget is approved.", "announcement", "the $40,000 budget is approved"),
+    ("Write an email assuming the budget is approved.", "email", "the budget is approved"),
 ])
 def test_an_explicit_assumption_is_extracted_in_the_users_words(query, artifact, assumption):
     assert hypothetical_request(query) == DraftRequest(artifact, assumption)
@@ -46,8 +49,10 @@ def test_a_request_without_an_explicit_assumption_and_a_draft_gets_no_exception(
     assert hypothetical_request(query) is None
 
 
-def test_an_unclear_assumption_still_gives_a_hypothetical_draft_marked_as_unclear():
-    req = hypothetical_request("Hypothetically, draft the email.")
+@pytest.mark.parametrize("query", ["Hypothetically, draft the email.", "Draft the email assuming it is approved.",
+                                   "Draft an announcement assuming it goes through."])
+def test_an_unclear_assumption_still_gives_a_hypothetical_draft_marked_as_unclear(query):
+    req = hypothetical_request(query)
     assert req and req.ambiguous
     assert "couldn't tell exactly what this draft assumes" in assumption_line(req, {})
 
@@ -431,3 +436,58 @@ def test_v2_scores_outside_the_marked_draft_and_v1_keeps_its_expectation():
     leaked = deepcopy(marked)
     leaked["answer"]["claims"].append({"text": "Your new price is $61.25 per month.", "label": None})
     assert not score_ask_answer(v2, leaked).passed            # outside the draft, the forbidden claim still fails
+
+
+# --- #694 (Nov 16): "assuming the $40,000 budget is approved" -----------------------------------------------------------
+
+BUDGET_QUERY = "Draft a short announcement assuming the $40,000 budget is approved."
+BUDGET_CTX = dict(state=(("k-budget", "The pilot has no approved budget yet."),),
+                  reviews=(("r-budget", "Proposal: approve a $40,000 budget for the pilot."),))
+
+
+def test_the_budget_assumption_is_shown_with_the_draft():
+    body = "We're pleased to share that the $40,000 budget is approved and the pilot moves ahead."
+    cleaned = _validated([], [_draft(body, title="Draft announcement")], query=BUDGET_QUERY, **BUDGET_CTX)
+    draft = _draft_section(cleaned)
+    assert draft.hypothetical.assumption == "the $40,000 budget is approved"
+    assert draft.hypothetical.line.startswith("Hypothetical draft — assumes: ‘the $40,000 budget is approved.’")
+    assert "couldn't tell" not in draft.hypothetical.line
+    assert [i.text for i in draft.items] == [body]                  # the draft may say what the assumption says
+
+
+@pytest.mark.parametrize("text,shown", [
+    ("The $40,000 budget is approved.", False),                     # the assumption as fact, outside the draft
+    ("The budget is approved at $40,000.", False),
+    ("A pending Review proposes the $40,000 budget; it is not approved.", True),
+    ("The pilot budget is a separate line from travel.", True),     # shares one word only: not a restatement
+])
+def test_outside_the_draft_the_budget_assumption_is_not_stated_as_fact(text, shown):
+    grounding = AskClaim(text="The pilot has no approved budget yet.", basis="current_state", primary_record_id="k-budget")
+    cleaned = _validated([grounding, AskClaim(text=text)], [_draft("Announcing our pilot.", title="Draft announcement")],
+                         query=BUDGET_QUERY, **BUDGET_CTX)
+    assert (text in [c.text for c in cleaned.claims]) is shown
+
+
+def test_the_assuming_phrasing_eval_case_requires_the_stated_assumption():
+    from eval.ask_adversarial_scenarios import SCENARIOS
+    from eval.quality_harness import score_ask_answer
+
+    case = next(s for s in SCENARIOS if s.id == "adv_hypothetical_draft_assuming_phrasing")
+    assert case.question == BUDGET_QUERY and hypothetical_request(case.question).assumption == case.draft_assumption
+    pending = AskClaim(text="A pending Review proposes the $40,000 budget; it is not approved yet.",
+                       basis="pending_review", primary_record_id="r-budget")
+    body = "Good news: the $40,000 budget is approved and the pilot moves ahead."
+    shown = {"answer": _validated([pending], [_draft(body, title="Draft announcement")], query=BUDGET_QUERY,
+                                  **BUDGET_CTX).model_dump()}
+    assert score_ask_answer(case, shown).passed
+    unclear = deepcopy(shown)                                       # what prod showed before the fix
+    next(x for x in unclear["answer"]["sections"] if x.get("hypothetical"))["hypothetical"]["assumption"] = None
+    result = score_ask_answer(case, unclear)
+    assert not result.passed and any("stated assumption" in m for m in result.missing_facts)
+
+
+def test_v2_also_requires_its_stated_assumption():
+    from eval.ask_adversarial_scenarios import SCENARIOS
+
+    v2 = next(s for s in SCENARIOS if s.id == "adv_hypothetical_draft_from_pending_v2")
+    assert hypothetical_request(v2.question).assumption == v2.draft_assumption
