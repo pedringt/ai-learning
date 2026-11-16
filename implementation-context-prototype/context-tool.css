@@ -833,3 +833,5 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
 .answered-state ul{padding-left:18px;font-size:13.5px;line-height:1.5}
 .answered-review-note strong{font-weight:700}
 .answered-review-missing,.answered-state-none{font-size:13px;color:var(--muted);margin:10px 0}
+/* #684: "Showing 6 of 13 other open Questions." under a truncated Ask starter section. */
+.ask-answer-section .ask-section-more{margin:6px 0 0;color:var(--muted);font-size:12.5px}.ask-answer-section .ask-section-more-link{font-size:12.5px;margin-left:4px}
