@@ -19,6 +19,7 @@ from ask_contract import (  # noqa: I001
 import ask_assertions
 import ask_drafts
 from contextvars import ContextVar
+import ask_unsupported
 from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_card, fixed_headline, prepare_answer_raw, record_text
 from ask_display import claim_lines, has_withheld, withheld_line
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
@@ -726,13 +727,17 @@ class _AnswerChecks:
     it completes (#567), so nothing is shown while streaming that the finished answer would not show."""
 
     def __init__(self, context: Mapping[str, Any], candidates: Mapping[str, list[dict]] | None = None, *,
-                 query: str = "", today: date | None = None, previous_answer: Mapping[str, Any] | None = None):
+                 query: str = "", today: date | None = None, previous_answer: Mapping[str, Any] | None = None,
+                 project: Mapping[str, list[dict]] | None = None):
         self.context = context
+        self.query = query
         # #567 (Nov 11): an explicitly requested hypothetical draft (ask_drafts.py), or a refinement of one.
         self.draft = ask_drafts.draft_request(query, previous_answer)
         self.draft_used = False
         self.moved_items: list[AskAnswerItem] = []
         self.pool = candidates if candidates is not None else context
+        # #704: every record in the project, not just the ones sent to the model, for the absence check.
+        self.project = project if project is not None else self.pool
         self.allowed: dict[str, set[str]] = {
             "state": {x["id"] for x in context.get("state", [])},
             "review": {x["id"] for x in context.get("reviews", [])},
@@ -771,6 +776,9 @@ class _AnswerChecks:
         verdict = ask_assertions.check(claim.text, claim.basis, self._authority_records(claim))
         if verdict.ok and self._restates_assumption(claim.text):
             verdict = ask_assertions.Verdict(False, "restates the draft's assumption as fact", verdict.assertions)
+        if verdict.ok and (reason := self._unknowable(claim.text, about_state=claim.basis == "current_state" or any(
+                rid in self.allowed["state"] for rid in [claim.primary_record_id, *claim.supporting_record_ids]))):
+            verdict = ask_assertions.Verdict(False, reason, verdict.assertions)
         if not verdict.ok:
             _log_decision("claim", raw_text, claim.basis, claim.primary_record_id, claim.supporting_record_ids,
                           "withheld", verdict.reason, verdict.assertions)
@@ -779,6 +787,15 @@ class _AnswerChecks:
         _log_decision("claim", raw_text, claim.basis, claim.primary_record_id, claim.supporting_record_ids, "shown",
                       None, verdict.assertions)
         return claim
+
+    def _unknowable(self, text: str, *, about_state: bool) -> str | None:
+        """#703/#704 (Paige, Nov 16): a freshness verdict on Current State (the model never sees confirmation data), or a
+        claim that no record covers something a record in the project covers. Why it is withheld, or None."""
+        if word := ask_unsupported.freshness_verdict(text, about_state=about_state):
+            return f"freshness verdict ({word!r}) without confirmation data"
+        if record_id := ask_unsupported.false_absence(text, self.project, self.query):
+            return f"says no record covers what {record_id} covers"
+        return None
 
     def _restates_assumption(self, text: str) -> bool:
         """Outside the draft, a unit that states the draft's assumption as fact (most of its content words, with no
@@ -899,6 +916,8 @@ class _AnswerChecks:
                 verdict = ask_assertions.check(f"{item.text} {item.detail or ''}", "none", {})
                 if verdict.ok and self._restates_assumption(f"{item.text} {item.detail or ''}"):
                     verdict = ask_assertions.Verdict(False, "restates the draft's assumption as fact", verdict.assertions)
+                if verdict.ok and (reason := self._unknowable(f"{item.text} {item.detail or ''}", about_state=False)):
+                    verdict = ask_assertions.Verdict(False, reason, verdict.assertions)
                 _log_decision("card", raw_text, "none", None, [], "shown" if verdict.ok else "withheld", verdict.reason,
                               verdict.assertions)
                 if not verdict.ok:
@@ -951,7 +970,8 @@ class _AnswerChecks:
                     basis = {"state": "current_state", "history": "history", "evidence": "evidence_says"}[item.record_type]
                     verdict = ask_assertions.check(f"{item.text} {item.detail or ''}", basis,
                                                    {"current_state": [record]} if basis == "current_state" else {})
-                    reason = verdict.reason
+                    reason = verdict.reason or self._unknowable(f"{item.text} {item.detail or ''}",
+                                                                about_state=item.record_type == "state")
                 if reason:
                     item.text, item.detail = canonical_card(item.record_type, record, self.labels)
                     item.wording = "record_fallback"
@@ -966,6 +986,7 @@ def _validate_synthesis(
     answer: AskSynthesis, selection: AskSelection, context: Mapping[str, Any],
     candidates: Mapping[str, list[dict]] | None = None, *, query: str = "", today: date | None = None,
     previous_answer: Mapping[str, Any] | None = None, withheld_units: list[dict] | None = None,
+    project: Mapping[str, list[dict]] | None = None,
 ) -> AskSynthesis:
     # #662: this pass's check decisions, to count withheld statements by kind (and, through `withheld_units`, keep them
     # for review). An eval that already collects decisions (UNIT_DECISIONS) keeps its list; this reads what it adds.
@@ -974,7 +995,8 @@ def _validate_synthesis(
     start = len(log)
     token = UNIT_DECISIONS.set(log) if outer_log is None else None
     try:
-        answer = _checked_synthesis(answer, context, candidates, query=query, today=today, previous_answer=previous_answer)
+        answer = _checked_synthesis(answer, context, candidates, query=query, today=today, previous_answer=previous_answer,
+                                    project=project)
     finally:
         if token is not None:
             UNIT_DECISIONS.reset(token)
@@ -990,9 +1012,9 @@ def _validate_synthesis(
 
 def _checked_synthesis(
     answer: AskSynthesis, context: Mapping[str, Any], candidates: Mapping[str, list[dict]] | None, *, query: str,
-    today: date | None, previous_answer: Mapping[str, Any] | None,
+    today: date | None, previous_answer: Mapping[str, Any] | None, project: Mapping[str, list[dict]] | None = None,
 ) -> AskSynthesis:
-    checks = _AnswerChecks(context, candidates, query=query, today=today, previous_answer=previous_answer)
+    checks = _AnswerChecks(context, candidates, query=query, today=today, previous_answer=previous_answer, project=project)
     shown_claims = []
     for claim in answer.claims:
         checked = checks.claim(claim)
@@ -1175,6 +1197,7 @@ def _finalize_ask_result(
     today: date | None = None,
     first_validated_ms: int | None = None,
     connection: Any = None,
+    project: Mapping[str, list[dict]] | None = None,
 ) -> dict[str, Any]:
     validation_started = time.perf_counter()
     selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
@@ -1184,7 +1207,7 @@ def _finalize_ask_result(
     answer.withheld_claims = withheld_before
     withheld_units: list[dict] = []
     answer = _validate_synthesis(answer, selection, context, candidates, query=query, today=today,
-                                 previous_answer=previous_answer, withheld_units=withheld_units)
+                                 previous_answer=previous_answer, withheld_units=withheld_units, project=project)
     if connection is not None:
         record_withheld(connection, query, withheld_units)
     answer = _transform_keeping_drafts(query, _normalize_meeting_prep(answer))
@@ -1295,7 +1318,7 @@ def _refinement_shortcut_result(
     return _finalize_ask_result(
         candidates, selection_raw, previous_answer, pipeline="deterministic_refinement",
         context_ms=db_ms + trim_ms, provider_ms=0, total_started=total_started,
-        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, today=today,
+        query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, today=today, project=raw_candidates,
     )
 
 
@@ -1360,10 +1383,10 @@ class _StreamChecks:
     """Checks streamed claims and sections with the same _AnswerChecks the finished answer uses."""
 
     def __init__(self, selection_raw: Any, candidates: Mapping[str, list[dict]], query: str, today: date | None,
-                 previous_answer: Mapping[str, Any] | None = None):
+                 previous_answer: Mapping[str, Any] | None = None, project: Mapping[str, list[dict]] | None = None):
         selection = _validate_selection(AskSelection.model_validate(_bounded_selection_raw(selection_raw)), candidates)
         self.checks = _AnswerChecks(_selected_context(selection, candidates), candidates, query=query, today=today,
-                                    previous_answer=previous_answer)
+                                    previous_answer=previous_answer, project=project)
         self.claims_kept = 0        # prepare_answer_raw keeps the first MAX_CLAIMS claims that pass its bounds
         self.claim_index = 0
         self.section_index = 0
@@ -1464,7 +1487,8 @@ def stream_ask_events(
                     break
                 if stream_checks is None:
                     try:
-                        stream_checks = _StreamChecks(scanner.selection, candidates, query, today, previous_answer)
+                        stream_checks = _StreamChecks(scanner.selection, candidates, query, today, previous_answer,
+                                                      project=raw_candidates)
                     except ValueError:
                         selection_failed = True     # it fails the finished answer too; nothing is shown
                         break
@@ -1491,7 +1515,7 @@ def stream_ask_events(
         candidates, selection_raw, answer_raw, pipeline="one_call_stream",
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
         query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, first_token_ms=first_token_ms,
-        today=today, first_validated_ms=first_validated_ms, connection=connection,
+        today=today, first_validated_ms=first_validated_ms, connection=connection, project=raw_candidates,
     )
     yield "final", result
 
@@ -1553,4 +1577,5 @@ def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer:
         candidates, selection_raw, answer_raw, pipeline=pipeline,
         context_ms=context_ms, provider_ms=provider_ms, total_started=total_started,
         query=query, previous_answer=previous_answer, db_ms=db_ms, trim_ms=trim_ms, today=today, connection=connection,
+        project=raw_candidates,
     )
