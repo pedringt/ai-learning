@@ -63,18 +63,30 @@
   // Older Baseline confirmations stored this setup-process text as an area description. It is not
   // project truth, so it is never rendered as Current State content (#450, from context-baseline-polish.js).
   const LEGACY_BASELINE_AREA_DESCRIPTION='Baseline section created from human-authorized project material.';
-  // #678 / DEC-026: Current State keeps its prose; items past their re-check interval are listed in a box under
-  // their area (Paige, Nov 15: layout B). "Show dates" lists every item with its date, its own interval and
-  // "Still true". Nothing here changes an item.
+  // #678 / DEC-026: Current State keeps its prose. Each area with items past their re-check interval gets one summary
+  // line that opens the re-check filter, where those items are Reviews-style rows (Paige, Nov 16: layout 4b, which
+  // replaced Nov 15's per-area box). "Show dates" lists every item with its date, its own interval and "Still true".
+  // Nothing here changes an item.
   const RECHECK_CHOICES=[30,60,90,180];
   function recheckChip(k){return `<span class="recheck-chip">Needs re-check · last confirmed ${esc(k.lastConfirmed||'')}</span>`;}
   function recheckActions(k,{suggest=true}={}){
     return `<button type="button" class="text-button" data-action="state-still-true" data-state-id="${esc(k.id)}">Still true</button>${suggest?`<button type="button" class="text-button" data-action="suggest-recheck-question" data-state-id="${esc(k.id)}">Suggest a re-check question</button>`:''}`;
   }
-  function recheckBox(items){
+  function recheckSummary(items){
+    const n=items.filter(k=>k.needsRecheck).length;
+    if(!n) return '';
+    return `<div class="recheck-summary"><span class="recheck-chip">Re-check</span><span>${n} ${n===1?'item in this area needs':'items in this area need'} a re-check</span><button type="button" class="text-button" data-action="open-recheck-items">Review ${n===1?'it':'them'} →</button></div>`;
+  }
+  // The filtered view's rows follow the Reviews page record: label, bold title, meta line and chevron; expanding shows
+  // shaded context blocks and the actions, primary first.
+  function recheckRecords(items,projectDays){
     const flagged=items.filter(k=>k.needsRecheck);
     if(!flagged.length) return '';
-    return `<div class="recheck-box"><p class="recheck-box-head">${flagged.length} ${flagged.length===1?'item needs':'items need'} a re-check</p><ul>${flagged.map(k=>`<li data-state-id="${esc(k.id)}"><p class="recheck-statement">“${esc(k.statement)}”</p>${recheckChip(k)}<div class="recheck-actions">${recheckActions(k)}</div></li>`).join('')}</ul></div>`;
+    const row=k=>{
+      const days=k.recheckDays||projectDays;
+      return `<details class="recheck-record" data-state-id="${esc(k.id)}"><summary class="open-question-row recheck-record-toggle"><span class="open-question-copy"><span class="open-item-label recheck-label">Re-check</span><span class="open-question-title recheck-record-title">${esc(k.statement)}</span><span class="open-question-meta">Last confirmed ${esc(k.lastConfirmed||'')}${days?` · re-check every ${esc(days)} days`:''}</span></span><span class="question-card-chevron" aria-hidden="true">›</span></summary><div class="recheck-record-body"><div class="review-decision-context"><div class="review-context-block"><span>Current State item</span><p>${esc(k.statement)}</p></div><div class="review-context-block"><span>Last confirmed</span><p>${esc(k.lastConfirmed||'')}${days?`. It is past its ${esc(days)}-day re-check.`:'.'}</p></div></div><div class="review-actions"><button type="button" class="btn primary" data-action="state-still-true" data-state-id="${esc(k.id)}">Still true</button><button type="button" class="btn secondary" data-action="suggest-recheck-question" data-state-id="${esc(k.id)}">Suggest a re-check question</button></div></div></details>`;
+    };
+    return `<div class="recheck-records"><div class="recheck-records-head"><span>Needs a re-check</span><span class="count-badge">${flagged.length}</span></div>${flagged.map(row).join('')}</div>`;
   }
   function intervalSelect(k){
     const current=k.recheckDays??'';
@@ -92,12 +104,12 @@
       // (no prose, no other items); "Show all Current State" in the banner brings the full view back.
       const flagged=items.filter(k=>k.needsRecheck);
       if(!flagged.length) return '';
-      return `<section class="project-outline-section project-wiki-section is-recheck-only" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${view.showDates?datedItems(flagged):recheckBox(flagged)}</section>`;
+      return `<section class="project-outline-section project-wiki-section is-recheck-only" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${view.showDates?datedItems(flagged):recheckRecords(flagged,view.recheckDays)}</section>`;
     }
     const paragraphs=projectWikiParagraphs(items);
     // Hidden: the prose above is the Current State reading surface (#450, from context-feedback-pass-3.js / context-quickwins.js).
     const maintained=`<details class="project-maintained-facts" hidden><summary>See ${items.length} maintained Current State ${items.length===1?'fact':'facts'}</summary><ul>${items.map(k=>projectFact(k,pendingFor,history)).join('')}</ul></details>`;
-    return `<section class="project-outline-section project-wiki-section" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${area.description&&area.description.trim()!==LEGACY_BASELINE_AREA_DESCRIPTION?`<p class="project-outline-description">${esc(area.description)}</p>`:''}${view.showDates?datedItems(items):`<div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${recheckBox(items)}`}${maintained}</section>`;
+    return `<section class="project-outline-section project-wiki-section" id="project-${esc(area.id)}"><div class="project-section-sticky"><h3>${esc(area.name)}</h3></div>${area.description&&area.description.trim()!==LEGACY_BASELINE_AREA_DESCRIPTION?`<p class="project-outline-description">${esc(area.description)}</p>`:''}${view.showDates?datedItems(items):`<div class="project-wiki-prose">${paragraphs.map(text=>`<p>${esc(text)}</p>`).join('')}</div>${recheckSummary(items)}`}${maintained}</section>`;
   }
 
   // Universal facts are matched by topic label (see UNIVERSAL_TOPICS), not a
@@ -135,7 +147,7 @@
     const areas=visibleAreas(knowledge);
     const orientation=projectOrientation(knowledge);
     const needing=recheckCount(knowledge);
-    const view={showDates,recheckOnly:recheckOnly&&needing>0};
+    const view={showDates,recheckOnly:recheckOnly&&needing>0,recheckDays};
     const datesToggle=`<button type="button" class="btn secondary" data-action="toggle-show-dates" aria-pressed="${showDates?'true':'false'}">${showDates?'Hide dates':'Show dates'}</button>`;
     const recheckPointer=recheckDays?'':`<p class="recheck-pointer">Re-check reminders are off. <button type="button" class="text-button" data-action="open-recheck-settings">Turn them on in Settings.</button></p>`;
     const recheckMeta=needing?`<div><dt>Re-check</dt><dd>${needing} ${needing===1?'item needs':'items need'} a re-check</dd></div>`:'';

@@ -1329,10 +1329,31 @@ html body .current-state-page-actions [data-action="toggle-show-dates"]{height:3
 .recheck-pointer .text-button{font-size:12px;padding:0}
 @media (max-width: 760px){html body .current-state-page-actions{max-width:none;justify-content:flex-start}.recheck-pointer{text-align:left}}
 .recheck-filter-banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0 0 18px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--warm-soft);color:var(--warm);font-size:13px;font-weight:600}
-.recheck-box{margin:14px 0 4px;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--warm);border-radius:0 10px 10px 0;background:var(--surface)}
-.recheck-box-head{margin:0 0 8px;font-size:13px;font-weight:700;color:var(--warm)}
-.recheck-box ul,.current-state-dated{list-style:none;margin:0;padding:0;display:grid;gap:12px}
-.recheck-statement{margin:0 0 4px;font-size:13.5px;line-height:1.55}
+.current-state-dated{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+/* Paige, Nov 16 (layout 4b): one summary line per area, opening the re-check filter, whose rows follow the Reviews page record. */
+.recheck-summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:12px 0 2px;padding:8px 0 0;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.recheck-summary .text-button{font-size:13px;padding:0;margin-left:auto}
+@media (max-width:760px){.recheck-summary .text-button{margin-left:0}}
+.recheck-records{margin:16px 0 4px}
+.recheck-records-head{display:flex;align-items:center;gap:8px;padding:0 0 8px;font-size:13px;font-weight:700;color:var(--ink,#17223a)}
+.recheck-records-head .count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;border:1px solid var(--line);font-size:11px;font-weight:600;color:var(--muted)}
+.recheck-record{margin:0;border-top:1px solid var(--line)}
+.recheck-record:last-child{border-bottom:1px solid var(--line)}
+.recheck-record>summary{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px 4px;list-style:none;cursor:pointer}
+.recheck-record>summary::-webkit-details-marker{display:none}
+.recheck-record>summary:focus-visible{outline:2px solid var(--state-blue,#1769e8);outline-offset:2px;border-radius:6px}
+.recheck-record .open-question-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.recheck-record .open-item-label.recheck-label{font-size:10.5px;letter-spacing:.055em;text-transform:uppercase;font-weight:700;color:var(--warm)}
+.recheck-record .open-item-label.recheck-label::before{content:'• '}
+.recheck-record-title{font-size:13.5px;font-weight:650;line-height:1.4;color:var(--state-ink,#17223a);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.recheck-record[open] .recheck-record-title{display:block;-webkit-line-clamp:unset}
+.recheck-record .open-question-meta{font-size:11.5px;color:#6b7280}
+.recheck-record .question-card-chevron{color:#9aa3b2;font-size:18px;transition:transform .15s}
+.recheck-record[open] .question-card-chevron{transform:rotate(90deg)}
+.recheck-record-body{padding:0 4px 16px}
+.recheck-record .review-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.recheck-record .review-actions .btn{min-height:37px;padding:0 12px;font-size:11.5px}
+@media (prefers-reduced-motion:reduce){.recheck-record .question-card-chevron{transition:none}}
 .recheck-chip{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--warm-soft);color:var(--warm);font-size:11.5px;font-weight:650}
 .recheck-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:6px}
 .recheck-actions .text-button{font-size:12px;padding:0}
