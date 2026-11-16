@@ -5,6 +5,8 @@ Each one replaces a model answer for a kind of question the model answered badly
 - #692 re-checks and confirmation dates: the model never sees `last_confirmed_at` or `needs_recheck` (DEC-026 kept them
   out of its context), so it said nothing was flagged beside a "needs re-check" chip. Software answers these from the
   same fields Current State shows.
+- #693 another project by name: asked from Juniper about Northstar, the model presented Juniper's records as
+  Northstar's. Software says which project Ask is answering from and declines.
 
 Every answer here is an ordinary Ask envelope (claims and sections citing real records of the active project), so the
 drawer, Copy and the eval scorers read it like any other answer. `timing.pipeline` says which software answer it was.
@@ -18,6 +20,7 @@ from typing import Any, Mapping
 
 from ask_contract import AskAnswerItem, AskAnswerSection, AskClaim, AskSelection, AskSynthesis
 from ask_display import claim_lines
+from db import project_id_of
 from review_service import list_presented_reviews, list_questions, list_state
 
 STATE_LABEL = "Current State"
@@ -79,7 +82,7 @@ def _envelope(connection: Any, answer: AskSynthesis, *, pipeline: str, started: 
 # #692: re-checks and confirmation dates
 
 _RECHECK_QUESTION = re.compile(
-    r"\bre[\s-]?check|\bre[\s-]?confirm|\blast\s+(?:re-?)?confirm(?:ed|ation)\b|\bconfirmation\s+dates?\b|\bwhen\s+(?:was|were)\b.*\blast\b.*\bconfirmed\b",
+    r"\bre[\s-]?check|\blast\s+(?:re-?)?confirm(?:ed|ation)\b|\bconfirmation\s+dates?\b|\bwhen\s+(?:was|were)\b.*\blast\b.*\bconfirmed\b",
     re.IGNORECASE,
 )
 # Words that say what kind of question it is, not which item it is about.
@@ -215,10 +218,81 @@ def confirmation_fingerprint(connection: Any) -> list[list[Any]]:
 
 
 # --------------------------------------------------------------------------------------------------------------------
+# #693: questions about another project
+
+
+def _phrase_in(phrase: str, text: str) -> bool:
+    return bool(phrase) and re.search(rf"(?<![a-z0-9]){re.escape(phrase.lower())}(?![a-z0-9])", text) is not None
+
+
+def _active_project_text(connection: Any) -> str:
+    """Everything the active project's own records say, to tell another project's name from an ordinary word."""
+    parts: list[str] = []
+    for item in list_state(connection):
+        parts += [str(item.get("topic") or ""), str(item.get("statement") or "")]
+    for review in list_presented_reviews(connection, "open"):
+        parts += [str(review.get("decision_question") or ""), str(review.get("why_consequential") or "")]
+    for question in list_questions(connection, "open"):
+        parts.append(str(question.get("text") or ""))
+    return " ".join(parts).lower()
+
+
+def other_projects_named(connection: Any, query: str) -> tuple[str, list[str]]:
+    """The active project's name, and the names of other projects the question names.
+
+    A project is named by its full name, or by its id when the id is a plain word (the demo projects' "northstar" and
+    "juniper"; a created project's id is generated, so only its name counts). A name that also appears in the active
+    project's own records ("Budget", say) is an ordinary word there, not a reference to the other project."""
+    active_id = project_id_of(connection)
+    rows = [dict(row) for row in connection.execute("SELECT id, name FROM projects").fetchall()]
+    active_name = next((str(r["name"]) for r in rows if r["id"] == active_id), active_id)
+    text = (query or "").lower()
+    candidates = []
+    for row in rows:
+        if row["id"] == active_id:
+            continue
+        names = [str(row["name"] or "").strip()]
+        if re.fullmatch(r"[a-z]{4,}", str(row["id"])):
+            names.append(str(row["id"]))
+        if any(_phrase_in(name, text) for name in names):
+            candidates.append((str(row["name"] or row["id"]), names))
+    if not candidates:
+        return active_name, []
+    own = _active_project_text(connection) + " " + active_name.lower()
+    named = [name for name, names in candidates if not any(_phrase_in(n, own) for n in names if _phrase_in(n, text))]
+    return active_name, named
+
+
+def _join(names: list[str]) -> str:
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def other_project_answer(connection: Any, query: str, *, started: float | None = None) -> dict[str, Any] | None:
+    """#693 (Paige, Nov 16): asked about another project by name, Ask says which project it is answering from and
+    declines; it never answers from the active project's records, and never offers to track the other project's
+    Question here. None when the question names no other project."""
+    active, others = other_projects_named(connection, query)
+    if not others:
+        return None
+    started = time.perf_counter() if started is None else started
+    names = _join(others)
+    possessive = f"{names}'" if names.endswith("s") else f"{names}'s"
+    claims = [
+        AskClaim(text=f"Ask answers only from {active}, the project you have open. It can't see {possessive} records, "
+                      f"so it won't answer for {names}."[:300]),
+        AskClaim(text=f"To ask about {names}, switch to {'it' if len(others) == 1 else 'that project'} with the project "
+                      "switcher, then ask again."[:300]),
+    ]
+    answer = AskSynthesis(job="general_project_synthesis", headline="Another project", claims=claims)
+    return _envelope(connection, answer, pipeline="software_other_project", started=started)
+
+
+# --------------------------------------------------------------------------------------------------------------------
 
 
 def software_answer(connection: Any, query: str, previous_answer: Mapping[str, Any] | None = None, *,
                     today: date | None = None, timezone_offset: int | None = None) -> dict[str, Any] | None:
     """The software-written answer for this question, or None when the model should answer it."""
     started = time.perf_counter()
-    return recheck_answer(connection, query, timezone_offset=timezone_offset, today=today, started=started)
+    return (other_project_answer(connection, query, started=started)
+            or recheck_answer(connection, query, timezone_offset=timezone_offset, today=today, started=started))

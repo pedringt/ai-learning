@@ -131,6 +131,8 @@ def ask_cache_key(
         # dates in the asker's time zone. A "Still true" changes only these.
         "confirmations": confirmation_fingerprint(connection),
         "timezone_offset": timezone_offset,
+        # #693: a question naming another project is declined in software; a new or renamed project changes that.
+        "projects": [list(row) for row in connection.execute("SELECT id, name FROM projects ORDER BY id").fetchall()],
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
