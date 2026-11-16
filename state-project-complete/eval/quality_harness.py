@@ -318,6 +318,9 @@ class AskQualityResult:
     # #567: with ASK_EVAL_TRANSPORT=stream, how long a person waits: until the first content the browser would draw
     # (a raw text delta on the older code, a checked claim or section after #567) and until the finished answer.
     latency: dict[str, Any] = field(default_factory=dict)
+    # #682: the statements Ask's checks left out of this answer (ask_withheld_units rows in the scenario's own test
+    # database), so a failure that comes from withholding can be read. Synthetic scenarios only.
+    withheld_units: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def number_ok(self) -> bool:
@@ -712,6 +715,18 @@ def _streamed_ask(connection, provider, question: str) -> tuple[dict[str, Any], 
                    "total_ms": round((time.perf_counter() - started) * 1000)}
 
 
+def _withheld_units(connection) -> list[dict[str, Any]]:
+    """#682: what Ask withheld in this scenario's test database (ask_withheld_log.record_withheld), oldest first."""
+    try:
+        rows = connection.execute(
+            "SELECT unit, kind, reason, basis, record_id, statement_text FROM ask_withheld_units ORDER BY occurred_at"
+        ).fetchall()
+    except Exception:  # broad on purpose: a capture for reading failures must never fail the scenario
+        return []
+    keys = ("unit", "kind", "reason", "basis", "record_id", "statement_text")
+    return [{key: row[key] for key in keys} for row in rows]
+
+
 def run_ask_quality_scenario(scenario: AskQualityScenario, provider) -> AskQualityResult:
     connection = _new_test_connection()
     try:
@@ -720,9 +735,12 @@ def run_ask_quality_scenario(scenario: AskQualityScenario, provider) -> AskQuali
             answer, latency = _streamed_ask(connection, LiveAskProvider(provider), scenario.question)
             result = score_ask_answer(scenario, answer)
             result.latency = latency
+            result.withheld_units = _withheld_units(connection)
             return result
         answer = run_ask(connection, LiveAskProvider(provider), scenario.question)
-        return score_ask_answer(scenario, answer)
+        result = score_ask_answer(scenario, answer)
+        result.withheld_units = _withheld_units(connection)
+        return result
     except Exception as exc:
         return AskQualityResult(
             scenario=scenario,
