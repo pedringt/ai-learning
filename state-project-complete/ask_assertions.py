@@ -87,10 +87,10 @@ _DENIED_AFTER = re.compile(
     r"weren['’]t|hasn['’]t|haven['’]t)\s+(?!only\b)(?:yet\s+)?(?:been\s+)?(?:yet\s+)?(?:correct|accurate|true|right|valid|"
     r"established|recorded|confirmed|accepted|approved|resolved|settled|final|known|decided|in\s+current\s+state|"
     r"on\s+record|in\s+place|part\s+of\s+current\s+state)\b", re.I)
-# #682 candidate V1: the clause itself says its subject is only proposed. "the approved $40,000 pilot budget is a
-# pending Review proposal, not yet accepted" repeats the Review's own adjective under a pending frame (11 of 16 compound
-# misses in run 43817087174 withheld exactly that). Only a review/proposal predicate counts: "the approved budget is
-# pending implementation" still asserts approval.
+# #682 (Paige, Nov 16): Ask may repeat what a pending item says, as long as the same clause makes clear it is still
+# pending review. "the approved $40,000 pilot budget is a pending Review proposal, not yet accepted" repeats the
+# Review's own wording under a pending frame (11 of 16 compound misses in run 43817087174 withheld exactly that). Only
+# a review/proposal predicate counts: "the approved budget is pending implementation" still asserts approval.
 _PROPOSED_AFTER = re.compile(
     r"^(?:\s+[\w'’$,.-]+){0,6}?\s+(?:is|are)\s+(?:only\s+)?(?:still\s+)?(?:(?:a|an)\s+)?(?:open\s+)?"
     r"(?:pending\s+(?:review|proposal)|proposed\b|proposal\b|awaiting\s+(?:review|a\s+decision|decision)|under\s+review)",
@@ -147,7 +147,7 @@ def _status_assertions(clause: str, sentence: str = "") -> Iterable[Assertion]:
         if _DENIED_AFTER.match(after):
             continue          # "Confirmed retention terms are not recorded"; "the premise that … is resolved is not correct"
         if _PROPOSED_AFTER.match(after):
-            continue          # #682 V1: "the approved $40,000 pilot budget is a pending Review proposal"
+            continue          # #682: "the approved $40,000 pilot budget is a pending Review proposal"
         if re.search(r"\bmay\b", before, re.I):
             continue          # "new legal evidence may contradict the approved terms"
         if _STATE_ITSELF.match(after):
