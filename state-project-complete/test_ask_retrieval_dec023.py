@@ -58,3 +58,22 @@ def test_link_expansion_is_capped_and_adds_only_project_records(bench):
     assert added <= _ids(full)
     for bucket, records in expanded.items():             # each added record lands in its own type, unchanged
         assert all(r in full[bucket] for r in records)
+
+
+# #704 (Nov 16, prod QA): "Is the VIP carve-out out of date?" got "no Current State record covers it". On the seeded
+# Northstar (the same 25 Current State items as production), retrieval sends k-vip and the retire-VIP Review for every
+# wording: the false absence was the model's. Keep it that way for these paraphrases.
+@pytest.mark.parametrize("query", ["Is the VIP carve-out out of date?", "Is the VIP exception stale?",
+                                   "Is the VIP carve-out still in place?", "Has the VIP exception carve-out been retired?",
+                                   "Is the VIP exception outdated?"])
+def test_northstar_vip_questions_reach_the_vip_records(tmp_path, query):
+    from database_migration_backed import initialize_db
+    from db import connect
+    from seed_demo import bootstrap_demo_data
+
+    conn = connect(f"sqlite://{tmp_path / 'northstar.db'}")
+    initialize_db(conn)
+    bootstrap_demo_data(conn)
+    conn.project_id = "northstar"
+    sent = _ids(_trim_candidates_for_query(query, _compact_candidates(conn)))
+    assert {"k-vip", "demo-review-retire-vip"} <= sent, query
