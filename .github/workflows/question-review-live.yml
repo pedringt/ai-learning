@@ -43,6 +43,7 @@ on:
           - staging
 permissions:
   contents: read
+  actions: read   # #698: the previous staging runs' quality-report artifacts
 concurrency:
   group: state-ai-quality-check-${{ github.ref_name }}
   cancel-in-progress: false
@@ -61,6 +62,22 @@ jobs:
           python-version: '3.14'
       - name: Install quality-check dependencies
         run: pip install -r state-project-complete/requirements.txt
+      # #698 (Paige, Nov 16): the staging API reseeds on every backend deploy, so "failed in two consecutive runs"
+      # reads the previous staging run from its saved quality-report artifact instead. The five most recent completed
+      # runs on staging are fetched; the newest report that ran each suite is used. Nothing is fetched elsewhere.
+      - name: Fetch the previous staging quality reports
+        if: github.ref == 'refs/heads/staging'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p previous-reports
+          for id in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow question-review-live.yml --branch staging \
+              --status completed --limit 6 --json databaseId --jq '.[].databaseId'); do
+            [ "$id" = "$GITHUB_RUN_ID" ] && continue
+            gh run download "$id" --repo "$GITHUB_REPOSITORY" --pattern 'quality-report-*' --dir "previous-reports/$id" \
+              2>/dev/null || echo "run $id: no quality report saved"
+          done
+          find previous-reports -name quality-report.json | head -10
       - name: Run controlled AI quality checks
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -119,6 +136,7 @@ jobs:
             --record-url "$RECORD_URL" \
             --authority-lab-envelope authority-lab-evidence.json \
             --json quality-report.json \
+            --previous-reports previous-reports \
             --max-calls "${{ inputs.max_calls || '80' }}"
       # #517: the review suite's aggregate results as Authority Lab evidence
       # (counts, versions and this run's link; no scenario or model text).

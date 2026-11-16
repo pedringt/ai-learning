@@ -653,3 +653,38 @@ Nov 16 production QA: "Is the VIP exception stale?" got "…not stale in Current
 
 **Revisit when**
 A replay or eval shows a correct claim withheld by either check, or the model starts receiving confirmation data.
+
+### DEC-030 — Claims may cite a linked or shown record; the premise test and release check read Ask's correct wording and staging's last run (#701)
+
+**Status:** Decided (Paige, Nov 16). V3, V4, the scorer changes and #698 are on `fix/701-decisions`, not yet on `staging`. P3 is held (branch `p3/701-held`).
+**Date:** 2026-11-16
+**Related:** #701, #695, #696, #698, #700, DEC-022, DEC-023, DEC-028, R-022, R-024; `ask_claims.py`, `ask_service.py`, `eval/authority_wording.py`, `eval/quality_harness.py`, `eval/release_gate.py`
+
+**Decision**
+- **A cited Review's linked Evidence supplies its numbers (V3).** When a claim cites a Review, the Evidence that Review links to and that the answer selected counts as a source for the claim's numbers and dates. This follows the answered-Question precedent. A premise correction can cite the retention Review and still say "30 days".
+- **A claim may cite a record Ask was shown but did not select (V4).** This relaxes #567's "selected records" rule for citations to "shown records". The record must still be the right type for the claim's basis, numbers still come only from the cited records, and a `none` claim's open sources are not widened.
+- **Cite the record each detail comes from (P3, prompt): held.** Before writing a number, name or date, the claim must cite the record it comes from; otherwise it leaves the detail out. Its before/after (Nov 16) improved Ask, adversarial, premise and the Ask-quality eval, but compound "should wait" (R-024) rose from 2/150 to 9/150; across two P3 runs it was 10/300 against 3/300 without. P3 is held until a #696 wording keeps "should wait" at or below baseline when combined with P3 (Paige, Nov 16). It ships only with V4.
+- **"Should wait" (#696).** Keep the current dependency/condition sentence; P2 (deleting it) is rejected on the data. Two alternative wordings (W1, W2) are measured, each combined with P3, against a same-day P3-only run; Paige chooses.
+- **Premise test wording (#700, option b).** The premise test accepts DEC-023's cut-context wording narrowly ("the records I looked at don't/do not show that retention is resolved / show retention as resolved") and "cannot be treated as resolved". "The records I looked at don't show…" about anything else does not count.
+- **"Legal-confirmed" under a pending frame (premise test).** The premise test follows DEC-028's V1 rule: a settled word is allowed only inside a pending Review's own description, in the same clause that says the Review is pending ("A Review proposing Legal-confirmed retention terms … is pending"). It must come after "Review" in that clause and must not be the clause's predicate. A later clause ("…, but the Review is pending") never qualifies it.
+- **Unknown-scenario wording.** The uncertainty check also accepts "has no established" and "does not have a confirmed", which `ask_unknown_stays_unknown`'s required facts already accept. An open item shown only as a chip stays a quality miss.
+- **Previous run (#698).** On staging, "failed in two consecutive runs" reads the previous run from the last staging runs' saved `quality-report` artifacts (the newest report that ran each suite), because the staging API reseeds on every backend deploy. The record URL's analytics remain the fallback, and the only source on production.
+
+**Why**
+The #701 investigation found the remaining release-check variance came from three citation mechanisms (an uncited source record, a cited but unselected record, and Evidence reachable only through a Review), plus scorer wording that did not recognise correct answers and a previous-run lookup that staging's reseeding almost always emptied.
+
+**Measured (offline replay of captured outputs; no model calls)**
+- Baseline outputs with V3 + V4: Ask 378 → 379/390, adversarial 667 → 671/720, compound 113 → 114/150, premise repro 42 → 50/60. With the premise-test and uncertainty wording as well: premise 60/60.
+- P3's outputs with V3 + V4: Ask 386/390, adversarial 679/720, compound 142/150. With the new wording: Ask 387/390 (one more correct "does not have a confirmed" answer), premise 29/30 (the remaining miss makes no correction).
+
+**Measured (paid, same day, Nov 16; V3 + V4 in both arms; runs 43979173001/7320/81248 vs 43979184898/89343/94344)**
+- Without P3 → with P3: Ask 379 → 389/390, adversarial 666 → 679/720, premise 27 → 30/30, compound 130 → 132/150, Ask-quality eval 12 → 13/13 (release reading pass).
+- Compound "should wait": 2/150 → 9/150, all in the model's own output (none withheld). 2,666 calls, $2.59.
+- V4 newly shows 62 statements, each accurate to its cited records.
+
+**Rejected / deferred**
+- P2 (deleting the dependency/condition sentence): "should wait" rose to at least 6/150, and `adv_leading_since_we_approved` fell from 27/30 to 18/30.
+- The broad #700 wording (any "records I looked at don't show…").
+
+**Revisit when**
+A shown-but-unselected citation is found to mislead, a new "should wait" wording is approved and measured, or staging's quality reports stop being saved.
