@@ -18,6 +18,9 @@ class AskRequest(BaseModel):
     # #476: the asker's local calendar day, so "today" is not the server's UTC day.
     # Used only when within a day of the server's date (see ask_service.ask_today).
     client_date: date | None = None
+    # #692: the browser's Date.getTimezoneOffset() (minutes behind UTC), so dates Ask writes in software (when an item
+    # was last confirmed) fall on the same day as the chips beside them. Same retry-without rule as client_date.
+    client_timezone_offset: int | None = Field(default=None, ge=-840, le=840)
 
 class AskSelection(BaseModel):
     model_config = ConfigDict(extra="forbid")

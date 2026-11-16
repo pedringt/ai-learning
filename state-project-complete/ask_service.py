@@ -23,6 +23,7 @@ from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_ca
 from ask_display import claim_lines, has_withheld, withheld_line
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from ask_withheld_log import record_withheld, withheld_kind
+from ask_software_answers import confirmation_fingerprint, software_answer
 from db import project_id_of
 from ask_authority_text import (  # noqa: F401  (re-exported: tests import these from ask_service)
     _DEMO_SLUG_ID,
@@ -92,7 +93,8 @@ _SELECTION_LIMITS = {
 def ask_cache_key(
     connection: Any,
     query: str,
-    previous_answer: Mapping[str, Any] | None = None, today: date | None = None) -> str:
+    previous_answer: Mapping[str, Any] | None = None, today: date | None = None,
+    timezone_offset: int | None = None) -> str:
     """Fingerprint an Ask request against every authority-bearing input.
 
     Reusing a prior answer is safe only while Current State, open Reviews,
@@ -125,6 +127,10 @@ def ask_cache_key(
         "as_of_date": (today or date.today()).isoformat(),
         # #567: answers changed shape (claims, fixed headlines); never serve one cached in the older shape.
         "answer_shape": "claims-v2",
+        # #692: software answers re-check questions from confirmation dates the model never sees, and writes those
+        # dates in the asker's time zone. A "Still true" changes only these.
+        "confirmations": confirmation_fingerprint(connection),
+        "timezone_offset": timezone_offset,
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
@@ -1386,12 +1392,19 @@ def stream_ask_events(
     previous_answer: Mapping[str, Any] | None = None,
     today: date | None = None,
     cancelled: threading.Event | None = None,
+    timezone_offset: int | None = None,
 ) -> Iterator[tuple[str, dict[str, Any]]]:
     """Yield grounded-context status, real provider deltas, then a validated final Ask payload.
 
     When `cancelled` is set (the person left), stop at the provider's next chunk and close its stream (#654).
     """
     total_started = time.perf_counter()
+
+    # Nov 16 (#692): questions software answers from the record, with no model call (ask_software_answers.py).
+    written = software_answer(connection, query, previous_answer, today=today, timezone_offset=timezone_offset)
+    if written is not None:
+        yield "final", written
+        return
 
     # A hypothetical draft is refined by the model (keeping its assumption), not by the deterministic transforms.
     if previous_answer and detect_refinement_type(query) and not ask_drafts.previous_draft(previous_answer):
@@ -1414,7 +1427,7 @@ def stream_ask_events(
     }
 
     if not hasattr(provider, "stream"):
-        result = run_ask(connection, provider, query, previous_answer, today=today)
+        result = run_ask(connection, provider, query, previous_answer, today=today, timezone_offset=timezone_offset)
         yield "final", result
         return
 
@@ -1477,8 +1490,14 @@ def stream_ask_events(
     yield "final", result
 
 
-def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None, today: date | None = None) -> dict[str, Any]:
+def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None,
+            today: date | None = None, timezone_offset: int | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
+
+    # Nov 16 (#692): questions software answers from the record, with no model call (ask_software_answers.py).
+    written = software_answer(connection, query, previous_answer, today=today, timezone_offset=timezone_offset)
+    if written is not None:
+        return written
 
     # A hypothetical draft is refined by the model (keeping its assumption), not by the deterministic transforms.
     if previous_answer and detect_refinement_type(query) and not ask_drafts.previous_draft(previous_answer):

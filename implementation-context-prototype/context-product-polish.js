@@ -440,7 +440,9 @@
         },ui.abortController.signal);
       }else payload=await ASK.submit(clean,null,ui.abortController.signal);
       if(requestId!==ui.requestId)return;
-      ui.payload=payload;ui.answerStateSignature=await statePromise;ui.resolvedContext=await resolvedPromise;ui.running=false;ui.stream=null;renderFinalAsk();askTiming?.completed?.();if(ui.askTiming===askTiming)ui.askTiming=null;
+      ui.payload=payload;ui.answerStateSignature=await statePromise;
+      // Nov 16: a software-written answer (ask_software_answers.py) stands alone: no prior decisions matched to its words.
+      ui.resolvedContext=String(payload?.timing?.pipeline||'').startsWith('software_')?[]:await resolvedPromise;ui.running=false;ui.stream=null;renderFinalAsk();askTiming?.completed?.();if(ui.askTiming===askTiming)ui.askTiming=null;
     }catch(error){
       askTiming?.failed?.();if(ui.askTiming===askTiming)ui.askTiming=null;
       if(requestId!==ui.requestId)return;ui.running=false;ui.stream=null;

@@ -1002,7 +1002,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         def event_stream(cancelled: Event):
             try:
                 with get_connection() as connection:
-                    cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer, today=today)
+                    cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer, today=today,
+                                              timezone_offset=payload.client_timezone_offset)
                     cached = request.app.state.ask_cache.get(cache_key)
                     if cached is not None:
                         logger.info("Ask cache hit endpoint=stream")
@@ -1011,7 +1012,7 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                     try:
                         for event_name, event_payload in stream_ask_events(
                             connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today,
-                            cancelled=cancelled,
+                            cancelled=cancelled, timezone_offset=payload.client_timezone_offset,
                         ):
                             if event_name == "final":
                                 request.app.state.ask_cache.put(cache_key, event_payload)
@@ -1025,7 +1026,8 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                         # miss into a visible dead end after the user already saw text.
                         logger.warning("Streaming Ask contract failure; retrying once: %s", first_exc)
                         result = run_ask(
-                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today
+                            connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today,
+                            timezone_offset=payload.client_timezone_offset,
                         )
                         request.app.state.ask_cache.put(cache_key, result)
                         yield f"event: final\ndata: {json.dumps(result, ensure_ascii=False)}\n\n"
@@ -1084,19 +1086,22 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         today = ask_today(payload.client_date)
         try:
             with get_connection() as connection:
-                cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer, today=today)
+                cache_key = ask_cache_key(connection, payload.query.strip(), payload.previous_answer, today=today,
+                                              timezone_offset=payload.client_timezone_offset)
                 cached = request.app.state.ask_cache.get(cache_key)
                 if cached is not None:
                     logger.info("Ask cache hit endpoint=standard")
                     return cached
                 try:
-                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today)
+                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today,
+                                     timezone_offset=payload.client_timezone_offset)
                 except (ValueError, TypeError) as first_exc:
                     # Model output can occasionally miss the grounded Ask contract even
                     # for a good query. Retry once with the same authoritative context
                     # before surfacing an error; invalid final output still fails closed.
                     logger.warning("Ask contract failure; retrying once: %s", first_exc)
-                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today)
+                    result = run_ask(connection, selected_ask_provider, payload.query.strip(), payload.previous_answer, today=today,
+                                     timezone_offset=payload.client_timezone_offset)
                 request.app.state.ask_cache.put(cache_key, result)
                 timing = result.get("timing", {})
                 logger.info(
