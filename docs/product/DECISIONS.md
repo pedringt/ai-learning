@@ -576,6 +576,10 @@ State gets logins (an owner to notify becomes possible), or the bundled Review e
 - **Why this matters:** the collapsed Review row shows the Review's existing "why this matters" line (model-written `why_consequential`).
 - **Bulk "Leave unchanged":** any Reviews with that decision can be selected and closed together. Under DEC-026 this confirms the items those Reviews are about, the same as deciding each one.
 - **The decision is labelled "Keep Current State as is"** on each card and in bulk (Nov 15), replacing #107's "Leave unchanged", which read as unclear. The bulk confirm says what happens: "Close N proposed changes without applying them? Current State won't change. These proposals will be closed, and the items they're about will be marked as confirmed today." Paige chose this knowing #107 had replaced an earlier "Keep Current State" label.
+- **Amendment (Paige, Nov 16, #691): the bulk confirm adapts to what is actually confirmed.** A Review that only adds an item is about no existing item, so "the items they're about" referred to nothing. The confirmed items are the same ones the backend confirms: the Review's linked items plus each proposal's existing item, counted once.
+  - Every selected Review touches an existing item: the wording above, unchanged.
+  - Every selected Review is add-only: "Current State won't change. These proposals will be closed. They don't touch any existing item, so nothing is marked as confirmed."
+  - A mix of the two: "Current State won't change. These proposals will be closed, and the N items they're about will be marked as confirmed today."
 
 **Why**
 Northstar opens with 7 Reviews and 3 blocking Questions; the order put the oldest first, not the most consequential, and the reason to care was hidden inside each card.

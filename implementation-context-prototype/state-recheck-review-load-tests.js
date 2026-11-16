@@ -105,5 +105,38 @@ check('the re-check entry sits after the Reviews and counts as one',()=>{
   assert.ok(!/Nothing needs review/.test(empty));
 });
 
+// #691 (Paige, Nov 16; DEC-027 amendment): the bulk confirm says what is actually confirmed.
+const keep=(id,targets,create=false)=>({id,reviewType:'proposed_update',summary:id,affectedStateIds:[],
+  proposals:create?[proposal(`p-${id}`,'create',null)]:targets.map((t,i)=>proposal(`p-${id}-${i}`,'update',t))});
+check('bulk confirm: add-only Reviews say nothing is marked as confirmed',()=>{
+  assert.equal(OPEN_ITEMS.bulkKeepConfirmText([keep('a',[],true),keep('b',[],true)]),
+    'Current State won’t change. These proposals will be closed. They don’t touch any existing item, so nothing is marked as confirmed.');
+  assert.equal(OPEN_ITEMS.bulkKeepConfirmText([keep('a',[],true)]),
+    'Current State won’t change. This proposal will be closed. It doesn’t touch any existing item, so nothing is marked as confirmed.');
+});
+check('bulk confirm: Reviews that all touch existing items keep the DEC-027 wording',()=>{
+  assert.equal(OPEN_ITEMS.bulkKeepConfirmText([keep('a',['k1']),keep('b',['k2'])]),
+    'Current State won’t change. These proposals will be closed, and the items they’re about will be marked as confirmed today.');
+  assert.equal(OPEN_ITEMS.bulkKeepConfirmText([keep('a',['k1'])]),
+    'Current State won’t change. This proposal will be closed, and the item it’s about will be marked as confirmed today.');
+});
+check('bulk confirm: a mixed selection names the deduplicated count of existing items',()=>{
+  assert.equal(OPEN_ITEMS.bulkKeepConfirmText([keep('a',['k1','k2']),keep('b',['k2']),keep('c',[],true)]),
+    'Current State won’t change. These proposals will be closed, and the 2 items they’re about will be marked as confirmed today.');
+  assert.equal(OPEN_ITEMS.bulkKeepConfirmText([keep('a',['k1']),keep('c',[],true)]),
+    'Current State won’t change. These proposals will be closed, and the 1 item they’re about will be marked as confirmed today.');
+  // Linked items count too, as in the backend's review_confirmation_targets.
+  const linked={...keep('d',[],true),affectedStateIds:['k9']};
+  assert.match(OPEN_ITEMS.bulkKeepConfirmText([linked,keep('c',[],true)]),/the 1 item they’re about/);
+});
+check('API Reviews carry their linked item ids, so the count matches what the backend confirms',()=>{
+  require('./context-backend-sync.js');
+  const mapped=window.STATE_BACKEND_SYNC.mapApiReview({id:'r9',review_type:'proposed_update',decision_question:'Change budget?',
+    affected_state_items:[{id:'k-budget',statement:'Budget is $40,000.',topic:'Budget'}],
+    proposals:[{id:'p9',operation:'update',state_item_id:'k-budget',status:'pending'}]});
+  assert.deepEqual(mapped.affectedStateIds,['k-budget']);
+  assert.match(OPEN_ITEMS.bulkKeepConfirmText([mapped,keep('c',[],true)]),/the 1 item they’re about/);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail)process.exit(1);
