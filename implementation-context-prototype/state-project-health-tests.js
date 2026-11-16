@@ -320,10 +320,10 @@ const regressionData={
   quality:{
     ...healthy,
     recent:[
-      {suite:'review_interpretation',overall_pass_rate:.8,created_at:'2026-09-30T20:00:00Z'},
-      {suite:'review_interpretation',overall_pass_rate:1,created_at:'2026-09-30T19:00:00Z'},
-      {suite:'ask_quality',overall_pass_rate:1,created_at:'2026-09-30T20:00:00Z'},
-      {suite:'ask_quality',overall_pass_rate:1,created_at:'2026-09-30T19:00:00Z'}
+      {suite:'review_interpretation',overall_pass_rate:.8,created_at:'2026-09-30T20:00:00Z',scoring_version:'sv1'},
+      {suite:'review_interpretation',overall_pass_rate:1,created_at:'2026-09-30T19:00:00Z',scoring_version:'sv1'},
+      {suite:'ask_quality',overall_pass_rate:1,created_at:'2026-09-30T20:00:00Z',scoring_version:'sv1'},
+      {suite:'ask_quality',overall_pass_rate:1,created_at:'2026-09-30T19:00:00Z',scoring_version:'sv1'}
     ]
   },
   delivery:{vercel:{kind:'good'}},
@@ -332,6 +332,7 @@ const regressionData={
   platform:{analytics:{configured:true,available:true},neon:{configured:true,available:true},aiTelemetry:{configured:true,available:true,workflow:{available:true}}},
   runInfo:{configured:true}
 };
+// Nov 15: a regression is reported only for runs the comparability check accepts, here the same scoring version.
 const regression=H.regressionSignal(regressionData);
 assert.strictEqual(regression.kind,'warn');
 assert.match(regression.title,/regressed 20 points/);
@@ -858,24 +859,22 @@ const operationalCompared=H.operationalSignals({
   quality:{resolvedReviews:1,materialEditRate:0,recent:[]},
   platform:{aiTelemetry:{available:true,response_speed:{sample_size:10,p95_ms:8200}}},
   previousPlatform:{aiTelemetry:{available:true,response_speed:{sample_size:8,p95_ms:5700}}},
-  investigationHistory:[{observedAt:new Date(Date.now()-2*24*60*60*1000).toISOString(),trigger:'AI eval failure · ask_conflicting_evidence',needsAttentionAtRun:true,resolvedAt:null}]
+  investigationHistory:[{id:'phinv_0123456789abcdef',observedAt:new Date(Date.now()-2*24*60*60*1000).toISOString(),trigger:'AI eval failure · ask_conflicting_evidence',outcome:null}]
 });
 const speedChanged=operationalCompared.find(item=>item.label==='AI response speed');
-assert.strictEqual(speedChanged.status,'Changed');
-assert.match(speedChanged.detail,/last saved 5\.7 s/);
-assert.match(speedChanged.detail,/2\.5 s slower/);
+// Nov 15: the saved value was this browser's previous page load, so no delta is shown against it.
+assert.strictEqual(speedChanged.status,'Measured');
+assert.doesNotMatch(speedChanged.detail,/last saved|slower|faster/);
 const openInvestigation=operationalCompared.find(item=>item.label==='Open investigation');
 assert.strictEqual(openInvestigation.status,'Open');
-assert.match(openInvestigation.detail,/no resolution recorded yet/);
+assert.match(openInvestigation.detail,/no outcome recorded yet/);
 
-const seeded=H.emptyProjectData(H.PROJECTS[0],{platform:{aiTelemetry:{available:true,response_speed:{p95_ms:5700}}}});
-assert.strictEqual(seeded.previousPlatform.aiTelemetry.response_speed.p95_ms,5700);
 
 const regressionWithBuilds=H.regressionSignal({
   project:{quality:'state'},
   quality:{recent:[
-    {suite:'ask_quality',created_at:'2026-10-01T12:00:00Z',overall_pass_rate:.8,build:'abcdef123456'},
-    {suite:'ask_quality',created_at:'2026-09-30T12:00:00Z',overall_pass_rate:1,build:'123456abcdef'}
+    {suite:'ask_quality',created_at:'2026-10-01T12:00:00Z',overall_pass_rate:.8,build:'abcdef123456',scoring_version:'sv1'},
+    {suite:'ask_quality',created_at:'2026-09-30T12:00:00Z',overall_pass_rate:1,build:'123456abcdef',scoring_version:'sv1'}
   ]}
 });
 assert.strictEqual(regressionWithBuilds.kind,'warn');

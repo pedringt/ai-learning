@@ -55,7 +55,7 @@ check('the excerpt quotes the Evidence, not the AI rationale',!fig.includes('rec
 check('the AI rationale stays under Why / source, apart from the quote',why(reasonedHtml).includes(RATIONALE)&&!figure(reasonedHtml).includes(RATIONALE),why(reasonedHtml));
 check('a short source is not marked as shortened',!fig.includes('&hellip;')&&!fig.includes('Shortened'),fig);
 check('Update Current State / Adjust / Leave unchanged are unchanged',
-  html.includes('data-action="review-update" data-review="r-budget">Update Current State<')&&html.includes('data-action="open-adjust-review" data-review="r-budget">Adjust<')&&html.includes('data-action="review-keep" data-review="r-budget" title="Do not apply this evidence to Current State.">Leave unchanged<'),html);
+  html.includes('data-action="review-update" data-review="r-budget">Update Current State<')&&html.includes('data-action="open-adjust-review" data-review="r-budget">Adjust<')&&html.includes('data-action="review-keep" data-review="r-budget" title="Close this proposal without applying it to Current State.">Keep Current State as is<'),html);
 
 // Long note: visible truncation, full text still reachable
 const longText=`Weekly sync notes. ${'The team walked through every open vendor question in turn and agreed who follows up with whom. '.repeat(8)}Final line: retention is thirty days.`;

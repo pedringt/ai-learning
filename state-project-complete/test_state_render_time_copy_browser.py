@@ -98,3 +98,20 @@ def test_slack_settings_show_channel_heading_and_full_button_labels(page):
     assert on.get_attribute('aria-label') == 'Disable #state-test'
     assert off.inner_text().strip() == 'Enable channel'
     assert off.get_attribute('aria-label') == 'Enable #launch'
+
+
+def test_slack_channels_read_as_inactive_while_slack_is_disconnected(page):
+    """#672: production listed #state-test as "No activity yet" under "Not connected yet". A channel can't receive
+    anything while Slack is disconnected, so the row says so."""
+    health = SLACK['/api/integrations/slack/health']
+    SLACK['/api/integrations/slack/health'] = {'connected': False}
+    try:
+        page.evaluate("location.hash = '#project'")
+        page.evaluate("location.hash = '#settings'")
+        page.wait_for_function("document.querySelector('#settings-slack')?.innerText.includes('Not connected yet')")
+        page.wait_for_selector('[data-settings-action="toggle-channel"][data-channel-row-id="row_on"]')
+        text = page.inner_text('#settings-slack')
+        assert text.count('Inactive until Slack is connected') == 2
+        assert 'No activity yet' not in text
+    finally:
+        SLACK['/api/integrations/slack/health'] = health

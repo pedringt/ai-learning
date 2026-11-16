@@ -122,7 +122,9 @@
     if(slackState.loading) return '<div class="slack-preview-row"><span>Loading channels…</span></div>';
     if(slackState.channelsFailed) return '<div class="slack-preview-row"><span>Channels could not be loaded.</span><button class="text-button" type="button" data-settings-action="retry-slack">Try again</button></div>';
     if(!slackState.channels.length) return '<div class="slack-preview-row"><span>No channels approved yet.</span></div>';
-    return slackState.channels.map(channel=>`<div class="slack-preview-row"><div><strong>#${esc(channel.channel_name||channel.channel_id)}</strong><br><span>${channel.last_event_at?`Last activity ${esc(channel.last_event_at)}`:'No activity yet'}</span></div><button class="btn secondary" type="button" data-settings-action="toggle-channel" data-channel-row-id="${esc(channel.id)}" data-enabled="${channel.enabled?'1':'0'}" aria-label="${channel.enabled?'Disable':'Enable'} #${esc(channel.channel_name||channel.channel_id)}">${channel.enabled?'Disable channel':'Enable channel'}</button></div>`).join('');
+    // #672: an approved channel can't receive anything while Slack is disconnected; say so instead of "No activity yet".
+    const inactive=!slackState.healthFailed&&!slackState.health?.connected;
+    return slackState.channels.map(channel=>`<div class="slack-preview-row"><div><strong>#${esc(channel.channel_name||channel.channel_id)}</strong><br><span>${inactive?'Inactive until Slack is connected':channel.last_event_at?`Last activity ${esc(channel.last_event_at)}`:'No activity yet'}</span></div><button class="btn secondary" type="button" data-settings-action="toggle-channel" data-channel-row-id="${esc(channel.id)}" data-enabled="${channel.enabled?'1':'0'}" aria-label="${channel.enabled?'Disable':'Enable'} #${esc(channel.channel_name||channel.channel_id)}">${channel.enabled?'Disable channel':'Enable channel'}</button></div>`).join('');
   }
 
   // Settings owns its own data fetch instead of going through the shared,
@@ -144,6 +146,26 @@
     return '';
   }
 
+  // #678 / DEC-026: re-check reminders, off unless the project turns them on, and the items with their own interval.
+  // Loaded with GET /api/state; a change is announced so the app's Current State picks it up.
+  let recheckState={loading:true,failed:false,days:null,overrides:[]};
+  const RECHECK_CHOICES=[30,60,90,180];
+  function recheckFromState(payload){
+    const items=payload?.items||[];
+    return {loading:false,failed:false,days:payload?.recheck_days??null,overrides:items.filter(item=>item.recheck_days).map(item=>({id:item.id,statement:item.statement,days:item.recheck_days}))};
+  }
+  async function loadRecheck(){try{return recheckFromState(await api()?.getState?.());}catch(error){console.warn('Settings could not load re-check reminders.',error);return {loading:false,failed:true,days:null,overrides:[]};}}
+  function recheckSectionMarkup(){
+    const r=recheckState;
+    if(r.loading) return '<section class="settings-section" id="settings-recheck"><div class="settings-section-head"><div><h3>Re-check reminders</h3><p>Loading…</p></div></div></section>';
+    if(r.failed) return '<section class="settings-section" id="settings-recheck"><div class="settings-section-head"><div><h3>Re-check reminders</h3><p>Re-check reminders could not be loaded.</p></div></div></section>';
+    const on=!!r.days, days=r.days||60;
+    const select=`<select id="settingsRecheckDays" aria-label="Re-check interval"${on?'':' disabled'}>${RECHECK_CHOICES.map(d=>`<option value="${d}"${d===days?' selected':''}>${d}</option>`).join('')}</select>`;
+    const overrides=r.overrides.length?`<ul class="settings-recheck-overrides">${r.overrides.map(o=>`<li><span>“${esc(o.statement)}” · every ${esc(o.days)} days</span><button class="text-button" type="button" data-settings-action="clear-item-recheck" data-state-id="${esc(o.id)}">Use project default</button></li>`).join('')}</ul>`:'';
+    return `<section class="settings-section" id="settings-recheck"><div class="settings-section-head"><div><h3>Re-check reminders</h3><p>Flag items nobody has confirmed in ${select} days.</p></div><label class="settings-switch"><input type="checkbox" id="settingsRecheckEnabled" role="switch" aria-label="Re-check reminders"${on?' checked':''}><span>${on?'On':'Off'}</span></label></div>${overrides}</section>`;
+  }
+  function announceRecheck(result){if(typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('state:recheck-changed',{detail:{state:result?.state||[],recheckDays:result?.recheck_days}}));}
+
   function render(rulesState,slackState,connectNotice){
     const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');if(!settingsNav?.classList.contains('active')) return;
     const target=root();if(!target) return;
@@ -156,6 +178,7 @@
       <section class="settings-section"><div class="settings-section-head"><div><h3>Project</h3><p>Basic information State uses for this project.</p></div></div><div class="settings-project-name"><label for="settings-project-name">Project name</label><input id="settings-project-name" value="${esc(project.name)}" readonly aria-readonly="true"><p>Project renaming isn't available yet.</p></div>
         <details class="settings-rules"><summary><span>Project rules <span class="settings-rules-count">${rulesCountMarkup(state)}</span></span></summary><div class="settings-rules-body"><p>Rules tell State how to interpret information for this project.</p><form class="settings-rule-form" data-settings-action="add-rule"><label>Add a project rule<input name="rule" autocomplete="off" placeholder="${esc(rulePlaceholder())}"></label><label>Category<select name="category"><option>Authority</option><option>Review</option><option>Sources</option><option selected>Interpretation</option></select></label><button class="btn secondary" type="submit">Add rule</button></form><ul class="settings-rule-list">${rulesListMarkup(state)}</ul></div></details>
       </section>
+      ${recheckSectionMarkup()}
       <section class="settings-section settings-slack" id="settings-slack"><div class="settings-section-head"><div class="settings-slack-intro"><h3 class="settings-slack-heading">${sourceIcon('slack')}<span>Slack</span></h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><div class="settings-actions"><a class="btn secondary" href="${esc((api()?.base||'')+'/api/integrations/slack/oauth/start')}">${slack.health?.connected?'Reconnect Slack':'Connect Slack'}</a>${slack.health?.connected?'<button class="text-button" type="button" data-settings-action="confirm-disconnect-slack">Disconnect</button>':''}</div></div>${slackConnectNoticeMarkup(connectNotice)}<p class="settings-slack-status ${slackStatusClass(slack)}">${slackStatusLine(slack)}</p><div class="settings-channel-heading"><strong>Approved channels</strong><span>Choose which channel conversations State can use as Evidence.</span></div><div class="slack-preview" aria-label="Slack channel activity">${slackChannelsMarkup(slack)}</div></section>
       <section class="settings-section"><div class="settings-section-head"><div><h3>Other Sources</h3><p>Places State can gather project information from planning, discovery, documentation, and collaboration.</p></div></div><div class="settings-callout"><strong>Sources provide Evidence. They never change Current State directly.</strong></div><div class="source-list settings-source-grid" aria-label="Planned sources">
         <div class="source-row"><div>${sourceTitle('docs','Google Docs')}<span class="source-description">Specs, plans, research, and meeting notes.</span></div><span class="settings-status">Coming soon</span></div>
@@ -193,13 +216,29 @@
     let connectNotice=null;
     if(window.__stateSlackConnectResult!==undefined){connectNotice=window.__stateSlackConnectResult;delete window.__stateSlackConnectResult;}
     const current={rules:{loading:true,failed:false,items:[]},slack:{loading:true,channelsFailed:false,healthFailed:false,channels:[],health:null}};
+    recheckState={loading:true,failed:false,days:null,overrides:[]};
     render(current.rules,current.slack,connectNotice);
     await Promise.all([
+      loadRecheck().then(result=>{recheckState=result;render(current.rules,current.slack,connectNotice);}),
       rules().then(result=>{current.rules=result;render(current.rules,current.slack,connectNotice);}),
       slackStatus().then(result=>{current.slack=result;render(current.rules,current.slack,connectNotice);}),
     ]);
   }
 
+  async function saveProjectRecheck(days){
+    try{const result=await api().setProjectRecheckDays(days);recheckState={...recheckFromState({items:result.state,recheck_days:result.recheck_days})};announceRecheck(result);}
+    catch(error){console.warn('Could not save re-check reminders.',error);}
+    const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');if(settingsNav?.classList.contains('active'))load();
+  }
+  document.addEventListener('change',event=>{
+    if(event.target.id==='settingsRecheckEnabled')saveProjectRecheck(event.target.checked?Number(document.getElementById('settingsRecheckDays')?.value||60):null);
+    else if(event.target.id==='settingsRecheckDays'&&document.getElementById('settingsRecheckEnabled')?.checked)saveProjectRecheck(Number(event.target.value));
+  });
+  document.addEventListener('click',async event=>{
+    const control=event.target.closest('[data-settings-action="clear-item-recheck"]');if(!control)return;
+    try{const result=await api().setItemRecheckDays(control.dataset.stateId,null);announceRecheck(result);}catch(error){console.warn('Could not clear the item interval.',error);}
+    load();
+  });
   document.addEventListener('submit',async event=>{const form=event.target.closest('form[data-settings-action="add-rule"]');if(!form)return;event.preventDefault();const input=form.elements.rule;const text=String(input?.value||'').trim();if(!text)return;const category=form.elements.category?.value||'Interpretation';const button=form.querySelector('button[type="submit"]');if(button)button.disabled=true;try{await api()?.createRule?.(text,category);if(input)input.value='';await load();}catch(error){console.error('Could not add project rule.',error);if(button)button.disabled=false;window.alert(`Could not save the rule: ${error.message}`);}});
   document.addEventListener('click',async event=>{const control=event.target.closest('[data-settings-action]');if(!control)return;const action=control.dataset.settingsAction;if(action==='retry-rules'||action==='retry-slack'){await load();}if(action==='delete-rule'){control.disabled=true;try{await api()?.deleteRule?.(control.dataset.ruleId);await load();}catch(error){console.error('Could not remove project rule.',error);control.disabled=false;window.alert(`Could not remove the rule: ${error.message}`);}}if(action==='toggle-channel'){control.disabled=true;const nowEnabled=control.dataset.enabled!=='1';try{await api()?.updateSlackChannel?.(control.dataset.channelRowId,{enabled:nowEnabled});await load();}catch(error){console.error('Could not update Slack channel.',error);control.disabled=false;window.alert(`Could not update the channel: ${error.message}`);}}if(action==='confirm-disconnect-slack'){showSettingsDialog(`<span class="eyebrow">Disconnect from State</span><h2 id="dialogTitle">Disconnect this Slack workspace from State?</h2><p>State forgets this connection and its saved access token. This does not remove or reinstall the State app in Slack itself -- do that from Slack's own App Directory if that's what you're after. Channel approvals stay as they are; reconnecting will not re-approve anything on its own.</p><div class="dialog-actions"><button class="btn primary" type="button" data-settings-action="disconnect-slack">Disconnect</button><button class="btn secondary" type="button" data-action="close-dialog">Cancel</button></div>`);}if(action==='disconnect-slack'){control.disabled=true;try{await api()?.disconnectSlack?.();document.getElementById('overlay')?.setAttribute('hidden','');document.body.classList.remove('modal-open');await load();}catch(error){console.error('Could not disconnect Slack.',error);control.disabled=false;window.alert(`Could not disconnect: ${error.message}`);}}if(action==='confirm-reset-demo'){const name=activeProjectInfo().name;showSettingsDialog(`<span class="eyebrow">Reset to starting scenario</span><h2 id="dialogTitle">Restore the ${esc(name)} starting scenario?</h2><p>This removes everything created during testing and restores the same curated starting State, open Reviews, blockers, Questions, Notes, Rules, and History.</p><div class="dialog-actions"><button class="btn primary" type="button" data-settings-action="reset-demo">Reset ${esc(name)}</button><button class="btn secondary" type="button" data-action="close-dialog">Cancel</button></div>`);}if(action==='reset-demo'){control.disabled=true;const name=activeProjectInfo().name;showSettingsDialog(`<span class="eyebrow">Resetting ${esc(name)}</span><h2 id="dialogTitle">Restoring ${esc(name)}…</h2><p>Rebuilding the curated starting scenario. This page reloads once it's ready.</p>`);try{await api()?.resetDemo?.();window.location.reload();}catch(error){console.error('Could not reset demo.',error);control.disabled=false;showSettingsDialog(`<span class="eyebrow">Reset failed</span><h2 id="dialogTitle">${esc(name)} was not reset.</h2><p>${esc(error?.isTimeout?error.message:`${name} was not reset: ${error.message}`)}</p><div class="dialog-actions">${error?.isTimeout?'<button class="btn primary" type="button" data-action="reload-page">Refresh page</button>':''}<button class="btn secondary" type="button" data-action="close-dialog">Close</button></div>`);}}
     if(action==='confirm-delete-project'){const name=activeProjectInfo().name;showSettingsDialog(`<span class="eyebrow">Delete project</span><h2 id="dialogTitle">Permanently delete ${esc(name)}?</h2><p>This removes all of its Notes, Evidence, Reviews, Questions, Current State, and History. This cannot be undone.</p><div class="dialog-actions"><button class="btn primary" type="button" data-settings-action="delete-project">Delete ${esc(name)}</button><button class="btn secondary" type="button" data-action="close-dialog">Cancel</button></div>`);}

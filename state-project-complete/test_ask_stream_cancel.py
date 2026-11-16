@@ -113,3 +113,59 @@ def test_closing_the_openai_ask_stream_closes_its_http_response():
     assert next(stream) == "{"
     stream.close()
     assert response.closed
+
+
+class _MeteredTricklingProvider(_TricklingProvider):
+    """Records a usage row when its stream is closed early, like LiveAskProvider does."""
+
+    def __init__(self):
+        super().__init__()
+        self.rows = []
+
+    def stream(self, prompt):
+        try:
+            yield from super().stream(prompt)
+        except GeneratorExit:
+            self.rows.append({"provider": "anthropic", "model_identifier": "claude-haiku-5-5", "duration_ms": 250,
+                              "input_tokens": 9000, "output_tokens": 40, "cancelled": True})
+            raise
+
+    def drain_call_metrics(self):
+        rows, self.rows = self.rows, []
+        return rows
+
+
+def test_a_cancelled_streaming_ask_records_its_known_usage(tmp_path):
+    """Paige, Nov 14 (#654 follow-up): a cancelled call still costs, so its known usage is recorded, marked
+    `ask_cancelled`, where the daily spend cap and Product Health read it."""
+    import sqlite3
+    provider = _MeteredTricklingProvider()
+    _cancel_mid_answer(tmp_path, provider, lambda: provider.closed.wait(2) and time.sleep(0.3))
+    rows = sqlite3.connect(tmp_path / "cancel.db").execute(
+        "SELECT operation, input_tokens, output_tokens FROM model_call_metrics").fetchall()
+    assert rows == [("ask_cancelled", 9000, 40)]
+
+
+def test_the_anthropic_stream_records_what_is_known_when_closed_early():
+    class _Stream:
+        current_message_snapshot = SimpleNamespace(usage=SimpleNamespace(input_tokens=1200, output_tokens=7))
+
+        @property
+        def text_stream(self):
+            yield from ("{", "\"selection\"", ":")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    messages = SimpleNamespace(stream=lambda **_: _Stream())
+    client = SimpleNamespace(with_options=lambda **_: SimpleNamespace(messages=messages))
+    provider = LiveAskProvider(SimpleNamespace(name="anthropic", model_identifier="claude-haiku-5-5", client=client))
+    provider.drain_call_metrics()
+    stream = provider.stream("prompt")
+    assert next(stream) == "{"
+    stream.close()
+    [row] = provider.drain_call_metrics()
+    assert row["cancelled"] is True and row["input_tokens"] == 1200 and row["output_tokens"] == 7

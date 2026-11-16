@@ -51,5 +51,18 @@ const polish=fs.readFileSync(path.join(dir,'context-product-polish.js'),'utf8');
 const copyFn=polish.slice(polish.indexOf('function portableAskText'),polish.indexOf('function sanitizeAskHtml'));
 check('the drawer Copy uses the shared formatter, with no label set of its own',copyFn.includes('ASK.portableText')&&!/blocking_question:'Blocking question'/.test(copyFn),copyFn.slice(0,200));
 
+// #678 / DEC-026: a claim resting on a Current State item past its re-check interval gets a software-written note
+// beside its chip, on screen and in Copy; nothing else changes.
+context.window.STATE_RECHECK_LOOKUP=id=>id==='k-vip'?{needsRecheck:true,lastConfirmed:'Aug 29'}:id==='k-pilot'?{needsRecheck:false,lastConfirmed:'Oct 29'}:null;
+const flagged={...claim('VIP accounts keep a separate escalation path.','Current State','current_state'),primary_record_id:'k-vip'};
+const fresh={...claim('The pilot stays read-only.','Current State','current_state'),primary_record_id:'k-pilot'};
+const review={...claim('Retiring the VIP carve-out is proposed.','Needs review','pending_review'),primary_record_id:'k-vip'};
+const noted=ASK.render({answer:{job:'current_fact',headline:'What State has on record',claims:[flagged,fresh,review],sections:[]},selection:{},timing:{}},null);
+check('a claim on a flagged item shows the re-check note beside its chip',noted.includes('>Current State</span><span class="ask-recheck-note">needs re-check · last confirmed Aug 29</span><span class="ask-claim-text">VIP accounts'),noted);
+check('only that claim: a fresh item and a non-Current State basis get no note',(noted.match(/ask-recheck-note/g)||[]).length===1,noted);
+const notedCopy=ASK.portableText({answer:{job:'current_fact',headline:'What State has on record',claims:[flagged,fresh],sections:[]}},null).split('\n');
+check('Copy carries the note with the chip',notedCopy.includes('[Current State · needs re-check · last confirmed Aug 29] VIP accounts keep a separate escalation path.')&&notedCopy.includes('[Current State] The pilot stays read-only.'),JSON.stringify(notedCopy));
+delete context.window.STATE_RECHECK_LOOKUP;
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);

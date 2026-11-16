@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,vercelFromStatus,deliveryHealth,normalizeQuality,percent,failureReason,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,healthySummary,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,makeRunner,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,loadingCardMarkup,cardMarkup,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,investigationResultHtml,evalRunComplete,externalQualityRunComplete,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,evalScenarioCountsNote,qualityProvenance,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
+  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,vercelFromStatus,deliveryHealth,normalizeQuality,percent,failureReason,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,healthySummary,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,investigationOutcomeLabel,investigationIsOpen,investigationRecordRow,investigationOutcomeText,makeRunner,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,loadingCardMarkup,cardMarkup,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,investigationResultHtml,evalRunComplete,externalQualityRunComplete,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,evalScenarioCountsNote,qualityProvenance,staleFailureContext,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -260,15 +260,18 @@
   async function removeDecisionEntry(id,key){
     return await jsonFetch('/api/project-health-decisions?id='+encodeURIComponent(id),{method:'DELETE',timeoutMs:12000,headers:{'X-Project-Health-Decision-Key':key}});
   }
-  function investigationHistoryKey(root,projectId){return 'project-health-investigations:'+pageEnvironment(root)+':'+projectId;}
-  function loadInvestigationHistory(root,projectId){
-    try{
-      const rows=JSON.parse(root.localStorage?.getItem(investigationHistoryKey(root,projectId))||'[]');
-      return Array.isArray(rows)?rows.slice(0,20):[];
-    }catch(_){return[];}
+  // DEC-025 (Nov 15): investigation records live in the State backend, shared by every visitor; they used to be
+  // per-browser localStorage. The server writes every record's text. A browser can only ask for a State AI-eval record,
+  // which the backend verifies against the latest recorded run; outcomes need the decision log key.
+  async function loadInvestigationRecords(projectId){
+    const payload=await jsonFetch('/api/project-health-investigations?project='+encodeURIComponent(projectId),{timeoutMs:10000});
+    return (Array.isArray(payload?.records)?payload.records:[]).map(investigationRecordRow);
   }
-  function saveInvestigationHistory(root,projectId,rows){
-    try{root.localStorage?.setItem(investigationHistoryKey(root,projectId),JSON.stringify((rows||[]).slice(0,20)));}catch(_){}
+  async function requestStateEvalRecord(scenarioId){
+    return await jsonFetch('/api/project-health-investigations',{method:'POST',timeoutMs:12000,headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'state-eval',scenarioId:scenarioId||null})});
+  }
+  async function saveInvestigationOutcome(id,outcome,note,key){
+    return await jsonFetch('/api/project-health-investigations',{method:'POST',timeoutMs:12000,headers:{'Content-Type':'application/json','X-Project-Health-Decision-Key':key},body:JSON.stringify({action:'outcome',id,outcome,note})});
   }
 
   async function loadProject(project,root,onUpdate,seed){
@@ -322,17 +325,31 @@
     return data;
   }
 
+  // DEC-025: each shared record shows its outcome (or the Healthy hint) and a collapsed form to record one with the key.
+  function investigationHistoryItemHtml(item,data,keyKnown){
+    const options=['awaiting_evidence','investigating','accepted_limitation','resolved'].map(value=>'<option value="'+value+'"'+(item.outcome===value?' selected':'')+'>'+esc(investigationOutcomeLabel(value))+'</option>').join('');
+    return '<div class="activity-item investigation-record" data-record-id="'+esc(item.id||'')+'"><strong>'+esc(item.trigger||'Investigation')+'</strong>'+
+      '<span>'+esc(fmtDate(item.observedAt))+' · '+esc(item.summary||'Investigation completed')+'</span>'+
+      '<span class="investigation-outcome'+(investigationIsOpen(item)?' open':'')+'">Outcome: '+esc(investigationOutcomeText(item,data))+(item.outcomeNote?' · '+esc(item.outcomeNote):'')+'</span>'+
+      (item.id?'<details class="investigation-outcome-form"><summary>Record outcome</summary>'+
+        '<label>Outcome <select data-outcome-select>'+options+'</select></label>'+
+        '<label>Note (optional) <input type="text" maxlength="500" data-outcome-note value="'+esc(item.outcomeNote||'')+'"></label>'+
+        (keyKnown?'':'<label>Decision log key <input type="password" autocomplete="off" data-outcome-key></label>')+
+        '<button class="button small" type="button" data-save-outcome="'+esc(item.id)+'">Save outcome</button><span class="footnote" data-outcome-error role="status"></span>'+
+      '</details>':'')+
+    '</div>';
+  }
   // #611 (Paige, Nov 4): "Open investigation" opens the drawer with what already exists for the selected project.
   // Before any investigation has run, that is the rules-based assessment the Overview shows. No request, no model call.
   function assessmentDrawerHtml(data){
-    const p=data.project,current=overallAttention(data),failed=[];
+    const p=data.project,current=overallAttention(data),failed=[],staleFailures=staleFailureContext(data);
     const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
     if(liveFailure)failed.push(liveFailure.title);
     (p.quality==='state'?qualityFailureClassSummary(data.quality).details||[]:[]).slice(0,3)
       .forEach(item=>failed.push(item.title||item.scenario_id||'Quality scenario needs review'));
     return '<div class="investigation-result agent-result"><div class="agent-kicker">Assessment from current signals</div>'+
       '<strong>'+esc(current.title)+'</strong><p>'+esc(current.detail||'')+'</p>'+
-      '<h4>What failed</h4>'+(failed.length?'<ul>'+failed.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+
+      '<h4>'+esc(staleFailures&&failed.length&&!liveFailure?staleFailures.heading:'What failed')+'</h4>'+(failed.length?'<ul>'+failed.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>'+(staleFailures&&!liveFailure?'<p class="footnote">'+esc(staleFailures.note)+'</p>':''):'<p>No specific current failure is recorded.</p>')+
       '<h4>Recommended next look</h4><p>'+esc(operationalNextDecision(data))+'</p>'+
       '<p class="footnote">Built by rules from the signals on this page. No AI model was called.</p></div>';
   }
@@ -422,7 +439,7 @@
     const drawerRunAgainButton=doc.getElementById('drawerRunAgainButton');
     const historyRows=Array.isArray(data.investigationHistory)?data.investigationHistory:[];
     const historyHtml=historyRows.length
-      ?'<div class="history-section"><h4>Previous investigations</h4>'+historyRows.slice(0,5).map(item=>'<div class="activity-item"><strong>'+esc(item.trigger||'Investigation')+'</strong><span>'+esc(fmtDate(item.observedAt))+' · '+esc(item.summary||'Investigation completed')+(item.resolvedAt?' · Resolved '+esc(relativeAge(item.resolvedAt)):'')+'</span></div>').join('')+'</div>'
+      ?'<div class="history-section"><h4>Previous investigations</h4><p class="footnote">Shared with everyone viewing Project Health. Only the owner records outcomes.</p>'+historyRows.slice(0,5).map(item=>investigationHistoryItemHtml(item,data,!!data.decisionKeyKnown)).join('')+'</div>'
       :'';
     if(investigationPanel) investigationPanel.innerHTML=(investigationResultHtml(data.investigation)||assessmentDrawerHtml(data))+historyHtml;
     if(investigationDrawerTitle) investigationDrawerTitle.textContent=p.name+' investigation';
@@ -569,6 +586,7 @@
       const current=overallAttention(data);
       const failureDetails=p.quality==='state'?qualityFailureClassSummary(q).details||[]:[];
       const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
+      const staleFailures=liveFailure?null:staleFailureContext(data);
       const failedItems=[];
       if(liveFailure)failedItems.push(liveFailure.title);
       failureDetails.slice(0,2).forEach(item=>failedItems.push(item.title||item.scenario_id||'Quality scenario needs review'));
@@ -580,8 +598,8 @@
         '</p></div><button class="button small" type="button" data-open-investigation>Open investigation</button></div>'+
         '<div class="mock-investigation-grid">'+
           '<div class="mock-investigation-block"><strong>Current assessment</strong><p>'+esc(current.title)+'. '+esc(current.detail||'')+'</p></div>'+
-          '<div class="mock-investigation-block"><strong>What failed</strong>'+
-            (failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+
+          '<div class="mock-investigation-block"><strong>'+esc(staleFailures&&failedItems.length?staleFailures.heading:'What failed')+'</strong>'+
+            (failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>'+(staleFailures?'<p class="footnote">'+esc(staleFailures.note)+'</p>':''):'<p>No specific current failure is recorded.</p>')+
           '</div>'+
           '<div class="mock-investigation-block"><strong>Recommended next look</strong><p>'+esc(nextLook)+'</p></div>'+
         '</div>';
@@ -638,7 +656,9 @@
       // is the previous assessment, or that no release data is available.
       const releaseNotice=retainedNotice(data,['Delivery'],{hasData:!!d,loadedAt:data.deliveryLoadedAt});
       const latestRelease=d?.message?commitTitle(d.message):releaseNotice?'Release data unavailable':'No recent release data';
-      const currentReleaseStatus=dKind==='good'?'Stable':dKind==='bad'?'Needs attention':dKind==='warn'?'Watch':'Unknown';
+      // Nov 15: this label reads delivery signals only (deploy status, failed checks, deploy failures), so it names a
+      // successful deployment rather than claiming product stability.
+      const currentReleaseStatus=dKind==='good'?'Deployment succeeded':dKind==='bad'?'Needs attention':dKind==='warn'?'Watch':'Unknown';
       const releaseStatus=releaseNotice?.retained?'Previous assessment: '+currentReleaseStatus:releaseNotice?'Unknown':currentReleaseStatus;
       const releaseClass=dKind==='good'?'mock-release-stable':'mock-release-stable';
 
@@ -650,12 +670,13 @@
 
       const failedItems=[];
       const liveFailure=activityReviewItems(data).find(item=>!item.resolved);
+      const staleFailures=liveFailure?null:staleFailureContext(data);
       if(liveFailure)failedItems.push(liveFailure.title);
       (qDetails.details||[]).slice(0,3).forEach(item=>failedItems.push(item.title||item.scenario_id||'Quality scenario needs review'));
       const nextLook=operationalNextDecision(data);
 
       const testRows=(qDetails.details||[]).slice(0,2).map(item=>
-        '<div class="mock-test-row"><strong>'+esc(item.story?.heading||item.title||item.scenario_id||'Quality scenario')+'</strong><span class="status-pill bad">Failed</span><span>'+esc(item.story?'Scenario: '+item.story.title:(item.expected||'Review scenario'))+'</span></div>'
+        '<div class="mock-test-row"><strong>'+esc(item.story?.heading||item.title||item.scenario_id||'Quality scenario')+'</strong>'+(staleFailures?'<span class="status-pill unknown">'+esc(staleFailures.pill)+'</span>':'<span class="status-pill bad">Failed</span>')+'<span>'+esc(item.story?'Scenario: '+item.story.title:(item.expected||'Review scenario'))+'</span></div>'
       ).join('');
 
       // While the only open item is "Still checking", show a neutral loading state instead of an orange warning.
@@ -675,6 +696,8 @@
       // #597: one provenance label for the quality numbers on Overview and AI Evals. Previous results stay visible during a
       // refresh or after a failed one, marked as previous with the time they were recorded.
       const provenance=qualityProvenance(data);
+      // Stale State evals keep their scores on Overview, shown like previous results (Nov 15).
+      const previousLook=provenance.previous||(p.quality==='state'&&stateEvalResultsStale(q));
       const provenanceLine=['refreshing','stale','unavailable','loading'].includes(provenance.status)
         ?'<p class="quality-provenance '+esc(provenance.status)+'" role="status">'+esc(provenance.detail)+'</p>':'';
       mockDashboard.innerHTML=
@@ -683,7 +706,7 @@
           (checking?'':incompleteOnly?'<button class="button small" type="button" data-retry-health>Retry check</button>':actionable.length?'<button class="button small" type="button" data-tab-target="ai-quality">View all issues →</button>':'')+
         '</section>'+
         provenanceLine+
-        '<div class="mock-kpi-grid'+(provenance.previous?' is-previous':'')+'">'+kpis+'</div>'+
+        '<div class="mock-kpi-grid'+(previousLook?' is-previous':'')+'">'+kpis+'</div>'+
         '<section class="mock-dashboard-section mock-release-card">'+
           '<div class="mock-card-title"><span class="mock-card-title-icon">◇</span><h3>Latest release</h3></div>'+
           '<div class="mock-release-version"><strong>'+esc(latestRelease)+'</strong><span class="'+releaseClass+'">'+esc(releaseStatus)+'</span></div>'+
@@ -704,18 +727,18 @@
             :'<div class="empty compact-empty">'+esc(pending.has('Analytics')?'Checking site analytics…':a?.configured===false?'Site analytics are not connected for this environment.':a?.configured?analyticsGapDetail(a):'Site analytics could not be checked. Refresh to try again.')+'</div>')+
         '</section>'+
         '<section class="mock-dashboard-section mock-quality-detail">'+
-          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3><span class="mock-refreshing-evals'+(provenance.previous?' previous':'')+'">'+esc(provenance.previous?provenance.label+' · '+(provenance.resultAt?'recorded '+fmtDate(provenance.resultAt):'recording time unknown'):provenance.label)+'</span></div><button class="button small" type="button" data-tab-target="ai-quality">'+(p.id==='state'?'View all evaluations':'View all checks')+' →</button></div>'+
-          '<div class="mock-quality-detail-grid'+(provenance.previous?' is-previous':'')+'">'+qualityCards+'</div>'+
+          '<div class="mock-quality-detail-head"><div><h3>Quality and evaluation details</h3><span class="mock-refreshing-evals'+(previousLook?' previous':'')+'">'+esc(previousLook?(provenance.previous?provenance.label:'Previous results · rerun needed')+' · '+(provenance.resultAt?'recorded '+fmtDate(provenance.resultAt):'recording time unknown'):provenance.label)+'</span></div><button class="button small" type="button" data-tab-target="ai-quality">'+(p.id==='state'?'View all evaluations':'View all checks')+' →</button></div>'+
+          '<div class="mock-quality-detail-grid'+(previousLook?' is-previous':'')+'">'+qualityCards+'</div>'+
           (coverage?'<p class="mock-eval-coverage '+esc(coverage.kind)+'">'+esc(coverage.text)+'</p>':'')+
         '</section>'+
         '<section class="mock-dashboard-section mock-investigation-card">'+
           '<div class="mock-investigation-head"><div><h3>Assessment from current signals</h3><p class="mock-investigation-source">Built by rules from the signals on this page. No AI model was called.</p></div><button class="button small" type="button" data-open-investigation>Open investigation →</button></div>'+
           '<div class="mock-investigation-columns">'+
             '<div class="mock-investigation-column"><strong>Current assessment</strong><p>'+esc(overall.title)+'. '+esc(overall.detail||'')+'</p></div>'+
-            '<div class="mock-investigation-column"><strong>What failed</strong>'+(failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':'<p>No specific current failure is recorded.</p>')+'</div>'+
+            '<div class="mock-investigation-column"><strong>'+esc(staleFailures&&failedItems.length?staleFailures.heading:'What failed')+'</strong>'+(failedItems.length?'<ul>'+failedItems.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>'+(staleFailures?'<p class="footnote">'+esc(staleFailures.note)+'</p>':''):'<p>No specific current failure is recorded.</p>')+'</div>'+
             '<div class="mock-investigation-column"><strong>Recommended next look</strong><p>'+esc(nextLook)+'</p></div>'+
           '</div>'+
-          (testRows?'<div class="mock-related-tests"><strong style="font-size:11px">Related test scenarios</strong>'+testRows+'</div>':'')+
+          (testRows?'<div class="mock-related-tests"><strong style="font-size:11px">'+(staleFailures?'Related test scenarios · previous run':'Related test scenarios')+'</strong>'+testRows+'</div>':'')+
         '</section>';
     }
 
@@ -1122,7 +1145,7 @@
     if(!cards||!status||!summary||!reviewInbox||!refresh||!qualityPanel)return;
     const cached=loadSnapshot(root);
     let state=PROJECTS.map(project=>hydrateProjectData(project,cached?.projects?.find(item=>item.projectId===project.id)));
-    state.forEach(item=>{item.investigationHistory=loadInvestigationHistory(root,item.project.id);item.productNotes=[];item.productNotesStatus='loading';});
+    state.forEach(item=>{item.investigationHistory=[];item.investigationStatus='loading';item.productNotes=[];item.productNotesStatus='loading';});
     // Held in memory for this page only, never stored, so a removal or a second entry does not ask again.
     let decisionKey='';
     // Loaded by every Refresh, including the one on page load (Nov 3: Refresh used to skip it, so the page said "Refreshed" while the
@@ -1136,6 +1159,25 @@
           .catch(error=>{apply({productNotesStatus:'error',productNotesError:failureReason(error)});return item.project.name;});
       })).then(names=>names.filter(Boolean));
     }
+    // DEC-025: shared investigation records load with every Refresh, like the decision log. A failed load keeps what
+    // was shown and is named in the status line; it never reads as "no investigations".
+    function loadInvestigationLogs(){
+      return Promise.all(state.map(item=>{
+        const apply=update=>{const current=state.find(entry=>entry.project.id===item.project.id);if(current)Object.assign(current,update);scheduleRender();};
+        return loadInvestigationRecords(item.project.id)
+          .then(records=>{apply({investigationHistory:records,investigationStatus:'ok'});return null;})
+          .catch(()=>{apply({investigationStatus:'error'});return item.project.name;});
+      })).then(names=>names.filter(Boolean));
+    }
+    async function reloadInvestigationRecords(data){
+      try{
+        const records=await loadInvestigationRecords(data.project.id);
+        const current=state.find(entry=>entry.project.id===data.project.id)||data;
+        current.investigationHistory=records;current.investigationStatus='ok';
+        if(current!==data){data.investigationHistory=records;data.investigationStatus='ok';}
+        scheduleRender();
+      }catch(_){}
+    }
     const initialParams=new URLSearchParams(root.location.search);
     let activeId=initialParams.get('project')||'state';
     const allowedTabs=new Set(['overview','ai-quality','releases','decision-support']);
@@ -1148,32 +1190,16 @@
 
     function activeData(){return state.find(item=>item.project.id===activeId)||null;}
 
-    function recordInvestigation(data,investigation,trigger){
+    // DEC-025: only real problems become shared records. The AI investigator's function records its own run on a
+    // verified failure, so the page only reloads the list; a State AI-eval investigation asks the backend, which records
+    // it only while the latest recorded run has failures. Quick checks are not recorded. Nothing resolves on its own.
+    function recordInvestigation(data,investigation,scenarioId){
       if(!data||!investigation||investigation.loading)return;
-      const row={
-        id:String(investigation.observedAt||new Date().toISOString())+':'+String(trigger||'project'),
-        observedAt:investigation.observedAt||new Date().toISOString(),
-        trigger:trigger||'project check',
-        summary:investigationHistorySummary(investigation),
-        evidence:(investigation.sources||[]).map(source=>source.label).filter(Boolean),
-        qualityInvestigation:!!investigation.qualityInvestigation,
-        quickCheck:!!investigation.quickCheck,
-        needsAttentionAtRun:overallAttention(data).kind!=='good',
-        resolvedAt:null
-      };
-      const rows=Array.isArray(data.investigationHistory)?data.investigationHistory:[];
-      data.investigationHistory=[row,...rows.filter(item=>item.id!==row.id)].slice(0,20);
-      saveInvestigationHistory(root,data.project.id,data.investigationHistory);
-    }
-    function reconcileInvestigationHistory(data){
-      if(!data||!Array.isArray(data.investigationHistory)||!data.investigationHistory.length)return;
-      if(overallAttention(data).kind!=='good')return;
-      let changed=false;
-      data.investigationHistory=data.investigationHistory.map((item,index)=>{
-        if(index===0&&item.needsAttentionAtRun&&!item.resolvedAt){changed=true;return {...item,resolvedAt:new Date().toISOString()};}
-        return item;
-      });
-      if(changed)saveInvestigationHistory(root,data.project.id,data.investigationHistory);
+      if(investigation.qualityInvestigation&&data.project.quality==='state'){
+        requestStateEvalRecord(scenarioId).catch(()=>null).then(()=>reloadInvestigationRecords(data));
+        return;
+      }
+      if(investigation.report)reloadInvestigationRecords(data);
     }
 
     function renderCards(){
@@ -1270,7 +1296,6 @@
     async function ensureDetails(id){
       const data=state.find(item=>item.project.id===id);if(!data)return;
       await loadProjectDetails(data,root,()=>{scheduleRender();});
-      reconcileInvestigationHistory(data);
       scheduleRender();persist();
     }
 
@@ -1419,7 +1444,7 @@
       }catch(error){
         data.investigation={error:error.message||'Could not complete the investigation.'};
       }
-      recordInvestigation(data,data.investigation,signalType==='vercel'?'Deployment failure':'Failed release check');
+      recordInvestigation(data,data.investigation);
       renderNow();
     }
 
@@ -1452,14 +1477,13 @@
       const liveIncident=activityReviewItems(data).find(item=>!item.resolved);
       if(liveIncident?.kind==='deployment'){await runAgentInvestigation(data,'vercel','production');return;}
       if(data.project.quality==='state'&&['bad','warn'].includes(qualityAttention(data.quality,data).kind)){
-        data.investigation=qualityInvestigation(data);recordInvestigation(data,data.investigation,'AI eval');renderNow();revealInvestigation();return;
+        data.investigation=qualityInvestigation(data);recordInvestigation(data,data.investigation);renderNow();revealInvestigation();return;
       }
       if(deliveryAttentionForData(data).kind==='bad'){
         const failedChecks=Array.isArray(data.delivery?.failedChecks)?data.delivery.failedChecks:[];
         await runAgentInvestigation(data,failedChecks.length?'github-check':'vercel','production');return;
       }
       data.investigation=quickProjectCheck(data);
-      recordInvestigation(data,data.investigation,'Project check');
       renderNow();
       revealInvestigation();
     }
@@ -1513,6 +1537,29 @@
       await runAgentInvestigation(data,button.dataset.investigate,button.dataset.environment);
     });
 
+    // DEC-025: Paige records an investigation outcome with the decision log key (held in memory for this page only).
+    if(investigationDrawer)investigationDrawer.addEventListener('click',async event=>{
+      const save=event.target.closest?.('[data-save-outcome]');
+      if(!save)return;
+      const data=activeData();if(!data)return;
+      const item=save.closest('[data-record-id]'),error=item?.querySelector('[data-outcome-error]');
+      const outcome=String(item?.querySelector('[data-outcome-select]')?.value||'');
+      const note=String(item?.querySelector('[data-outcome-note]')?.value||'').trim();
+      const keyValue=String(item?.querySelector('[data-outcome-key]')?.value||'').trim()||decisionKey;
+      if(!keyValue){if(error)error.textContent='Enter the decision log key to save.';return;}
+      if(error)error.textContent='Saving…';
+      try{
+        const record=await saveInvestigationOutcome(save.dataset.saveOutcome,outcome,note,keyValue);
+        decisionKey=keyValue;
+        state.forEach(entry=>{entry.decisionKeyKnown=true;});
+        const row=investigationRecordRow(record);
+        data.investigationHistory=(data.investigationHistory||[]).map(entry=>entry.id===row.id?row:entry);
+        renderNow();
+      }catch(failure){
+        if(error)error.textContent=[401,403].includes(Number(failure?.status))?'That key was not accepted. Nothing was saved.':(failure?.message||'The outcome was not saved.');
+      }
+    });
+
     if(productNoteForm)productNoteForm.addEventListener('submit',async event=>{
       event.preventDefault();
       const data=activeData();if(!data)return;
@@ -1556,6 +1603,7 @@
       const showProgress=()=>{if(finished.size<PROJECTS.length)status.textContent=progressText(statusKnown.size,PROJECTS.length,pendingNames(),activityNames());};
       showProgress();
       const decisionLogs=loadDecisionLogs();
+      const investigationLogs=loadInvestigationLogs();
 
       const jobs=PROJECTS.map(async project=>{
         const index=PROJECTS.findIndex(p=>p.id===project.id);
@@ -1577,7 +1625,6 @@
 
       await Promise.all(jobs);
       if(generation!==refreshGeneration)return;
-      state.forEach(reconcileInvestigationHistory);
       await ensureDetails(activeId);
       persist();
       // #597: the status line is about this refresh attempt, not when any result was recorded; a failed or partial
@@ -1585,8 +1632,10 @@
       const attempt=refreshStatus(state,new Date().toISOString());
       // The decision log is a separate read: its failure is named in the status, and a refresh that only lost the log is partial.
       const logFailed=await decisionLogs;
+      const investigationsFailed=await investigationLogs;
       if(generation!==refreshGeneration)return;
-      const logNote=logFailed.length?'Decision log couldn’t load for '+logFailed.join(', ')+'.':'';
+      const logNote=[logFailed.length?'Decision log couldn’t load for '+logFailed.join(', ')+'.':'',
+        investigationsFailed.length?'Investigation history couldn’t load for '+investigationsFailed.join(', ')+'.':''].filter(Boolean).join(' ');
       const title=logNote&&attempt.kind==='refreshed'?attempt.title.replace(/^Refreshed/,'Partly refreshed'):attempt.title;
       const detail=[attempt.detail,logNote].filter(Boolean).join(' ');
       status.innerHTML='<strong>'+esc(title)+'</strong>'+(detail?' · '+esc(detail):'');
@@ -1628,7 +1677,6 @@
           data.qualityRun=null;
           data.qualityRunCompletedAt=activeTab==='ai-quality'?null:new Date().toISOString();
           saveEvalRunState(root,null,projectId);
-          reconcileInvestigationHistory(data);
           persist();
           renderNow();
           return;
@@ -1656,7 +1704,7 @@
       if(investigate){
         const data=activeData();if(!data)return;
         data.investigation=qualityInvestigation(data,investigate.dataset.failureId||null);
-        recordInvestigation(data,data.investigation,investigate.dataset.failureId?'AI eval failure · '+investigate.dataset.failureId:'AI eval');
+        recordInvestigation(data,data.investigation,investigate.dataset.failureId||null);
         renderNow();revealInvestigation();return;
       }
       const button=event.target.closest?.('[data-run-checks]');
@@ -1691,7 +1739,7 @@
       if(data?.project?.id==='state'&&data.quality){
         const requestedFailure=initialParams.get('failure');
         data.investigation=qualityInvestigation(data,requestedFailure||null);
-        recordInvestigation(data,data.investigation,requestedFailure?'AI eval failure · '+requestedFailure:'AI eval');
+        recordInvestigation(data,data.investigation,requestedFailure||null);
         renderNow();
         revealInvestigation();
         const url=new URL(root.location.href);

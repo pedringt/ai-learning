@@ -41,7 +41,7 @@ window.STATE_APP_DIALOGS=Object.freeze({install(ctx){
     const steps=[
       ['1. Add','Add Evidence. Capture a finding, decision, or meeting update. Approved Slack conversations can also become Evidence automatically.'],
       ['2. State interprets','AI compares new Evidence with Current State and identifies possible changes or unresolved Questions.'],
-      ['3. Review & decide','Review proposed changes. Accept, reject/leave unchanged, or keep uncertainty open before Current State changes.'],
+      ['3. Review & decide','Review proposed changes. Update Current State, adjust it, keep Current State as is, or keep uncertainty open before Current State changes.'],
       ['4. Know','Accepted changes update Current State. Previous decisions remain in History.'],
       ['5. Ask','Use Ask State to understand the project without changing it.']
     ];

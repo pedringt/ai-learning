@@ -41,8 +41,11 @@ class Scenario:
     condition: str
 
 
-def scenarios() -> list[Scenario]:
-    return [Scenario(f"{case.id}@{condition}", case, condition) for condition in CONDITIONS for case in rb.CASES]
+def scenarios(conditions: tuple[str, ...] | None = None) -> list[Scenario]:
+    """Every case under each condition; `contextnow` runs only `today`, the after side of DEC-023's before/after
+    (its before side is run 43676969245's `today`, measured on the code before DEC-023)."""
+    names = conditions or tuple(CONDITIONS)
+    return [Scenario(f"{case.id}@{condition}", case, condition) for condition in names for case in rb.CASES]
 
 
 @lru_cache(maxsize=1)

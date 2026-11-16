@@ -81,8 +81,9 @@ check('proposed Review uses Update Current State',
   proposedReviewHtml.includes('>Update Current State<') && !proposedReviewHtml.includes('>Update understanding<'));
 check('proposed Review offers Adjust',
   proposedReviewHtml.includes('>Adjust<') && proposedReviewHtml.includes('data-action="open-adjust-review"'));
-check('proposed Review uses Leave unchanged, not the old Keep Current State label',
-  proposedReviewHtml.includes('>Leave unchanged<') && !proposedReviewHtml.includes('>Keep Current State<'));
+// Nov 15 (Paige, #679): "Leave unchanged" (#107) read as unclear; the button now says what it does.
+check('proposed Review uses Keep Current State as is, not the #107 Leave unchanged label',
+  proposedReviewHtml.includes('>Keep Current State as is<') && !proposedReviewHtml.includes('>Leave unchanged<'));
 
 // state.md #107: a Review that reaches the human with no proposal to act on
 // (state_at_risk, or any defensive fallback) gets wording specific to its

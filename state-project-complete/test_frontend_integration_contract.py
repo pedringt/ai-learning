@@ -132,8 +132,9 @@ def test_workspace_uses_one_bootstrap_request_with_safe_fallback():
     assert "Workspace bootstrap unavailable; retrying individual resources." in JS
 
 
-def test_open_items_action_count_includes_reviews_and_blockers_only():
-    assert "uiPendingReviews().length+openQuestions().filter(q=>q.blocking).length" in JS
+def test_open_items_action_count_includes_reviews_blockers_and_one_recheck_entry():
+    # DEC-026 (#678): the bundled re-check entry counts as one item, however many items it covers.
+    assert "uiPendingReviews().length+recheckEntry+openQuestions().filter(q=>q.blocking).length" in JS
     # The Open Items page header's own actionTotal moved to
     # context-open-items-view.js 2026-09-06; the workspace attention-banner
     # total below is a separate computation (workspaceAttentionHtml) and
@@ -187,7 +188,7 @@ def test_r8_long_project_and_open_items_scaling_contract():
     # id) into one area-level function driven by each fact's own area_id/
     # area_name, since subsections were themselves a hardcoded-per-area
     # concept with no project-neutral equivalent.
-    assert "function projectOutlineSection(area,items,pendingFor,history)" in PROJECT_VIEW_JS
+    assert "function projectOutlineSection(area,items,pendingFor,history,view={})" in PROJECT_VIEW_JS
     assert "project-section-sticky" in PROJECT_VIEW_JS
     assert ".app-sidebar{position:sticky" in css
 

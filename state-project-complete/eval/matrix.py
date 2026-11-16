@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 SCHEMA = "state-eval-matrix/v1"
-SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade", "calibration", "recalibrate", "holdout", "validate", "heldout", "assess", "heldoutb", "assessb", "heldoutc", "assessc", "recheck", "recheckb", "heldoutd", "assessd", "contextsize", "survey", "surveygrade")
+SUITES = ("review", "ask", "consequentiality", "baseline", "adversarial", "graded", "regrade", "calibration", "recalibrate", "holdout", "validate", "heldout", "assess", "heldoutb", "assessb", "heldoutc", "assessc", "recheck", "recheckb", "heldoutd", "assessd", "contextsize", "survey", "surveygrade", "absence", "contextnow")
 MODEL_ID_PATTERN = re.compile(r"^claude-[a-z0-9.-]+$")
 
 # USD per million tokens, Anthropic first-party API. Source: the claude-api skill's model table
@@ -82,6 +82,10 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
     # DEC-023 context-size experiment (#653): measured prompts average about 11,700 tokens across its five conditions
     # (8,100 today to 22,100 for the whole project; `python -m eval.context_size_experiment --dry-run`).
     "contextsize": {"input": 11_700, "output": 1_200, "max_output": 2_400},
+    # DEC-023 item 7: one Ask on the #653 fixture with today's retrieval (about 17k tokens measured on Nov 14).
+    "absence": {"input": 17_000, "output": 600, "max_output": 2_400},
+    # DEC-023 after side: `today` only. 42.3k-character prompts at the 2.5 characters per token run 43676969245 measured.
+    "contextnow": {"input": 17_000, "output": 600, "max_output": 2_400},
 }
 
 # Wall-clock seconds per repeat on Haiku 5.5, from past runs of the existing workflows:
@@ -89,7 +93,7 @@ TOKENS_PER_CALL: dict[str, dict[str, int]] = {
 # ask 27.6-28.3s (10 cases; same workflow), consequentiality 67-77s (36 cases; State QA Release runs
 # 38078551511, 38079304500, 38271757236), baseline 119-126s per 6 repeats of 5 sources per route (run 38187113539).
 SECONDS_PER_REPEAT: dict[str, float] = {"review": 40, "ask": 30, "adversarial": 30, "graded": 60, "regrade": 30, "calibration": 12, "recalibrate": 30, "holdout": 12, "validate": 30, "heldout": 12, "assess": 30, "heldoutb": 12, "assessb": 30, "heldoutc": 12, "assessc": 30, "recheck": 30, "recheckb": 30, "heldoutd": 12, "assessd": 30, "survey": 12, "surveygrade": 30, "consequentiality": 80, "baseline": 22,
-                                     "contextsize": 1_100}  # 155 streamed Asks, not yet measured: about 7 s each
+                                     "contextsize": 1_100, "absence": 90, "contextnow": 220}  # 155 streamed Asks, not yet measured: about 7 s each
 # Other models are unmeasured here; plan shards as if they were this much slower.
 MODEL_SLOWDOWN: dict[str, float] = {"claude-haiku-5-5": 1.0, "claude-haiku-4-5": 2.0}
 DEFAULT_SLOWDOWN = 3.0
@@ -196,9 +200,12 @@ def scenario_ids(suite: str) -> list[str]:
         from eval.scenarios import SCENARIOS
     elif suite == "baseline":
         from eval.baseline_decomposition import SCENARIOS
-    elif suite == "contextsize":
+    elif suite in ("contextsize", "contextnow"):
         from eval.context_size_experiment import scenarios
-        SCENARIOS = scenarios()
+        SCENARIOS = scenarios(("today",) if suite == "contextnow" else None)
+    elif suite == "absence":
+        from eval.absence_wording import CASES
+        SCENARIOS = list(CASES)
     else:
         raise PlanError(f"Unknown suite {suite!r}")
     return [s.id for s in (graded_subset(list(SCENARIOS)) if suite == "graded" else SCENARIOS)]
@@ -863,9 +870,12 @@ def _scenarios(suite: str) -> list[Any]:
         SCENARIOS = calibration_items(SURVEY_665_ANSWERS)
     elif suite == "consequentiality":
         from eval.scenarios import SCENARIOS
-    elif suite == "contextsize":
+    elif suite in ("contextsize", "contextnow"):
         from eval.context_size_experiment import scenarios
-        SCENARIOS = scenarios()
+        SCENARIOS = scenarios(("today",) if suite == "contextnow" else None)
+    elif suite == "absence":
+        from eval.absence_wording import CASES
+        SCENARIOS = list(CASES)
     else:
         from eval.baseline_decomposition import SCENARIOS
     return graded_subset(list(SCENARIOS)) if suite == "graded" else list(SCENARIOS)
@@ -873,7 +883,14 @@ def _scenarios(suite: str) -> list[Any]:
 
 def _runner(suite: str, model: str, *, baseline_route: str, baseline_timeout: float) -> Callable[[Any], dict[str, Any]]:
     """A function that runs one scenario once and returns its record (without usage/latency)."""
-    if suite == "contextsize":
+    if suite == "absence":
+        from anthropic_provider import AnthropicProvider
+        from ask_provider import LiveAskProvider
+        from eval.absence_wording import run_one as absence_run_one
+
+        absence_provider = LiveAskProvider(AnthropicProvider(model_identifier=model))
+        return lambda s: absence_run_one(s, absence_provider)
+    if suite in ("contextsize", "contextnow"):
         from anthropic_provider import AnthropicProvider
         from ask_provider import LiveAskProvider
         from eval.context_size_experiment import run_one

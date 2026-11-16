@@ -28,7 +28,7 @@ const normalReview={
 };
 const normalHtml=openItems.reviewCard(normalReview,true,false);
 check('normal update review shows Update Current State, Adjust, and Leave unchanged',
-  normalHtml.includes('>Update Current State<') && normalHtml.includes('>Adjust<') && normalHtml.includes('>Leave unchanged<'));
+  normalHtml.includes('>Update Current State<') && normalHtml.includes('>Adjust<') && normalHtml.includes('>Keep Current State as is<'));
 check('normal update review\'s Adjust button targets the right review',
   normalHtml.includes('data-action="open-adjust-review" data-review="r-normal"'));
 
@@ -45,7 +45,7 @@ check('adjust dialog submits via confirm-review-adjust, not a second confirmatio
 
 // --- 3. Leave unchanged is always present and labeled plainly ---------------
 check('Leave unchanged uses the existing review-keep action (no new backend concept needed)',
-  normalHtml.includes('data-action="review-keep" data-review="r-normal" title="Do not apply this evidence to Current State.">Leave unchanged<'));
+  normalHtml.includes('data-action="review-keep" data-review="r-normal" title="Close this proposal without applying it to Current State.">Keep Current State as is<'));
 
 // --- 4. state_at_risk / uncertainty-only Review -----------------------------
 const riskReview={
@@ -74,7 +74,7 @@ const answersQuestionReview={
 };
 const answersQuestionHtml=openItems.reviewCard(answersQuestionReview,true,false);
 check('a Review that would also resolve a Question still uses the ordinary three actions',
-  answersQuestionHtml.includes('>Update Current State<') && answersQuestionHtml.includes('>Adjust<') && answersQuestionHtml.includes('>Leave unchanged<'));
+  answersQuestionHtml.includes('>Update Current State<') && answersQuestionHtml.includes('>Adjust<') && answersQuestionHtml.includes('>Keep Current State as is<'));
 
 // --- 6. New Question suggestion (open_question) is unchanged ---------------
 const questionReview={
@@ -133,7 +133,7 @@ const retireOnlyHtml=openItems.reviewCard(retireOnlyReview,true,false);
 check('a retire-only review shows Adjust disabled, not absent',
   retireOnlyHtml.includes('data-action="open-adjust-review"') && /data-action="open-adjust-review"[^>]*\sdisabled/.test(retireOnlyHtml));
 check('a retire-only review still offers Update Current State and Leave unchanged',
-  retireOnlyHtml.includes('>Update Current State<') && retireOnlyHtml.includes('>Leave unchanged<'));
+  retireOnlyHtml.includes('>Update Current State<') && retireOnlyHtml.includes('>Keep Current State as is<'));
 
 const mixedReview={
   ...normalReview,id:'r-mixed',

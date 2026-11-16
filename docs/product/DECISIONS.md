@@ -471,11 +471,11 @@ Risk acceptances become routine, or a check's class proves wrong in practice.
   - an answered Question's answer Evidence;
   - superseded or superseding Evidence.
 - **Answered Questions are ranked like every other record type**, within their limit of 6. The extra "must share a query word" rule is dropped.
+- **Copy Context stays complete (Paige, Nov 15).** It copies every Current State item, and in Working mode every pending Review and open Question. The task text is a label only. Measured first (`docs/evals/copy-context-filter-results.md`): every task-text filter kept 88% of needed records and silently dropped an accepted fact in 2 of 12 tasks, while the full copy is small (about 1,550 tokens for Northstar). If copies grow large, the fallback is to keep all of Current State and filter only Reviews and Questions; on the fixture that kept 100% of needed records at 65% of the size.
+- **Absence relative to what Ask looked at, only when the context was cut (Paige, Nov 15).** When retrieval sent fewer records of some type than the project holds, Ask says "The records I looked at don't show X", never "State has no record of X". A project sent whole keeps "State has no record". The absence suite found the old wording false in 15 of 15 answers whose record existed but was not sent. With the change it was 15 of 15 correct, and true-absence and yes/no answers stayed 40 of 40 (`docs/evals/absence-wording-results.md`).
 
 **Pending**
 - **Paraphrase misses:** research the options and report back.
-- **Copy Context by task text:** measure it in the benchmark first.
-- **"Not found" vs "not retrieved" wording:** scope the paid absence-wording run.
 
 **Why**
 On the #653 fixture, the windows caused most misses: A0 recall was 0.48, and 0.80 without windows at the same context size, because the per-type limits, not the windows, bound the context. Link expansion raised the linked-context family from 0.8 to 1.0, for about 1k characters per Ask. The fixture is synthetic; these are benchmark numbers, not production behavior.
@@ -513,3 +513,77 @@ A generic "part of this answer couldn't be checked" left both the reader and the
 **Revisit when**
 State gets access control (a review page becomes possible), or the kinds prove too coarse to act on.
 
+
+### DEC-025 — Project Health: shared investigation records with recorded outcomes, and project-specific next decisions
+
+**Status:** Decided (Paige, Nov 15)
+**Date:** 2026-11-15
+**Related:** DEC-012, DEC-016, `state-project-complete/project_health_investigations_api.py`, `api/project-health-investigations.js`, `api/project-health-investigate.js`, `api/project-health-project-quality.js`, `project-health-model.js`, `docs/product/DATA_PRIVACY.md`
+
+**Decision**
+Paige made these choices after the Nov 15 review of an outside Project Health review:
+- **Investigation history is stored on the State backend**, like the decision log, so every visitor sees the same history. It was in each browser's localStorage.
+- **Only real problems create a record.** A visitor's Investigate creates one only when the project needs attention: the AI investigator's run on a current deployment or release-check failure (written by the Vercel function, which verifies the failure), or a State AI-eval investigation while the latest recorded eval run has failures (verified by the State backend). Quick checks on a healthy project are not recorded. A project and problem has at most one open record; a repeat updates its "last seen" time.
+- **A record holds** the project, what triggered it, the evidence source names, a one-line summary and the times. The summary of an AI-investigated failure is the first line of the AI report, redacted like the investigator's evidence and cut to 300 characters; the State eval summary is written by the backend from the recorded run. Browsers never send summary text.
+- **Four outcomes:** Awaiting evidence, Investigating, Accepted limitation, Resolved, with an optional note (at most 500 characters). Only Paige sets them, with `PROJECT_HEALTH_DECISION_KEY`. A new record has no outcome. Accepted limitation and Resolved close a record.
+- **Nothing closes on its own.** When a project reads Healthy while a record is still open, the record shows a hint to record an outcome. The old automatic "resolved" is removed.
+- **Next decision:** when a project-quality signal needs attention, the dashboard shows that warning's own next action (for example NARC's first-run playtest) instead of a generic line. When nothing needs attention, it shows the project's own next decision from the registry, used as written. Open pull requests do not replace it.
+- **Authority Lab Web Analytics stays off.** The card says it is not enabled.
+
+**Why**
+Per-browser history meant every visitor saw a different record, a first-time visitor saw none, and "resolved" was inferred from a project turning Healthy, which is not the same as the problem being fixed. Free text from browsers would let anyone put text on the public dashboard, so the server writes it.
+
+**Rejected / deferred**
+Recording every Investigate click; records only Paige saves; facts-only records with no summary; automatic resolution, labelled or not; enabling Authority Lab analytics. NARC, Tastemake and Authority Lab warnings that the dashboard checks only in the browser create no record yet.
+
+**Revisit when**
+Records pile up as noise, a summary needs more redaction, or a non-State warning needs a shared record.
+
+### DEC-026 — Current State shows when a person last confirmed each item (#678)
+
+**Status:** Decided (Paige, Nov 15); not built.
+**Date:** 2026-11-15
+**Related:** #678, #679, DEC-021, R-006
+
+**Decision**
+- **Only a person confirms.** "Last confirmed" moves when someone accepts a Review that changes or re-states an item, or uses a new "Still true" action, which adds a History entry.
+- **Agreeing evidence gets its own, weaker date.** Evidence that matches an item ("No review needed") records "last mentioned in evidence". It never moves "last confirmed". *Deferred (Nov 15):* intake does not record which item a no-Review note agreed with, so this date waits on a follow-up (#680).
+- **Review decisions that confirm (Nov 15):** accepting a Review, "Leave unchanged" on a proposed change, and "Dismiss concern" on an at-risk Review confirm the items the Review is about. "Keep tracking" does not. This keys on the decision made, not on the stored resolution (the database stores "Keep tracking" as `confirmed_current`). Existing items start from their last change date.
+- **Expiry is a per-project setting, off by default.** Individual items can override the project threshold while reminders are on; when the project's reminders are off, no item is flagged (Nov 15: "off means off"). The seeded demo projects use 60 days and seed a deliberate mix of old and recent items, and the UI says expiry can be turned on in Settings.
+- **An old item is flagged, never changed.** Current State keeps its prose; a box under each area lists its old items with "Needs re-check · last confirmed <date>", "Still true" and "Suggest a re-check question" (Nov 15: layout B). A "Show dates" toggle (off by default) lists every item with its date, its own re-check interval and "Still true". "Still true" takes an optional note saved to History. "Suggest a re-check question" opens the Add question dialog prefilled. Item intervals are set in the dates view and listed in Settings. The overview counts items needing a re-check, and Open Items gets one bundled entry after the Reviews (counted as one) that opens Current State filtered to them.
+- **Ask notes it in software.** When a claim's primary record is flagged, software adds the note beside its chip. No prompt change.
+
+**Why**
+Stale "true" items are the next trust failure once the authority boundary holds: an item can be correctly accepted and still no longer true. Comparable tools (Guru, Document360, Notion, Confluence) have a person verify content, set intervals per item with a team default, and notify rather than change content; Guru's current default is "Does not expire".
+
+**Rejected / deferred**
+- Agreeing evidence moving the main date: it is a model judgment, not a person's confirmation.
+- One fixed threshold for every project, and per-area thresholds.
+- One Review-queue entry per old item: it adds review load (#679).
+- Model-worded staleness in Ask answers: a prompt change for something software can state.
+
+**Revisit when**
+State gets logins (an owner to notify becomes possible), or the bundled Review entry is routinely ignored.
+
+### DEC-027 — Reviews are ordered by impact, show why they matter, and can be left unchanged in bulk (#679)
+
+**Status:** Decided (Paige, Nov 15).
+**Date:** 2026-11-15
+**Related:** #679, #592, DEC-026
+
+**Decision**
+- **Order:** Reviews that answer or link a blocking Question first, then "at risk" Reviews, then Reviews that remove or change an existing Current State item, then the rest (adding an item, suggesting a Question). Within a tier, Reviews touching more Current State items first, then oldest first. This replaces "at risk first" everywhere Reviews are listed, Ask included.
+- **Why this matters:** the collapsed Review row shows the Review's existing "why this matters" line (model-written `why_consequential`).
+- **Bulk "Leave unchanged":** any Reviews with that decision can be selected and closed together. Under DEC-026 this confirms the items those Reviews are about, the same as deciding each one.
+- **The decision is labelled "Keep Current State as is"** on each card and in bulk (Nov 15), replacing #107's "Leave unchanged", which read as unclear. The bulk confirm says what happens: "Close N proposed changes without applying them? Current State won't change. These proposals will be closed, and the items they're about will be marked as confirmed today." Paige chose this knowing #107 had replaced an earlier "Keep Current State" label.
+
+**Why**
+Northstar opens with 7 Reviews and 3 blocking Questions; the order put the oldest first, not the most consequential, and the reason to care was hidden inside each card.
+
+**Rejected / deferred**
+- At risk first (Paige chose blocking first: unblocking work comes first).
+- A software-written ranking reason on the row instead of the model's line.
+- Bulk limited to Reviews that only add, or bulk decisions that don't confirm.
+
+**Revisit when**
+Bulk leave-unchanged is used to clear Reviews nobody read (bulk confirmations with no prior card opens), or the order hides an at-risk Review people needed to see.

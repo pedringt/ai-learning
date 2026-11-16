@@ -529,7 +529,7 @@ function cachedSnapshot(){
         const overview=()=>elements.get('mockDashboardOverview').innerHTML;
         assert.ok(await waitFor(()=>/Release data unavailable/.test(overview())),overview().slice(0,400));
         assert.match(overview(),/Couldn’t refresh · no previously loaded data/);
-        assert.doesNotMatch(overview(),/Previous assessment|>Stable</);
+        assert.doesNotMatch(overview(),/Previous assessment|>Deployment succeeded</);
         assert.match(elements.get('historyPanel').innerHTML,/Deployment activity: Couldn’t refresh · no previously loaded data/);
         assert.doesNotMatch(elements.get('changesPanel').innerHTML,/No meaningful changes/);
       }finally{cleanup();}
@@ -596,7 +596,8 @@ function cachedSnapshot(){
       // A specific finding still comes first.
       const data={project:H.PROJECTS.find(p=>p.id==='state'),quality:M.normalizeQuality(qualityPayload()),failures:[{label:'Delivery'}],platform:{},openPullRequests:[]};
       assert.match(M.operationalNextDecision(data),/^Review the failed high-severity scenarios/);
-      assert.strictEqual(M.operationalNextDecision({...data,quality:null,failures:[]}),'No immediate product decision is required. Continue the current goal until the next review.');
+      // DEC-025: with nothing more specific, the project's own next decision from the registry.
+      assert.strictEqual(M.operationalNextDecision({...data,quality:null,failures:[]}),H.PROJECTS.find(p=>p.id==='state').nextDecision);
     });
   }finally{global.fetch=realFetch;}
 

@@ -60,3 +60,30 @@ No forbidden record was selected in any call.
 ## Not decided
 
 The budget (DEC-023 item 2) and whether to use whole-project context (item 4's option 3) are Paige's decisions.
+
+## DEC-023 before/after (Nov 14)
+
+**After side:** `contextnow` suite, [run 43683640532](https://github.com/pedringt/ai-learning/actions/runs/43683640532), on staging code `6b760b6` (DEC-023 plus #662, which doesn't change retrieval). 93 calls, 0 errors, **$0.172**.
+
+**Before side:** the `today` condition of run 43676969245, on the code before DEC-023. Same fixture, questions, model and repeats.
+
+| | Before | After DEC-023 |
+|---|---|---|
+| Selection recall | 0.446 | **0.964** |
+| All needed records selected | 36% | 96% |
+| First token p50 / p90 | 850 / 1,446 ms | 795 / 1,356 ms |
+| Finished p50 / p90 | 2.06 / 2.83 s | 2.07 / 2.70 s |
+| Input tokens per Ask | 11.5k | 16.7k |
+| Cost per Ask | $0.0013 | $0.0019 |
+| Forbidden records selected | 0 | 0 |
+
+**By family, before → after:**
+- windows 0.00 → 1.00
+- answered Questions 0.20 → 1.00
+- links 0.70 → 1.00
+- superseded 0.50 → 1.00
+- flood 0.50 → 1.00
+- paraphrase 0.33 → 0.83
+- same word and pending vs accepted stay at 1.00.
+
+**The one miss:** "What did Legal say about the data processing agreement?" (p6) in all 3 runs. This measures record selection, not answer quality. The Ask quality check on the combined release is separate (the coordinator runs it).

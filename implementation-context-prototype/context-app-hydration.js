@@ -184,9 +184,9 @@ window.STATE_APP_HYDRATION=Object.freeze({install(ctx){
       if(payload.project){state.data.project={...state.data.project,...payload.project};state.projectConfirmed=true;API.setActiveProject(payload.project.id);}
       const fulfilled=items=>({status:'fulfilled',value:{items:items||[]}});
       byKey={
-        state:fulfilled(payload.state), evidence:fulfilled(payload.evidence),
+        state:{status:'fulfilled',value:{items:payload.state||[],recheck_days:payload.recheck_days??null}}, evidence:fulfilled(payload.evidence),
         open:fulfilled(payload.open_reviews), resolved:fulfilled(payload.resolved_reviews),
-        history:fulfilled(payload.history), questions:fulfilled(payload.questions),
+        history:{status:'fulfilled',value:{items:payload.history||[],confirmations:payload.confirmations||[]}}, questions:fulfilled(payload.questions),
         rules:fulfilled(payload.rules), drafts:fulfilled(payload.drafts)
       };
     }catch(bootstrapError){
@@ -207,7 +207,7 @@ window.STATE_APP_HYDRATION=Object.freeze({install(ctx){
     state.backendStatus.rules=byKey.rules.status==='fulfilled'?'loaded':'error';
     state.backendStatus.drafts=byKey.drafts.status==='fulfilled'?'loaded':'error';
 
-    if(byKey.state.status==='fulfilled') syncApiState(payloadOf(byKey.state).items||[]);
+    if(byKey.state.status==='fulfilled'){ syncApiState(payloadOf(byKey.state).items||[]); state.data.recheckDays=payloadOf(byKey.state).recheck_days??null; }
     if(byKey.rules.status==='fulfilled') state.projectRules=payloadOf(byKey.rules).items||[];
     if(byKey.drafts.status==='fulfilled') syncApiDrafts(payloadOf(byKey.drafts).items||[]);
     if(byKey.evidence.status==='fulfilled') syncApiEvidence(
@@ -218,7 +218,7 @@ window.STATE_APP_HYDRATION=Object.freeze({install(ctx){
     // Nov 14: when Evidence fails to load, keep only real drafts. Otherwise the static Northstar fixture notes
     // (context-data.js) stayed on the Notes page, shown as if they were this project's Evidence.
     else state.data.notes=state.data.notes.filter(n=>n.backendDraft);
-    if(byKey.history.status==='fulfilled') syncApiHistory(payloadOf(byKey.history).items||[]);
+    if(byKey.history.status==='fulfilled'){ syncApiHistory(payloadOf(byKey.history).items||[]); state.data.confirmations=payloadOf(byKey.history).confirmations||[]; }
     if(byKey.questions.status==='fulfilled'){
       syncApiQuestions(payloadOf(byKey.questions).items||[]);
     }else{

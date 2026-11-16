@@ -71,9 +71,9 @@ function summarizeEval(report){
 
 function tastemakeAttention(baseline,endpoint,ci){
   const items=[];
-  if(ci&&ci.conclusion&&ci.conclusion!=='success') items.push({kind:'bad',title:'Main QA is not green',detail:'The latest Tastemake GitHub test workflow concluded '+ci.conclusion+'.'});
-  if(endpoint?.rule_checks?.failed>0) items.push({kind:'bad',title:'Live-endpoint eval has rule failures',detail:endpoint.rule_checks.failed+' rule check(s) failed in the committed endpoint report.'});
-  if(endpoint?.validator_self_test?.missed>0) items.push({kind:'bad',title:'Validator self-test missed bad output',detail:endpoint.validator_self_test.missed+' deliberately bad case(s) were not caught.'});
+  if(ci&&ci.conclusion&&ci.conclusion!=='success') items.push({kind:'bad',title:'Main QA is not green',detail:'The latest Tastemake GitHub test workflow concluded '+ci.conclusion+'.',nextAction:'Check whether the failing Tastemake test run is a real product bug or a test problem, then fix or revert.'});
+  if(endpoint?.rule_checks?.failed>0) items.push({kind:'bad',title:'Live-endpoint eval has rule failures',detail:endpoint.rule_checks.failed+' rule check(s) failed in the committed endpoint report.',nextAction:'Review the failed rule checks in the endpoint report and decide whether the recommendation behavior or the rule should change.'});
+  if(endpoint?.validator_self_test?.missed>0) items.push({kind:'bad',title:'Validator self-test missed bad output',detail:endpoint.validator_self_test.missed+' deliberately bad case(s) were not caught.',nextAction:'Review the bad cases the validator missed; until it catches them, its passing results don’t show recommendations are safe.'});
   if(!items.length) items.push({kind:'good',title:'Latest recorded Tastemake checks look healthy',detail:'Current endpoint rules, validator defenses, and main automated checks are healthy. Baseline results remain visible as historical comparison evidence only.'});
   return items;
 }
@@ -125,9 +125,9 @@ async function authorityLab(){
     suite(agent,'Agent tooling tests','The MCP agent tooling, which imports the same gate (npm test --prefix agent).')
   ];
   const attention=[];
-  if(!ci)attention.push({kind:'warn',title:'No test run found',detail:'Project Health could not find a test workflow run on main.'});
-  else if(ci.conclusion&&ci.conclusion!=='success')attention.push({kind:'bad',title:'Automated tests are not green',detail:'The latest Authority Lab test workflow on main concluded '+ci.conclusion+'.'});
-  else if(ci.status!=='completed')attention.push({kind:'warn',title:'Tests are still running',detail:'The latest test run on main has not finished.'});
+  if(!ci)attention.push({kind:'warn',title:'No test run found',detail:'Project Health could not find a test workflow run on main.',nextAction:'Check why Project Health can’t find an Authority Lab test run on main, then run the tests and confirm the result.'});
+  else if(ci.conclusion&&ci.conclusion!=='success')attention.push({kind:'bad',title:'Automated tests are not green',detail:'The latest Authority Lab test workflow on main concluded '+ci.conclusion+'.',nextAction:'Check whether the failing Authority Lab test run is a real product bug or a test problem, then fix or revert.'});
+  else if(ci.status!=='completed')attention.push({kind:'warn',title:'Tests are still running',detail:'The latest test run on main has not finished.',nextAction:'Wait for the Authority Lab test run on main to finish, then refresh Project Health.'});
   if(!attention.length)attention.push({kind:'good',title:'Latest Authority Lab tests pass',detail:'The test workflow on main passed on Node 22 and 24.'});
   return {
     project:'authority-lab',
@@ -178,9 +178,9 @@ async function narc(){
   const latest=Array.isArray(runs.workflow_runs)?runs.workflow_runs[0]:null;
   const ci=latest?{status:latest.status,conclusion:latest.conclusion,updated_at:latest.updated_at,html_url:latest.html_url,head_sha:latest.head_sha}:null;
   const attention=[];
-  if(ci?.conclusion&&ci.conclusion!=='success') attention.push({kind:'bad',title:'Automated game checks are not green',detail:'The latest NARC quality workflow concluded '+ci.conclusion+'.'});
-  if(!ci&&!recorded.recorded_all_suites_green) attention.push({kind:'warn',title:'No current recorded test verification found',detail:'Project Health could not confirm that all three deterministic suites are green.'});
-  if(recorded.full_playtest_pending) attention.push({kind:'warn',title:'Full first-run playtest still pending',detail:'The code-level suites are recorded green, but the ~15-minute human playtest is still the next product-quality gate.'});
+  if(ci?.conclusion&&ci.conclusion!=='success') attention.push({kind:'bad',title:'Automated game checks are not green',detail:'The latest NARC quality workflow concluded '+ci.conclusion+'.',nextAction:'Check whether the failing NARC quality run is a real game bug or a test problem, then fix or revert.'});
+  if(!ci&&!recorded.recorded_all_suites_green) attention.push({kind:'warn',title:'No current recorded test verification found',detail:'Project Health could not confirm that all three deterministic suites are green.',nextAction:'Check why Project Health can’t find a NARC test record, then run the three suites on main and record the result.'});
+  if(recorded.full_playtest_pending) attention.push({kind:'warn',title:'Full first-run playtest still pending',detail:'The code-level suites are recorded green, but the ~15-minute human playtest is still the next product-quality gate.',nextAction:'Complete the ~15-minute first-run playtest and record confusing choices, broken transitions and whether the ending makes sense.'});
   if(!attention.length) attention.push({kind:'good',title:'Latest NARC quality checks look healthy',detail:'The automated game suites are green and no additional code-level quality issue is recorded.'});
   return {
     project:'narc',
