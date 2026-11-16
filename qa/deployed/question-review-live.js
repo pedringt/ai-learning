@@ -77,8 +77,11 @@ async function completedAsk() {
   await expect(page.locator('#askStateDrawerResult [data-review-batch-action="copy-ask-answer"]')).toBeVisible({ timeout: 90000 });
   await expect(page.locator('#askStateDrawerResult .ask-live-error')).toHaveCount(0);
 }
+// DEC-026 (#678): closing a Review with 'keep' (this walkthrough's cleanup) confirms the items it is about, by design,
+// so an item's last_confirmed_at and needs_recheck may move. Statements, versions and History must not.
+const withoutConfirmation = items => (items || []).map(({ last_confirmed_at, needs_recheck, ...item }) => item);
 async function unchanged() {
-  expect((await get('/api/state')).items).toEqual(baseline.state);
+  expect(withoutConfirmation((await get('/api/state')).items)).toEqual(withoutConfirmation(baseline.state));
   expect((await get('/api/history')).items).toEqual(baseline.history);
 }
 (async () => {
