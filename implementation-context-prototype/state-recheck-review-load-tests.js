@@ -54,6 +54,16 @@ check('the re-check filter from Open Items shows only areas with flagged items, 
   assert.match(html,/Showing the 1 item that needs a re-check/);
   assert.match(html,/data-action="clear-recheck-filter">Show all Current State</);
   assert.ok(!/id="project-budget"/.test(html),'area without flagged items hidden');
+  // #686: the banner promises only the flagged items, so the area shows those and nothing else.
+  assert.ok(!/class="project-wiki-prose"/.test(html),'no area prose while filtered');
+  assert.match(html,/The assistant supports the rep inside the existing workflow\./);
+  assert.ok(!/Tier 1 troubleshooting/.test(html),'unflagged item in the same area hidden');
+  assert.ok(!/approved support material/.test(html),'unflagged item in the same area hidden');
+  const dated=PROJECT_VIEW.render({backendState:'loaded',projectName:'Northstar',knowledge:[...knowledge,other],history:[],pendingFor:()=>[],recheckDays:60,recheckOnly:true,showDates:true});
+  assert.ok(!/Tier 1 troubleshooting/.test(dated)&&!/Budget is/.test(dated),'Show dates while filtered lists only flagged items');
+  assert.match(dated,/Needs re-check · last confirmed Aug 18/);
+  const all=page({recheckDays:60});
+  assert.match(all,/Tier 1 troubleshooting/,'unfiltered view still shows everything');
 });
 
 const proposal=(id,op='update',stateId='k-entry')=>({id,operation:op,state_item_id:stateId,proposed_statement:'x'});

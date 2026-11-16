@@ -170,12 +170,17 @@
     if(API && state.workspaceAttentionStatus==='error'){
       return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('alert')}</span><span class="eyebrow">Needs your attention</span><h3>Attention items could not be loaded</h3><p>Ask still works; try Open Items again in a moment.</p></div><button class="text-button" data-action="retry-hydration">Try again →</button></div></section>`;
     }
-    const reviews=API?state.data.reviews.filter(r=>r.status==='pending'&&r.backendReviewId):uiPendingReviews();
-    const blockers=(API?state.data.questions.filter(q=>q.status==='open'&&q.backendManaged):openQuestions()).filter(q=>q.blocking);
+    // #685: count exactly what the Open Items badge counts (updateNav in context-app-navigation.js):
+    // pending Reviews, the bundled DEC-026 re-check entry as one item, and blocking Questions.
+    const reviews=uiPendingReviews();
+    const blockers=openQuestions().filter(q=>q.blocking);
+    const recheckItems=PROJECT_VIEW.recheckCount(state.data.knowledge||[]);
     const items=[];
     reviews.slice(0,2).forEach(r=>items.push({kind:'review',id:r.id,label:'Review',title:r.summary||r.title,detail:r.whyConsequential||r.proposed||'New evidence may change Current State.'}));
+    // Same order as Open Items: the re-check entry sits after the Reviews, before blocking Questions.
+    if(items.length<2&&recheckItems) items.push({kind:'recheck',label:'Re-check',title:`${recheckItems} Current State ${recheckItems===1?'item needs':'items need'} a re-check`,detail:'Review in Current State.'});
     if(items.length<2) blockers.slice(0,2-items.length).forEach(q=>items.push({kind:'blocker',id:q.id,label:'Blocking question',title:q.text,detail:q.blocks?`Blocks ${q.blocks}`:'A concrete dependency is waiting on this answer.'}));
-    const total=reviews.length+blockers.length;
+    const total=reviews.length+(recheckItems?1:0)+blockers.length;
     if(!items.length){
       return `<section class="workspace-attention is-clear"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('alert')}</span><span class="eyebrow">Needs your attention</span><h3>You're caught up</h3><p>Nothing currently needs a decision and no questions are blocking progress.</p></div><button class="text-button" data-view="open-items">Open Items →</button></div></section>`;
     }
@@ -185,12 +190,15 @@
     // row actually renders is the exact silent mismatch this guards against.
     const shownReviews=items.filter(i=>i.kind==='review').length;
     const shownBlockers=items.filter(i=>i.kind==='blocker').length;
+    const shownRecheck=items.some(i=>i.kind==='recheck');
     const hiddenCount=total-items.length;
     const breakdownParts=[];
     if(shownReviews) breakdownParts.push(`${shownReviews} review${shownReviews===1?'':'s'}`);
+    if(shownRecheck) breakdownParts.push('1 re-check');
     if(shownBlockers) breakdownParts.push(`${shownBlockers} blocking question${shownBlockers===1?'':'s'}`);
     if(hiddenCount>0) breakdownParts.push(`+${hiddenCount} more in Open Items`);
-    const rows=items.map(item=>`<button class="attention-item ${item.kind}" data-action="${item.kind==='review'?'open-specific-review':'go-open-question'}" ${item.kind==='review'?`data-review-id="${esc(item.id)}"`:`data-question-id="${esc(item.id)}"`}><span class="attention-item-copy"><span class="attention-row-icon ${item.kind==='blocker'?'blocker':'review'} mock-icon">${workspaceIcon(item.kind==='blocker'?'question':'review')}</span><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span><span class="attention-kind">${esc(item.label)}</span></button>`).join('');
+    const rowAction=item=>item.kind==='review'?`data-action="open-specific-review" data-review-id="${esc(item.id)}"`:item.kind==='recheck'?'data-action="open-recheck-items"':`data-action="go-open-question" data-question-id="${esc(item.id)}"`;
+    const rows=items.map(item=>`<button class="attention-item ${item.kind}" ${rowAction(item)}><span class="attention-item-copy"><span class="attention-row-icon ${item.kind==='blocker'?'blocker':'review'} mock-icon">${workspaceIcon(item.kind==='blocker'?'question':'review')}</span><span class="attention-kind">${esc(item.label)}</span><strong>${esc(item.title)}</strong><span>${esc(item.detail)}</span></span><span class="attention-arrow" aria-hidden="true">→</span><span class="attention-kind">${esc(item.label)}</span></button>`).join('');
     return `<section class="workspace-attention"><div class="workspace-attention-head"><div><span class="attention-head-icon mock-icon">${workspaceIcon('alert')}</span><span class="eyebrow">Needs your attention</span><h3>${total===1?'1 item is waiting on you':`${total} items are waiting on you`}</h3><p class="attention-intro-text">${esc(breakdownParts.join(' · '))}</p></div><button class="text-button" data-view="open-items">Open Items →</button></div><div class="attention-list">${rows}</div></section>`;
   }
   // Answers "What actually changed?" -- up to 3 meaningful recent decisions,
@@ -1234,7 +1242,7 @@
     history.replaceState(history.state,'',location.pathname+(cleanedSearch?`?${cleanedSearch}`:'')+'#settings');
     navigateTo('settings');
   }
-  window.STATE_ASK_TEST_API={state,openReviewSource,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry,hydrateBackend,showProjectSettings,openQuestionById,showDialog,closeDialog,activateProject};
+  window.STATE_ASK_TEST_API={state,openReviewSource,detectAskIntent,intentAskHtml,looksLikeQuestion,hasExplicitUpdateIntent,upsertBackendReview,replaceBackendOpenReviews,mapApiReview,linkedReviewFor,questionDialogHtml,renderOverview,renderOpenItems,refreshOpenReviews,historyType,syncApiHistory,addDialogHtml,historyEntry,hydrateBackend,showProjectSettings,openQuestionById,showDialog,closeDialog,activateProject,updateNav};
   // state.md #115: the live Ask State drawer (context-product-polish.js's
   // runAsk) is the only Ask surface a user actually reaches. Generic
   // inventory questions ("What needs review?") still need to route to a
