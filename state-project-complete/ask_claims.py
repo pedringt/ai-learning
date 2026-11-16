@@ -204,8 +204,14 @@ class ClaimChecker:
     """Checks claims against the records Ask selected for this request. The same checker runs while a streamed
     answer arrives and on the final answer, so a claim is shown during streaming only if the final answer keeps it."""
 
-    def __init__(self, context: Mapping[str, Any], *, query: str = "", today: date | None = None):
+    def __init__(self, context: Mapping[str, Any], *, query: str = "", today: date | None = None,
+                 shown: Mapping[str, Any] | None = None):
         self.records = selected_records(context)
+        # #701 candidate V4: the records the model was shown (project-scoped, status-filtered candidates), selected or
+        # not. A claim may cite one of these as if it had selected it; it still needs the right type for its basis,
+        # and its numbers still come only from the records it cites. Never widens a `none` claim's open sources.
+        self.shown = selected_records(shown) if shown is not None else {k: {} for k in self.records}
+        self.shown_by_id: dict[str, Mapping[str, Any]] = {rid: rec for bucket in self.shown.values() for rid, rec in bucket.items()}
         self.by_id: dict[str, Mapping[str, Any]] = {rid: rec for bucket in self.records.values() for rid, rec in bucket.items()}
         # An answered Question's resolving Review and answer Evidence are not selected records, but the Question
         # carries the answer. Citing one as support counts as citing the Question (Paige, Nov 11).
@@ -221,10 +227,13 @@ class ClaimChecker:
 
     def primary(self, basis: str, record_id: str | None) -> tuple[str, Mapping[str, Any]] | None:
         for record_type in BASIS_RECORD_TYPES.get(basis, ()):
-            record = self.records[record_type].get(record_id or "")
+            record = self.records[record_type].get(record_id or "") or self.shown[record_type].get(record_id or "")
             if record is not None:
                 return record_type, record
         return None
+
+    def _cited(self, rid: str) -> Mapping[str, Any] | None:
+        return self.by_id.get(rid) or self.linked.get(rid) or self.shown_by_id.get(rid)
 
     def _review_evidence(self, records: Iterable[Mapping[str, Any] | None]) -> list[Mapping[str, Any]]:
         """#701 candidate V3: the selected Evidence a cited Review links to (its evidence_ids). A Review rests on that
@@ -240,7 +249,7 @@ class ClaimChecker:
     def check_claim(self, claim: Mapping[str, Any]) -> str | None:
         """The claim's chip label ("" for an unlabelled `none` claim) when it may be shown, or None to withhold it."""
         basis = claim.get("basis") or "none"
-        supporting = [self.by_id.get(rid) or self.linked.get(rid) for rid in claim.get("supporting_record_ids") or []]
+        supporting = [self._cited(rid) for rid in claim.get("supporting_record_ids") or []]
         if any(record is None for record in supporting):
             return None
         supporting = supporting + self._review_evidence(
@@ -263,7 +272,7 @@ class ClaimChecker:
         """Why check_claim withheld a claim (#662): "reference" when a record it cites isn't among the answer's records,
         else "figure" (a number or month its records don't contain)."""
         basis = claim.get("basis") or "none"
-        if any((self.by_id.get(rid) or self.linked.get(rid)) is None for rid in claim.get("supporting_record_ids") or []):
+        if any(self._cited(rid) is None for rid in claim.get("supporting_record_ids") or []):
             return "reference"
         if basis == "none":
             return "reference" if claim.get("primary_record_id") else "figure"
