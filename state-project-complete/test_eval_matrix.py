@@ -140,6 +140,39 @@ def test_call_counter_counts_records_usage_and_refuses_past_the_cap(monkeypatch)
     assert Messages.create is fake_create  # restored on exit
 
 
+def test_call_counter_keeps_raw_output_for_created_calls(monkeypatch):
+    # #682: the Ask suites default to run_ask (Messages.create); a withheld claim must be readable afterwards.
+    from anthropic.resources.messages import Messages
+
+    def fake_create(self, **kwargs):
+        return SimpleNamespace(usage=SimpleNamespace(input_tokens=1, output_tokens=1),
+                               content=[SimpleNamespace(text='{"claims": []}')])
+
+    monkeypatch.setattr(Messages, "create", fake_create)
+    with matrix.CallCounter(1) as counter:
+        Messages.create(None, model="x")
+    assert counter.usage[0]["raw_text"] == '{"claims": []}'
+
+
+def test_ask_record_keeps_withheld_units():
+    from eval.ask_quality_scenarios import SCENARIOS as ASK_QUALITY_SCENARIOS
+    from eval.quality_harness import AskQualityResult, _new_test_connection, _withheld_units, _close
+    from ask_withheld_log import record_withheld
+
+    connection = _new_test_connection()
+    try:
+        record_withheld(connection, "q?", [{"unit": "claim", "raw_text": "The budget is approved.", "basis": "pending_review",
+                                            "primary_record_id": "ask-review-0", "reason": "status ('approved') not carried"}])
+        units = _withheld_units(connection)
+    finally:
+        _close(connection)
+    assert units and units[0]["statement_text"] == "The budget is approved." and units[0]["kind"] == "settled"
+    result = AskQualityResult(scenario=ASK_QUALITY_SCENARIOS[0], answer=None, required_facts_ok=True,
+                              forbidden_claims_ok=True, uncertainty_ok=True, open_item_ok=True, authority_ok=True,
+                              withheld_units=units)
+    assert matrix.ask_record(result)["withheld_units"] == units
+
+
 def test_call_budget_exceeded_is_not_swallowed_by_except_exception():
     with pytest.raises(matrix.CallBudgetExceeded):
         try:
