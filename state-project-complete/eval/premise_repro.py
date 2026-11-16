@@ -54,7 +54,7 @@ def run_one(case: PremiseCase, provider: Any) -> dict[str, Any]:
                 record.update(outcome="error", passed=None, checks={}, failed_checks=[], error="intake setup failed")
                 return record
             record["intake_reviews"] = [dict(r) for r in conn.execute(
-                "SELECT id, decision_question, proposed_statement FROM review_issues WHERE id IN (%s)"
+                "SELECT id, decision_question, why_consequential FROM review_issues WHERE id IN (%s)"
                 % ",".join("?" * len(intake.review_ids)), tuple(intake.review_ids)).fetchall()]
             current_state = {row["id"]: row["statement"] for row in conn.execute(
                 "SELECT id, statement FROM current_state_items WHERE status='active'").fetchall()}
