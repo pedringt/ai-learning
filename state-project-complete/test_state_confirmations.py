@@ -92,11 +92,13 @@ def test_project_and_item_intervals(db_url):
         assert off["recheck_days"] is None and not any(i["needs_recheck"] for i in off["state"])
         item = client.patch("/api/state/k-escalation/recheck", json={"days": 30}, headers=H).json()
         escalation = {i["id"]: i for i in item["state"]}["k-escalation"]
-        assert escalation["recheck_days"] == 30 and escalation["effective_recheck_days"] == 30 and escalation["needs_recheck"]
+        # Off means off: the item keeps its own interval but is not flagged while the project's reminders are off.
+        assert escalation["recheck_days"] == 30 and escalation["effective_recheck_days"] is None and not escalation["needs_recheck"]
         assert client.patch("/api/project/recheck", json={"days": 45}, headers=H).status_code == 422
         on = client.patch("/api/project/recheck", json={"days": 180}, headers=H).json()
         by_id = {i["id"]: i for i in on["state"]}
-        assert by_id["k-escalation"]["effective_recheck_days"] == 30 and by_id["k-vip"]["effective_recheck_days"] == 180
+        assert by_id["k-escalation"]["effective_recheck_days"] == 30 and by_id["k-escalation"]["needs_recheck"]
+        assert by_id["k-vip"]["effective_recheck_days"] == 180
         assert not by_id["k-vip"]["needs_recheck"]
 
 

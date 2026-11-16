@@ -5,8 +5,8 @@ at-risk Review, or "Still true". "Keep tracking" does not. Nothing here ever cha
 past its re-check interval is only flagged.
 
 An item's last confirmation is ``last_confirmed_at``, falling back to ``updated_at`` (its last accepted change) for
-items nobody has confirmed since migration 026. Reminders are off unless the project sets ``recheck_days``; an item's
-own ``recheck_days`` overrides the project's.
+items nobody has confirmed since migration 026. Reminders are off unless the project sets ``recheck_days``; while they
+are on, an item's own ``recheck_days`` overrides the project's.
 """
 from __future__ import annotations
 
@@ -54,7 +54,8 @@ def annotate_state_items(connection: Connection, items: list[dict], *, now: date
     project_days = project_recheck_days(connection)
     for item in items:
         confirmed = _as_datetime(item.get("last_confirmed_at")) or _as_datetime(item.get("updated_at"))
-        days = item.get("recheck_days") or project_days
+        # Off means off (Paige, Nov 15): an item's own interval applies only while its project's reminders are on.
+        days = (item.get("recheck_days") or project_days) if project_days else None
         item["last_confirmed_at"] = _iso(confirmed)
         item["effective_recheck_days"] = days
         item["needs_recheck"] = bool(days and confirmed and now - confirmed > timedelta(days=days))

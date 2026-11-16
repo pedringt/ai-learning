@@ -77,7 +77,7 @@ const launchExplained=api.mapApiReview({...launch,proposals:[{...launch.proposal
 check('a linked-Question Review whose reasoning explains the answer keeps it',hasReasoning(openItems.reviewCard(launchExplained,true,false))&&openItems.reviewCard(launchExplained,true,false).includes('not who signs off'));
 check('the linked Question mapping is unchanged',launchR.resolvesQuestionId==='q-thresholds');
 check('decision buttons on the simplified card are unchanged',
-  launchHtml.includes('data-action="review-update" data-review="demo-review-launch">Update Current State<')&&launchHtml.includes('data-action="open-adjust-review" data-review="demo-review-launch">Adjust<')&&launchHtml.includes('data-action="review-keep" data-review="demo-review-launch" title="Do not apply this evidence to Current State.">Leave unchanged<'));
+  launchHtml.includes('data-action="review-update" data-review="demo-review-launch">Update Current State<')&&launchHtml.includes('data-action="open-adjust-review" data-review="demo-review-launch">Adjust<')&&launchHtml.includes('data-action="review-keep" data-review="demo-review-launch" title="Close this proposal without applying it to Current State.">Keep Current State as is<'));
 
 // 3. Other Reviews keep their reasoning even with a verbatim rationale.
 const verbatim=r=>({...r,establishes:LAUNCH});

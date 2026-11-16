@@ -23,7 +23,7 @@ Exercise realistic combinations of:
 
 1. Add Evidence / Notes.
 2. Review consequential proposals.
-3. Update, Adjust, Leave unchanged, Keep tracking, Dismiss concern, Create Question, or Link Question when available.
+3. Update, Adjust, Keep Current State as is, Keep tracking, Dismiss concern, Create Question, or Link Question when available.
 4. Verify the resulting Current State or lack of state change.
 5. Verify Questions and Blocking Questions.
 6. Verify History/provenance for consequential state changes.

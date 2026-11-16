@@ -116,7 +116,7 @@ window.STATE_APP_REVIEW_ACTIONS=Object.freeze({install(ctx){
     try{await hydrateBackend();}catch(error){console.warn('Review saved; refresh needed.',error);}
   }
 
-  // #679 / DEC-027: "Leave unchanged" on several Reviews, one request each (the same decision as each card's own
+  // #679 / DEC-027: "Keep Current State as is" on several Reviews, one request each (the same decision as each card's own
   // button, so each confirms its items under DEC-026). A failure leaves that Review open and is reported.
   async function bulkLeaveUnchanged(ids){
     const picked=ids.map(id=>state.data.reviews.find(r=>r.id===id)).filter(r=>r&&r.status==='pending'&&r.backendReviewId);
@@ -128,7 +128,7 @@ window.STATE_APP_REVIEW_ACTIONS=Object.freeze({install(ctx){
     try{await hydrateBackend();}catch(error){console.warn('Reviews saved; refresh needed.',error);}
     document.dispatchEvent(new Event('state-project-record-changed'));
     window.StateAnalytics?.track('review_bulk_kept',{count:done,failed:failed.length});
-    showToast(failed.length?`${done} left unchanged. ${failed.length} could not be saved and stay open.`:`${done} ${done===1?'Review':'Reviews'} left unchanged. Current State was not changed.`);
+    showToast(failed.length?`${done} closed. ${failed.length} could not be saved and stay open.`:`${done} proposed ${done===1?'change':'changes'} closed. Current State was not changed.`);
   }
 
   async function executeReviewDecision(id,decision,checkOnly,adjustments){

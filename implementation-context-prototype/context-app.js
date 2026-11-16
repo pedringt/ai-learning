@@ -1095,8 +1095,8 @@
     else if(act==='confirm-review-adjust')confirmReviewAdjust(a.dataset.review);
     // #678 / DEC-026: re-check actions on Current State. "Still true" takes an optional note saved to History;
     // a re-check Question goes through the ordinary Add question dialog, prefilled for the person to edit.
-    // #679 / DEC-027: leave the selected Reviews unchanged, after a confirm naming them.
-    else if(act==='bulk-leave-unchanged'){const ids=[...(state.selectedReviewIds||[])];const picked=uiPendingReviews().filter(r=>ids.includes(r.id)&&OPEN_ITEMS_VIEW.bulkEligible(r));if(picked.length)showDialog(`<span class="eyebrow">Leave unchanged</span><h2 id="dialogTitle">Leave ${picked.length} ${picked.length===1?'Review':'Reviews'} unchanged?</h2><p>Current State stays as it is, and the items these Reviews are about count as confirmed.</p><ul class="bulk-review-list">${picked.map(r=>`<li>${esc(r.summary)}</li>`).join('')}</ul><div class="dialog-actions"><button class="btn primary" data-action="confirm-bulk-leave-unchanged">Leave unchanged</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
+    // #679 / DEC-027: close the selected proposals without applying them, after a confirm naming them.
+    else if(act==='bulk-leave-unchanged'){const ids=[...(state.selectedReviewIds||[])];const picked=uiPendingReviews().filter(r=>ids.includes(r.id)&&OPEN_ITEMS_VIEW.bulkEligible(r));if(picked.length)showDialog(`<span class="eyebrow">Keep Current State as is</span><h2 id="dialogTitle">Close ${picked.length} proposed ${picked.length===1?'change':'changes'} without applying ${picked.length===1?'it':'them'}?</h2><p>Current State won’t change. ${picked.length===1?'This proposal will be closed, and the item it’s about will be marked as confirmed today.':'These proposals will be closed, and the items they’re about will be marked as confirmed today.'}</p><ul class="bulk-review-list">${picked.map(r=>`<li>${esc(r.summary)}</li>`).join('')}</ul><div class="dialog-actions"><button class="btn primary" data-action="confirm-bulk-leave-unchanged">Keep Current State as is</button><button class="btn secondary" data-action="close-dialog">Cancel</button></div>`);}
     else if(act==='confirm-bulk-leave-unchanged'){const ids=[...(state.selectedReviewIds||[])];closeDialog();await bulkLeaveUnchanged(ids);state.selectedReviewIds=new Set();updateNav();render();}
     else if(act==='toggle-show-dates'){state.showDates=!state.showDates;renderProjectOverview();}
     else if(act==='clear-recheck-filter'){state.recheckOnly=false;renderProjectOverview();}
@@ -1112,7 +1112,7 @@
     else if(act==='copy-note'){const n=state.data.notes.find(x=>x.id===a.dataset.noteId);if(n){navigator.clipboard?.writeText(n.text);a.textContent='Copied';}}
   });
 
-  // #679: selecting Reviews for bulk "Leave unchanged".
+  // #679: selecting Reviews for bulk "Keep Current State as is".
   document.addEventListener('change',e=>{
     const box=e.target.closest?.('[data-review-select]');if(!box)return;
     state.selectedReviewIds=state.selectedReviewIds||new Set();

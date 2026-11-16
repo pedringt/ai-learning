@@ -71,14 +71,14 @@ check('each collapsed Review row shows its "why this matters" line',()=>{
   assert.match(html,/<span class="open-question-why">Retention terms are unconfirmed\.<\/span>/);
 });
 
-check('bulk Leave unchanged offers a box only on Reviews with that decision, and a bar for the selection',()=>{
+check('bulk Keep Current State as is offers a box only on Reviews with that decision, and a bar for the selection',()=>{
   const html=openItems({selectedReviewIds:new Set(['r1','r2'])});
   assert.match(html,/data-review-select="r1" checked/);
   assert.match(html,/data-review-select="r3"/);
-  assert.ok(!/data-review-select="r2"/.test(html),'an at-risk Review has no Leave unchanged');
-  assert.match(html,/<span>1 selected<\/span><button type="button" class="btn secondary" data-action="bulk-leave-unchanged">Leave selected unchanged<\/button>/);
+  assert.ok(!/data-review-select="r2"/.test(html),'an at-risk Review has no Keep Current State as is');
+  assert.match(html,/<span>1 selected<\/span><button type="button" class="btn secondary" data-action="bulk-leave-unchanged">Keep Current State as is \(1\)<\/button>/);
   const none=openItems({});
-  assert.match(none,/<span>0 selected<\/span>.*aria-disabled="true"/s);
+  assert.match(none,/<span>0 selected<\/span>.*aria-disabled="true">Keep Current State as is<\/button>/s);
   const one=openItems({reviews:[reviews[0]]});
   assert.ok(!/review-bulk-bar/.test(one),'no bulk bar with a single eligible Review');
 });
