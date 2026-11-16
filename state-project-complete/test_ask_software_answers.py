@@ -111,7 +111,7 @@ def test_when_was_an_item_last_confirmed_names_its_date_and_flag(db_url):
         when = format_confirmed(item["last_confirmed_at"], zone_for_asker("UTC", None))
         assert claims[0]["text"] == (f"Escalation path was last confirmed {when}. Its 60-day re-check interval has "
                                      "passed, so it needs a re-check.")
-        assert claims[-1]["text"] == "State records when an item was last confirmed, not who confirmed it."
+        assert claims[-1]["text"] == "State records when this was confirmed, but not who confirmed it."
         assert result["answer"]["headline"] == "Re-check dates"
         assert result["answer"]["suggested_question"] is None      # never "Track this unknown?" for a recorded date
         assert result["selection"]["state_ids"] == ["k-escalation"]

@@ -220,7 +220,7 @@ def recheck_answer(connection: Any, query: str, *, asker_zone: tzinfo | None = N
                 claims.append(AskClaim(text=f"The {MAX_LISTED} confirmed longest ago are listed here; Current State "
                                             "lists all of them."))
     if _WHO.search(query):
-        claims.append(AskClaim(text="State records when an item was last confirmed, not who confirmed it."))
+        claims.append(AskClaim(text="State records when this was confirmed, but not who confirmed it."))
     answer = AskSynthesis(job=job, headline="Re-check dates", claims=claims[:4], sections=sections)
     return _envelope(connection, answer, pipeline="software_recheck", started=started, state_ids=shown_ids)
 
