@@ -1021,8 +1021,9 @@
           :scenario.expected_action==='link_existing_question'?'the Evidence was not linked to the open Question.'
           :'no new Question was proposed.';
         consequence=(reviewCreated===false?'This run missed a needed Review: ':'This run’s Review proposed nothing: ')+missing;
-        // With no Review there is no proposal, Review or rationale text, so nothing could overstate the Evidence.
-        if(unsafeWords&&reviewCreated===false)consequence+=' It did not make this scenario’s unsafe mistake ('+unsafeWords+').';
+        // With no Review there is no proposal, Review or rationale text, so nothing could overstate the Evidence. A state_change
+        // scenario gets the one sentence below instead, so the unsafe-mistake line is never said twice (#689).
+        if(unsafeWords&&reviewCreated===false&&scenario.unsafe_if!=='state_change')consequence+=' It did not make this scenario’s unsafe mistake ('+unsafeWords+').';
         if(reviewCreated===false&&MISSED_REVIEW_CONSEQUENCES[id])consequence=MISSED_REVIEW_CONSEQUENCES[id];
         else if(unsafeWords&&scenario.unsafe_if==='state_change')consequence+=' No change was proposed, so it did not make this scenario’s unsafe mistake ('+unsafeWords+').';
       }else if(checks.includes('interpretation')&&(scenario.allowed_actions?.length?scenario.allowed_actions:[scenario.expected_action]).includes(recorded.action)&&findings.other.some(item=>/^proposed state (lacks|contains forbidden) /.test(item))){
@@ -1373,7 +1374,13 @@
     const normalized=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?$/.test(raw)?raw.replace(' ','T').replace(/(\.\d{3})\d+$/,'$1')+'Z':raw;
     return new Date(normalized).getTime();
   }
-  function fmtDate(value){if(!value)return'Unknown';const d=new Date(Number.isNaN(dateMs(value))?value:dateMs(value));return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
+  // #689: one formatter for Project Health and the State eval details page. Naive server timestamps are UTC (dateMs), and
+  // the viewer's time zone is named, so the same run reads the same on both pages.
+  function fmtDate(value,options={}){
+    if(!value)return'Unknown';
+    const d=new Date(Number.isNaN(dateMs(value))?value:dateMs(value));
+    return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',...(options.year?{year:'numeric'}:{}),hour:'numeric',minute:'2-digit',timeZoneName:'short'});
+  }
   function relativeAge(value){
     if(!value)return'not checked yet';
     const time=dateMs(value);if(Number.isNaN(time))return'unknown';
@@ -1810,11 +1817,32 @@
   // State's four quality measurements (Oct 27 review): each card's score, failure count and change come from the same
   // field, so a card can never show one metric's score next to another's trend ("100%, down 10" on Answer quality).
   const STATE_QUALITY_METRICS=[
-    {label:'Update understanding',run:'review',suite:'review_interpretation',field:'interpretation_accuracy',check:'interpretation',sub:'Interpreting new evidence'},
+    {label:'Update understanding',run:'review',suite:'review_interpretation',field:'interpretation_accuracy',wholeScenario:true,check:'interpretation',sub:'Interpreting new evidence'},
     {label:'Evidence grounding',run:'ask',suite:'ask_quality',field:'ask_grounding',check:'grounding',sub:'Answers stay on the record'},
     {label:'Decision authority',run:'ask',suite:'ask_quality',field:'authority_accuracy',check:'authority',sub:'Authority boundary scenarios'},
     {label:'Uncertainty handling',run:'ask',suite:'ask_quality',field:'uncertainty_accuracy',check:'uncertainty',sub:'Unknown-answer scenarios'}
   ];
+  // #689 (Paige, Nov 16): "Update understanding" counts whole scenarios, so its count matches the failed-scenario list.
+  // A review scenario passes only when the Review decision and the interpretation are both right (quality_harness.py
+  // ReviewQualityResult.passed); interpretation_accuracy scores the interpretation alone. Every scenario that did not
+  // pass is in failure_details (errored ones too, which are not scored). The list is capped at 16, so a longer run whose
+  // list may be cut off returns null and callers fall back to the field. Trends and deltas keep reading the field.
+  function scenarioPassRate(run){
+    const total=Number(run?.total||0),errors=Math.max(0,Number(run?.errors||0)),details=run?.failure_details;
+    if(!total||!Array.isArray(details))return null;
+    if(details.length>=16&&total>details.length)return null;
+    const scored=total-errors;
+    if(scored<=0)return null;
+    const failed=Math.max(0,details.length-errors),rate=Math.max(0,scored-failed)/scored;
+    // Whole-scenario passes can't exceed interpretation passes; if they would, the list is incomplete (older records).
+    const field=Number(run?.interpretation_accuracy);
+    if(run?.interpretation_accuracy!=null&&Number.isFinite(field)&&rate>field+1e-9)return null;
+    return rate;
+  }
+  function cardScore(run,m){
+    if(m?.wholeScenario){const rate=scenarioPassRate(run);if(rate!=null)return rate;}
+    return metricScore(run,m?.field);
+  }
   function metricScore(row,field){
     if(!row)return null;
     const value=field?row[field]:evalScore(row);
@@ -1891,7 +1919,7 @@
     return STATE_QUALITY_METRICS.map(m=>stateMetricCard(q,m,unknownSignal)).map(card=>stale&&card.score!=null?{...card,kind:'unknown',signal:'Previous run: '+card.signal}:card);
   }
   function stateMetricCard(q,m,unknownSignal){
-    const run=q?.[m.run],score=metricScore(run,m.field),severe=failureCheckCount(q,m.check);
+    const run=q?.[m.run],score=cardScore(run,m),severe=failureCheckCount(q,m.check);
     const kind=score==null?'unknown':severe?'bad':score<1?'warn':'good';
     const misses=scenarioCounts(run,score)?.failed;
     // An older run can record failures in high-severity scenarios without per-scenario details; never call those lower-severity.
@@ -2278,5 +2306,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,INVESTIGATION_OUTCOMES,investigationOutcomeLabel,investigationIsOpen,investigationRecordRow,investigationOutcomeText,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,gateEligibility,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,staleFailureContext,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,INVESTIGATION_OUTCOMES,investigationOutcomeLabel,investigationIsOpen,investigationRecordRow,investigationOutcomeText,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,scenarioPassRate,cardScore,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,gateEligibility,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,staleFailureContext,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });

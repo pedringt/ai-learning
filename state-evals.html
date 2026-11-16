@@ -245,7 +245,8 @@
     tabs.forEach(tab=>{const name=tab.dataset.suite;if(suiteCopy[name]&&scenarios[name])tab.textContent=suiteCopy[name].title+' · '+scenarios[name].length;});
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const pct=value=>value==null||Number.isNaN(Number(value))?'Not measured':(Math.round(Number(value)*1000)/10)+'%';
-    const fmt=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'Unknown':d.toLocaleString([],{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});};
+    // #689: Project Health's formatter, so a naive UTC run time is not read as local time and the time zone is named.
+    const fmt=value=>model?.fmtDate?model.fmtDate(value,{year:true}):'Unknown';
     let failedScenarioIds=new Set();
     function renderSuite(name){
       const copy=suiteCopy[name];
@@ -283,7 +284,9 @@
         const controlled=payload?.controlled_evals||{};
         const review=controlled.latest_review_interpretation||null;
         const ask=controlled.latest_ask_quality||null;
-        suiteSummary(document.getElementById('reviewSummary'),'Update understanding',review,review?.interpretation_accuracy);
+        // #689: whole scenarios (Review decision and interpretation both right), so the count matches the failed-scenario list.
+        const reviewMetric=run=>model?.scenarioPassRate?.(run)??run?.interpretation_accuracy;
+        suiteSummary(document.getElementById('reviewSummary'),'Update understanding',review,reviewMetric(review));
         suiteSummary(document.getElementById('askSummary'),'Answer quality',ask,ask?.overall_pass_rate??ask?.ask_grounding);
         const failures=[
           ...(Array.isArray(review?.failure_details)?review.failure_details.map(item=>({...item,suite:'review'})):[]),
@@ -328,7 +331,7 @@
         }
         const rows=Array.isArray(controlled.recent)?controlled.recent.slice(0,12):[];
         document.getElementById('runHistory').innerHTML=rows.length?rows.map(run=>{
-          const metric=run.suite==='review_interpretation'?run.interpretation_accuracy:run.overall_pass_rate;
+          const metric=run.suite==='review_interpretation'?reviewMetric(run):run.overall_pass_rate;
           const label=run.suite==='review_interpretation'?'Update understanding':'Answer quality';
           const tech=[run.provider,run.model_identifier,run.build].filter(Boolean).join(' · ');
           return '<div class="run-row"><div><strong>'+esc(label)+' · '+esc(passedLabel(run,metric))+'</strong><span>'+esc(fmt(run.created_at))+' · '+esc(pct(metric))+' · '+esc(countLabel(run.high_severity_failures??0,'high-impact failure','high-impact failures'))+' · scoring '+esc(versionLabel(run))+'</span></div><span>'+esc(tech||'Technical record unavailable')+'</span></div>';

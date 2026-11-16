@@ -538,6 +538,9 @@
     .mock-related-tests{margin-top:14px;border-top:1px solid #e6e9ef;padding-top:12px}
     .mock-test-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:9px 2px;border-top:1px solid #eef0f4}
     .mock-test-row:first-child{border-top:0}.mock-test-row strong{font-size:11px}.mock-test-row span{font-size:10px;color:#727c8e}
+    /* #690: at phone width the scenario line (an auto column) squeezed the title into one word per line. Stack the row so
+       the title uses the full card width, with the chip and the scenario line below it. */
+    @media(max-width:560px){.mock-test-row{grid-template-columns:minmax(0,1fr);gap:4px;justify-items:start}}
 
     @media(max-width:900px){
       .mock-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
