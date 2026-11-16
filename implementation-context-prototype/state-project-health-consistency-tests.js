@@ -33,6 +33,9 @@ const stateData=(overrides={})=>({...M.emptyProjectData(M.PROJECTS[0]),fresh:tru
   });
   await check('the Releases timeline shows the same Pacific time as the quality details',()=>{
     assert.match(M.fmtDate(RUN_AT),/3:29\s?PM/);
+    // #689: the time zone is named, and the eval details page (year:true) shows the same time.
+    assert.match(M.fmtDate(RUN_AT),/^Nov 9, 3:29\s?PM PST$/);
+    assert.match(M.fmtDate(RUN_AT,{year:true}),/^Nov 9, 2026, 3:29\s?PM PST$/);
     assert.match(M.activityTimeRange({when:RUN_AT}),/^3:29\s?PM$/);
     assert.match(M.activityTimeRange({when:RUN_AT,startWhen:RUN_AT,endWhen:'2026-11-09 23:45:00'}),/^3:29\s?PM–3:45\s?PM$/);
     assert.strictEqual(M.activityDayLabel('2026-11-10 02:00:00'),'Nov 9','02:00 UTC on Nov 10 is still Nov 9 in Pacific time');
@@ -79,7 +82,7 @@ const stateData=(overrides={})=>({...M.emptyProjectData(M.PROJECTS[0]),fresh:tru
     assert.strictEqual(M.staleFailureContext(stateData({quality:quality()})),null);
     const context=M.staleFailureContext(stateData({quality:staleQuality()}));
     assert.strictEqual(context.heading,'Failed in the previous run');
-    assert.match(context.note,/^Historical: recorded Nov 9, 3:29\s?PM, before the latest State behavior change\. Not treated as a current product failure\.$/);
+    assert.match(context.note,/^Historical: recorded Nov 9, 3:29\s?PM PST, before the latest State behavior change\. Not treated as a current product failure\.$/);
   });
 
   // ---- Operational signals and copy ----

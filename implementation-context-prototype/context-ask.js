@@ -19,7 +19,11 @@
     return [];
   }
   const item=(text,record_type='none',record_id=null,detail=null)=>({text:String(text||'').trim()||'Project context',record_type,record_id,detail:detail||null});
-  const section=(kind,title,items)=>({kind,title,items:items.filter(Boolean)});
+  const section=(kind,title,items,more=null)=>({kind,title,items:items.filter(Boolean),...(more?{more}:{})});
+  // #684 (Paige, Nov 16): a starter section that lists only some open items says how many it shows of how many, and
+  // links to Open Items. parts: [record type, shown, total]; only the truncated ones are kept.
+  const OPEN_ITEMS_ANCHOR={review:'open-items-reviews',blocking_question:'open-items-blockers',question:'open-items-questions'};
+  const shownOf=(...parts)=>{const left=parts.filter(([,shown,total])=>total>shown).map(([type,shown,total])=>({type,shown,total}));return left.length?{parts:left,anchor:OPEN_ITEMS_ANCHOR[left[0].type]}:null;};
 
   async function fastStarterPayload(kind){
     const started=performance.now();
@@ -42,32 +46,32 @@
       answer={job:'catch_up',headline:'Here is what matters right now.',summary:`${reviews.length} ${reviews.length===1?'Review needs':'Reviews need'} attention, ${blockers.length} ${blockers.length===1?'question is':'questions are'} blocking, and ${ordinary.length} other ${ordinary.length===1?'question remains':'questions remain'} open.`,sections:[
         section('established','Project snapshot',state.slice(0,4).map(stateItem)),
         section('changes','Changed recently',history.slice(0,3).map(historyItem)),
-        section('needs_review','Needs attention',[...reviews.slice(0,3).map(reviewItem),...blockers.slice(0,3).map(questionItem)]),
-        section('questions','Still unclear',ordinary.slice(0,4).map(questionItem))
+        section('needs_review','Needs attention',[...reviews.slice(0,3).map(reviewItem),...blockers.slice(0,3).map(questionItem)],shownOf(['review',Math.min(3,reviews.length),reviews.length],['blocking_question',Math.min(3,blockers.length),blockers.length])),
+        section('questions','Still unclear',ordinary.slice(0,4).map(questionItem),shownOf(['question',Math.min(4,ordinary.length),ordinary.length]))
       ],source_ids:[],uncertainty_ids:[...reviews.map(x=>x.id),...questions.map(x=>x.id)],suggested_refinements:['Make this shorter','Focus only on blockers','Give me a meeting brief']};
     } else if(kind==='meeting'){
       answer={job:'meeting_prep',headline:'Meeting brief',summary:'Carry the settled project state, the decisions that need attention, and the questions worth getting answered.',sections:[
-        section('needs_review','Decisions needed',reviews.slice(0,3).map(reviewItem)),
-        section('questions','Questions to get answered',[...blockers.slice(0,3).map(questionItem),...ordinary.slice(0,3).map(questionItem)]),
+        section('needs_review','Decisions needed',reviews.slice(0,3).map(reviewItem),shownOf(['review',Math.min(3,reviews.length),reviews.length])),
+        section('questions','Questions to get answered',[...blockers.slice(0,3).map(questionItem),...ordinary.slice(0,3).map(questionItem)],shownOf(['blocking_question',Math.min(3,blockers.length),blockers.length],['question',Math.min(3,ordinary.length),ordinary.length])),
         section('changes','Recent changes',history.slice(0,3).map(historyItem)),
         section('established','Useful context',state.slice(0,3).map(stateItem))
       ],source_ids:[],uncertainty_ids:[...reviews.map(x=>x.id),...questions.map(x=>x.id)],suggested_refinements:['Make this shorter','Turn this into an agenda','Make it leadership-ready']};
     } else if(kind==='changed'){
       answer={job:'historical',headline:'Recent accepted changes',summary:'These are recorded project changes. Pending Reviews and open Questions remain separate from accepted Current State.',sections:[
         section('changes','What changed',history.slice(0,6).map(historyItem)),
-        section('needs_review','Still pending',reviews.slice(0,3).map(reviewItem))
+        section('needs_review','Still pending',reviews.slice(0,3).map(reviewItem),shownOf(['review',Math.min(3,reviews.length),reviews.length]))
       ],source_ids:[],uncertainty_ids:reviews.map(x=>x.id),suggested_refinements:['Make this shorter','Show only the biggest changes','What needs my attention?']};
     } else if(kind==='attention'){
       answer={job:'attention_check',headline:'What needs your attention',summary:blockers.length?'Start with Reviews and confirmed blockers. Ordinary open Questions come after those.':'Start with Reviews. No open Question is currently marked blocking.',sections:[
-        section('needs_review','Needs your review',reviews.slice(0,5).map(reviewItem)),
-        section('questions','Blocking questions',blockers.slice(0,5).map(questionItem)),
-        section('open_attention','Other open questions',ordinary.slice(0,4).map(questionItem))
+        section('needs_review','Needs your review',reviews.slice(0,5).map(reviewItem),shownOf(['review',Math.min(5,reviews.length),reviews.length])),
+        section('questions','Blocking questions',blockers.slice(0,5).map(questionItem),shownOf(['blocking_question',Math.min(5,blockers.length),blockers.length])),
+        section('open_attention','Other open questions',ordinary.slice(0,4).map(questionItem),shownOf(['question',Math.min(4,ordinary.length),ordinary.length]))
       ],source_ids:[],uncertainty_ids:[...reviews.map(x=>x.id),...questions.map(x=>x.id)],suggested_refinements:['Focus only on blockers','Make this 3 bullets','Give me a meeting brief']};
     } else {
       answer={job:'general_project_synthesis',headline:'What is still unresolved',summary:'These items are intentionally not being treated as settled project truth.',sections:[
-        section('questions','Blocking questions',blockers.slice(0,5).map(questionItem)),
-        section('questions','Open questions',ordinary.slice(0,6).map(questionItem)),
-        section('needs_review','Evidence still awaiting review',reviews.slice(0,4).map(reviewItem))
+        section('questions','Blocking questions',blockers.slice(0,5).map(questionItem),shownOf(['blocking_question',Math.min(5,blockers.length),blockers.length])),
+        section('questions','Open questions',ordinary.slice(0,6).map(questionItem),shownOf(['question',Math.min(6,ordinary.length),ordinary.length])),
+        section('needs_review','Evidence still awaiting review',reviews.slice(0,4).map(reviewItem),shownOf(['review',Math.min(4,reviews.length),reviews.length]))
       ],source_ids:[],uncertainty_ids:[...reviews.map(x=>x.id),...questions.map(x=>x.id)],suggested_refinements:['Focus only on blockers','What needs my attention?','Give me a meeting brief']};
     }
     answer.sections=answer.sections.filter(s=>s.items.length);
@@ -81,6 +85,11 @@
   async function submitStream(query,previousPayload=null,handlers={},signal){return API.askStream(query,previousPayload?.answer||null,handlers,signal);}
   async function submit(query,previousPayload=null,signal){const kind=starterKind(query,previousPayload);if(kind)return fastStarterPayload(kind);return API.ask(query,previousPayload?.answer||null,signal);}
 
+  // #684: "Showing 6 of 13 other open Questions." under a truncated starter section, with a link to Open Items.
+  const MORE_NOUNS={review:['Review','Reviews'],blocking_question:['blocking Question','blocking Questions'],question:['other open Question','other open Questions']};
+  const moreLine=s=>{const parts=s?.more?.parts;if(!Array.isArray(parts)||!parts.length)return '';return `Showing ${parts.map(p=>`${p.shown} of ${p.total} ${(MORE_NOUNS[p.type]||['item','items'])[p.total===1?0:1]}`).join(' and ')}.`;};
+  const MORE_LINK='See all in Open Items';
+  const moreHtml=s=>{const line=moreLine(s);return line?`<p class="ask-section-more">${esc(line)} <button class="text-button ask-section-more-link" type="button" data-view="open-items" data-anchor="${esc(s.more.anchor||'open-items-reviews')}">${MORE_LINK} →</button></p>`:'';};
   const labelFor=type=>({review:'Needs review',blocking_question:'Blocking',question:'Open question',answered_question:'Answered question',state:'Current State',history:'History',evidence:'Project evidence'}[type]||'');
   // The answer's item list is a snapshot from when it was generated. An item
   // whose Review/Question has since been resolved must not keep appearing as
@@ -149,7 +158,7 @@
     return `${claims?`<ul class="ask-claims">${claims}</ul>`:''}${hasWithheld(a)?`<p class="ask-withheld-note">${esc(withheldLine(a))}</p>`:''}`;
   }
   // Copy, in the same form as ask_display.displayed_lines: chips stay with the text they label.
-  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,''];if(Array.isArray(a.claims)){for(const c of a.claims)lines.push(labelled(c.label&&recheckNote(c)?`${c.label} · ${recheckNote(c)}`:c.label,c.text));if(hasWithheld(a))lines.push(withheldLine(a));}else lines.push(a.summary);for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length&&!s.hypothetical)continue;lines.push('',s.title,...hypotheticalLines(s));for(const i of items){lines.push(`- ${labelled(labelFor(i.record_type),i.text)}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
+  function portableText(p,liveStatus){const a=p?.answer;if(!a)return'';const lines=[a.headline,''];if(Array.isArray(a.claims)){for(const c of a.claims)lines.push(labelled(c.label&&recheckNote(c)?`${c.label} · ${recheckNote(c)}`:c.label,c.text));if(hasWithheld(a))lines.push(withheldLine(a));}else lines.push(a.summary);for(const s of a.sections||[]){const items=(s.items||[]).filter(i=>!isItemResolved(i,liveStatus));if(!items.length&&!s.hypothetical)continue;lines.push('',s.title,...hypotheticalLines(s));for(const i of items){lines.push(`- ${labelled(labelFor(i.record_type),i.text)}`);const d=String(i.detail||'').replace(/^blocks:\s*/i,'').trim();if(d)lines.push(`  ${i.record_type==='blocking_question'?'Blocks: ':''}${d}`);}if(moreLine(s))lines.push(`${moreLine(s)} ${MORE_LINK}.`);}lines.push('',SCOPE_NOTE);if(a.job==='meeting_prep')lines.push('','Meeting notes','','Decisions','- ','','Answers / new information','- ','','Actions','- [ ] ','','Follow-ups','- ');return lines.join('\n').trim();}
 
   // #567: the browser never draws the model's raw text. The server sends each claim and each section only after it
   // has passed the same checks as the finished answer ({claims:[claim events], sections:[section events]}); the
@@ -188,7 +197,7 @@
         return !resolved;
       });
       return {...s,items};
-    }).filter(s=>(s.items||[]).length||s.hypothetical).map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3>${hypotheticalHtml(s)}<ul>${(s.items||[]).map(i=>itemHtml(i,liveStatus)).join('')}</ul></section>`).join('');
+    }).filter(s=>(s.items||[]).length||s.hypothetical).map(s=>`<section class="ask-answer-section ask-section-${esc(s.kind)}"><h3>${esc(s.title)}</h3>${hypotheticalHtml(s)}<ul>${(s.items||[]).map(i=>itemHtml(i,liveStatus)).join('')}</ul>${moreHtml(s)}</section>`).join('');
     const refinements=(a.suggested_refinements||[]).slice(0,3).map(x=>`<button data-prompt="${esc(x)}">${esc(x)}</button>`).join('');
     const notes=a.job==='meeting_prep'?meetingNotesScaffold():'';
     // The item list, footer, and Copy all reflect resolutions live, but the

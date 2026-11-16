@@ -92,6 +92,22 @@
   //     least one proposal): Update Current State / Adjust / Leave unchanged.
   // #679 / DEC-027: a Review with a "Keep Current State as is" decision (not a Question suggestion or an at-risk
   // check) can be selected and closed with others.
+  // #691 (Paige, Nov 16; DEC-027 amendment): the bulk confirm names what is actually confirmed. The targets are the
+  // backend's review_confirmation_targets: the Review's linked Current State items plus each proposal's existing item.
+  function confirmationTargets(r){
+    const ids=new Set((r.affectedStateIds||[]).filter(Boolean));
+    (Array.isArray(r.proposals)?r.proposals:[]).forEach(p=>{if(p&&p.state_item_id)ids.add(p.state_item_id);});
+    return ids;
+  }
+  function bulkKeepConfirmText(picked){
+    const one=picked.length===1;
+    const targets=new Set();picked.forEach(r=>confirmationTargets(r).forEach(id=>targets.add(id)));
+    const n=targets.size;
+    const lead='Current State won’t change.';
+    if(!n) return `${lead} ${one?'This proposal will be closed. It doesn’t touch any existing item, so nothing is marked as confirmed.':'These proposals will be closed. They don’t touch any existing item, so nothing is marked as confirmed.'}`;
+    if(picked.every(r=>confirmationTargets(r).size)) return `${lead} ${one?'This proposal will be closed, and the item it’s about will be marked as confirmed today.':'These proposals will be closed, and the items they’re about will be marked as confirmed today.'}`;
+    return `${lead} These proposals will be closed, and the ${n} ${n===1?'item':'items'} they’re about will be marked as confirmed today.`;
+  }
   function bulkEligible(r){return r.reviewType!=='open_question'&&r.reviewType!=='state_at_risk'&&Array.isArray(r.proposals)&&r.proposals.length>0;}
   function reviewCard(r,expanded=true,accordion=false,sourceNote,selection=null){
     const isQuestionReview=r.reviewType==='open_question';
@@ -296,5 +312,5 @@
     return `<section class="page collection-page open-items-page"><div class="page-head"><div><div class="review-title-row"><h2>Open Items</h2>${actionTotal?`<span class="count-badge review-page-count" aria-label="${actionTotal} items need attention">${actionTotal}</span>`:''}</div><p>${countSummary}Review what State thinks new information means, then decide what happens to Current State.</p>${reviewHelp}</div><button class="btn secondary" data-action="add-question">+ Add question</button></div><div class="open-items-sections">${openItemSection('Needs your review',reviewUnavailable?'Unavailable':reviewTotal,'reviews',reviewBody,!reviewTotal&&!reviewUnavailable,openItemSections)}${openItemSection('Blocking questions',questionUnavailable?'Unavailable':blockers.length,'blockers',blockerBody,!blockers.length&&!questionUnavailable,openItemSections)}${openItemSection('Open questions',questionUnavailable?'Unavailable':waiting.length,'questions',questionBody,!waiting.length&&!questionUnavailable,openItemSections)}${openItemSection('Draft notes',draftsLoading?'…':draftsUnavailable?'Unavailable':draftNotes.length,'drafts',draftBody,draftsStatus==='loaded'&&!draftNotes.length,openItemSections)}${answered?openItemSection('Answered Questions',answered.status==='loaded'?`${answered.items.length}${answered.nextOffset!=null?'+':''}`:'','answered',answeredSectionBody(answered),answered.status==='loaded'&&!answered.items.length,openItemSections):''}</div></section>`;
   }
 
-  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,bulkEligible,isStraightforwardReview,adjustDialogHtml,questionDialogHtml,cleanReviewCopy,answeredQuestionDialogHtml,answeredSectionBody});
+  window.STATE_OPEN_ITEMS_VIEW = Object.freeze({render,reviewCard,bulkEligible,bulkKeepConfirmText,isStraightforwardReview,adjustDialogHtml,questionDialogHtml,cleanReviewCopy,answeredQuestionDialogHtml,answeredSectionBody});
 })();

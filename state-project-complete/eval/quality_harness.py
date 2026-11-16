@@ -318,6 +318,9 @@ class AskQualityResult:
     # #567: with ASK_EVAL_TRANSPORT=stream, how long a person waits: until the first content the browser would draw
     # (a raw text delta on the older code, a checked claim or section after #567) and until the finished answer.
     latency: dict[str, Any] = field(default_factory=dict)
+    # #682: the statements Ask's checks left out of this answer (ask_withheld_units rows in the scenario's own test
+    # database), so a failure that comes from withholding can be read. Synthetic scenarios only.
+    withheld_units: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def number_ok(self) -> bool:
@@ -420,7 +423,7 @@ def _has_uncertainty_language(text: str) -> bool:
 # Oct 16 (approved by Paige): wordings from correct Haiku 5.5 answers that the list above missed, e.g.
 # "Not confirmed: launch readiness is blocked by an open Security question", "has not been established",
 # "State cannot confirm", "is still open", "does not have enough confirmed information". Used only for
-# the uncertainty check; the authority check keeps the original list.
+# the uncertainty check; the authority check keeps the original list (amended Nov 16: see _REVIEW_UNSETTLED).
 _ANSWER_UNCERTAINTY_SIGNALS = (
     "not confirmed", "cannot confirm", "can't confirm", "unable to confirm",
     "not been established", "still open", "does not have enough",
@@ -431,6 +434,11 @@ _ANSWER_UNCERTAINTY_SIGNALS = (
     # Nov 13 (Paige, staging run 43532212042): the record-first wording #567's denial rule asks for, e.g. "State does
     # not confirm launch readiness: a blocking Question is open..." and "State has no confirmed Security approval...".
     "does not confirm", "has no confirmed",
+    # Nov 16 (Paige, #682): the same record-first denial in another form, and the existing "open blocking question"
+    # reordered: "State does not have confirmed launch readiness: a blocking Question is open on whether Security has
+    # approved the production data path". "does not show" was left out: answer-wide, an unrelated "does not show any
+    # change" would satisfy it.
+    "does not have confirmed", "blocking question is open",
 )
 
 
@@ -455,6 +463,17 @@ def _distinguishes_proposal(text: str) -> bool:
     # Review by naming the review and explicitly preserving uncertainty, without
     # using one of the exact proposal words above.
     return "review" in text and _has_uncertainty_language(text)
+
+
+# Nov 16 (Paige, #682): an amendment to the Oct 16 note above ("the authority check keeps the original list"). These
+# express the same unsettled status the list already accepts, e.g. "an open Review awaiting a decision, not an accepted
+# change" and "an open Review, not yet decided" (the Ask prompt itself prescribes "not yet decided, pending Review").
+# They count only when the phrase and "review" are both in the answer's own claims (_authority_ok): a card quoting a
+# record ("Leadership asked whether…; no decision is recorded.") must not complete the match (Paige, Nov 16 refinement).
+# "once accepted" was left out: it states a condition, not that the item is pending. This corrects what the scorer
+# recognises; it certifies no whole answer.
+_REVIEW_UNSETTLED = ("awaiting a decision", "awaiting decision", "not yet decided", "no decision is recorded",
+                     "no decision recorded")
 
 
 
@@ -485,8 +504,15 @@ def _pending_only_words(scenario: AskQualityScenario) -> set[str]:
     return {w.rstrip(",.") for w in pending - known - _COMMON_WORDS}
 
 
+def _review_unsettled_in_claims(answer: Any) -> bool:
+    """#682: an S1 phrase and "review" both in the answer's own claims, never completed by a card's record text."""
+    claims = _normalize(_claims_text(answer))
+    return "review" in claims and any(phrase in claims for phrase in _REVIEW_UNSETTLED)
+
+
 def _authority_ok(scenario: AskQualityScenario, answer: Any, text: str) -> bool:
-    if not scenario.should_distinguish_proposal_from_truth or _distinguishes_proposal(text):
+    if (not scenario.should_distinguish_proposal_from_truth or _distinguishes_proposal(text)
+            or _review_unsettled_in_claims(answer)):
         return True
     # Nov 14 (Paige, "Label counts; body must still answer"): a pending claim shown only as a labelled Needs-review
     # item is separated from governing State. This holds only when every claim the answer makes rests on Current State
@@ -636,6 +662,12 @@ def marked_draft(answer: Any) -> bool:
     return any(isinstance(s.get("hypothetical"), dict) and s["hypothetical"].get("line") for s in _sections(answer))
 
 
+def draft_assumptions(answer: Any) -> list[str]:
+    """The assumptions the answer's marked drafts show (#694); an unclear one shows none."""
+    return [str(s["hypothetical"].get("assumption") or "") for s in _sections(answer)
+            if isinstance(s.get("hypothetical"), dict) and s["hypothetical"].get("line")]
+
+
 def outside_marked_draft(answer: Any) -> Any:
     """The answer with a marked draft's body removed, for checks that apply only outside it."""
     import copy
@@ -671,6 +703,9 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
         )
     if scenario.hypothetical_draft and not marked_draft(answer):
         missing += (HYPOTHETICAL_DRAFT_UNMARKED,)
+    elif scenario.draft_assumption and not any(_normalize(scenario.draft_assumption) in _normalize(a)
+                                               for a in draft_assumptions(answer)):
+        missing += (f"the draft's stated assumption ({scenario.draft_assumption!r})",)
     asserted = tuple(claim for claim in scenario.forbidden_claims if _asserts(text, _normalize(claim)))
     numbers = tuple(unsupported_numbers(text, _normalize(scenario_record_text(scenario)))) if scenario.forbid_unsupported_numbers else ()
     required_ok = not missing
@@ -712,6 +747,18 @@ def _streamed_ask(connection, provider, question: str) -> tuple[dict[str, Any], 
                    "total_ms": round((time.perf_counter() - started) * 1000)}
 
 
+def _withheld_units(connection) -> list[dict[str, Any]]:
+    """#682: what Ask withheld in this scenario's test database (ask_withheld_log.record_withheld), oldest first."""
+    try:
+        rows = connection.execute(
+            "SELECT unit, kind, reason, basis, record_id, statement_text FROM ask_withheld_units ORDER BY occurred_at"
+        ).fetchall()
+    except Exception:  # broad on purpose: a capture for reading failures must never fail the scenario
+        return []
+    keys = ("unit", "kind", "reason", "basis", "record_id", "statement_text")
+    return [{key: row[key] for key in keys} for row in rows]
+
+
 def run_ask_quality_scenario(scenario: AskQualityScenario, provider) -> AskQualityResult:
     connection = _new_test_connection()
     try:
@@ -720,9 +767,12 @@ def run_ask_quality_scenario(scenario: AskQualityScenario, provider) -> AskQuali
             answer, latency = _streamed_ask(connection, LiveAskProvider(provider), scenario.question)
             result = score_ask_answer(scenario, answer)
             result.latency = latency
+            result.withheld_units = _withheld_units(connection)
             return result
         answer = run_ask(connection, LiveAskProvider(provider), scenario.question)
-        return score_ask_answer(scenario, answer)
+        result = score_ask_answer(scenario, answer)
+        result.withheld_units = _withheld_units(connection)
+        return result
     except Exception as exc:
         return AskQualityResult(
             scenario=scenario,

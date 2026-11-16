@@ -70,6 +70,15 @@ def _content(text: str) -> set[str]:
 _ASSUMPTION_STOP = frozenset({"goes", "throug", "happen", "happens", "passes", "proceed", "ahead", "gets"})
 
 
+def assumption_terms(text: str) -> set[str]:
+    """What an assumption is about: its content words, plus its figures and status words, which _content leaves out.
+    #694 (Nov 16): "the $40,000 budget is approved" has one content word ("budget") but says something definite."""
+    from ask_claims import anchors
+    numbers, _ = anchors(text)
+    status = {re.sub(r"\s+", " ", m.group(0).lower()) for m in ask_assertions._STATUS.finditer(text)}
+    return _content(text) | numbers | status
+
+
 def hypothetical_request(query: str) -> DraftRequest | None:
     """A drafting request on an explicit assumption, or None. The assumption is the user's words, trimmed."""
     # "if possible", "if you can": politeness, not an assumption.
@@ -86,7 +95,7 @@ def hypothetical_request(query: str) -> DraftRequest | None:
             if text and text.lower() not in (f.lower() for f in found):
                 found.append(text)
     found = [f for f in found if not any(f != g and f.lower() in g.lower() for g in found)]
-    clean = found[0] if len(found) == 1 and 2 <= len(_content(found[0])) and len(found[0]) <= 160 else None
+    clean = found[0] if len(found) == 1 and 2 <= len(assumption_terms(found[0])) and len(found[0]) <= 160 else None
     return DraftRequest(artifact.group(1).lower().replace("e-mail", "email"), clean)
 
 

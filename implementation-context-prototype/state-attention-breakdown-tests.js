@@ -10,7 +10,8 @@ const fs=require('fs'), vm=require('vm'), path=require('path');
 const dir=__dirname;
 
 const stub={innerHTML:'',hidden:true,classList:{toggle(){},add(){},remove(){}},setAttribute(){},addEventListener(){},querySelector(){return null},querySelectorAll(){return []}};
-const document={getElementById(id){return stub},querySelectorAll(){return []},querySelector(){return null},addEventListener(){},body:stub,contains(){return true},activeElement:null};
+const badge={textContent:'',hidden:true,setAttribute(){}};
+const document={getElementById(id){return stub},querySelectorAll(sel){return String(sel).includes('#openItemsActionCount')?[badge]:[]},querySelector(){return null},addEventListener(){},body:stub,contains(){return true},activeElement:null};
 
 const context={window:{},document,navigator:{clipboard:{writeText(){}}},location:{protocol:'file:',search:''},requestAnimationFrame(fn){fn()},HTMLElement:function(){},console,setTimeout,URLSearchParams,history:{replaceState(){}}};
 vm.createContext(context);
@@ -74,6 +75,34 @@ api.renderOverview();
 html=stub.innerHTML;
 check('everything that fits renders without a truncation note', !html.includes('more in Open Items'), html);
 check('the single blocking question is both counted and rendered as a row', /1 blocking question/.test(html) && countOccurrences(html,'blocker')===1);
+
+// #685 (prod QA, Nov 16): the Workspace said "10 items are waiting on you" while the Open Items badge said 11,
+// because the Workspace left out the bundled DEC-026 re-check entry. Both must count the same things.
+const flagged=(id,needsRecheck)=>({id,state:'current',projectArea:'workflow',areaName:'Scope',areaSortOrder:10,title:id,statement:id,needsRecheck});
+function workspaceTotal(){api.renderOverview();const m=stub.innerHTML.match(/(\d+) items? (?:is|are) waiting on you/);return m?Number(m[1]):0;}
+function navTotal(){api.updateNav();return Number(badge.textContent||0);}
+const manyReviews=[1,2,3,4,5,6,7].map(i=>({id:`r-${i}`,status:'pending',summary:`Review ${i}`}));
+const threeBlockers=[1,2,3].map(i=>({id:`q-${i}`,status:'open',blocking:true,text:`Blocker ${i}`,blocks:'launch'}));
+for(const [label,reviews,questions,knowledge] of [
+  ['Northstar shape: 7 Reviews, 2 items to re-check, 3 blockers',manyReviews,threeBlockers,[flagged('a',true),flagged('b',true),flagged('c',false)]],
+  ['no re-check items',manyReviews,threeBlockers,[flagged('c',false)]],
+  ['re-check only',[],[],[flagged('a',true)]],
+  ['1 Review, re-check, 1 blocker',[manyReviews[0]],[threeBlockers[0]],[flagged('a',true)]],
+]){
+  api.state.data.reviews=reviews;api.state.data.questions=questions;api.state.data.knowledge=knowledge;
+  const w=workspaceTotal(), n=navTotal();
+  check(`Workspace count equals the Open Items badge (${label})`, w===n, `workspace ${w}, badge ${n}`);
+}
+api.state.data.reviews=manyReviews;api.state.data.questions=threeBlockers;api.state.data.knowledge=[flagged('a',true),flagged('b',true)];
+check('Northstar shape counts 11, the re-check entry as one', workspaceTotal()===11, stub.innerHTML);
+api.state.data.reviews=[];api.state.data.questions=[];api.state.data.knowledge=[flagged('a',true)];
+api.renderOverview();html=stub.innerHTML;
+check('a re-check alone is not "You\'re caught up"; it renders a row that opens the filtered Current State',
+  !html.includes("You're caught up") && /class="attention-item recheck" data-action="open-recheck-items"/.test(html) && /1 item is waiting on you/.test(html), html);
+api.state.data.reviews=[manyReviews[0]];api.state.data.questions=[threeBlockers[0]];api.state.data.knowledge=[flagged('a',true),flagged('b',true)];
+api.renderOverview();html=stub.innerHTML;
+check('the re-check row sits after the Reviews and before blocking questions, and the breakdown says so',
+  html.indexOf('attention-item review')<html.indexOf('attention-item recheck') && !html.includes('attention-item blocker') && /1 review · 1 re-check · \+1 more in Open Items/.test(html), html);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail) process.exit(1);

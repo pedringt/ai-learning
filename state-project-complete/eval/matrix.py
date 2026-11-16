@@ -568,6 +568,12 @@ class CallCounter:
                 counter._record(None, started, exc, kwargs.get("model"))
                 raise
             counter._record(message, started, model=kwargs.get("model"))
+            # #682: the raw output for non-streamed calls too (the Ask suites' default transport is run_ask), so a
+            # claim the checks withheld can be read. Repeat files only, as for streamed calls.
+            text = "".join(getattr(block, "text", "") or "" for block in getattr(message, "content", None) or [])
+            if text:
+                with counter._lock:
+                    counter.usage[-1]["raw_text"] = text[:6000]
             return message
 
         def stream(self, *args, **kwargs):
@@ -694,7 +700,8 @@ def ask_record(r) -> dict[str, Any]:
             **({"model_output_excerpt": _excerpt(_answer_text(r.answer))} if outcome == "fail" else {}),
             **({"summary_repetition": _summary_repetition(r.answer)} if r.answer else {}),
             **(_review_capture(r) if r.answer else {}),
-            **({"ask_latency": r.latency} if getattr(r, "latency", None) else {})}
+            **({"ask_latency": r.latency} if getattr(r, "latency", None) else {}),
+            **({"withheld_units": r.withheld_units} if getattr(r, "withheld_units", None) else {})}
 
 
 def _review_capture(r) -> dict[str, Any]:

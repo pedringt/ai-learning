@@ -66,6 +66,7 @@
       backendReviewId:r.id,
       evidenceId:r.evidence_id,
       topics:affected.map(x=>x.topic).filter(Boolean),
+      affectedStateIds:affected.map(x=>x.id).filter(Boolean),
       status:'pending',
       title:reviewTypeTitle(r.review_type),
       summary:r.decision_question,

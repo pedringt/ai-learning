@@ -576,6 +576,10 @@ State gets logins (an owner to notify becomes possible), or the bundled Review e
 - **Why this matters:** the collapsed Review row shows the Review's existing "why this matters" line (model-written `why_consequential`).
 - **Bulk "Leave unchanged":** any Reviews with that decision can be selected and closed together. Under DEC-026 this confirms the items those Reviews are about, the same as deciding each one.
 - **The decision is labelled "Keep Current State as is"** on each card and in bulk (Nov 15), replacing #107's "Leave unchanged", which read as unclear. The bulk confirm says what happens: "Close N proposed changes without applying them? Current State won't change. These proposals will be closed, and the items they're about will be marked as confirmed today." Paige chose this knowing #107 had replaced an earlier "Keep Current State" label.
+- **Amendment (Paige, Nov 16, #691): the bulk confirm adapts to what is actually confirmed.** A Review that only adds an item is about no existing item, so "the items they're about" referred to nothing. The confirmed items are the same ones the backend confirms: the Review's linked items plus each proposal's existing item, counted once.
+  - Every selected Review touches an existing item: the wording above, unchanged.
+  - Every selected Review is add-only: "Current State won't change. These proposals will be closed. They don't touch any existing item, so nothing is marked as confirmed."
+  - A mix of the two: "Current State won't change. These proposals will be closed, and the N items they're about will be marked as confirmed today."
 
 **Why**
 Northstar opens with 7 Reviews and 3 blocking Questions; the order put the oldest first, not the most consequential, and the reason to care was hidden inside each card.
@@ -587,3 +591,33 @@ Northstar opens with 7 Reviews and 3 blocking Questions; the order put the oldes
 
 **Revisit when**
 Bulk leave-unchanged is used to clear Reviews nobody read (bulk confirmations with no prior card opens), or the order hides an at-risk Review people needed to see.
+
+### DEC-028 — Ask may repeat a pending item's wording under a pending frame; claims cite every record they draw from; eval wording corrections (#682)
+
+**Status:** Decided (Paige, Nov 16). V1 and the scorer corrections are on `eval/682-validation`, not yet on `staging`.
+**Date:** 2026-11-16
+**Related:** #682, DEC-021, DEC-022, R-022, R-024; `ask_assertions.py`, `eval/quality_harness.py`
+
+**Decision**
+- **Accurately stating a pending item (V1).** Ask may repeat what a pending item says, including a status word in its own text ("the approved $40,000 pilot budget"), as long as the same clause makes clear it is still pending review ("…is a pending Review proposal", "…is proposed", "…is awaiting review / a decision", "…is under review"). Any other status the clause doesn't cover is still withheld ("the approved budget is pending implementation", "the budget is approved at $40,000").
+- **Claims cite every record they draw from (V2 rejected as proposed).** A claim may combine Current State records, but every number in it must come from a record it cites. Ask does not search other Current State records to rescue an incompletely cited claim: that would remove part of the anchor check's protection against a number on the wrong subject. Correct claims that disappear for this reason are to be fixed by better citation coverage (the model selects and cites each record it uses) and a supported record-text fallback for claims, each measured first.
+- **"Should wait" prompt change held (P1).** Replacing the compound-question rule had no measurable benefit (2/30 → 1/30) and a possible adversarial cost. The "should wait" answer is a real authority error and stays open (R-024); a narrower rewording (removing only the dependency/condition sentence) is to be measured separately against the unchanged baseline, with the Ask-quality eval, before any promotion.
+- **Authority scorer wording (S1).** The authority check also accepts "awaiting a decision", "awaiting decision", "not yet decided" and "no decision (is) recorded", but only when the phrase and "review" are both in Ask's own claims: a card quoting a record (whose text may itself say "no decision is recorded") never completes the match. "Once accepted" is excluded: it states a condition, not that the item is pending. This amends the Oct 16 note that the authority check keeps its original list.
+- **Uncertainty scorer wording (S2).** The uncertainty check also accepts "does not have confirmed" and "blocking question is open". "Does not show" is excluded: the check reads the whole answer, and an unrelated sentence could satisfy it.
+- These are corrections to what the scorer recognises, justified by the wording. Paige's judgment covers the quoted wording only; it does not certify the complete answers or resolve any other release failure, including the failed Nov 16 release check.
+
+**Why**
+In 585 saved answers (production main and staging, x15 each), none of the 5 authority failures presented a pending item as settled; each was correct wording the scorer did not recognise. The compound scenario's misses came from Ask withholding correct claims: 11 of 16 in run 43817087174 repeated the Review's own word "approved" under a pending frame, 4 used "Tier 1" from a Current State record they did not cite, and 2 said "should wait".
+
+**Measured (offline replay of captured outputs; no model calls)**
+- Ask run 43817087174 (x30): staging 372/390 → V1 383 → V1 + S1 + S2 385/390; compound 14/30 → 25/30. The remaining compound misses: 2 "should wait" (R-024), 3 "Tier 1" (citation follow-up).
+- Adversarial baseline run 43819892532 (x30): 637/690 under every combination (no change).
+- Rescoring 2,745 saved answers: 11 changed, all within the approved wording (5 authority, 6 uncertainty). One correct answer ("an open, undecided Review", 2532/5) remains a known false alarm.
+
+**Rejected / deferred**
+- V2 as proposed (any shown Current State record may supply a claim's numbers).
+- S1 matching anywhere in the answer (card text could satisfy it); "once accepted"; "does not show".
+- P1 as written.
+
+**Revisit when**
+The citation-coverage or fallback work lands (re-measure "Tier 1"-type misses), the narrower P1 rewording is measured, or a repeated-wording claim is read as settled by a reviewer.

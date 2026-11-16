@@ -145,5 +145,16 @@ check('routing anchor force-expands Open Questions even from the null default', 
 check('the scroll anchor is consumed after use', context.window.__stateScrollAnchor===undefined);
 check('"Show current project state" is left as a normal answer, not a routing card', !['pending','open','blockers'].includes(api.detectAskIntent('Show current project state')?.kind));
 
+// #693 (Nov 16): a question naming another project must not get this project's counts. Asked in Juniper,
+// "What open Reviews does the Northstar project have?" showed Juniper's Review count; the backend now declines it.
+api.state.data.project={...api.state.data.project,id:'juniper',name:'Juniper Office Move'};
+api.state.data.projects=[{id:'northstar',name:'Northstar'},{id:'juniper',name:'Juniper Office Move'},{id:'project-1a2b',name:'Harbor Lights'}];
+const routing=context.window.STATE_ASK_ROUTING;
+check('#693: naming another project by name leaves it to the backend',routing.askRoutingCardHtml('What open Reviews does the Northstar project have?')===null);
+check("#693: a possessive name counts too",routing.askRoutingCardHtml("List Northstar's open reviews")===null);
+check('#693: a created project is named by its full name',routing.askRoutingCardHtml('What is blocking Harbor Lights?')===null);
+check('#693: the active project by name still routes',!!routing.askRoutingCardHtml('What open reviews does Juniper have?'));
+check('#693: a plain inventory question still routes',!!routing.askRoutingCardHtml('What open Reviews are there?'));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail) process.exit(1);
