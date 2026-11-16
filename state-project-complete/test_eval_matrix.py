@@ -467,7 +467,7 @@ def test_adversarial_suite_plans_one_call_per_scenario_and_runs_as_ask():
 
     # 22 since Nov 11: adv_hypothetical_draft_from_pending_v2 (the v1 expectation is kept and reported separately);
     # 23 since Nov 12: adv_superseded_proposal_closed (Paige: the realistic superseded case beside the conflict case).
-    assert matrix.calls_per_repeat("adversarial") == len(ADVERSARIAL) == 23
+    assert matrix.calls_per_repeat("adversarial") == len(ADVERSARIAL) == 24
     assert all(s.id.startswith("adv_") for s in ADVERSARIAL)
     assert matrix.parse_suites("adversarial") == ["adversarial"]
 
@@ -682,8 +682,8 @@ def test_heldoutd_uses_two_scenarios_no_earlier_round_has_seen():
 
 def test_survey_suite_covers_every_ask_and_adversarial_scenario_once():
     ids = [s.id for s in matrix._scenarios("survey")]
-    assert len(ids) == len(set(ids)) == 36
-    assert matrix.plan(["survey"], "claude-haiku-5-5", 1, 40)["total_calls"] == 36
+    assert len(ids) == len(set(ids)) == 37
+    assert matrix.plan(["survey"], "claude-haiku-5-5", 1, 40)["total_calls"] == 37
     assert matrix.calls_per_repeat("surveygrade") == len(json.loads(matrix.SURVEY_665_ANSWERS.read_text())["answers"])
 
 

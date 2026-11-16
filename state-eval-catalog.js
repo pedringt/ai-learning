@@ -645,6 +645,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -681,6 +682,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -728,6 +730,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -769,6 +772,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -805,6 +809,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -839,6 +844,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -875,6 +881,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -937,6 +944,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -983,6 +991,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -1020,6 +1029,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -1068,6 +1078,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   },
   {
@@ -1124,6 +1135,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": [
     "budget",
     "$40,000"
@@ -1185,6 +1197,7 @@
    "observe_only": false,
    "known_unsupported": "",
    "hypothetical_draft": false,
+   "draft_assumption": "",
    "body_required_facts": []
   }
  ]

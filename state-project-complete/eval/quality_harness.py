@@ -662,6 +662,12 @@ def marked_draft(answer: Any) -> bool:
     return any(isinstance(s.get("hypothetical"), dict) and s["hypothetical"].get("line") for s in _sections(answer))
 
 
+def draft_assumptions(answer: Any) -> list[str]:
+    """The assumptions the answer's marked drafts show (#694); an unclear one shows none."""
+    return [str(s["hypothetical"].get("assumption") or "") for s in _sections(answer)
+            if isinstance(s.get("hypothetical"), dict) and s["hypothetical"].get("line")]
+
+
 def outside_marked_draft(answer: Any) -> Any:
     """The answer with a marked draft's body removed, for checks that apply only outside it."""
     import copy
@@ -697,6 +703,9 @@ def score_ask_answer(scenario: AskQualityScenario, answer: dict[str, Any]) -> As
         )
     if scenario.hypothetical_draft and not marked_draft(answer):
         missing += (HYPOTHETICAL_DRAFT_UNMARKED,)
+    elif scenario.draft_assumption and not any(_normalize(scenario.draft_assumption) in _normalize(a)
+                                               for a in draft_assumptions(answer)):
+        missing += (f"the draft's stated assumption ({scenario.draft_assumption!r})",)
     asserted = tuple(claim for claim in scenario.forbidden_claims if _asserts(text, _normalize(claim)))
     numbers = tuple(unsupported_numbers(text, _normalize(scenario_record_text(scenario)))) if scenario.forbid_unsupported_numbers else ()
     required_ok = not missing

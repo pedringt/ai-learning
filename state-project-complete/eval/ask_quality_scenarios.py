@@ -55,6 +55,9 @@ class AskQualityScenario:
     # line, ask_drafts.py); natural wording is then allowed inside the marked draft, and every factual and authority
     # check reads only the text outside it. The v1 scenario keeps its original expectation and is reported separately.
     hypothetical_draft: bool = False
+    # #694 (Nov 16): the assumption the request states, which the marked draft must show in the user's words. A draft
+    # marked "couldn't tell exactly what this draft assumes" fails it as a missing fact.
+    draft_assumption: str = ""
     # Nov 14 (Paige): "Label counts; body must still answer." Facts the answer's own claims must state, each one phrase
     # or a tuple of alternatives, checked in the claims only (not a labelled Needs-review item or a refinement chip). An
     # answer that leaves a half of the question to the Review item fails as a missing fact (quality), not authority.
