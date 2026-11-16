@@ -42,6 +42,12 @@ _REPORTED = re.compile(
 _STATE_REPORTS = re.compile(r"\bcurrent\s+state\s+(?:\w+\s+){0,2}?(?:says|said|states?|shows?|records?|notes?|lists?|treats?)\b",
                             re.IGNORECASE)
 _ABOUT_STATE = re.compile(r"\bcurrent\s+state\b", re.IGNORECASE)
+# The look-back is the clause, not the sentence (Nov 16 probes): "A Review proposing $5,000 is pending, but Current
+# State's $2,500 limit is still current" is Ask's own verdict after "but". ask_assertions._CLAUSE_BREAK's breaks, with a
+# comma rule that keeps only a thousands separator, so "$5,000, the limit…" still splits. Local to this check: the
+# shared rule is its own issue.
+_CLAUSE_BREAK = re.compile(r"[.;:!?]|,(?!\d{3}\b)|\s[—–]\s|\b(?:but|so|while|although|though|whereas|because|therefore|"
+                           r"thus|which\s+means|meaning)\b", re.IGNORECASE)
 
 
 def freshness_verdict(text: str, *, about_state: bool) -> str | None:
@@ -52,7 +58,7 @@ def freshness_verdict(text: str, *, about_state: bool) -> str | None:
         return None
     from ask_assertions import _REPORTING
     for match in _FRESHNESS.finditer(text or ""):
-        before = re.split(r"[.;!?]", text[:match.start()])[-1]
+        before = _CLAUSE_BREAK.split(text[:match.start()])[-1]
         if _OPEN.search(before):
             continue
         framed = _ABOUT_STATE.sub(" ", before)         # "State" in "Current State" is not the reporting verb "states"

@@ -72,6 +72,35 @@ def test_wording_that_is_not_a_freshness_verdict_on_current_state_is_left_alone(
     assert freshness_verdict(text, about_state=about_state) is None
 
 
+# Nov 16 crafted probes (#682 session): the look-back is the clause, not the sentence. A pending or reporting word
+# earlier in the sentence doesn't release Ask's own verdict after a comma, "but", "so" or "although"; and a Current State
+# clause earlier on doesn't make a later reported one Ask's verdict.
+@pytest.mark.parametrize("text", [
+    "A Review proposing $5,000 is pending, but Current State's $2,500 limit is still current.",
+    "Although a pending Review proposes $5,000, the $2,500 limit in Current State is up to date.",
+    "The proposal has not been accepted, so the Current State limit is still current.",
+    "Nothing is pending, and Current State is up to date.",
+    "Considering the open Review, Current State is out of date.",
+    "Suggested by Finance or not, the $2,500 limit is current and does not need a re-check.",
+    # Already right before the change.
+    "Although Finance confirmed it, the VIP exception is stale.",
+    "The $2,500 limit in Current State is up to date.",
+])
+def test_ask_own_verdict_after_a_clause_break_is_withheld(text):
+    assert freshness_verdict(text, about_state=True)
+
+
+@pytest.mark.parametrize("text", [
+    "Current State says the limit is $2,500, and Finance calls it outdated.",
+    # Already right before the change.
+    "A pending Review proposes $5,000, saying the $2,500 figure is outdated.",
+    "Current State sets the limit at $2,500, while a pending Review argues it is outdated.",
+    "Finance treats the $2,500 figure as outdated, but Current State still sets $2,500.",
+])
+def test_a_reported_verdict_in_its_own_clause_is_left_alone(text):
+    assert freshness_verdict(text, about_state=True) is None
+
+
 # --- #704: existence absence ----------------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("text,query", [
