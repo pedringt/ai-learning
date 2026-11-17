@@ -33,6 +33,7 @@ from eval.quality_harness import (
 )
 from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 from eval.authority_lab_export import build_envelope
+from eval.pending_omission import lost_pending_claim
 from eval.scoring_version import scoring_version
 from eval.quality_report import analytics_payload as _analytics_payload, failure_details as _failure_details
 from eval.release_gate import (ASK_SUITE, REVIEW_SUITE, accepted_scenarios, ask_not_counted, fetch_analytics, gate,
@@ -92,6 +93,8 @@ def _ask_report(provider) -> dict:
     started = time.time()
     results = [run_ask_quality_scenario(scenario, provider) for scenario in ASK_SCENARIOS]
     metrics = ask_quality_metrics(results)
+    # #696 (DEC-030 amendment): "the answer lost its pending claim", tracked apart from the authority check; not a gate.
+    metrics["lost_pending_claim"] = sum(lost_pending_claim(r.answer, r.withheld_units) for r in results if not r.error)
     return {
         "suite": "ask_quality",
         "scoring_version": scoring_version("ask_quality"),
@@ -116,6 +119,8 @@ def _ask_report(provider) -> dict:
                 "passed": r.passed,
                 "error": r.error,
                 "answer": r.answer,
+                "withheld_units": r.withheld_units,
+                "lost_pending_claim": lost_pending_claim(r.answer, r.withheld_units),
             }
             for r in results
         ],
