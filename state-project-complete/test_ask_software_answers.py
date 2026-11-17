@@ -105,6 +105,21 @@ def test_freshness_questions_are_recheck_questions(query):
     assert is_recheck_question(query)
 
 
+# #706 (Nov 16 production QA): a question that asks for every flagged item got the "couldn't tell which item" preface,
+# which reads as an error. Fixed on staging by #703's freshness words; this keeps the answer itself clean. A question
+# that names an item State can't match still gets the preface (test_an_unmatched_subject_says_so).
+@pytest.mark.parametrize("query", FRESHNESS_LISTS + ["Which Current State items are stale or need a re-check?",
+                                                     "Which Current State items need a re-check?",
+                                                     "Is anything in Current State outdated or due for a re-check?"])
+def test_a_list_all_question_gets_the_list_without_the_preface(db_url, query):
+    with _client(db_url) as client:
+        result = _ask(client, query)
+        assert result["timing"]["pipeline"] == "software_recheck"
+        first = result["answer"]["claims"][0]["text"]
+        assert first.startswith("2 Current State items need a re-check"), first
+        assert not any("couldn't tell" in c["text"] for c in result["answer"]["claims"])
+
+
 @pytest.mark.parametrize("query", FRESHNESS_NEAR_MISSES)
 def test_freshness_words_that_are_not_the_question_are_left_to_the_model(query):
     assert not is_recheck_question(query)
