@@ -91,11 +91,11 @@
 <section class="section product-model">
 <div class="kicker" data-edit="tastemake-9">What I built</div>
 <h2 data-edit="tastemake-10">An editable model of personal taste</h2>
-<p data-edit="tastemake-11">Tastemake looks at your favorites and ratings and proposes taste patterns across books, movies, TV, and games. Each pattern lists the titles behind it, anything that cuts against it, and how well supported it is.</p>
-<p data-edit="tastemake-12">You can confirm a pattern, reject it, say it’s only partly right, or limit it to certain contexts. Rejecting a pattern doesn’t erase the ratings behind it.</p>
+<p data-edit="tastemake-11">Tastemake looks at your favorites and ratings and proposes taste patterns across books, movies, TV, and games. Each pattern lists the titles behind it, anything that cuts against it, and how well supported it is. When you rate more titles, a refresh files each new rating under an existing pattern, as evidence against one, or as not yet part of a pattern. It doesn’t rewrite patterns you’ve confirmed.</p>
+<p data-edit="tastemake-12">You can confirm a pattern, reject it, say it’s only partly right, or limit it to certain contexts. Under &ldquo;Partly,&rdquo; you can mark titles that don’t fit, and the pattern stops citing them. Rejecting a pattern doesn’t erase the ratings behind it.</p>
 <div class="correction-split" role="group" aria-label="What corrections change">
-  <div class="split-col split-yes"><h3 data-edit="tastemake-13">What corrections change today</h3><div class="split-text" data-edit="tastemake-14">The visible Taste Profile, pattern history, and profile refreshes. Software enforces certain corrections, including rejected patterns and areas excluded from a pattern. A &ldquo;Not me&rdquo; answer also moves titles that clearly match that pattern to the back of the shortlist.</div></div>
-  <div class="split-col split-not"><h3 data-edit="tastemake-15">What corrections don’t yet control</h3><div class="split-text" data-edit="tastemake-16">Which catalog titles software retrieves, and how &ldquo;Partly&rdquo; or &ldquo;Not sure&rdquo; answers affect the shortlist. The recommendation AI receives corrections as instructions, but software doesn’t yet verify that every pick follows them.</div></div>
+  <div class="split-col split-yes"><h3 data-edit="tastemake-13">What corrections change</h3><div class="split-text" data-edit="tastemake-14">The visible Taste Profile, pattern history, and profile refreshes. Software enforces rejected patterns, areas you exclude from a pattern, and titles you say don’t fit it. A &ldquo;Not me&rdquo; answer or an excluded area also moves titles that clearly match that pattern to the back of the shortlist.</div></div>
+  <div class="split-col split-not"><h3 data-edit="tastemake-15">What corrections don’t control</h3><div class="split-text" data-edit="tastemake-16">Which catalog titles software retrieves, and how &ldquo;Not sure&rdquo; answers or the context on a &ldquo;Partly&rdquo; answer affect the shortlist. The recommendation AI receives corrections as instructions, but software doesn’t verify that every pick follows them.</div></div>
 </div>
 <p data-edit="tastemake-17">Saving a title you haven’t tried or marking it Not interested doesn’t count as evidence of taste. When AI is unavailable, recommendations fall back to catalog picks.</p>
 </section>
@@ -118,9 +118,9 @@
 </section>
 
 <section class="section next-tests">
-<h2 data-edit="tastemake-24">What else changed through testing</h2>
+<h2 data-edit="tastemake-24">What testing shaped</h2>
 <ul class="findings-list" role="list">
-  <li class="finding"><h3 class="finding-title" data-edit="tastemake-25">Honest feedback</h3><div class="finding-text" data-edit="tastemake-26">Code review showed the app claiming that some corrections changed recommendations when they didn’t. Some Live AI labels and success messages were misleading too. I rewrote them to match what the app actually does.</div></li>
+  <li class="finding"><h3 class="finding-title" data-edit="tastemake-25">Honest feedback</h3><div class="finding-text" data-edit="tastemake-26">Labels and success messages describe only what the software does, including which corrections reach recommendations and when Live AI is in use. Code review is how I check that they don’t claim more.</div></li>
   <li class="finding"><h3 class="finding-title" data-edit="tastemake-27">Simpler onboarding</h3><div class="finding-text" data-edit="tastemake-28">Browse lets people find and rate titles they already know. Questions about why they liked something come after that first reaction.</div></li>
   <li class="finding"><h3 class="finding-title" data-edit="tastemake-29">Candidate quality</h3><div class="finding-text" data-edit="tastemake-30">Scoring leans heavily on genre. Retrieval order can push higher-scoring titles off the shortlist, and the scorer doesn’t use synopses. A reason on a Liked or Loved rating gives that rating more weight, but the scorer doesn’t read what the reason says.</div></li>
 </ul>
@@ -135,12 +135,13 @@
   <ol class="progression-steps">
     <li class="progression-step"><span class="step-num">01</span><h3>Noticed</h3><p>“Quirky character-driven comedy” lumped sketch and docu-reality shows like <cite>Nathan for You</cite> in with sitcoms like <cite>The Office</cite>.</p></li>
     <li class="progression-step"><span class="step-num">02</span><h3>Tested</h3><p>I gave the model readable genres and short synopses. Its wording changed, but across 19 blind judgments from my own profile, none of the comedy pairings fit.</p></li>
-    <li class="progression-step"><span class="step-num">03</span><h3>Understood</h3><p>I’d answered “Partly” on that pattern. That kept its name in place but couldn’t say which part was wrong.</p></li>
-    <li class="progression-step"><span class="step-num">04</span><h3>Explored</h3><p>I prototyped a way to mark the words or titles that don’t fit and approve a suggested correction.</p></li>
+    <li class="progression-step"><span class="step-num">03</span><h3>Understood</h3><p>I’d answered “Partly” on that pattern. A “Partly” answer alone keeps the pattern’s name but can’t say which part is wrong.</p></li>
+    <li class="progression-step"><span class="step-num">04</span><h3>Built</h3><p>Under “Partly,” you mark the titles that don’t fit, and the pattern stops citing them.</p></li>
   </ol>
-  <p class="progression-note">Research prototype only, not part of Tastemake. Seven trials I ran on myself, with hand-written suggestions standing in for the AI.</p>
+  <p class="progression-note">Marking words and approving an AI-suggested rewording is a research prototype, not part of Tastemake. Seven trials I ran on myself, with hand-written suggestions standing in for the AI.</p>
 </figure>
-<p data-edit="tastemake-39">In one run, I marked five shows as fitting a different side of my taste. The suggested correction quietly dropped them and kept only the sitcoms, while its description still mentioned sketch and docu-style comedy. That’s when I asked, “Why does it only mention the sitcoms as what this comes from?” Every step had worked. It just hadn’t kept track of everything I’d told it.</p>
+<p data-edit="tastemake-39">In one prototype run, I marked five shows as fitting a different side of my taste. The suggested correction quietly dropped them and kept only the sitcoms, while its description still mentioned sketch and docu-style comedy. That’s when I asked, “Why does it only mention the sitcoms as what this comes from?” Every step had worked. It just hadn’t kept track of everything I’d told it.</p>
+<p data-edit="tastemake-40">That’s why Tastemake does the part software can check: a title you mark stays out of the pattern. Rewording stays in research, because in my tests the model sometimes kept the part I’d said was wrong. The Example Profile shows a marked correction on &ldquo;Exploration-heavy games with puzzles,&rdquo; where I said two Resident Evil games don’t fit.</p>
 </section>
 
 <section class="section current-conclusion">
