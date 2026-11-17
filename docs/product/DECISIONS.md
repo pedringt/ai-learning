@@ -689,3 +689,23 @@ The #701 investigation found the remaining release-check variance came from thre
 
 **Revisit when**
 A shown-but-unselected citation is found to mislead, a new "should wait" wording is approved and measured, or staging's quality reports stop being saved.
+
+### DEC-031 — A broad "What's still open?" answer shows the project's open Questions and pending Reviews, counted by software (#710)
+
+**Status:** Decided (Paige, Nov 17). Built on `fix/710-open-work-line`.
+**Date:** 2026-11-17
+**Related:** #710, #699, #709, #684, DEC-023; `ask_software_answers.py` (`is_open_work_question`, `open_work_totals`), `ask_service._with_open_work`, `ask_display.open_work_line`, `context-ask.js` (`openWorkLine`), `context-app.js` (`intentAskHtml`)
+
+**Decision**
+- **Trigger.** Broad requests about the project's unresolved work: "What's still open?", "What's unresolved?", "What's pending?", "What's outstanding?", "What's left to decide?" and close variants. A question with its own subject ("Is the vendor question still open?", "What's pending on the VIP carve-out?") does not trigger it; a word like "open" or "pending" alone is not enough.
+- **Both totals, always.** One line, e.g. "3 open Questions · 2 Reviews awaiting a decision", shown even when neither is zero. A zero reads "No open Questions" / "No Reviews awaiting a decision". Blocking Questions are not broken out.
+- **Whole project, selected project.** The totals count every open Question (not resolved or stopped ones) and every pending Review in the project the request named, never only the records the answer used, and never another project's (#709).
+- **Questions and Reviews stay distinct.** A pending Review that proposes a Question counts as a Review until accepted.
+- **Software, not the model.** The counts are set by software on every final answer; the model cannot set them. The model's own text is unchanged.
+- **Follow-ups keep it.** A refinement of such an answer ("shorten it", "make it leadership-ready") keeps the line, recounted for that request.
+- **Placement.** Directly under the answer's headline, visually secondary to it, ending with a "See all in Open Items" link (as in #684). Copy includes the line after the headline.
+- **The browser's Open Items card says the same thing.** "What's still open?", "What's unresolved?" and other open-Questions inventory wording are answered by the browser's routing card, with no Ask call (Paige, Nov 17: no model is needed for counts software already has). The card shows the same line, counted from the same open Questions and pending Reviews of the tab's own project, with its Open Items link. Before the project's records have loaded it does not answer (no guessed zero); Ask answers instead.
+- **Not every answer.** Showing what an answer left out on all answers stays a separate question (#699).
+
+**Why**
+On Nov 17 Ask told a user there were no open Questions while Reviews were waiting for a decision. That was correct, since the two are different records, but incomplete for someone asking what is unresolved. Software counts are predictable and testable; asking the model to mention both would not be.

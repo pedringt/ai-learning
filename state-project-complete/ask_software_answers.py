@@ -137,6 +137,47 @@ def is_recheck_question(query: str) -> bool:
     return bool(_RECHECK_QUESTION.search(query or "") or _FRESHNESS_QUESTION.search(query or ""))
 
 
+# --------------------------------------------------------------------------------------------------------------------
+# #710 (Paige, Nov 17): how much unresolved work the project has
+#
+# For a broad request about unresolved work ("What's still open?", "What's unresolved?", "What's pending?", "What's
+# outstanding?", "What's left to decide?"), Ask shows one software line under its headline with both totals: every open
+# Question and every pending Review in the active project, never only the records the answer used. Questions and Reviews
+# stay distinct: a pending Review that proposes a Question counts as a Review. The request must be about the project as
+# a whole, so a question with its own subject ("Is the vendor question still open?", "What's pending on the VIP
+# carve-out?") does not trigger it: every word has to be one of the words below.
+
+_OPEN_WORK_SIGNALS = {"open", "unresolved", "pending", "outstanding", "undecided"}
+_OPEN_WORK_DECIDE = re.compile(r"\b(?:left|still|yet|remain(?:s|ing)?)\s+(?:for\s+us\s+)?to\s+(?:be\s+)?decide(?:d)?\b")
+_OPEN_WORK_WORDS = _OPEN_WORK_SIGNALS | {
+    "what", "whats", "s", "is", "are", "was", "be", "there", "still", "currently", "right", "now", "at", "the",
+    "moment", "in", "on", "for", "this", "our", "project", "here", "overall", "anything", "any", "everything", "else",
+    "all", "list", "show", "me", "us", "we", "tell", "give", "please", "can", "you", "item", "items", "work", "things",
+    "stuff", "left", "to", "decide", "decided", "remain", "remains", "remaining", "yet", "a", "of", "and", "or",
+    "questions", "question", "reviews", "review", "decisions", "decision", "how", "many", "much", "which", "do", "have",
+    "has", "need", "needs", "unresolved", "awaiting", "waiting", "so", "far", "today",
+}
+
+
+def is_open_work_question(query: str) -> bool:
+    """True when the whole request asks what is unresolved in the project, not about one subject."""
+    text = (query or "").lower().replace("\u2019", "'")
+    words = re.findall(r"[a-z]+", text)
+    if not words or len(words) > 14:
+        return False
+    if not (_OPEN_WORK_SIGNALS & set(words) or _OPEN_WORK_DECIDE.search(text)):
+        return False
+    return all(word in _OPEN_WORK_WORDS for word in words)
+
+
+def open_work_totals(connection: Any) -> dict[str, int]:
+    """Open Questions and pending Reviews in the connection's project (the project the request named, #709)."""
+    return {
+        "questions": len(list_questions(connection, "open")),
+        "reviews": len(list_presented_reviews(connection, "open")),
+    }
+
+
 def _subject_words(query: str) -> set[str]:
     return {_stem(w) for w in _words(query) if w not in _RECHECK_FILLER and len(w) > 1}
 

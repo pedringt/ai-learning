@@ -468,12 +468,17 @@
   // authoritative view for these counts. Route there instead: a count plus a
   // link, nothing Ask has to keep consistent on its own.
   function routingCardHtml({category,sentence,detail,count,view,anchor}){
-    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><div class="ask-routing-card-head"><span class="ask-routing-category">${esc(category)}</span><span class="ask-routing-count">${count}</span></div><p class="ask-routing-sentence">${esc(sentence)}</p>${detail?`<p class="ask-routing-detail">${esc(detail)}</p>`:''}<button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
+    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><div class="ask-routing-card-head"><span class="ask-routing-category">${esc(category)}</span>${count==null?'':`<span class="ask-routing-count">${count}</span>`}</div><p class="ask-routing-sentence">${esc(sentence)}</p>${detail?`<p class="ask-routing-detail">${esc(detail)}</p>`:''}<button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
   }
   function intentAskHtml(i){
     if(i.kind==='blockers'){ const n=openQuestions().filter(q=>q.blocking).length; return routingCardHtml({category:'Blockers',sentence:n===1?'1 question is blocking progress.':`${n} questions are blocking progress.`,detail:'Resolve these to keep the project moving.',count:n,view:'open-items',anchor:'open-items-blockers'}); }
     if(i.kind==='pending'){ const n=pendingReviews().length; return routingCardHtml({category:'Reviews',sentence:n===1?'1 review is waiting on a decision.':`${n} reviews are waiting on a decision.`,detail:'Waiting on a decision from you.',count:n,view:'open-items',anchor:'open-items-reviews'}); }
-    if(i.kind==='open'){ const n=openQuestions().length; return routingCardHtml({category:'Questions',sentence:n===1?'1 question is open.':`${n} questions are open.`,detail:'Not yet answered in the project record.',count:n,view:'open-items',anchor:'open-items-questions'}); }
+    // #710 / DEC-031 (Paige, Nov 17): "What's still open?" / "What's unresolved?" are answered here, with no Ask call.
+    // The card shows both totals in DEC-031's line, from this tab's own project (the same open Questions and pending
+    // Reviews the server counts, loaded with the tab's project id), so it never reads "0 questions" while Reviews wait.
+    // Until this project's Reviews and Questions have loaded, a zero would be a guess: let Ask answer instead.
+    if(i.kind==='open'&&API&&(state.backendStatus?.reviews!=='loaded'||state.backendStatus?.questions!=='loaded'))return null;
+    if(i.kind==='open'){ const q=openQuestions().length, r=pendingReviews().length; const work={questions:q,reviews:r}; return routingCardHtml({category:'Open work',sentence:ASK?.openWorkLine?.({open_work:work})||`${q} open Questions · ${r} Reviews awaiting a decision`,detail:null,count:null,view:'open-items',anchor:!q&&r?'open-items-reviews':'open-items-questions'}); }
     return null;
   }
 

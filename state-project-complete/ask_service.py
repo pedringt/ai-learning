@@ -24,7 +24,7 @@ from ask_claims import MAX_CLAIMS, ClaimChecker, anchors_supported, canonical_ca
 from ask_display import claim_lines, has_withheld, withheld_line
 from ask_refinement_transforms import apply_refinement_transform, detect_refinement_type
 from ask_withheld_log import record_withheld, withheld_kind
-from ask_software_answers import confirmation_fingerprint, software_answer
+from ask_software_answers import confirmation_fingerprint, is_open_work_question, open_work_totals, software_answer
 from db import project_id_of
 from ask_authority_text import (  # noqa: F401  (re-exported: tests import these from ask_service)
     _DEMO_SLUG_ID,
@@ -1414,7 +1414,37 @@ class _StreamChecks:
         return {"index": index, "section": section.model_dump(), "withheld_items": withheld}
 
 
+def _with_open_work(connection: Any, query: str, previous_answer: Mapping[str, Any] | None,
+                    payload: dict[str, Any]) -> dict[str, Any]:
+    """#710 (Paige, Nov 17): set the answer's open_work line, or clear it, on every final Ask payload.
+
+    Shown for a broad request about unresolved work, and kept on a refinement of such an answer ("shorten it"),
+    recounted now. The totals are the whole project's (the request's own project, #709), not the selected records.
+    """
+    answer = payload.get("answer") if isinstance(payload, dict) else None
+    if not isinstance(answer, dict):
+        return payload
+    keep = bool(previous_answer and previous_answer.get("open_work") and detect_refinement_type(query))
+    answer["open_work"] = open_work_totals(connection) if (is_open_work_question(query) or keep) else None
+    return payload
+
+
 def stream_ask_events(
+    connection: Any,
+    provider: AskProvider,
+    query: str,
+    previous_answer: Mapping[str, Any] | None = None,
+    today: date | None = None,
+    cancelled: threading.Event | None = None,
+    asker_zone: tzinfo | None = None,
+) -> Iterator[tuple[str, dict[str, Any]]]:
+    """_stream_ask_events, with the #710 open-work line on the final payload."""
+    for event, payload in _stream_ask_events(connection, provider, query, previous_answer, today=today,
+                                             cancelled=cancelled, asker_zone=asker_zone):
+        yield event, (_with_open_work(connection, query, previous_answer, payload) if event == "final" else payload)
+
+
+def _stream_ask_events(
     connection: Any,
     provider: AskProvider,
     query: str,
@@ -1522,6 +1552,12 @@ def stream_ask_events(
 
 def run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None,
             today: date | None = None, asker_zone: tzinfo | None = None) -> dict[str, Any]:
+    result = _run_ask(connection, provider, query, previous_answer, today=today, asker_zone=asker_zone)
+    return _with_open_work(connection, query, previous_answer, result)
+
+
+def _run_ask(connection: Any, provider: AskProvider, query: str, previous_answer: Mapping[str, Any] | None = None,
+             today: date | None = None, asker_zone: tzinfo | None = None) -> dict[str, Any]:
     total_started = time.perf_counter()
 
     # Nov 16 (#692): questions software answers from the record, with no model call (ask_software_answers.py).

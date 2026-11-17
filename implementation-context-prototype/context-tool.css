@@ -835,3 +835,5 @@ html body .review-source-excerpt .review-source-link .review-source-link-text{di
 .answered-review-missing,.answered-state-none{font-size:13px;color:var(--muted);margin:10px 0}
 /* #684: "Showing 6 of 13 other open Questions." under a truncated Ask starter section. */
 .ask-answer-section .ask-section-more{margin:6px 0 0;color:var(--muted);font-size:12.5px}.ask-answer-section .ask-section-more-link{font-size:12.5px;margin-left:4px}
+/* #710: the project's unresolved-work totals under an Ask headline; secondary to the headline. */
+.ask-live-answer .ask-open-work{margin:2px 0 12px;color:var(--muted);font-size:13px}.ask-live-answer .ask-open-work-link{font-size:13px;margin-left:4px}
