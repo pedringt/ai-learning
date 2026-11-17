@@ -41,8 +41,10 @@ check('Tastemake: six sections in the approved order',JSON.stringify(tasteSectio
 check('Tastemake: each section has exactly one heading',tasteSections.length===TASTE_SECTIONS.length&&tasteSections.every(x=>x.h2s===1),JSON.stringify(tasteSections));
 // Nov 16 (Paige): marking titles that don't fit is part of Tastemake; AI-suggested rewording is still research,
 // and the figure must say so.
+// Nov 17 (Paige): the step timeline became a narrative; the rewording stays labelled as an unreleased prototype.
 check('Tastemake: the second example keeps its research-prototype label for the rewording',
-  /<section class="section feedback-example">[\s\S]*<figure class="progression"[\s\S]*AI-suggested rewording is a research prototype, not part of Tastemake\.[\s\S]*hand-written suggestions[\s\S]*<\/figure>/.test(tastemake));
+  /<section class="section feedback-example">[\s\S]*AI-generated rewriting remains experimental[\s\S]*<p class="progression-note">The rewriting experiment was an early prototype[\s\S]*manually prepared suggestions\. It was not a released feature or an external-user study\.<\/p>/.test(tastemake)
+  &&!tastemake.includes('<figure class="progression"'));
 check('Tastemake: the two tests are one labelled figure, 98% beside 53%',
   /<figure class="test-compare" aria-labelledby="test-compare-label">[\s\S]*>98%<[\s\S]*>53%<[\s\S]*<\/figure>/.test(tastemake));
 check('Tastemake: the three findings are a list with their own headings',
