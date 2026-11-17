@@ -65,10 +65,10 @@
       }
     },
     {
-      id:'authority-lab',name:'Authority Lab',stageLabel:'In progress',noRuntimeAi:true,unmeasuredQuality:['the full lifecycle walkthrough'],description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
+      id:'authority-lab',name:'Authority Lab',stageLabel:'v1 released',noRuntimeAi:true,unmeasuredQuality:['the full lifecycle walkthrough'],description:'Prototype for deciding what an AI capability is allowed to do, based on evidence.',repo:'pedringt/authority-lab',branch:'main',
       focus:'Show authority as explicit, evidence-earned, conditional, reversible, and authorized by a named person.',
       evidence:['Lifecycle walkthrough','Authority decisions','Record history','Reversibility'],
-      nextDecision:'Decide whether the Refund recommendation walkthrough is clear enough to add a second capability.',
+      nextDecision:'Walk the v1 flows, then decide whether the Refund recommendation walkthrough is clear enough to add a second capability.',
       nextReview:'After the next full lifecycle walkthrough.',
       owner:'Product',
       qualityLabel:'Prototype Quality',
