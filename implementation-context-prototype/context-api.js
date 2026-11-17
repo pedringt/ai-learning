@@ -16,7 +16,38 @@
   // hydration, or a completed switch); requests made before that point omit
   // the header and the server falls back to its own default.
   let activeProjectId = null;
-  function setActiveProject(projectId) { activeProjectId = projectId || null; }
+  // #709: the server refuses a request whose project no longer exists (deleted in another tab, or a staging
+  // database that re-seeded) with code project_unavailable, instead of quietly using another project. Once that
+  // happens this tab sends no more writes until someone deliberately picks a project; listing, creating and
+  // switching projects stay allowed so they can.
+  let unavailableProjectId = null;
+  function setActiveProject(projectId) {
+    activeProjectId = projectId || null;
+    if (activeProjectId && activeProjectId !== unavailableProjectId) unavailableProjectId = null;
+  }
+  const PROJECT_MANAGEMENT_PATH = /^\/api\/projects(\/|$)/;
+  function projectUnavailableError(projectId) {
+    const error = new Error('This project is no longer available. Nothing was saved. Choose a project to keep working.');
+    error.status = 404;
+    error.projectUnavailable = true;
+    error.projectId = projectId;
+    return error;
+  }
+  // Call with any refused response's JSON body. Returns true (and tells the app) when it is project_unavailable.
+  function noteProjectUnavailable(payload) {
+    const detail = payload?.detail;
+    if (detail?.code !== 'project_unavailable') return false;
+    const first = unavailableProjectId === null;
+    unavailableProjectId = detail.project_id || activeProjectId || '';
+    if (first) document.dispatchEvent?.(new CustomEvent('state:project-unavailable', {detail: {projectId: unavailableProjectId}}));
+    return true;
+  }
+  // Throws before a write leaves the tab while its project is unavailable.
+  function guardProjectWrite(method, path) {
+    if (unavailableProjectId === null) return;
+    if ((method || 'GET').toUpperCase() === 'GET' || PROJECT_MANAGEMENT_PATH.test(path)) return;
+    throw projectUnavailableError(unavailableProjectId);
+  }
   function projectHeaders(extra = {}) {
     return activeProjectId ? {...extra, 'X-State-Project-Id': activeProjectId} : extra;
   }
@@ -43,6 +74,7 @@
     }
     let response;
     try {
+      guardProjectWrite(options.method, path);
       response = await fetch(`${base}${path}`, {...options, headers: projectHeaders(options.headers), signal: controller.signal});
     } catch (err) {
       if (err.name === 'AbortError') {
@@ -61,6 +93,7 @@
     }
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
+      if (noteProjectUnavailable(payload)) throw projectUnavailableError(payload.detail.project_id);
       const detail = payload?.detail;
       const message = detail?.error_details?.error_message || detail?.code || (typeof detail === 'string' ? detail : null) || `API error ${response.status}`;
       const error = new Error(message);
@@ -118,6 +151,7 @@
     };
     let response;
     try {
+      guardProjectWrite('POST', '/api/ask/stream');
       const post = withDate => fetch(`${base}/api/ask/stream`, {
         method: 'POST',
         headers: projectHeaders({'Content-Type':'application/json', 'Accept':'text/event-stream'}),
@@ -133,6 +167,7 @@
     if (!response.ok) {
       clearTimeout(watchdog);
       const payload = await response.json().catch(() => ({}));
+      if (noteProjectUnavailable(payload)) throw projectUnavailableError(payload.detail.project_id);
       const detail = payload?.detail;
       throw new Error(typeof detail === 'string' ? detail : `API error ${response.status}`);
     }
@@ -183,6 +218,10 @@
   window.STATE_API = Object.freeze({
     base,
     setActiveProject,
+    noteProjectUnavailable,
+    guardProjectWrite,
+    projectUnavailableError,
+    unavailableProject: () => unavailableProjectId,
     getAttention: () => request('/api/attention'),
     getBootstrap: () => request('/api/bootstrap'),
     getState: () => request('/api/state'),

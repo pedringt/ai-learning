@@ -25,6 +25,7 @@ from db import DB_ERRORS, connect
 from interpretation_pipeline_integrated import new_id
 from upload_text import UPLOAD_EXTENSIONS as _UPLOAD_EXTENSIONS, UPLOAD_MAX_BYTES as _UPLOAD_MAX_BYTES
 from upload_text import extract_upload_text as _extract_upload_text
+from project_scope import project_unavailable_http
 
 logger = logging.getLogger("state.baseline.intake")
 
@@ -70,7 +71,7 @@ def _store_pending_evidence(settings: Any, project_id: str, content: str, source
         connection.project_id = project_id
         exists = connection.execute("SELECT id FROM projects WHERE id=?", (project_id,)).fetchone()
         if exists is None:
-            raise HTTPException(status_code=404, detail="Project not found")
+            raise project_unavailable_http(project_id)  # #709: same refusal the frontend recognises
         if not is_baseline_setup(connection):
             raise HTTPException(status_code=409, detail={"code": "baseline_not_active"})
 

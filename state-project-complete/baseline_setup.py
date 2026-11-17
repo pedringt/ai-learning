@@ -23,6 +23,7 @@ from typing import Any, Mapping
 from fastapi import HTTPException, Request
 
 from db import connect, project_id_of
+from project_scope import ProjectUnavailableError, project_unavailable_http, scope_connection
 from extension_points import ExtensionPoint
 
 logger = logging.getLogger("state.baseline")
@@ -751,14 +752,11 @@ def baseline_coverage(connection: Any) -> dict[str, Any]:
 def _request_connection(settings: Any, request: Request):
     connection = connect(settings.connection_url())
     try:
-        row = connection.execute("SELECT project_id FROM active_project WHERE id=1").fetchone()
-        if row:
-            connection.project_id = row["project_id"]
-        requested = request.headers.get("X-State-Project-Id")
-        if requested:
-            exists = connection.execute("SELECT id FROM projects WHERE id=?", (requested,)).fetchone()
-            if exists:
-                connection.project_id = requested
+        # #709: a project that no longer exists is refused, never replaced by the shared active project.
+        try:
+            scope_connection(connection, request.headers.get("X-State-Project-Id"))
+        except ProjectUnavailableError as exc:
+            raise project_unavailable_http(exc.project_id) from None
         yield connection
     finally:
         connection.close()

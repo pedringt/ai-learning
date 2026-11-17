@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from baseline_grounding import review_unsupported_specifics, unsupported_specifics_reason
 from baseline_setup import is_baseline_setup
 from db import connect, project_id_of
+from project_scope import ProjectUnavailableError, project_unavailable_http, scope_connection
 from review_service import _apply_proposal, list_history, list_questions, list_reviews, list_state
 
 _SETUP_AREA_DESCRIPTION = "Baseline section created from human-authorized project material."
@@ -407,14 +408,11 @@ def confirm_starting_state(connection: Any, payload: ConfirmStartingStateInput) 
 def _request_connection(settings: Any, request: Request):
     connection = connect(settings.connection_url())
     try:
-        row = connection.execute("SELECT project_id FROM active_project WHERE id=1").fetchone()
-        if row:
-            connection.project_id = row["project_id"]
-        requested = request.headers.get("X-State-Project-Id")
-        if requested:
-            exists = connection.execute("SELECT id FROM projects WHERE id=?", (requested,)).fetchone()
-            if exists:
-                connection.project_id = requested
+        # #709: a project that no longer exists is refused, never replaced by the shared active project.
+        try:
+            scope_connection(connection, request.headers.get("X-State-Project-Id"))
+        except ProjectUnavailableError as exc:
+            raise project_unavailable_http(exc.project_id) from None
         yield connection
     finally:
         connection.close()

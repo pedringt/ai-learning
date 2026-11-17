@@ -30,6 +30,7 @@
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     let response;
     try {
+      prior.guardProjectWrite?.(options.method, path);  // #709
       response = await fetch(`${prior.base}${path}`, {
         ...options,
         headers: projectHeaders(options.headers),
@@ -48,6 +49,7 @@
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
+      if (prior.noteProjectUnavailable?.(payload)) throw prior.projectUnavailableError(payload.detail.project_id);
       const detail = payload?.detail;
       const message = detail?.error_details?.error_message || detail?.code || (typeof detail === 'string' ? detail : null) || `API error ${response.status}`;
       const error = new Error(message);

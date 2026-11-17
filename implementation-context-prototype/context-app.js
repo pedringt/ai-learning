@@ -71,6 +71,19 @@
   // the later modules call, under their original names. Order matters: each module only
   // receives functions from modules installed above it.
   const {showToast,showDemoHelp,showDialog,closeDialog,showProjectSettings,addDialogHtml,showAddDialog,analyzingDialog,startAnalysisClock,stopAnalysisClock}=window.STATE_APP_DIALOGS.install({baselineSetupActive,dialogBody,esc,overlay,state});
+  // #709: this tab's project no longer exists (deleted in another tab, or demo data reset). The server refused the
+  // request and saved nothing; ask for a project instead of quietly opening another one. Writes stay blocked in
+  // context-api.js until one is chosen.
+  async function showProjectUnavailable(projectId){
+    const name=(state.data.projects||[]).find(p=>p.id===projectId)?.name||state.data.project?.name||'This project';
+    state.isAnalyzing=false;
+    let projects=[];
+    try{projects=(await API.getProjects()).items||[];state.data.projects=projects;}catch(err){console.warn('Project list unavailable.',err);}
+    state.projectMenuOpen=false;updateNav();
+    const choices=projects.filter(p=>p.id!==projectId).map(p=>`<button class="btn secondary" data-action="switch-project" data-project-id="${esc(p.id)}">${esc(p.name)}</button>`).join('');
+    showDialog(`<span class="eyebrow">Project unavailable</span><h2 id="dialogTitle">${esc(name)} is no longer available.</h2><p>It may have been deleted, or the demo data may have been reset. Nothing was saved to another project. State won't save anything until you choose a project.</p>${choices?`<div class="dialog-actions project-unavailable-choices">${choices}</div>`:'<p>Reload the page to choose a project.</p>'}`);
+  }
+  document.addEventListener('state:project-unavailable',event=>{showProjectUnavailable(event.detail?.projectId);});
   const {updateNav,updateProjectSubnavActive,render,navigateTo,scrollProjectTarget}=window.STATE_APP_NAVIGATION.install({ASK,PROJECT_VIEW,announceView,esc,openQuestions,renderHistory,renderNotes,renderOpenItems,renderOverview,renderProjectOverview,root,state,uiPendingReviews});
   const {upsertBackendReview,replaceBackendOpenReviews,mapApiReview,refreshOpenReviews,formatBackendDate,sourceLabel,historyType,syncApiHistory,syncApiState,syncApiQuestions,createBackendQuestion,submitEvidence,retryEvidenceAnalysis,activateProject,hydrateBackend}=window.STATE_APP_HYDRATION.install({announceView,API,BACKEND_SYNC,currentProjectStage,renderWorkspaceAttentionOnly,renderWorkspaceBelowGridOnly,root,state,workspaceAttentionHtml,closeDialog,updateNav,render});
   const {decideReview,openAdjustDialog,executeReviewDecision,confirmReviewAdjust,bulkLeaveUnchanged}=window.STATE_APP_REVIEW_ACTIONS.install({API,OPEN_ITEMS_VIEW,clone,esc,norm,questionDialogHtml,state,todayISO,todayLabel,truncateText,showToast,showDialog,closeDialog,updateNav,render,replaceBackendOpenReviews,syncApiState,syncApiQuestions,hydrateBackend});

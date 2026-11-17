@@ -190,6 +190,8 @@ window.STATE_APP_HYDRATION=Object.freeze({install(ctx){
         rules:fulfilled(payload.rules), drafts:fulfilled(payload.drafts)
       };
     }catch(bootstrapError){
+      // #709: the project is gone. Load nothing else; the project-unavailable dialog asks for a project.
+      if(bootstrapError?.projectUnavailable){if(loadStatus)loadStatus.hidden=true;return;}
       console.warn('Workspace bootstrap unavailable; retrying individual resources.',bootstrapError);
       const calls=[
         API.getState(), API.getEvidence(), API.getReviews('open'), API.getReviews('resolved'), API.getHistory(), API.getQuestions('open'), API.getRules(), API.getDrafts()
