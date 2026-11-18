@@ -727,3 +727,31 @@ Rescoring 8,819 saved answers (seven Nov 16 eval-matrix arms, no model calls) fo
 
 **Measured (saved answers, no model calls)**
 217 answers change from fail to pass (172 `adv_ceo_said_final`, 45 `adv_state_silent_evidence_loud`), none in any other scenario; 0 answers get worse on any check; 2 stay failed on other checks (authority, required facts). All 36 R-024 "should wait" answers still fail. Ask's own answer-time claim checks and the scorer's authority check are unchanged. The scorer version changes, so the next DEC-022 run starts a fresh consecutive-miss history.
+
+### DEC-033 — An agreed future change gets a Review that records the plan beside the existing fact (#711)
+
+**Status:** Decided (Paige, Nov 18). Built on `draft/711-record-the-plan` (v2 `7e014e7`); not on staging.
+**Date:** 2026-11-18
+**Related:** #711, #480, DEC-026, R-026; `anthropic_provider.py` (the #480/#711 rule), `eval/review_interpretation_scenarios.py` (`keeps_existing_state`), `eval/quality_harness.py`, `test_review_plan_711.py`, `test_provider_prompt_contract.py`
+
+**Decision**
+- **Record the plan.** When Evidence clearly establishes that the team **agreed** to a future change, State proposes a Review that records the agreement as a planned action, not a completed change, as **its own Current State item** (`missing_understanding` create), beside the existing fact.
+- **Three distinctions the Review preserves:** (1) Current State stays accurate until the change actually happens; (2) the agreed plan deserves human review; (3) accepting the Review never marks the work done and never replaces or retires the existing fact.
+- **The wording must say it was agreed** (agreed / planned / plan to / plans to) and that it hasn't happened yet. "The criteria **are to be revised**" records an intended action but not that anyone agreed. It does not meet the bar, and the scorer was **not** loosened to accept it (Paige, Nov 18).
+- **Contrast kept in the prompt:** a change that is only **asked about or considered** is an open Question; a personal opinion isn't a decision.
+- **Prompt budget:** 12,200 → 12,250 characters to fit the rule and its contrast. Shortening alone broke the tentative-question case.
+- A "planned" status field or a due date is **not** added. "Planned, not done" lives in the wording, and a later note updates or retires the plan item the normal way.
+
+**Why**
+On staging f4912e9 the model skipped the Review 6 of 30 times for an agreed revision. Its own reason each time was that Current State is still accurate, so proposing would overstate. A system can be careful about not inventing progress and still fail people by letting a real decision disappear into Evidence. A "may change soon" flag or a "has it happened?" Question loses the fact that a decision was made.
+
+**Measured (Review suite ×30 each, Haiku 5.5)**
+| | Baseline f4912e9 (run 44352443141) | v1 665df64 (44369067949) | v2 7e014e7 (44379342393) |
+|---|---|---|---|
+| `review_planned_action_not_stated_as_done` (this bar) | 8/30 (outputs replayed) | 30/30 | **28/30** |
+| `review_tentative_high_consequence` | 26/30 | 17/30 | 24/30 |
+| Whole suite | 462/479 (96%) | 462/480 (96%) | **471/480 (98%)** |
+
+v1 shortened the contrast to fit the old budget, and "leadership asked whether…" became an at-risk flag 13/30 times. v2 restores it. In v2 all 30 #711 outputs raised a Review, recorded the plan as its own item, edited nothing and stated nothing as done.
+
+**Known limitation (Paige, Nov 18).** 2 of 30 v2 outputs wrote "…are to be revised together…; no revision has been made yet", which loses "agreed". They stay counted as failures. 28/30 is one measured run, not a guaranteed 93% reliability; later quality runs should show whether the distinction keeps slipping. No further prompt tuning to chase 30/30.
