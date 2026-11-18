@@ -125,6 +125,7 @@
     return {
       stage: stage?.statement || 'Stage not yet established in Current State.',
       outcome: outcome?.statement || 'Outcome not yet established in Current State.',
+      stageItem: stage || null, outcomeItem: outcome || null,
       count: current.length
     };
   }
@@ -151,8 +152,18 @@
     const datesToggle=`<button type="button" class="btn secondary" data-action="toggle-show-dates" aria-pressed="${showDates?'true':'false'}">${showDates?'Hide dates':'Show dates'}</button>`;
     const recheckPointer=recheckDays?'':`<p class="recheck-pointer">Re-check reminders are off. <button type="button" class="text-button" data-action="open-recheck-settings">Turn them on in Settings.</button></p>`;
     const recheckMeta=needing?`<div><dt>Re-check</dt><dd>${needing} ${needing===1?'item needs':'items need'} a re-check</dd></div>`:'';
+    // #707 (Paige, Nov 17): Stage and Outcome are Current State items like any other, so when either needs a re-check it
+    // gets the same chip and actions where it is shown (the header), "Show dates" gives it a date, interval and Still
+    // true, and the re-check filter lists it in its own group, so every counted item can be acted on.
+    const metaRecheck=k=>{
+      if(!k) return '';
+      if(showDates) return `${k.needsRecheck?recheckChip(k):`<p class="state-date-line">Confirmed ${esc(k.lastConfirmed||'')}</p>`}<div class="recheck-actions">${recheckActions(k,{suggest:!!k.needsRecheck})}${intervalSelect(k)}</div>`;
+      return k.needsRecheck?`${recheckChip(k)}<div class="recheck-actions">${recheckActions(k)}</div>`:'';
+    };
+    const metaFlagged=[orientation.stageItem,orientation.outcomeItem].filter(k=>k&&k.needsRecheck);
+    const metaSection=view.recheckOnly&&metaFlagged.length?`<section class="project-outline-section project-wiki-section is-recheck-only" id="project-stage-outcome"><div class="project-section-sticky"><h3>Stage and outcome</h3></div>${showDates?datedItems(metaFlagged):recheckRecords(metaFlagged,recheckDays)}</section>`:'';
     const recheckFilter=view.recheckOnly?`<div class="recheck-filter-banner"><span>Showing the ${needing} ${needing===1?'item that needs':'items that need'} a re-check</span><button type="button" class="text-button" data-action="clear-recheck-filter">Show all Current State</button></div>`:'';
-    return `<article class="page project-page project-document"><header class="page-head project-page-head current-state-page-head" id="project-top"><div><span class="eyebrow">Maintained project understanding</span><h2>Current State</h2><p class="project-document-summary">The team’s current shared understanding of ${esc(projectName)}: what is settled enough to use, what remains constrained, and what should not be treated as decided yet.</p></div><div class="current-state-page-actions">${datesToggle}<button class="btn secondary project-head-copy-context" data-action="open-copy-context">Copy context</button>${recheckPointer}</div></header><dl class="project-document-meta"><div><dt>Stage</dt><dd>${esc(orientation.stage)}</dd></div><div><dt>Outcome</dt><dd>${esc(orientation.outcome)}</dd></div>${recheckMeta}</dl>${recheckFilter}<div class="something-changed-cta"><div><strong>Something changed?</strong><span>Add new information and State will review whether Current State should change.</span></div><button class="btn secondary" data-action="something-changed">Add Evidence</button></div><div class="project-outline">${areas.map(area=>projectOutlineSection(area,currentKnowledge(knowledge,area.id),pendingFor,history,view)).join('')||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
+    return `<article class="page project-page project-document"><header class="page-head project-page-head current-state-page-head" id="project-top"><div><span class="eyebrow">Maintained project understanding</span><h2>Current State</h2><p class="project-document-summary">The team’s current shared understanding of ${esc(projectName)}: what is settled enough to use, what remains constrained, and what should not be treated as decided yet.</p></div><div class="current-state-page-actions">${datesToggle}<button class="btn secondary project-head-copy-context" data-action="open-copy-context">Copy context</button>${recheckPointer}</div></header><dl class="project-document-meta"><div data-state-id="${esc(orientation.stageItem?.id||'')}"><dt>Stage</dt><dd>${esc(orientation.stage)}${metaRecheck(orientation.stageItem)}</dd></div><div data-state-id="${esc(orientation.outcomeItem?.id||'')}"><dt>Outcome</dt><dd>${esc(orientation.outcome)}${metaRecheck(orientation.outcomeItem)}</dd></div>${recheckMeta}</dl>${recheckFilter}<div class="something-changed-cta"><div><strong>Something changed?</strong><span>Add new information and State will review whether Current State should change.</span></div><button class="btn secondary" data-action="something-changed">Add Evidence</button></div><div class="project-outline">${(metaSection+areas.map(area=>projectOutlineSection(area,currentKnowledge(knowledge,area.id),pendingFor,history,view)).join(''))||'<div class="empty-state"><h3>No Current State yet.</h3><p>Reviewed project understanding will appear here as a clean outline.</p></div>'}</div></article>`;
   }
 
   window.STATE_PROJECT_VIEW = Object.freeze({render, visibleAreas, recheckCount});
