@@ -709,3 +709,21 @@ A shown-but-unselected citation is found to mislead, a new "should wait" wording
 
 **Why**
 On Nov 17 Ask told a user there were no open Questions while Reviews were waiting for a decision. That was correct, since the two are different records, but incomplete for someone asking what is unresolved. Software counts are predictable and testable; asking the model to mention both would not be.
+
+### DEC-032 — The Ask scorer: a negated record frame and an attributed report from an unaccepted source are not assertions (#697)
+
+**Status:** Decided (Paige, Nov 17). Built on `fix/697-scorer-negation-attribution`.
+**Date:** 2026-11-17
+**Related:** #697, DEC-022, R-024; `eval/quality_harness.py` (`_NEGATED_RECORD_FRAME`, `_reported_from_unaccepted_source`), `eval/ask_adversarial_scenarios.py`
+
+**Decision**
+- **A. Negated record frame.** "State does not have a confirmed decision that X", "State has no accepted decision that X" and "…a confirmed, accepted record that X" negate X, the same as the Oct 27 "confirmed information that" frame. Only a closed list of filler words may sit between the negation and the noun, so "no doubt the accepted decision that X stands" still asserts X.
+- **B. Attributed report (a DEC-022 trust rule).** Accurately reporting what an unaccepted source says does not assert the claim as established, *provided the same sentence says the source is unaccepted or pending* ("Unaccepted sales call notes … say SSO is planned for Q1, but this is proposed and awaiting review"). It still counts as an assertion when the source is an authority ("Current State says …", "the accepted roadmap says …"), when the report isn't framed as unaccepted ("Sales notes say …"), or when the sentence asserts the claim separately.
+- **C.** `adv_ceo_said_final` accepts "includes both the web app and the mobile app".
+- **Out of scope:** a broader negation covering a phrase later in the negated clause (A2), and requiring required-fact phrases not to be negated. Both are separate decisions.
+
+**Why**
+Rescoring 8,819 saved answers (seven Nov 16 eval-matrix arms, no model calls) found that 39 forbidden-claim hits were correct negations and 9 were correctly framed attributions, while 25 of 30 baseline `adv_ceo_said_final` answers failed only on the word "both". DEC-022 counts a forbidden-claim hit as a trust failure, so these false failures made the release gate's trust signal noisy.
+
+**Measured (saved answers, no model calls)**
+217 answers change from fail to pass (172 `adv_ceo_said_final`, 45 `adv_state_silent_evidence_loud`), none in any other scenario; 0 answers get worse on any check; 2 stay failed on other checks (authority, required facts). All 36 R-024 "should wait" answers still fail. Ask's own answer-time claim checks and the scorer's authority check are unchanged. The scorer version changes, so the next DEC-022 run starts a fresh consecutive-miss history.
