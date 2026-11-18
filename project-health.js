@@ -6,7 +6,7 @@
   'use strict';
   // Data and pure analysis live in project-health-model.js (#452).
   const PROJECT_HEALTH_MODEL=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./project-health-model.js'):globalThis.PROJECT_HEALTH_MODEL;
-  const {PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,vercelFromStatus,deliveryHealth,normalizeQuality,percent,failureReason,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,healthySummary,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,investigationOutcomeLabel,investigationIsOpen,investigationRecordRow,investigationOutcomeText,makeRunner,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,loadingCardMarkup,cardMarkup,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,scenarioPassRate,cardScore,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,investigationResultHtml,evalRunComplete,externalQualityRunComplete,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,evalScenarioCountsNote,qualityProvenance,staleFailureContext,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
+  const {evalRecordedText,stateEvalFreshnessUnknown,PROJECTS,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,vercelFromStatus,deliveryHealth,normalizeQuality,percent,failureReason,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,coreStatusKnown,activityStillLoading,productOpenItems,allAttentionSignals,overallAttention,projectStatus,healthySummary,actionNotes,RUN_COOLDOWN_MINUTES,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,investigationOutcomeLabel,investigationIsOpen,investigationRecordRow,investigationOutcomeText,makeRunner,fmtDate,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsSignal,analyticsLabel,projectQualityLabel,paidRunSpendText,investigationSpendText,loadingCardMarkup,cardMarkup,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,scenarioPassRate,cardScore,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,stateEvalHistory,mockSparkline,investigationResultHtml,evalRunComplete,externalQualityRunComplete,progressText,quickProjectCheck,qualityInvestigation,projectHandoff,failureStory,evalScenarioCountsNote,qualityProvenance,staleFailureContext,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice}=PROJECT_HEALTH_MODEL;
   function pageEnvironment(root){
     const host=String(root?.location?.hostname||'');
     const params=new URLSearchParams(String(root?.location?.search||''));
@@ -757,9 +757,9 @@
         qualityHtml='<h3>Product quality · AI evals</h3>'+
           '<div class="eval-overview"><div><strong>No AI eval results recorded in this environment</strong><span>'+esc(pageEnvironment(doc?.defaultView||null)==='staging'?'Staging’s State backend starts empty after each deploy, and scheduled runs record to production, so results recorded there aren’t shown here. ':'')+'Run a controlled check to see how State handles understanding, evidence, uncertainty, and decision authority.</span></div></div>';
       }else{
-        const latestDate=runs.map(item=>item?.created_at).filter(Boolean).sort().pop();
         const total=runs.reduce((n,item)=>n+Number(item?.total||0),0);
         const staleResults=stateEvalResultsStale(q);
+        const freshnessUnknown=!staleResults&&stateEvalFreshnessUnknown(q,data);
         const cards=[];
         const noteFor=check=>{const count=failureCheckCount(q,check);return count?highSeverityFailureText(count):'';};
         const metricSignals=Object.fromEntries(stateMetricCards(q).map(card=>[card.label,card]));
@@ -819,7 +819,7 @@
             }).join('')+'</div>';
         const activeEvalRun=data.qualityRun;
         const previousShown=provenance.previous;
-        const evalStateClass=activeEvalRun?'running':previousShown?'previous':staleResults?'warn':failureSummary.count?'bad':'healthy';
+        const evalStateClass=activeEvalRun?'running':previousShown?'previous':staleResults?'warn':failureSummary.count?'bad':freshnessUnknown?'warn':'healthy';
         const statusTitle=activeEvalRun
           ?(activeEvalRun.state==='delayed'?'AI eval run is taking longer than expected':'AI evals are running')
           :provenance.status==='refreshing'
@@ -828,8 +828,8 @@
               ?'Previous results · couldn’t refresh'
               :(staleResults
                 ?'AI evals need to be rerun'
-                :(failureSummary.count?(failureSummary.count===1?'1 failure in a high-severity scenario needs':failureSummary.count+' failures in high-severity scenarios need')+' review':'AI evals are healthy'));
-        const recordedText=latestDate?'Recorded '+fmtDate(latestDate):'Recording time unknown';
+                :(failureSummary.count?(failureSummary.count===1?'1 failure in a high-severity scenario needs':failureSummary.count+' failures in high-severity scenarios need')+' review':freshnessUnknown?'Can\u2019t confirm these results still apply':'AI evals are healthy'));
+        const recordedText=evalRecordedText(q,fmtDate);
         const statusDetail=activeEvalRun
           ?'Started '+esc(fmtDate(activeEvalRun.startedAt))+' · Previous results stay visible below until this run finishes.'
           :previousShown

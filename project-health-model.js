@@ -171,6 +171,7 @@
     if(q.ask?.authority_accuracy==null) missing.push('decision authority');
     if(q.ask?.uncertainty_accuracy==null) missing.push('uncertainty handling');
     if(missing.length) return {kind:'warn',title:'Some AI quality signals are not measured',detail:'Project Health cannot call State quality healthy while '+missing.join(', ')+' '+(missing.length===1?'is':'are')+' unmeasured.',nextAction:'Run or repair the missing controlled quality checks before treating the quality signal as healthy.',owner:'Product'};
+    if(stateEvalFreshnessUnknown(q,data)) return {kind:'unknown',title:'Can\u2019t confirm these AI eval results still apply',detail:'The latest recorded checks reported no failures in high-severity scenarios, but Project Health couldn\u2019t load what has changed in State since they ran.'};
     return {kind:'good',title:'AI evals are healthy',detail:'The latest recorded checks reported no failures in high-severity scenarios.'};
   }
   function deliveryAttention(d){
@@ -1398,6 +1399,19 @@
     const contract=Math.max(dateMs(STATE_EVAL_CONTRACT_UPDATED_AT),Number.isFinite(fetched)?fetched:-Infinity);
     return runs.some(run=>{const when=dateMs(run.created_at);return Number.isFinite(when)&&when<contract;});
   }
+  // Nov 18 QA (G3): the "what changed in State since these runs" source failed to load and nothing was loaded before,
+  // so Project Health can't tell whether the latest results still apply. Not a failure; not "healthy" either.
+  // Nov 18 QA (G2): one "Recorded" date covered both suites, so after a Review-only rerun the Answer-quality results
+  // looked new too. Runs on different days get their own dates; a normal run (both suites minutes apart) keeps one.
+  function evalRecordedText(q,fmt){
+    const review=q?.review?.created_at,ask=q?.ask?.created_at,day=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toISOString().slice(0,10)};
+    if(review&&ask&&day(review)!==day(ask))return 'Update understanding recorded '+fmt(review)+' · Answer quality recorded '+fmt(ask);
+    const latest=[review,ask].filter(Boolean).sort().pop();
+    return latest?'Recorded '+fmt(latest):'Recording time unknown';
+  }
+  function stateEvalFreshnessUnknown(q,data){
+    return !!signalRefreshFailure(data,['Quality behavior'])&&!Number.isFinite(dateMs(q?.behaviorUpdatedAt));
+  }
   function stateEvalBehaviorStale(q){
     const runs=[q?.review,q?.ask].filter(Boolean);
     const changed=dateMs(q?.behaviorUpdatedAt);
@@ -1590,7 +1604,9 @@
       items.push({...visitComparison('ask','Answer-quality'),observedAt:currentQ.askAt,tab:'ai-quality'});
     }
     if(currentQ.severe!=null&&oldQ.severe!=null&&currentQ.severe!==oldQ.severe){
-      items.push({title:'Failures in high-severity scenarios changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:data.checkedAt,tab:'ai-quality'});
+      // Nov 18 QA: this changed when the newer run was recorded, not when the page was fetched ("just now").
+      const severeAt=[currentQ.reviewAt,currentQ.askAt].filter(Boolean).sort((a,b)=>new Date(b)-new Date(a))[0]||data.checkedAt;
+      items.push({title:'Failures in high-severity scenarios changed',detail:oldQ.severe+' → '+currentQ.severe,observedAt:severeAt,tab:'ai-quality'});
     }
     const analytics=data.platform?.analytics;
     if(before.analyticsAvailable!==null&&analytics&&before.analyticsAvailable!==analytics.available){
@@ -2306,5 +2322,5 @@
     };
   }
 
-  return {PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,INVESTIGATION_OUTCOMES,investigationOutcomeLabel,investigationIsOpen,investigationRecordRow,investigationOutcomeText,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,scenarioPassRate,cardScore,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,gateEligibility,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,staleFailureContext,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
+  return {evalRecordedText,stateEvalFreshnessUnknown,PROJECTS,paidRunSpendText,investigationSpendText,currentCheckRuns,esc,shortSha,commitTitle,repoUrl,githubCommitUrl,pullRequestNumber,githubPullRequestUrl,githubLink,changeUrl,commitLabel,htmlRow,linkedRow,githubApi,vercelFromStatus,deliveryHealth,normalizeQuality,percent,highSeverityFailureText,modelDisplayName,qualityAttention,deliveryAttention,deliveryAttentionForData,infrastructureAttention,externalQualityAttention,pendingSet,STATUS_SIGNALS,coreStatusKnown,activityStillLoading,productOpenItems,failureReason,uncheckedSignals,incompleteAttention,allAttentionSignals,overallAttention,projectStatus,qualityNotMeasured,unmeasuredQuality,PARTLY_MEASURED_LABEL,healthySummary,investigationUsesModel,actionNotes,RUN_COOLDOWN_MINUTES,runCooldown,latestRunStart,runCooldownFor,cooldownStartFromRetryAfter,attentionItems,setupGaps,releaseReadiness,regressionSignal,recurringFailureSignal,operationalSignals,healthConsistencyIssues,releaseRiskChecklist,productionRuntime,operationalNextDecision,failureCheckCount,failureExplanation,failureStory,evalScenario,scenarioTitle,SCENARIO_TITLES,parseReviewObserved,qualityFailureClassSummary,activityTimelineItems,activityDayLabel,activityTimeRange,evalBehaviorBranch,mergePlatform,emptyProjectData,safeExternalQualitySnapshot,serializeProjectData,hydrateProjectData,investigationHistorySummary,INVESTIGATION_OUTCOMES,investigationOutcomeLabel,investigationIsOpen,investigationRecordRow,investigationOutcomeText,makeRunner,STATE_EVAL_CONTRACT_UPDATED_AT,dateMs,fmtDate,scenarioPassRate,cardScore,relativeAge,stateEvalContractStale,stateEvalBehaviorStale,stateEvalResultsStale,stateEvalStaleReason,evalCoverageNote,freshnessMeta,qualitySnapshot,visitBaseline,knownDeliveryKind,healthStateLabel,scoreDeltaPoints,evalChangeDetail,meaningfulChanges,changedSinceVisit,trendText,activityReviewItems,row,metric,durationLabel,costLabel,attentionMarkup,neonConnectionDetail,infraCardLabel,analyticsConnectionValue,analyticsGapDetail,analyticsReceiving,analyticsSignal,analyticsLabel,projectQualityLabel,stageTag,loadingCardMarkup,cardMarkup,evalSuiteLabel,evalScore,evalTrend,STATE_QUALITY_METRICS,metricScore,metricChange,runComparability,gateEligibility,scoringVersionLabel,LEGACY_SCORING_LABEL,SYNTHETIC_EXCERPT_LABEL,failedItemFindings,stateMetricCards,stateEvalCard,stateScenarioCard,scenarioPassLabel,scenarioCounts,scenarioCountDisplay,evalScenarioCountsNote,qualityProvenance,staleFailureContext,qualityResultsAt,refreshStatus,signalRefreshFailure,sectionFreshness,retainedNotice,stateEvalHistory,mockSparkline,mockTrendValues,mockDelta,investigationResultHtml,evalRunComplete,externalQualityRunComplete,evalFailureImpact,previousEvalRun,progressText,quickProjectCheck,qualityInvestigation,projectHandoff};
 });
