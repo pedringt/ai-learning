@@ -33,10 +33,11 @@ from eval.quality_harness import (
 )
 from eval.review_interpretation_scenarios import SCENARIOS as REVIEW_SCENARIOS
 from eval.authority_lab_export import build_envelope
+from eval.pending_omission import lost_pending_claim
 from eval.scoring_version import scoring_version
 from eval.quality_report import analytics_payload as _analytics_payload, failure_details as _failure_details
 from eval.release_gate import (ASK_SUITE, REVIEW_SUITE, accepted_scenarios, ask_not_counted, fetch_analytics, gate,
-                               load_risk_acceptances, not_counted, previous_failed_ids)
+                               load_risk_acceptances, not_counted, previous_failed_from_reports, previous_failed_ids)
 
 
 def _record(url: str, key: str, payload: dict) -> None:
@@ -92,6 +93,8 @@ def _ask_report(provider) -> dict:
     started = time.time()
     results = [run_ask_quality_scenario(scenario, provider) for scenario in ASK_SCENARIOS]
     metrics = ask_quality_metrics(results)
+    # #696 (DEC-030 amendment): "the answer lost its pending claim", tracked apart from the authority check; not a gate.
+    metrics["lost_pending_claim"] = sum(lost_pending_claim(r.answer, r.withheld_units) for r in results if not r.error)
     return {
         "suite": "ask_quality",
         "scoring_version": scoring_version("ask_quality"),
@@ -116,6 +119,8 @@ def _ask_report(provider) -> dict:
                 "passed": r.passed,
                 "error": r.error,
                 "answer": r.answer,
+                "withheld_units": r.withheld_units,
+                "lost_pending_claim": lost_pending_claim(r.answer, r.withheld_units),
             }
             for r in results
         ],
@@ -165,6 +170,9 @@ def main() -> int:
     parser.add_argument("--record-url", metavar="URL", help="State API base URL for aggregate eval ingestion")
     parser.add_argument("--record-key", metavar="KEY", help="defaults to STATE_EVAL_INGEST_KEY")
     parser.add_argument("--authority-lab-envelope", metavar="PATH", help="write the review suite's aggregate results as Authority Lab evidence (#517)")
+    parser.add_argument("--previous-reports", metavar="DIR",
+                        help="#698: read the previous run's failures from saved quality-report.json files under DIR "
+                             "(the last staging runs' artifacts) instead of the record URL's analytics")
     parser.add_argument("--dry-run", action="store_true", help="print the planned paid model calls and exit without calling the model")
     parser.add_argument("--max-calls", type=int, metavar="N",
                         help="hard cap on model calls, counted before each call is sent; a capped scenario is reported as an error")
@@ -206,8 +214,19 @@ def main() -> int:
         _print_report(report)
 
     # The previous recorded runs, read before this run is recorded (for "failed in two consecutive runs").
-    analytics = fetch_analytics(args.record_url) if args.record_url else None
-    previous = {suite: (previous_failed_ids(analytics, suite) if analytics else None) for suite in (REVIEW_SUITE, ASK_SUITE)}
+    # #698 (Paige, Nov 16): on staging, the previous run comes from its saved quality-report artifact, because the
+    # staging API reseeds on every backend deploy. The record URL's analytics remain the fallback for a suite no saved
+    # report ran (and the only source on production).
+    from_reports = (previous_failed_from_reports(sorted(Path(args.previous_reports).rglob("quality-report.json")))
+                    if args.previous_reports else {})
+    analytics = (fetch_analytics(args.record_url) if args.record_url
+                 and any(from_reports.get(s) is None for s in (REVIEW_SUITE, ASK_SUITE)) else None)
+    previous = {suite: (from_reports[suite] if from_reports.get(suite) is not None
+                        else previous_failed_ids(analytics, suite) if analytics else None)
+                for suite in (REVIEW_SUITE, ASK_SUITE)}
+    previous_source = {suite: ("saved quality report" if from_reports.get(suite) is not None
+                               else "record URL" if previous[suite] is not None else None)
+                       for suite in (REVIEW_SUITE, ASK_SUITE)}
 
     if args.json:
         # Nov 7 (Paige): the full report, synthetic controlled-eval answers included, saved as a workflow artifact so
@@ -253,7 +272,8 @@ def main() -> int:
                 print("  " + line)
     print("\nRelease reading (RELEASE.md):")
     for suite, why in reasons.items():
-        note = "" if previous.get(suite) is not None else " (previous run unknown, consecutive check skipped)"
+        note = (f" (previous run from {previous_source[suite]})" if previous.get(suite) is not None
+                else " (previous run unknown, consecutive check skipped)")
         print(f"  {suite}: " + ("FAIL - " + "; ".join(why) if why else "pass") + note)
     return 1 if any(reasons.values()) else 0
 

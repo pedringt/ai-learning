@@ -155,14 +155,13 @@
     return {loading:false,failed:false,days:payload?.recheck_days??null,overrides:items.filter(item=>item.recheck_days).map(item=>({id:item.id,statement:item.statement,days:item.recheck_days}))};
   }
   async function loadRecheck(){try{return recheckFromState(await api()?.getState?.());}catch(error){console.warn('Settings could not load re-check reminders.',error);return {loading:false,failed:true,days:null,overrides:[]};}}
-  function recheckSectionMarkup(){
-    const r=recheckState;
+  function recheckSectionMarkup(r=recheckState){
     if(r.loading) return '<section class="settings-section" id="settings-recheck"><div class="settings-section-head"><div><h3>Re-check reminders</h3><p>Loading…</p></div></div></section>';
     if(r.failed) return '<section class="settings-section" id="settings-recheck"><div class="settings-section-head"><div><h3>Re-check reminders</h3><p>Re-check reminders could not be loaded.</p></div></div></section>';
     const on=!!r.days, days=r.days||60;
     const select=`<select id="settingsRecheckDays" aria-label="Re-check interval"${on?'':' disabled'}>${RECHECK_CHOICES.map(d=>`<option value="${d}"${d===days?' selected':''}>${d}</option>`).join('')}</select>`;
     const overrides=r.overrides.length?`<ul class="settings-recheck-overrides">${r.overrides.map(o=>`<li><span>“${esc(o.statement)}” · every ${esc(o.days)} days</span><button class="text-button" type="button" data-settings-action="clear-item-recheck" data-state-id="${esc(o.id)}">Use project default</button></li>`).join('')}</ul>`:'';
-    return `<section class="settings-section" id="settings-recheck"><div class="settings-section-head"><div><h3>Re-check reminders</h3><p>Flag items nobody has confirmed in ${select} days.</p></div><label class="settings-switch"><input type="checkbox" id="settingsRecheckEnabled" role="switch" aria-label="Re-check reminders"${on?' checked':''}><span>${on?'On':'Off'}</span></label></div>${overrides}</section>`;
+    return `<section class="settings-section" id="settings-recheck"><div class="settings-section-head"><div><h3>Re-check reminders</h3><p>Flag Current State items nobody has confirmed in ${select} days.</p></div><label class="settings-switch"><input type="checkbox" class="settings-switch-input" id="settingsRecheckEnabled" role="switch" aria-label="Re-check reminders"${on?' checked':''}><span class="settings-switch-track" aria-hidden="true"></span><span class="settings-switch-state">${on?'On':'Off'}</span></label></div>${overrides}</section>`;
   }
   function announceRecheck(result){if(typeof CustomEvent==='function')document.dispatchEvent(new CustomEvent('state:recheck-changed',{detail:{state:result?.state||[],recheckDays:result?.recheck_days}}));}
 
@@ -180,7 +179,7 @@
       </section>
       ${recheckSectionMarkup()}
       <section class="settings-section settings-slack" id="settings-slack"><div class="settings-section-head"><div class="settings-slack-intro"><h3 class="settings-slack-heading">${sourceIcon('slack')}<span>Slack</span></h3><p>Bring useful project conversations into State as Evidence. Slack never changes Current State directly.</p></div><div class="settings-actions"><a class="btn secondary" href="${esc((api()?.base||'')+'/api/integrations/slack/oauth/start')}">${slack.health?.connected?'Reconnect Slack':'Connect Slack'}</a>${slack.health?.connected?'<button class="text-button" type="button" data-settings-action="confirm-disconnect-slack">Disconnect</button>':''}</div></div>${slackConnectNoticeMarkup(connectNotice)}<p class="settings-slack-status ${slackStatusClass(slack)}">${slackStatusLine(slack)}</p><div class="settings-channel-heading"><strong>Approved channels</strong><span>Choose which channel conversations State can use as Evidence.</span></div><div class="slack-preview" aria-label="Slack channel activity">${slackChannelsMarkup(slack)}</div></section>
-      <section class="settings-section"><div class="settings-section-head"><div><h3>Other Sources</h3><p>Places State can gather project information from planning, discovery, documentation, and collaboration.</p></div></div><div class="settings-callout"><strong>Sources provide Evidence. They never change Current State directly.</strong></div><div class="source-list settings-source-grid" aria-label="Planned sources">
+      <section class="settings-section"><div class="settings-section-head"><div><h3>Other Sources</h3><p>Places State can gather project information from planning, discovery, documentation, and collaboration.</p></div></div><div class="source-list settings-source-grid" aria-label="Planned sources">
         <div class="source-row"><div>${sourceTitle('docs','Google Docs')}<span class="source-description">Specs, plans, research, and meeting notes.</span></div><span class="settings-status">Coming soon</span></div>
         <div class="source-row"><div>${sourceTitle('notion','Notion')}<span class="source-description">Maintained team and project knowledge.</span></div><span class="settings-status">Coming soon</span></div></div></section>
       ${project.seeded
@@ -244,6 +243,8 @@
     if(action==='confirm-delete-project'){const name=activeProjectInfo().name;showSettingsDialog(`<span class="eyebrow">Delete project</span><h2 id="dialogTitle">Permanently delete ${esc(name)}?</h2><p>This removes all of its Notes, Evidence, Reviews, Questions, Current State, and History. This cannot be undone.</p><div class="dialog-actions"><button class="btn primary" type="button" data-settings-action="delete-project">Delete ${esc(name)}</button><button class="btn secondary" type="button" data-action="close-dialog">Cancel</button></div>`);}
     if(action==='delete-project'){control.disabled=true;const {name,projectId}=activeProjectInfo();showSettingsDialog(`<span class="eyebrow">Deleting</span><h2 id="dialogTitle">Deleting ${esc(name)}…</h2><p>This page reloads once it's done.</p>`);try{await api()?.deleteProject?.(projectId);window.location.reload();}catch(error){console.error('Could not delete project.',error);control.disabled=false;showSettingsDialog(`<span class="eyebrow">Couldn't delete project</span><h2 id="dialogTitle">${esc(name)} was not deleted.</h2><p>${esc(error.message)}</p><div class="dialog-actions"><button class="btn secondary" type="button" data-action="close-dialog">Close</button></div>`);}}
   });
+
+  window.STATE_SETTINGS_VIEW=Object.freeze({recheckSectionMarkup});
 
   const settingsNav=document.querySelector('.sidebar-nav [data-view="settings"]');let settingsWasActive=!!settingsNav?.classList.contains('active');if(settingsWasActive)load();
   // Load once on arriving at Settings; navigation's render() announces every view, including this one. Mark Settings

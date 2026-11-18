@@ -32,9 +32,11 @@
     const url=endpoint(path); if(!url) throw new Error('State API is not ready');
     const id=projectId();
     const headers={...(options.headers||{}),...(id?{'X-State-Project-Id':id}:{})};
+    window.STATE_API?.guardProjectWrite?.(options.method,path);  // #709
     const response=await fetch(url,{...options,headers});
     const payload=await response.json().catch(()=>({}));
     if(!response.ok){
+      if(window.STATE_API?.noteProjectUnavailable?.(payload)) throw window.STATE_API.projectUnavailableError(payload.detail.project_id);
       const detail=payload?.detail;
       const message=detail?.error_details?.error_message || (typeof detail==='string'?detail:null) || `API error ${response.status}`;
       const error=new Error(message); error.status=response.status; error.payload=payload; throw error;
@@ -361,6 +363,7 @@
     if(!base||!projectId){if(status)status.textContent='State is not ready yet.';return;}
     button.disabled=true;button.textContent='Adding...';if(status)status.textContent='';
     try{
+      window.STATE_API?.guardProjectWrite?.('POST','/api/baseline/manual');  // #709
       const response=await fetch(`${base}/api/baseline/manual`,{
         method:'POST',
         headers:{'Content-Type':'application/json','X-State-Project-Id':projectId},
@@ -368,6 +371,7 @@
       });
       const payload=await response.json().catch(()=>({}));
       if(!response.ok){
+        if(window.STATE_API?.noteProjectUnavailable?.(payload)) throw window.STATE_API.projectUnavailableError(payload.detail.project_id);
         const detail=payload?.detail;
         throw new Error(detail?.error_details?.error_message||(typeof detail==='string'?detail:null)||`API error ${response.status}`);
       }
@@ -398,7 +402,7 @@
     const area=document.querySelector('[data-baseline-new-area]')?.value.trim(),topic=document.querySelector('[data-baseline-new-topic]')?.value.trim(),statement=document.querySelector('[data-baseline-new-statement]')?.value.trim(),status=document.querySelector('.baseline-inline-new-status');
     if(!statement){setText(status,'Add the fact first.');return}if(!area){setText(status,'Give the fact a section so it stays organized.');return}if(!topic){setText(status,'Give the fact a short title.');return}
     const base=apiBase(),id=projectId();if(!base||!id)return;button.disabled=true;button.textContent='Adding…';setText(status,'');
-    try{const response=await fetch(`${base}/api/baseline/manual`,{method:'POST',headers:{'Content-Type':'application/json','X-State-Project-Id':id},body:JSON.stringify({items:[{area_name:area,topic,statement}]})});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload?.detail?.error_details?.error_message||(typeof payload?.detail==='string'?payload.detail:null)||`API error ${response.status}`);document.querySelector('[data-baseline-new-fact-form]')?.remove();openDraft();scheduleRefresh(50)}catch(error){button.disabled=false;button.textContent='Add fact';setText(status,error?.message||'Could not add that fact.')}
+    try{window.STATE_API?.guardProjectWrite?.('POST','/api/baseline/manual');const response=await fetch(`${base}/api/baseline/manual`,{method:'POST',headers:{'Content-Type':'application/json','X-State-Project-Id':id},body:JSON.stringify({items:[{area_name:area,topic,statement}]})});const payload=await response.json().catch(()=>({}));if(window.STATE_API?.noteProjectUnavailable?.(payload))throw window.STATE_API.projectUnavailableError(payload.detail.project_id);if(!response.ok)throw new Error(payload?.detail?.error_details?.error_message||(typeof payload?.detail==='string'?payload.detail:null)||`API error ${response.status}`);document.querySelector('[data-baseline-new-fact-form]')?.remove();openDraft();scheduleRefresh(50)}catch(error){button.disabled=false;button.textContent='Add fact';setText(status,error?.message||'Could not add that fact.')}
   }
 
   // ---- Workspace empty states while Baseline Setup is active ----

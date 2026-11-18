@@ -91,62 +91,55 @@
 <section class="section product-model">
 <div class="kicker" data-edit="tastemake-9">What I built</div>
 <h2 data-edit="tastemake-10">An editable model of personal taste</h2>
-<p data-edit="tastemake-11">Tastemake looks at your favorites and ratings and proposes taste patterns across books, movies, TV, and games. Each pattern lists the titles behind it, anything that cuts against it, and how well supported it is.</p>
-<p data-edit="tastemake-12">You can confirm a pattern, reject it, say it’s only partly right, or limit it to certain contexts. Rejecting a pattern doesn’t erase the ratings behind it.</p>
+<p data-edit="tastemake-11">Tastemake looks at your favorites and ratings and proposes taste patterns across books, movies, TV, and games. It shows the titles behind each pattern, including evidence that doesn’t quite fit. As you rate more titles, it updates its understanding of your preferences rather than assuming every new rating confirms what it already believes. It doesn’t rewrite patterns you’ve confirmed.</p>
+<p data-edit="tastemake-12">You can confirm a pattern, reject it, say it’s only partly right, or limit it to certain contexts. Under &ldquo;Partly,&rdquo; you can mark titles that don’t fit, and the pattern stops citing them. Rejecting a pattern doesn’t erase the ratings behind it.</p>
 <div class="correction-split" role="group" aria-label="What corrections change">
-  <div class="split-col split-yes"><h3 data-edit="tastemake-13">What corrections change today</h3><div class="split-text" data-edit="tastemake-14">The visible Taste Profile, pattern history, and profile refreshes. Software enforces certain corrections, including rejected patterns and areas excluded from a pattern. A &ldquo;Not me&rdquo; answer also moves titles that clearly match that pattern to the back of the shortlist.</div></div>
-  <div class="split-col split-not"><h3 data-edit="tastemake-15">What corrections don’t yet control</h3><div class="split-text" data-edit="tastemake-16">Which catalog titles software retrieves, and how &ldquo;Partly&rdquo; or &ldquo;Not sure&rdquo; answers affect the shortlist. The recommendation AI receives corrections as instructions, but software doesn’t yet verify that every pick follows them.</div></div>
+  <div class="split-col split-yes"><h3 data-edit="tastemake-13">What corrections change</h3><div class="split-text" data-edit="tastemake-14">The visible Taste Profile, pattern history, and profile refreshes. Software enforces rejected patterns, areas you exclude from a pattern, and titles you say don’t fit it. After a &ldquo;Not me&rdquo; answer or an excluded area, titles Tastemake can recognize as matching that pattern are left out of your picks.</div></div>
+  <div class="split-col split-not"><h3 data-edit="tastemake-15">Where corrections have limits</h3><div class="split-text" data-edit="tastemake-16">Corrections help guide future recommendations, but they don’t change which titles Tastemake initially considers. It can exclude titles that match your corrections based on their catalog information, but some matches may still slip through, especially when that information is missing or incomplete. &ldquo;Not sure&rdquo; answers and additional context on a &ldquo;Partly&rdquo; answer still guide the AI rather than directly changing which titles are selected.</div></div>
 </div>
 <p data-edit="tastemake-17">Saving a title you haven’t tried or marking it Not interested doesn’t count as evidence of taste. When AI is unavailable, recommendations fall back to catalog picks.</p>
 </section>
 
 <section class="section seam-learning">
 <div class="kicker" data-edit="tastemake-18">What testing revealed</div>
-<h2 data-edit="tastemake-19">A more accurate citation wasn’t a better explanation.</h2>
-<p data-edit="tastemake-20">A diagnostic trace turned up a mismatch. Tastemake’s explanations often pointed to a different rating than the one that actually decided the recommendation. So I tested a rule: every explanation had to cite the rating the scorer used to pick the title.</p>
+<h2 data-edit="tastemake-19">A technically accurate explanation isn’t always a useful one.</h2>
+<p data-edit="tastemake-20">I discovered that Tastemake sometimes explained a recommendation using a different preference than the one that actually drove its selection. I tried making explanations more consistent with the recommendation process by requiring them to reference the rating that influenced the choice. That worked technically. Explanations became much more consistent with the underlying scoring. But when I reviewed whether those explanations were actually specific and meaningful, the results got worse.</p>
 <figure class="test-compare" aria-labelledby="test-compare-label">
   <figcaption id="test-compare-label" class="example-label">Two tests, different outcomes</figcaption>
   <div class="test-compare-grid">
-    <div class="test-metric"><h3>Trace alignment increased</h3><div class="metric-value">98%</div><div class="metric-detail">Up from about 65% in earlier recorded runs. In automated tests across 12 test profiles, 62 of 63 eligible explanations cited the deciding rating.</div></div>
-    <div class="test-metric"><h3>Explanation quality decreased</h3><div class="metric-value">53%</div><div class="metric-detail">Rated specific and true: 8 of 15, down from 9 of 13, in a separate blind review of my 16-title profile.</div></div>
+    <div class="test-metric"><h3>Alignment with scoring</h3><div class="metric-value">98%</div><div class="metric-detail">62 of 63 eligible explanations referenced the rating used to select the recommendation, up from about 65% in earlier recorded runs. Automated tests across 12 test profiles.</div></div>
+    <div class="test-metric"><h3>Explanation quality</h3><div class="metric-value">53%</div><div class="metric-detail">8 of 15 explanations were judged specific and true, down from 9 of 13, in a separate blind review of my own profile.</div></div>
   </div>
-  <div class="test-compare-note">In 11 paired comparisons, three explanations became worse and none improved. These were small offline tests with one rater, not outside-user research.</div>
+  <div class="test-compare-note">The two numbers come from different tests and aren’t directly comparable. In 11 paired comparisons, three explanations got worse and none improved. These were small internal tests with one rater, not outside-user research.</div>
 </figure>
-<p data-edit="tastemake-21">For <cite>Breath of the Wild</cite>, the original explanation connected the game to <cite>Piranesi</cite>, and I rated that connection specific and true. With the rule in place, it compared the game to <cite>Return of the Obra Dinn</cite> on genre instead, and I rated that one incorrect.</p>
-<p data-edit="tastemake-22">The rule made explanations line up with the scoring trace far more often, but some of them got less meaningful. The deciding rating was often just a broad genre match, not the most useful reason to recommend something.</p>
+<p data-edit="tastemake-21">One example made the tradeoff clear. The original explanation connected a recommended game to a novel I’d liked for its sense of wonder and discovery. That felt like a meaningful connection. After the change, the explanation focused on a broad genre similarity instead. It was more consistent with the scoring process, but less useful in explaining why I might enjoy the game.</p>
+<p data-edit="tastemake-22">Matching the system’s internal reasoning isn’t enough. An explanation also needs to help someone understand why a recommendation might fit their taste.</p>
 <p data-edit="tastemake-23"><span class="lead-in">Decision:</span> I didn’t ship the rule. I kept the diagnostic trace and turned my attention to how candidates get selected.</p>
 </section>
 
 <section class="section next-tests">
-<h2 data-edit="tastemake-24">What else changed through testing</h2>
+<h2 data-edit="tastemake-24">What testing shaped</h2>
 <ul class="findings-list" role="list">
-  <li class="finding"><h3 class="finding-title" data-edit="tastemake-25">Honest feedback</h3><div class="finding-text" data-edit="tastemake-26">Code review showed the app claiming that some corrections changed recommendations when they didn’t. Some Live AI labels and success messages were misleading too. I rewrote them to match what the app actually does.</div></li>
+  <li class="finding"><h3 class="finding-title" data-edit="tastemake-25">Honest feedback</h3><div class="finding-text" data-edit="tastemake-26">Labels and success messages describe only what the software does, including which corrections reach recommendations and when Live AI is in use.</div></li>
   <li class="finding"><h3 class="finding-title" data-edit="tastemake-27">Simpler onboarding</h3><div class="finding-text" data-edit="tastemake-28">Browse lets people find and rate titles they already know. Questions about why they liked something come after that first reaction.</div></li>
-  <li class="finding"><h3 class="finding-title" data-edit="tastemake-29">Candidate quality</h3><div class="finding-text" data-edit="tastemake-30">Scoring leans heavily on genre. Retrieval order can push higher-scoring titles off the shortlist, and the scorer doesn’t use synopses. A reason on a Liked or Loved rating gives that rating more weight, but the scorer doesn’t read what the reason says.</div></li>
+  <li class="finding"><h3 class="finding-title" data-edit="tastemake-29">Where recommendations still fall short</h3><div class="finding-text" data-edit="tastemake-30">Tastemake is better at recognizing broad similarities, like genre, than understanding the specific qualities that make someone love something. Even when someone explains why they enjoyed a title, the recommendation system doesn’t yet fully use that context to decide what to suggest. That can lead to recommendations that look similar on paper but miss what actually matters to the person.</div></li>
 </ul>
 </section>
 
 <section class="section feedback-example">
 <div class="kicker" data-edit="tastemake-36">A second example</div>
-<h2 data-edit="tastemake-37">Better information wasn’t enough</h2>
-<p data-edit="tastemake-38">Richer title descriptions looked promising in a held-out ranking test, but they didn’t meet the success criteria I’d set in advance. So I looked closely at one pattern that felt wrong to me.</p>
-<figure class="progression" aria-labelledby="progression-label">
-  <figcaption id="progression-label" class="example-label">How the investigation progressed</figcaption>
-  <ol class="progression-steps">
-    <li class="progression-step"><span class="step-num">01</span><h3>Noticed</h3><p>“Quirky character-driven comedy” lumped sketch and docu-reality shows like <cite>Nathan for You</cite> in with sitcoms like <cite>The Office</cite>.</p></li>
-    <li class="progression-step"><span class="step-num">02</span><h3>Tested</h3><p>I gave the model readable genres and short synopses. Its wording changed, but across 19 blind judgments from my own profile, none of the comedy pairings fit.</p></li>
-    <li class="progression-step"><span class="step-num">03</span><h3>Understood</h3><p>I’d answered “Partly” on that pattern. That kept its name in place but couldn’t say which part was wrong.</p></li>
-    <li class="progression-step"><span class="step-num">04</span><h3>Explored</h3><p>I prototyped a way to mark the words or titles that don’t fit and approve a suggested correction.</p></li>
-  </ol>
-  <p class="progression-note">Research prototype only, not part of Tastemake. Seven trials I ran on myself, with hand-written suggestions standing in for the AI.</p>
-</figure>
-<p data-edit="tastemake-39">In one run, I marked five shows as fitting a different side of my taste. The suggested correction quietly dropped them and kept only the sitcoms, while its description still mentioned sketch and docu-style comedy. That’s when I asked, “Why does it only mention the sitcoms as what this comes from?” Every step had worked. It just hadn’t kept track of everything I’d told it.</p>
+<h2 data-edit="tastemake-37">A correction isn’t useful if the system loses what you meant.</h2>
+<p data-edit="tastemake-38">Tastemake once grouped several very different kinds of comedy into a single taste pattern. They shared a broad genre, but the reasons I enjoyed them weren’t necessarily the same.</p>
+<p data-edit="tastemake-39">I first tested whether giving the AI better descriptions would help it recognize those differences. It didn’t. In a small review using my own preferences, none of the comedy comparisons were convincing. That led me to a different problem: people needed a way to correct Tastemake’s understanding of their taste.</p>
+<p data-edit="tastemake-41">I experimented with letting someone identify which parts of a pattern felt wrong and having AI rewrite the description. The prototype exposed another failure. In one test, a suggested correction sounded reasonable but quietly left out preferences I’d explicitly identified as important. The system appeared to accept my feedback without actually preserving its meaning.</p>
+<p data-edit="tastemake-40">So I chose a narrower approach that could be enforced reliably. In Tastemake today, someone can mark titles that don’t belong in a taste pattern, and the system removes those titles from that pattern’s supporting evidence. AI-generated rewriting remains experimental because the early tests showed it could misrepresent corrections. The <a href="https://tastemake.vercel.app/?example=paige" target="_blank" rel="noopener noreferrer">Example Profile</a> shows one of these corrections.</p>
+<p class="progression-note" data-edit="tastemake-42">The rewriting experiment was an early prototype I tested seven times using manually prepared suggestions. It was not a released feature or an external-user study.</p>
 </section>
 
 <section class="section current-conclusion">
 <div class="kicker" data-edit="tastemake-31">What’s next</div>
 <h2 data-edit="tastemake-32">Can understanding why someone liked something outperform genre matching?</h2>
-<p data-edit="tastemake-34">Two bigger questions are still open: do people other than me find the recommendations useful, and does correcting a Taste Profile actually improve their next set? I also want Tastemake’s sense of someone’s taste to shape which titles it considers, not just how it orders and explains them.</p>
+<p data-edit="tastemake-34">The biggest open question is whether people other than me find the recommendations useful. I also want Tastemake’s sense of someone’s taste to shape which titles it considers, not just how it orders and explains them.</p>
 <div class="case-meta case-credits" data-edit="tastemake-35"><span><b>My role</b> Product concept, experience design, feedback model, evaluation direction and review, and hands-on testing</span><span><b>AI collaborator</b> Code implementation and technical research support (ChatGPT and Claude)</span></div>
 </section>
 

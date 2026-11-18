@@ -22,6 +22,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from eval.matrix import PRICING, PRICING_SOURCE, SCHEMA, call_cost
+from eval.pending_omission import describe as describe_pending_omission, summarize as summarize_pending_omission
 
 
 def wilson_interval(passes: int, n: int, z: float = 1.959964) -> tuple[float, float] | None:
@@ -179,6 +180,9 @@ def aggregate(repeats: list[dict[str, Any]]) -> dict[str, Any]:
             "calls": s["calls"], "input_tokens": inp, "output_tokens": outp, "cost_usd": cost, "unpriced_calls": unpriced,
             "scenarios": scenario_rows,
             "grader_scores": _grader_scores([row for _model, row in s["rows"]]),
+            # #696 (DEC-030 amendment): tracked separately from the authority check, never a gate.
+            "lost_pending_claim": summarize_pending_omission(
+                row for _model, row in s["rows"] if row.get("outcome") in ("pass", "fail")),
         })
         totals["calls"] += s["calls"]
         totals["input_tokens"] += inp
@@ -222,6 +226,8 @@ def to_markdown(summary: dict[str, Any]) -> str:
                      f"Calls {s['calls']}, tokens {s['input_tokens']:,} in / {s['output_tokens']:,} out, ${s['cost_usd']:.4f}.")
         if s["checks"]:
             lines.append("Checks: " + ", ".join(f"{name} {_pct(c['rate'])} ({c['passes']}/{c['n']})" for name, c in s["checks"].items()))
+        if s.get("lost_pending_claim") and describe_pending_omission(s["lost_pending_claim"]):
+            lines.append(describe_pending_omission(s["lost_pending_claim"]))
         if s.get("grader_scores"):
             lines += ["", "LLM grader (observed only, not a gate until calibrated; 1-4, higher is better):", "",
                       "| Dimension | Answers | Mean | Scored 1 | Scored 2 |", "|---|---|---|---|---|"]

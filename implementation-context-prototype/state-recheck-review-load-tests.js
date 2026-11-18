@@ -19,14 +19,34 @@ const knowledge=[
 ];
 const page=props=>PROJECT_VIEW.render({backendState:'loaded',projectName:'Northstar',knowledge,history:[],pendingFor:()=>[],...props});
 
-check('Current State keeps its prose and lists the flagged item in a box under its area (layout B)',()=>{
+check('Current State keeps its prose; an area with flagged items gets one summary line that opens the re-check filter (4b)',()=>{
   const html=page({recheckDays:60});
   assert.match(html,/class="project-wiki-prose"/);
-  assert.match(html,/1 item needs a re-check/);
-  assert.match(html,/Needs re-check · last confirmed Aug 18/);
-  assert.match(html,/data-action="state-still-true" data-state-id="k-entry">Still true</);
-  assert.match(html,/data-action="suggest-recheck-question" data-state-id="k-entry">Suggest a re-check question</);
-  assert.ok(!/data-state-id="k-pilot">Still true/.test(html),'only flagged items in the box');
+  assert.match(html,/<div class="recheck-summary"><span class="recheck-chip">Re-check<\/span><span>1 item in this area needs a re-check<\/span><button type="button" class="text-button" data-action="open-recheck-items">Review it →<\/button><\/div>/);
+  // Paige, Nov 16: no per-area box repeating the flagged statements under the prose, and no actions in the reading view.
+  assert.ok(!/recheck-box/.test(html),'old box gone');
+  assert.ok(!/data-action="state-still-true"/.test(html),'actions live in the filtered view');
+  const visible=html.replace(/<details class="project-maintained-facts" hidden>.*?<\/details>/gs,'');
+  assert.equal((visible.match(/The assistant supports the rep inside the existing workflow\./g)||[]).length,1,'flagged statement shown once, in the prose');
+  const many=page({recheckDays:60,knowledge:knowledge.map(k=>({...k,needsRecheck:true}))});
+  assert.match(many,/3 items in this area need a re-check<\/span><button[^>]*>Review them →/);
+  assert.equal((many.match(/class="recheck-summary"/g)||[]).length,1,'one line per area however many are flagged');
+  assert.ok(!/recheck-summary/.test(page({recheckDays:60,knowledge:knowledge.map(k=>({...k,needsRecheck:false}))})),'no line when nothing is flagged');
+});
+
+check('the re-check filter lists flagged items as Reviews-style rows that expand to the statement, date and actions',()=>{
+  const html=page({recheckDays:60,recheckOnly:true});
+  assert.match(html,/<div class="recheck-records-head"><span>Needs a re-check<\/span><span class="count-badge">1<\/span><\/div>/);
+  const row=(html.match(/<details class="recheck-record" data-state-id="k-entry">.*?<\/details>/s)||[])[0];
+  assert.ok(row,'one record row for the flagged item');
+  assert.match(row,/<summary class="open-question-row recheck-record-toggle"><span class="open-question-copy"><span class="open-item-label recheck-label">Re-check<\/span><span class="open-question-title recheck-record-title">The assistant supports the rep inside the existing workflow\.<\/span><span class="open-question-meta">Last confirmed Aug 18 · re-check every 30 days<\/span><\/span><span class="question-card-chevron" aria-hidden="true">›<\/span><\/summary>/);
+  assert.match(row,/<div class="review-context-block"><span>Current State item<\/span><p>The assistant supports the rep inside the existing workflow\.<\/p><\/div><div class="review-context-block"><span>Last confirmed<\/span><p>Aug 18\. It is past its 30-day re-check\.<\/p><\/div>/);
+  assert.match(row,/<div class="review-actions"><button type="button" class="btn primary" data-action="state-still-true" data-state-id="k-entry">Still true<\/button><button type="button" class="btn secondary" data-action="suggest-recheck-question" data-state-id="k-entry">Suggest a re-check question<\/button><\/div>/);
+  // An item without its own interval shows the project's.
+  const proj=page({recheckDays:60,recheckOnly:true,knowledge:knowledge.map(k=>k.id==='k-entry'?{...k,recheckDays:null}:k)});
+  assert.match(proj,/Last confirmed Aug 18 · re-check every 60 days/);
+  assert.ok(!/recheck-summary/.test(html),'no summary line inside the filtered view');
+  assert.ok(!/class="review-record/.test(html),'rows never use the Review record class, so nothing counting Reviews picks them up');
 });
 
 check('the overview counts items needing a re-check; the off pointer shows only when reminders are off',()=>{

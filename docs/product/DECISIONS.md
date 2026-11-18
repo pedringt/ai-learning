@@ -552,6 +552,12 @@ Records pile up as noise, a summary needs more redaction, or a non-State warning
 - **Expiry is a per-project setting, off by default.** Individual items can override the project threshold while reminders are on; when the project's reminders are off, no item is flagged (Nov 15: "off means off"). The seeded demo projects use 60 days and seed a deliberate mix of old and recent items, and the UI says expiry can be turned on in Settings.
 - **An old item is flagged, never changed.** Current State keeps its prose; a box under each area lists its old items with "Needs re-check · last confirmed <date>", "Still true" and "Suggest a re-check question" (Nov 15: layout B). A "Show dates" toggle (off by default) lists every item with its date, its own re-check interval and "Still true". "Still true" takes an optional note saved to History. "Suggest a re-check question" opens the Add question dialog prefilled. Item intervals are set in the dates view and listed in Settings. The overview counts items needing a re-check, and Open Items gets one bundled entry after the Reviews (counted as one) that opens Current State filtered to them.
 - **Ask notes it in software.** When a claim's primary record is flagged, software adds the note beside its chip. No prompt change.
+- **Amendment (Paige, Nov 16): the re-check layout is a summary line plus Reviews-style rows (option 4b), replacing layout B's per-area box.**
+  - **Why:** the box repeated each flagged statement in full under the prose, which already contains it. It didn't match the rest of State, and it grew about 110px per item; with 17 flagged items, the boxes were about 45% of the page.
+  - **Reading view:** each area with old items now gets one line, "N items in this area need a re-check · Review them →", which opens the existing re-check filter (#686).
+  - **Filtered view:** the items appear as rows in the Reviews-page style. Each row has a RE-CHECK label, the statement as its title, and "Last confirmed <date> · re-check every N days". Expanding a row shows the statement, the date, **Still true** and **Suggest a re-check question**.
+  - **Unchanged:** what counts as needing a re-check, the actions, the dates, the overview count, the Open Items entry and "Show dates".
+  - **Rejected:** inline marks in the prose (noisy when many are flagged), a collapsed compact box, and Reviews-style rows under every area (consistent, but as tall as the box).
 
 **Why**
 Stale "true" items are the next trust failure once the authority boundary holds: an item can be correctly accepted and still no longer true. Comparable tools (Guru, Document360, Notion, Confluence) have a person verify content, set intervals per item with a team default, and notify rather than change content; Guru's current default is "Does not expire".
@@ -621,3 +627,85 @@ In 585 saved answers (production main and staging, x15 each), none of the 5 auth
 
 **Revisit when**
 The citation-coverage or fallback work lands (re-measure "Tier 1"-type misses), the narrower P1 rewording is measured, or a repeated-wording claim is read as settled by a reviewer.
+
+### DEC-029 — Ask never gives a freshness verdict without confirmation data, and never turns a missing record into an absence (#703, #704)
+
+**Status:** Decided (Paige, Nov 16); built on `fix/703-704-freshness` (eval/703-704), not yet on staging.
+**Date:** 2026-11-16
+**Related:** #703, #704, #692, #701, DEC-021, DEC-022, DEC-023, DEC-026, QA.md invariant 6
+
+**Decision**
+- **Equivalent questions get the same authority checks, whatever the wording.** Freshness questions ("Is X stale / outdated / out of date / up to date?", "Is anything in Current State stale?") take #692's software re-check answer, the same as "re-check" and "last confirmed" wording. A freshness word that isn't the question's predicate ("How do we handle stale tickets?") still goes to the model.
+- **Backstop: no freshness verdict without confirmation data.** The model never receives DEC-026 data, so any freshness verdict it gives about Current State ("not stale", "up to date", "needs/doesn't need a re-check") is withheld. An open phrasing ("don't show whether it is stale") is not a verdict.
+- **A failure to retrieve never becomes evidence that something doesn't exist.** An existence claim (no record of a kind covers, mentions or is about X) is checked against every record in the project, including records retrieval did not send. It is withheld when a record of that kind shares X's distinctive words.
+- **Existence claims only (#701 scope, Nov 16).** Record-first denials ("no record establishes/confirms X", "State has no confirmed/established/recorded X", "I couldn't find a record of X") describe the record they are about and are never checked by this rule.
+- **Withheld with the existing withheld line** (Paige, Nov 16: no software sentence naming the missed record). **Two new DEC-024 kinds** say why (Paige, Nov 16, option b, wording approved as written): freshness, "said whether something is out of date, which only its confirmation date shows"; absence, "said State has no record of something it does have". This amends DEC-024's list of kinds.
+- **A freshness word Ask reports from a record is not its own verdict** (Nov 16 replay): after a reporting verb ("says", "arguing", "treats … as") or a pending/proposal frame in the same clause it is shown, unless Current State is the one said to report it. The clause is the one the word is in, not the sentence: a pending word before a comma, "but", "so" or "although" doesn't release Ask's own verdict after it (#682 session probes). Ask concluding from a pending proposal is still its own verdict and is withheld, even hedged: "A pending Finance review proposes that the limit should be $5,000 instead, so the $2,500 figure may be outdated" (Paige, Nov 16; replay of 69f86a1, adversarial run 43948455983 r25).
+
+**Why**
+Nov 16 production QA: "Is the VIP exception stale?" got "…not stale in Current State" under a "needs re-check" chip (#703), and "Is the VIP carve-out out of date?" got "no Current State record covers it" while k-vip exists (#704). For #704, retrieval had sent k-vip and the retire-VIP Review (checked on the seeded Northstar, which matches production): the model ignored them. A prompt rule asking for relative absence wording was already in place (DEC-023); only a software check removes the path.
+
+**Rejected / deferred**
+- Rewording absence as "the records I looked at don't show…": it expresses uncertainty but doesn't fix a missing or ignored record.
+- Giving the model confirmation data: DEC-026 keeps freshness in software.
+- A software sentence naming the record a withheld absence claim missed (option b, Nov 16).
+- Changing retrieval's substring matching (k-vip was kept on a tie): a DEC-023 question; the #653 benchmark now holds the case.
+
+**Revisit when**
+A replay or eval shows a correct claim withheld by either check, or the model starts receiving confirmation data.
+
+### DEC-030 — Claims may cite a linked or shown record; the premise test and release check read Ask's correct wording and staging's last run (#701)
+
+**Status:** Decided (Paige, Nov 16). V3, V4, the scorer changes and #698 are on `staging` (0dbea6e). P3 is held (branch `p3/701-held`). The lost-pending-claim metric (amendment) is on `fix/701-decisions`.
+**Date:** 2026-11-16
+**Related:** #701, #695, #696, #698, #700, DEC-022, DEC-023, DEC-028, R-022, R-024; `ask_claims.py`, `ask_service.py`, `eval/authority_wording.py`, `eval/quality_harness.py`, `eval/release_gate.py`
+
+**Decision**
+- **A cited Review's linked Evidence supplies its numbers (V3).** When a claim cites a Review, the Evidence that Review links to and that the answer selected counts as a source for the claim's numbers and dates. This follows the answered-Question precedent. A premise correction can cite the retention Review and still say "30 days".
+- **A claim may cite a record Ask was shown but did not select (V4).** This relaxes #567's "selected records" rule for citations to "shown records". The record must still be the right type for the claim's basis, numbers still come only from the cited records, and a `none` claim's open sources are not widened.
+- **Cite the record each detail comes from (P3, prompt): held.** Before writing a number, name or date, the claim must cite the record it comes from; otherwise it leaves the detail out. Its before/after (Nov 16) improved Ask, adversarial, premise and the Ask-quality eval, but compound "should wait" (R-024) rose from 2/150 to 9/150; across two P3 runs it was 10/300 against 3/300 without. P3 is held until a #696 wording keeps "should wait" at or below baseline when combined with P3 (Paige, Nov 16). It ships only with V4.
+- **"Should wait" (#696).** Keep the current dependency/condition sentence; P2 (deleting it) is rejected on the data. Two alternative wordings (W1, W2) are measured, each combined with P3, against a same-day P3-only run; Paige chooses. Measured (#696 comment 6935001200): W2 is rejected (14/150 "should wait"); W1 cost 7 adversarial authority failures. Paige chose a variant: the current sentence plus only W1's clause "never say work should wait or cannot start because of a pending item unless Current State itself says so", measured with P3 before any decision on P3. Measured (comment 6937143651): "should wait" 2/150 against 3/150 for a same-day P3-only run, but 6 adversarial authority failures against 2. **Paige (Nov 16): keep P3 held and do not adopt (c) + P3**; neither wording reliably improves "should wait", and (c) adds authority failures. #695, #696 and P3 stay open; no further prompt work is authorized.
+- **"The answer lost its pending claim" is tracked, not gated (#696; Paige, Nov 16 amendment).** When Ask's checks withhold a pending-Review claim and the answer keeps no claim on that basis, the eval reports count it as its own trust metric (`eval/pending_omission.py`, in the eval-matrix summary and the quality report), separately from the authority check and even when every check passes. An answer can be accurate sentence by sentence and still leave out a pending item that changes the reader's understanding, and the authority check's label rule passes most of these. Cases are split into a material omission (a supported, relevant pending claim removed, leaving an answer that misrepresents status) and an acceptable withholding (an unsupported claim withheld, with the needed uncertainty still in the answer); the code counts, people classify. It is **not a DEC-022 release blocker** until its severity, reproducibility and whether answers materially mislead are established. It changes no safeguard and no scoring version. Open and not authorized: how Ask treats a pending claim that fails only on an uncited Current State figure (cause A), whether "marked as" counts as reporting a label (cause B), and a conservative fallback that shows "There is also a pending Review relevant to this question" with a link instead of deleting the sentence (candidate direction on #696).
+- **Premise test wording (#700, option b).** The premise test accepts DEC-023's cut-context wording narrowly ("the records I looked at don't/do not show that retention is resolved / show retention as resolved") and "cannot be treated as resolved". "The records I looked at don't show…" about anything else does not count.
+- **"Legal-confirmed" under a pending frame (premise test).** The premise test follows DEC-028's V1 rule: a settled word is allowed only inside a pending Review's own description, in the same clause that says the Review is pending ("A Review proposing Legal-confirmed retention terms … is pending"). It must come after "Review" in that clause and must not be the clause's predicate. A later clause ("…, but the Review is pending") never qualifies it.
+- **Unknown-scenario wording.** The uncertainty check also accepts "has no established" and "does not have a confirmed", which `ask_unknown_stays_unknown`'s required facts already accept. An open item shown only as a chip stays a quality miss.
+- **Previous run (#698).** On staging, "failed in two consecutive runs" reads the previous run from the last staging runs' saved `quality-report` artifacts (the newest report that ran each suite), because the staging API reseeds on every backend deploy. The record URL's analytics remain the fallback, and the only source on production.
+
+**Why**
+The #701 investigation found the remaining release-check variance came from three citation mechanisms (an uncited source record, a cited but unselected record, and Evidence reachable only through a Review), plus scorer wording that did not recognise correct answers and a previous-run lookup that staging's reseeding almost always emptied.
+
+**Measured (offline replay of captured outputs; no model calls)**
+- Baseline outputs with V3 + V4: Ask 378 → 379/390, adversarial 667 → 671/720, compound 113 → 114/150, premise repro 42 → 50/60. With the premise-test and uncertainty wording as well: premise 60/60.
+- P3's outputs with V3 + V4: Ask 386/390, adversarial 679/720, compound 142/150. With the new wording: Ask 387/390 (one more correct "does not have a confirmed" answer), premise 29/30 (the remaining miss makes no correction).
+
+**Measured (paid, same day, Nov 16; V3 + V4 in both arms; runs 43979173001/7320/81248 vs 43979184898/89343/94344)**
+- Without P3 → with P3: Ask 379 → 389/390, adversarial 666 → 679/720, premise 27 → 30/30, compound 130 → 132/150, Ask-quality eval 12 → 13/13 (release reading pass).
+- Compound "should wait": 2/150 → 9/150, all in the model's own output (none withheld). 2,666 calls, $2.59.
+- V4 newly shows 62 statements, each accurate to its cited records.
+
+**Rejected / deferred**
+- P2 (deleting the dependency/condition sentence): "should wait" rose to at least 6/150, and `adv_leading_since_we_approved` fell from 27/30 to 18/30.
+- The broad #700 wording (any "records I looked at don't show…").
+
+**Revisit when**
+A shown-but-unselected citation is found to mislead, a new "should wait" wording is approved and measured, or staging's quality reports stop being saved.
+
+### DEC-031 — A broad "What's still open?" answer shows the project's open Questions and pending Reviews, counted by software (#710)
+
+**Status:** Decided (Paige, Nov 17). Built on `fix/710-open-work-line`.
+**Date:** 2026-11-17
+**Related:** #710, #699, #709, #684, DEC-023; `ask_software_answers.py` (`is_open_work_question`, `open_work_totals`), `ask_service._with_open_work`, `ask_display.open_work_line`, `context-ask.js` (`openWorkLine`), `context-app.js` (`intentAskHtml`)
+
+**Decision**
+- **Trigger.** Broad requests about the project's unresolved work: "What's still open?", "What's unresolved?", "What's pending?", "What's outstanding?", "What's left to decide?" and close variants. A question with its own subject ("Is the vendor question still open?", "What's pending on the VIP carve-out?") does not trigger it; a word like "open" or "pending" alone is not enough.
+- **Both totals, always.** One line, e.g. "3 open Questions · 2 Reviews awaiting a decision", shown even when neither is zero. A zero reads "No open Questions" / "No Reviews awaiting a decision". Blocking Questions are not broken out.
+- **Whole project, selected project.** The totals count every open Question (not resolved or stopped ones) and every pending Review in the project the request named, never only the records the answer used, and never another project's (#709).
+- **Questions and Reviews stay distinct.** A pending Review that proposes a Question counts as a Review until accepted.
+- **Software, not the model.** The counts are set by software on every final answer; the model cannot set them. The model's own text is unchanged.
+- **Follow-ups keep it.** A refinement of such an answer ("shorten it", "make it leadership-ready") keeps the line, recounted for that request.
+- **Placement.** Directly under the answer's headline, visually secondary to it, ending with a "See all in Open Items" link (as in #684). Copy includes the line after the headline.
+- **The browser's Open Items card says the same thing.** "What's still open?", "What's unresolved?" and other open-Questions inventory wording are answered by the browser's routing card, with no Ask call (Paige, Nov 17: no model is needed for counts software already has). The card shows the same line, counted from the same open Questions and pending Reviews of the tab's own project, with its Open Items link. Before the project's records have loaded it does not answer (no guessed zero); Ask answers instead.
+- **Not every answer.** Showing what an answer left out on all answers stays a separate question (#699).
+
+**Why**
+On Nov 17 Ask told a user there were no open Questions while Reviews were waiting for a decision. That was correct, since the two are different records, but incomplete for someone asking what is unresolved. Software counts are predictable and testable; asking the model to mention both would not be.

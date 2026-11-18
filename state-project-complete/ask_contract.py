@@ -102,6 +102,13 @@ MEETING_PREP_SECTION_TITLES = {
 }
 
 
+class AskOpenWork(BaseModel):
+    """#710 (Paige, Nov 17): the project's unresolved work, counted by software for "What's still open?"-type requests."""
+    model_config = ConfigDict(extra="forbid")
+    questions: int = Field(ge=0)
+    reviews: int = Field(ge=0)
+
+
 class AskSynthesis(BaseModel):
     model_config = ConfigDict(extra="forbid")
     job: AskJob
@@ -122,6 +129,9 @@ class AskSynthesis(BaseModel):
     # #543 (Oct 20): one specific Question the person could track when the answer finds a gap the record
     # does not cover. Ask never creates it; the UI offers to open the Question form prefilled.
     suggested_question: str | None = Field(default=None, max_length=240)
+    # #710: open Questions and pending Reviews in the whole active project, shown as one line under the headline.
+    # Software-only: not in the model's schema, and always set (or cleared) by ask_service._with_open_work.
+    open_work: AskOpenWork | None = None
 
 # Anthropic structured outputs support only a subset of JSON Schema and reject
 # array maxItems. Application limits therefore remain authoritative in

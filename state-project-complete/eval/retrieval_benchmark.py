@@ -74,6 +74,8 @@ STATE = [
     ("s-staffing", "Staffing", "Two contractors cover weekend queues."),
     ("s-templates", "Templates", "Reply templates are reviewed quarterly."),
     ("s-uptime", "Uptime", "Uptime is reported monthly to the steering group."),
+    # #704 (Nov 16): Northstar's k-vip shape. Its statement doesn't say "carve-out"; the Review does.
+    ("s-vip", "VIP exception", "VIP and other specially handled accounts continue through manual support workflows."),
     ("s-volume", "Volume", "Expected contact volume is 4,000 tickets a month."),
     ("s-web-access", "Web accessibility", "Accessibility target is WCAG 2.1 AA."),
     ("s-workflow", "Workflow", "Agents triage in the shared queue before claiming tickets."),
@@ -94,6 +96,8 @@ OPEN_REVIEWS = [
     ("r-cohorts", "proposed_update", "Should training add a third cohort?", "Hiring grew.", 2040, ["s-agent-cohorts"], []),
     ("r-templates", "missing_understanding", "Who signs off reply templates each quarter?", "No owner is recorded.", 2050, [], []),
     ("r-volume", "proposed_update", "Should expected volume rise to 5,000 tickets?", "Forecast revised.", 2060, [], []),
+    ("r-vip-retire", "proposed_update", "Should the VIP exception carve-out be retired?",
+     "A note says VIP accounts may move to the standard queue.", 2065, ["s-vip"], []),
     # Newest Review: loses today's zero-score tie for the 6 Review slots (oldest first).
     ("r-contract-sign", "proposed_update", "Should Current State record that the Corvo order form is signed?",
      "Signature closes procurement.", 2070, [], ["e-approved"]),
@@ -324,6 +328,7 @@ FAMILIES = {
     "superseded": "Negative: superseded record",
     "authority": "Negative: pending vs accepted on one topic",
     "flood": "Negative: a recent keyword flood",
+    "freshness": "Freshness wording about a named record (#704)",
 }
 
 CASES: tuple[Case, ...] = (
@@ -371,6 +376,12 @@ CASES: tuple[Case, ...] = (
     Case("au2", "authority", "Is the mobile app in scope?", ("qa-mobile", "s-mobile"),
          authority_expectation=(("qa-mobile", "answered_questions"), ("s-mobile", "state"))),
 
+    # #704 (Nov 16, prod QA): Ask said "no Current State record covers" the VIP carve-out. On Northstar the record was
+    # sent and the model ignored it; this case keeps retrieval honest for the wording (short words like "out" match
+    # many records as substrings).
+    Case("fr1", "freshness", "Is the VIP carve-out out of date?", ("s-vip", "r-vip-retire"), expected_hit_today=True,
+         authority_expectation=(("s-vip", "state"), ("r-vip-retire", "reviews"))),
+    Case("fr2", "freshness", "Is the VIP exception stale?", ("s-vip", "r-vip-retire"), expected_hit_today=True),
     Case("f1", "flood", "What is the launch date?", ("e-launch-steering", "s-public-launch"), variant="15 newer notes share 'launch' and 'date'"),
 )
 

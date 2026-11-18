@@ -164,3 +164,27 @@ def fetch_analytics(record_url: str, timeout: float = 30) -> Mapping[str, Any] |
             return json.loads(response.read().decode("utf-8"))
     except Exception:
         return None
+
+
+def previous_failed_from_reports(paths: Iterable[Path | str]) -> dict[str, set[str] | None]:
+    """#698 (Paige, Nov 16): failed scenario ids per suite from saved ``quality-report.json`` files (the previous staging
+    runs' artifacts). Staging's API reseeds on every backend deploy, so its quality analytics rarely hold the previous
+    run; the artifact does. For each suite, the most recent report (by ``started_at``) that ran it wins; a suite no
+    report ran is None. Unreadable files are skipped. Failed means not passed, as ``quality_report.failure_details``."""
+    latest: dict[str, tuple[str, set[str]]] = {}
+    for path in paths:
+        try:
+            data = json.loads(Path(path).read_text())
+        except (OSError, ValueError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        started = str(data.get("started_at") or "")
+        for report in data.get("reports") or []:
+            suite = report.get("suite") if isinstance(report, dict) else None
+            if suite not in (REVIEW_SUITE, ASK_SUITE):
+                continue
+            failed = {str(r["id"]) for r in report.get("results") or [] if r.get("id") and not r.get("passed")}
+            if suite not in latest or started > latest[suite][0]:
+                latest[suite] = (started, failed)
+    return {suite: (latest[suite][1] if suite in latest else None) for suite in (REVIEW_SUITE, ASK_SUITE)}

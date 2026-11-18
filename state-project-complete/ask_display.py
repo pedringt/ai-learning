@@ -25,6 +25,9 @@ WITHHELD_KIND_PHRASES = {
     "settled": "said something was settled that State's records don't establish",
     "permission": "said something could go ahead without a record that allows it",
     "draft": "stated the draft's assumption as fact",
+    # #703/#704 (Paige, Nov 16, DEC-029)
+    "freshness": "said whether something is out of date, which only its confirmation date shows",
+    "absence": "said State has no record of something it does have",
     "other": "couldn't be checked against State's records",
 }
 # #567 (Nov 11, draft copy for Paige's review): when every claim was withheld, the line says so without implying the
@@ -99,6 +102,23 @@ def withheld_line(answer: Any) -> str | None:
     return _kinds_line(withheld_counts(a))
 
 
+# #710 (Paige, Nov 17): the project's unresolved work, one software line under the headline. context-ask.js
+# openWorkLine mirrors this wording (a test keeps them in step).
+OPEN_WORK_NONE = ("No open Questions", "No Reviews awaiting a decision")
+
+
+def open_work_line(answer: Any) -> str:
+    work = inner_answer(answer).get("open_work")
+    if not isinstance(work, Mapping):
+        return ""
+    questions, reviews = work.get("questions"), work.get("reviews")
+    if not isinstance(questions, int) or not isinstance(reviews, int):
+        return ""
+    q = f"{questions} open {'Question' if questions == 1 else 'Questions'}" if questions else OPEN_WORK_NONE[0]
+    r = f"{reviews} {'Review' if reviews == 1 else 'Reviews'} awaiting a decision" if reviews else OPEN_WORK_NONE[1]
+    return f"{q} · {r}"
+
+
 def displayed_lines(answer: Any, *, include_footer: bool = False, labels: bool = True) -> list[str]:
     """Every line a person sees, in order. Claims replace the summary when present; an answer without claims
     (the older shape, or a software-written starter answer) shows its summary.
@@ -111,6 +131,8 @@ def displayed_lines(answer: Any, *, include_footer: bool = False, labels: bool =
     lines: list[str] = []
     if a.get("headline") and (labels or not has_claims):
         lines.append(str(a["headline"]).strip())
+    if labels and open_work_line(a):
+        lines.append(open_work_line(a))
     if has_claims:
         lines.extend(claim_lines(a, labels=labels))
     elif a.get("summary"):

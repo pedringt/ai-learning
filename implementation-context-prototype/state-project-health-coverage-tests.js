@@ -81,7 +81,7 @@ function cardRows(html){
   return {name:head[1],pill:head[2],stage:detail[2]||null,signal:detail[3]};
 }
 const authorityRows=cardRows(authorityCard);
-assert.deepStrictEqual([authorityRows.name,authorityRows.stage,authorityRows.signal],['Authority Lab','In progress','No delivery or runtime problems']);
+assert.deepStrictEqual([authorityRows.name,authorityRows.stage,authorityRows.signal],['Authority Lab','v1 released','No delivery or runtime problems']);
 assert.match(authorityRows.pill,/^<span class="status-pill partial" title="Healthy · quality not measured">/);
 const stateRows=cardRows(M.cardMarkup(stateHealthy,true));
 assert.strictEqual(stateRows.stage,null);

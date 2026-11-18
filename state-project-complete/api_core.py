@@ -29,6 +29,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from anthropic_provider import AnthropicProvider
 from database_migration_backed import initialize_db
 from db import DB_ERRORS, connect, project_id_of
+from project_scope import ProjectUnavailableError, project_unavailable_http, scope_connection
 from product_analytics import ProductEventInput, _insert_event, review_conflict_kind
 from spend_guard import AI_BUDGET_MESSAGE, DailySpendCapReached, check_daily_budget, is_ai_budget_exhausted
 from extension_points import ExtensionPoint
@@ -96,6 +97,11 @@ logger = logging.getLogger("state.api")
 # needing to accept a Request parameter. The DB row remains only as the
 # bootstrap default for a client that hasn't loaded a project yet.
 _request_project_id: ContextVar[str | None] = ContextVar("_request_project_id", default=None)
+# #709: a request naming a project that no longer exists is refused (project_unavailable) instead of silently
+# landing in the shared active_project row. Only routes that manage projects themselves (listing, creating,
+# switching, deleting) still answer for such a tab, so it can choose another project.
+_request_project_optional: ContextVar[bool] = ContextVar("_request_project_optional", default=False)
+_PROJECT_MANAGEMENT_PATH = re.compile(r"^/api/projects(/.*)?$")
 
 
 from review_service import (
@@ -324,10 +330,12 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         project-aware for free -- none of their own bodies need to change.
 
         Resolution order: the requesting client's own X-State-Project-Id
-        header (see _request_project_id above) wins when present and valid,
-        so each browser tab's writes land wherever *it* believes it is,
-        independent of what any other tab most recently switched the shared
-        active_project row to. Falls back to that shared row -- the
+        header (see _request_project_id above) wins, so each browser tab's
+        writes land wherever *it* believes it is, independent of what any
+        other tab most recently switched the shared active_project row to.
+        #709: a header naming a project that no longer exists is refused
+        with 404 project_unavailable (see project_scope.py); it never falls
+        back. The shared row is used only when no header is sent -- the
         bootstrap default for a client that hasn't loaded a project yet, or
         a caller that predates the header. The active_project table may not
         exist yet (the very first connection opened during lifespan
@@ -338,37 +346,10 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
         connection = connect(settings.connection_url())
         try:
             try:
-                row = connection.execute("SELECT project_id FROM active_project WHERE id=1").fetchone()
-                if row:
-                    connection.project_id = row["project_id"]
-            except DB_ERRORS:
-                logger.info("Could not read active_project (expected before migrations); using the default project",
-                            exc_info=True)
-                # Production incident (2026-09-14): on Postgres, a failed
-                # SELECT against a not-yet-existing table poisons the whole
-                # transaction until an explicit ROLLBACK -- unlike SQLite,
-                # which just raises and leaves the connection otherwise
-                # usable. On a brand-new database (the very first lifespan
-                # startup, before initialize_db() has created anything),
-                # this speculative lookup always fails here, and without the
-                # rollback below, initialize_db()'s very next statement
-                # (CREATE TABLE IF NOT EXISTS schema_migrations) died with
-                # psycopg2.errors.InFailedSqlTransaction -- a crash loop
-                # that never surfaced against SQLite-backed staging.
-                if connection.is_postgres:
-                    connection.rollback()
-            requested = _request_project_id.get()
-            if requested and requested != connection.project_id:
-                try:
-                    exists = connection.execute("SELECT id FROM projects WHERE id=?", (requested,)).fetchone()
-                except DB_ERRORS:
-                    logger.warning("Could not verify requested project %r; using the active project", requested,
-                                   exc_info=True)
-                    exists = None
-                    if connection.is_postgres:
-                        connection.rollback()
-                if exists:
-                    connection.project_id = requested
+                scope_connection(connection, _request_project_id.get(),
+                                 allow_unavailable=_request_project_optional.get())
+            except ProjectUnavailableError as exc:
+                raise project_unavailable_http(exc.project_id) from None
             yield connection
         finally:
             connection.close()
@@ -476,6 +457,9 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
                 await run_in_threadpool(check_budget)
             except DailySpendCapReached as exc:
                 return JSONResponse(status_code=429, content={"detail": str(exc), "code": "daily_spend_cap"})
+            except HTTPException as exc:
+                # #709: the request named a project that no longer exists; refuse it here, before any model call.
+                return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
         return await call_next(request)
 
     app.add_middleware(
@@ -490,11 +474,13 @@ def create_app(settings: Settings | None = None, provider: InterpretationProvide
     async def request_id_middleware(request: Request, call_next):
         request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
         project_token = _request_project_id.set(request.headers.get("X-State-Project-Id") or None)
+        optional_token = _request_project_optional.set(bool(_PROJECT_MANAGEMENT_PATH.match(request.url.path)))
         started = time.perf_counter()
         try:
             response = await call_next(request)
         finally:
             _request_project_id.reset(project_token)
+            _request_project_optional.reset(optional_token)
         elapsed_ms = (time.perf_counter() - started) * 1000
         response.headers["X-Request-ID"] = request_id
         logger.info(

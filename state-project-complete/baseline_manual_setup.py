@@ -20,6 +20,7 @@ from baseline_setup import (
 )
 from db import connect
 from interpretation_pipeline_integrated import new_id
+from project_scope import project_unavailable_http
 
 
 class ManualStartingStateFact(BaseModel):
@@ -119,7 +120,7 @@ def register_baseline_manual_setup_routes(app: Any, settings: Any) -> None:
                 "SELECT id FROM projects WHERE id=?", (project_id,)
             ).fetchone()
             if exists is None:
-                raise HTTPException(status_code=404, detail="Project not found")
+                raise project_unavailable_http(project_id)  # #709: same refusal the frontend recognises
             if not is_baseline_setup(connection):
                 raise HTTPException(
                     status_code=409,

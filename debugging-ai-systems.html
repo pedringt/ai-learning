@@ -44,7 +44,7 @@
 <article class="case-page-content flagship-case">
 <section class="section seam-learning">
 <h2 data-edit="debugging-4">The right evidence, the wrong answer</h2>
-<dl class="diag-rows"><div><dt data-edit="debugging-5">Observed</dt><dd data-edit="debugging-6">In a controlled State debugging exercise, a read-only AI agent found an open proposal naming someone as the person responsible for a project task, but answered as though the decision was final.</dd></div><div><dt data-edit="debugging-7">Where it failed</dt><dd data-edit="debugging-8">I checked the agent&rsquo;s trace and found that it had retrieved the right information. The mistake happened when it interpreted that information in its answer, not when it retrieved it.</dd></div><div><dt data-edit="debugging-9">What I changed</dt><dd data-edit="debugging-10">I clarified the instructions and reran the test. This time, the agent correctly reported that responsibility hadn&rsquo;t been decided.</dd></div></dl>
+<dl class="diag-rows"><div><dt data-edit="debugging-5">Observed</dt><dd data-edit="debugging-6">In a controlled State debugging exercise, a read-only AI agent found an open proposal naming someone as the person responsible for a project task, but answered as though the decision was final.</dd></div><div><dt data-edit="debugging-7">Where it failed</dt><dd data-edit="debugging-8">The agent&rsquo;s trace showed it had retrieved the right information. The mistake came when it interpreted that information in its answer.</dd></div><div><dt data-edit="debugging-9">What I changed</dt><dd data-edit="debugging-10">I clarified the instructions and reran the test. This time, the agent correctly reported that responsibility hadn&rsquo;t been decided.</dd></div></dl>
 <p class="section-note" data-edit="debugging-11">Synthetic dataset. The full trace is in the <a href="state-managed-agent-tracing.html">agent tracing exercise</a>.</p>
 </section>
 
@@ -55,8 +55,8 @@
 
 <section class="section current-conclusion">
 <h2 data-edit="debugging-19">Fix the right problem</h2>
-<p data-edit="debugging-20">The lesson from both cases was the same: figure out what correct behavior should look like before trying to improve the score. Sometimes that means changing the system. Other times it means changing the test.</p>
-<div class="case-meta case-credits" data-edit="debugging-21"><span><b>My role</b> Expected behavior, severity, failure classification, and the product and eval decisions</span><span><b>AI collaborator</b> All code, plus test cases, trace summaries, regression coverage and documentation (ChatGPT and Claude)</span></div>
+<p data-edit="debugging-20">The lesson from both cases was the same: figure out what correct behavior should look like before trying to improve the score.</p>
+<div class="case-meta case-credits" data-edit="debugging-21"><span><b>My role</b> Expected behavior, severity, failure classification, and the product and eval decisions</span><span><b>AI collaborator</b> All code, plus test cases, trace summaries, regression coverage, documentation and editing help on this page (ChatGPT and Claude)</span></div>
 <footer class="case-study-footer">
 <a href="state-managed-agent-tracing.html">Agent tracing exercise →</a>
 <a href="index.html#portfolio">Back to Applied Work →</a>

@@ -92,7 +92,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <p class="lead" data-edit="project-health-2">Project Health is a dashboard that brings product quality, incidents, delivery, and usage signals from my projects into one place.</p>
 <div class="case-meta" data-edit="project-health-3"><span><b>Status</b> Working prototype · live, built around my own projects</span></div>
 </header>
-<aside class="meridian-product-callout"><div><span>Live prototype</span><strong>Open the dashboard</strong><p data-edit="project-health-4">It shows quality, delivery, and monitoring for my own projects, with links to the underlying tools.</p></div><a class="meridian-primary-action" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health <span aria-hidden="true">↗</span></a></aside>
+<aside class="meridian-product-callout"><div data-edit="project-health-42"><span>Live prototype</span><strong>Open the dashboard</strong></div><a class="meridian-primary-action" href="project-health.html" target="_blank" rel="noopener noreferrer">Open Project Health <span aria-hidden="true">↗</span></a></aside>
 
 
 <article class="case-page-content flagship-case">
@@ -107,7 +107,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker" data-edit="project-health-9">What I built</div>
 <h2 data-edit="project-health-10">One starting point for checking my projects.</h2>
-<p data-edit="project-health-11">I chose which signals mattered and how to order them. The overview leads with what needs attention, so I can decide where to look first, and it answers two questions.</p>
+<p data-edit="project-health-11">I chose which signals mattered and how to order them. The overview leads with what needs attention and answers two questions:</p>
 <div class="grid2">
   <div class="card"><h3 data-edit="project-health-12">What needs attention?</h3><p data-edit="project-health-13">See the project’s current goal, known concerns, next decision, and changes since your last visit.</p></div>
   <div class="card"><h3 data-edit="project-health-14">Is anything blocking release?</h3><p data-edit="project-health-15">Review quality failures, delivery status, whether users are likely affected, and missing checks before deciding whether to ship.</p></div>
@@ -119,7 +119,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker" data-edit="project-health-18">Failure handling</div>
 <h2 data-edit="project-health-19">What does the failure mean?</h2>
-<p data-edit="project-health-20">A failed AI check does not always mean the same thing. It may point to a real product bug, a test expectation that is wrong, or incomplete evidence. Project Health shows what was observed and what was expected; deciding what should change is still my job.</p>
+<p data-edit="project-health-20">A failed AI check does not always mean the same thing. It may point to a real product bug, a test expectation that is wrong, or incomplete evidence. Project Health shows what was observed and what was expected.</p>
 
 <div class="ph-example">
   <span class="example-label">Earlier State eval · not in today’s dashboard</span>
@@ -135,7 +135,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <section class="section">
 <div class="kicker" data-edit="project-health-26">Investigate</div>
 <h2 data-edit="project-health-27">Investigate starts with the specific problem</h2>
-<p data-edit="project-health-28">When a signal needs more context, Investigate drafts a handoff: what happened, what is known, what is still uncertain, and what should happen next. It takes one of two paths:</p><ul data-edit="project-health-29"><li><strong>A failed eval.</strong> Rules use the recorded results to assemble the explanation, without another model call.</li><li><strong>A release or deployment problem.</strong> A bounded, read-only AI investigation examines the available evidence, such as deployment status and logs, and drafts the handoff.</li></ul><p data-edit="project-health-30">Neither path changes code, configuration, or deployments. A person makes the decision.</p>
+<p data-edit="project-health-28">When a signal needs more context, Investigate drafts a handoff: what happened, what is known, what is still uncertain, and what should happen next. It takes one of two paths:</p><ul data-edit="project-health-29"><li><strong>A failed eval.</strong> Rules use the recorded results to assemble the explanation, without another model call.</li><li><strong>A release or deployment problem.</strong> A bounded, read-only AI investigation examines the available evidence, such as deployment status and logs, and drafts the handoff.</li></ul><p data-edit="project-health-30">Neither path changes code, configuration, or deployments. An investigation of a real problem is kept as a shared record, and it stays open until I record an outcome, such as Resolved or Accepted limitation. A project turning Healthy doesn’t close it.</p>
 </section>
 
 <section class="section">
@@ -163,7 +163,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
   </div>
   <figcaption id="ph-status-caption">State’s status when its quality data didn’t load. Recreated from the October QA check and the fix.</figcaption>
 </figure>
-<p data-edit="project-health-37"><span class="lead-in">What it taught me.</span> A dashboard shouldn’t reassure someone when it lacks the evidence to justify reassurance.</p>
+
 <table class="ph-changes">
 <caption>Activity feed</caption>
 <thead><tr><th scope="col">Before</th><th scope="col">After</th></tr></thead>
@@ -177,7 +177,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <div class="kicker" data-edit="project-health-38">Where I landed</div>
 <h2 data-edit="project-health-39">What held up</h2>
 <p data-edit="project-health-40">Bringing project information into one dashboard was only part of the problem. The harder part was making sure that missing information, outdated results, and failed checks didn’t create a misleading picture of how a project was doing. Project Health became as much about knowing when not to trust a status as knowing where to investigate next.</p>
-<div class="case-meta case-credits" data-edit="project-health-41"><span><b>My role</b> Product framing, requirements, UX direction, decisions, eval review, QA, and release review</span><span><b>AI collaborator</b> All code, test implementation, technical research, and copy assistance (ChatGPT and Claude)</span></div>
+<div class="case-meta case-credits" data-edit="project-health-41"><span><b>My role</b> Product framing, requirements, UX direction, decisions, eval review, QA, and release review</span><span><b>AI collaborator</b> All code, test implementation, technical research, and editing help on this page (ChatGPT and Claude)</span></div>
 </section>
 
 </article>

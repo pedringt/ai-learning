@@ -49,8 +49,9 @@ _PERMISSION = re.compile(
     r"|\bno\s+longer\s+block(?:ed|s|ing)\b",
     re.I,
 )
-# A clause is the unit a negation or an attribution covers.
-_CLAUSE_BREAK = re.compile(r"[;:]|(?<!\d),(?!\d)|\s[—–]\s|\b(?:but|so|while|although|though|whereas|because|therefore|thus|"
+# A clause is the unit a negation or an attribution covers. #708: a comma ends a clause unless it is a thousands
+# separator ("$40,000", "1,500"); a comma right after a figure ("…is $40,000, but the Review…") used to join the halves.
+_CLAUSE_BREAK = re.compile(r"[;:]|,(?!\d{3}\b)|\s[—–]\s|\b(?:but|so|while|although|though|whereas|because|therefore|thus|"
                            r"which\s+means|meaning)\b", re.I)
 _NEGATION = re.compile(r"\b(?:not|no|never|nothing|none|neither|nor|without|cannot)\b|n['’]t\b", re.I)
 # A status the clause makes conditional, proposed or required rather than asserting it.

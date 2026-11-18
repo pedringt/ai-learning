@@ -71,6 +71,19 @@
   // the later modules call, under their original names. Order matters: each module only
   // receives functions from modules installed above it.
   const {showToast,showDemoHelp,showDialog,closeDialog,showProjectSettings,addDialogHtml,showAddDialog,analyzingDialog,startAnalysisClock,stopAnalysisClock}=window.STATE_APP_DIALOGS.install({baselineSetupActive,dialogBody,esc,overlay,state});
+  // #709: this tab's project no longer exists (deleted in another tab, or demo data reset). The server refused the
+  // request and saved nothing; ask for a project instead of quietly opening another one. Writes stay blocked in
+  // context-api.js until one is chosen.
+  async function showProjectUnavailable(projectId){
+    const name=(state.data.projects||[]).find(p=>p.id===projectId)?.name||state.data.project?.name||'This project';
+    state.isAnalyzing=false;
+    let projects=[];
+    try{projects=(await API.getProjects()).items||[];state.data.projects=projects;}catch(err){console.warn('Project list unavailable.',err);}
+    state.projectMenuOpen=false;updateNav();
+    const choices=projects.filter(p=>p.id!==projectId).map(p=>`<button class="btn secondary" data-action="switch-project" data-project-id="${esc(p.id)}">${esc(p.name)}</button>`).join('');
+    showDialog(`<span class="eyebrow">Project unavailable</span><h2 id="dialogTitle">${esc(name)} is no longer available.</h2><p>It may have been deleted, or the demo data may have been reset. Nothing was saved to another project. State won't save anything until you choose a project.</p>${choices?`<div class="dialog-actions project-unavailable-choices">${choices}</div>`:'<p>Reload the page to choose a project.</p>'}`);
+  }
+  document.addEventListener('state:project-unavailable',event=>{showProjectUnavailable(event.detail?.projectId);});
   const {updateNav,updateProjectSubnavActive,render,navigateTo,scrollProjectTarget}=window.STATE_APP_NAVIGATION.install({ASK,PROJECT_VIEW,announceView,esc,openQuestions,renderHistory,renderNotes,renderOpenItems,renderOverview,renderProjectOverview,root,state,uiPendingReviews});
   const {upsertBackendReview,replaceBackendOpenReviews,mapApiReview,refreshOpenReviews,formatBackendDate,sourceLabel,historyType,syncApiHistory,syncApiState,syncApiQuestions,createBackendQuestion,submitEvidence,retryEvidenceAnalysis,activateProject,hydrateBackend}=window.STATE_APP_HYDRATION.install({announceView,API,BACKEND_SYNC,currentProjectStage,renderWorkspaceAttentionOnly,renderWorkspaceBelowGridOnly,root,state,workspaceAttentionHtml,closeDialog,updateNav,render});
   const {decideReview,openAdjustDialog,executeReviewDecision,confirmReviewAdjust,bulkLeaveUnchanged}=window.STATE_APP_REVIEW_ACTIONS.install({API,OPEN_ITEMS_VIEW,clone,esc,norm,questionDialogHtml,state,todayISO,todayLabel,truncateText,showToast,showDialog,closeDialog,updateNav,render,replaceBackendOpenReviews,syncApiState,syncApiQuestions,hydrateBackend});
@@ -455,12 +468,17 @@
   // authoritative view for these counts. Route there instead: a count plus a
   // link, nothing Ask has to keep consistent on its own.
   function routingCardHtml({category,sentence,detail,count,view,anchor}){
-    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><div class="ask-routing-card-head"><span class="ask-routing-category">${esc(category)}</span><span class="ask-routing-count">${count}</span></div><p class="ask-routing-sentence">${esc(sentence)}</p>${detail?`<p class="ask-routing-detail">${esc(detail)}</p>`:''}<button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
+    return `<div class="result-label">Open Items</div><div class="ask-routing-card"><div class="ask-routing-card-head"><span class="ask-routing-category">${esc(category)}</span>${count==null?'':`<span class="ask-routing-count">${count}</span>`}</div><p class="ask-routing-sentence">${esc(sentence)}</p>${detail?`<p class="ask-routing-detail">${esc(detail)}</p>`:''}<button class="btn primary" data-view="${esc(view)}" data-anchor="${esc(anchor)}">Open Items →</button></div>`;
   }
   function intentAskHtml(i){
     if(i.kind==='blockers'){ const n=openQuestions().filter(q=>q.blocking).length; return routingCardHtml({category:'Blockers',sentence:n===1?'1 question is blocking progress.':`${n} questions are blocking progress.`,detail:'Resolve these to keep the project moving.',count:n,view:'open-items',anchor:'open-items-blockers'}); }
     if(i.kind==='pending'){ const n=pendingReviews().length; return routingCardHtml({category:'Reviews',sentence:n===1?'1 review is waiting on a decision.':`${n} reviews are waiting on a decision.`,detail:'Waiting on a decision from you.',count:n,view:'open-items',anchor:'open-items-reviews'}); }
-    if(i.kind==='open'){ const n=openQuestions().length; return routingCardHtml({category:'Questions',sentence:n===1?'1 question is open.':`${n} questions are open.`,detail:'Not yet answered in the project record.',count:n,view:'open-items',anchor:'open-items-questions'}); }
+    // #710 / DEC-031 (Paige, Nov 17): "What's still open?" / "What's unresolved?" are answered here, with no Ask call.
+    // The card shows both totals in DEC-031's line, from this tab's own project (the same open Questions and pending
+    // Reviews the server counts, loaded with the tab's project id), so it never reads "0 questions" while Reviews wait.
+    // Until this project's Reviews and Questions have loaded, a zero would be a guess: let Ask answer instead.
+    if(i.kind==='open'&&API&&(state.backendStatus?.reviews!=='loaded'||state.backendStatus?.questions!=='loaded'))return null;
+    if(i.kind==='open'){ const q=openQuestions().length, r=pendingReviews().length; const work={questions:q,reviews:r}; return routingCardHtml({category:'Open work',sentence:ASK?.openWorkLine?.({open_work:work})||`${q} open Questions · ${r} Reviews awaiting a decision`,detail:null,count:null,view:'open-items',anchor:!q&&r?'open-items-reviews':'open-items-questions'}); }
     return null;
   }
 
