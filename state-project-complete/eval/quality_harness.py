@@ -110,6 +110,9 @@ class ReviewQualityResult:
             forbidden = [phrase for phrase in self.scenario.forbidden_state_update_phrases if _normalize(phrase) in text]
             if forbidden:
                 return [f"proposed state contains forbidden {', '.join(forbidden)}"]
+        if self.scenario.keeps_existing_state and re.search(r"\b(?:update|retire) target=\S+ status=pending",
+                                                            self.proposal_rows):
+            return ["changes the existing Current State item instead of recording the plan beside it"]
         prose = _normalize(self.review_prose)
         forbidden = [phrase for phrase in self.scenario.forbidden_review_phrases if _normalize(phrase) in prose]
         if forbidden:
