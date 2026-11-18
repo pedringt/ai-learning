@@ -155,6 +155,10 @@ check("#693: a possessive name counts too",routing.askRoutingCardHtml("List Nort
 check('#693: a created project is named by its full name',routing.askRoutingCardHtml('What is blocking Harbor Lights?')===null);
 check('#693: the active project by name still routes',!!routing.askRoutingCardHtml('What open reviews does Juniper have?'));
 check('#693: a plain inventory question still routes',!!routing.askRoutingCardHtml('What open Reviews are there?'));
+// #705 (Paige, Nov 18): the browser keeps its broad rule. A tab can't read the other project's records (cue 3), so any
+// one-word mention of another project skips the instant card and lets the server decide; never this project's counts.
+check('#705: an ordinary-word mention still leaves it to the backend',routing.askRoutingCardHtml('What open questions involve the Northstar Cafe?')===null);
+check('#705: an owned mention leaves it to the backend',routing.askRoutingCardHtml('What open reviews cover our Northstar badge readers?')===null);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if(fail) process.exit(1);

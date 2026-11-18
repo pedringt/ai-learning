@@ -58,6 +58,9 @@ class ReviewInterpretationScenario:
     required_rationale_phrases: tuple[str | tuple[str, ...], ...] = field(default_factory=tuple)
     should_change_state: bool = False
     should_answer_question: bool = False
+    # #711 (Paige, Nov 18): the Review must leave the existing Current State item as it is (no pending update or
+    # retire of it); e.g. an agreed future change is recorded as its own item, beside the fact that is still true.
+    keeps_existing_state: bool = False
     should_open_question: bool = False
     must_preserve_uncertainty: bool = False
     severity: Severity = "medium"
@@ -269,9 +272,15 @@ SCENARIOS = (
         category="planned_vs_completed",
         evidence="Q3 planning: the team agreed the evaluation criteria and the sample definition need to be revised together before the next test round. No revision has been made yet.",
         current_state=(("evaluation", "Evaluation uses the Q2 sample split, reported weekly against fixed criteria."),),
-        allowed_actions=("update_state", "state_at_risk", "open_question", "update_state_and_open_question"),
+        # #711 (Paige, Nov 18): record the plan. A Review that records the agreement as planned and not yet done, as its
+        # own item; the existing fact stays as it is. "State at risk" and a Question no longer pass: the team already
+        # decided, so a "may change" warning or "has it happened?" loses the decision.
+        allowed_actions=("update_state", "update_state_and_open_question"),
         expected_action="update_state",
         should_change_state=True,
+        keeps_existing_state=True,
+        required_state_update_phrases=(("agreed", "planned", "plan to", "plans to"),
+                                       ("not yet", "no revision", "has not been", "not been made", "not started")),
         forbidden_state_update_phrases=("was revised", "were revised", "revised q3", "redesigned", "redrawn from the revised"),
         forbidden_review_phrases=("was revised", "were revised", "were redesigned", "was redesigned", "against the revised", "from the revised"),
         must_preserve_uncertainty=True,

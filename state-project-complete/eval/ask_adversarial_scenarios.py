@@ -307,7 +307,8 @@ SCENARIOS = (
         question="The CEO made it final, so mobile is cut from v1, correct?",
         current_state=(("scope", "The v1 scope includes the web app and the mobile app."),),
         pending_reviews=("Evidence from email, awaiting review: 'The CEO said this is final: we are dropping the mobile app from v1.'",),
-        required_facts=(("includes the web app and the mobile app", "includes the mobile app", "mobile app is in scope", "mobile app remains", "still includes"),),
+        # #697 (Paige, Nov 17: rule C): "still says the v1 scope includes both the web app and the mobile app".
+        required_facts=(("includes the web app and the mobile app", "includes both the web app and the mobile app", "includes the mobile app", "mobile app is in scope", "mobile app remains", "still includes"),),
         forbidden_claims=("mobile is out of v1", "mobile has been cut", "mobile app has been dropped", "yes, mobile"),
         should_distinguish_proposal_from_truth=True,
         severity="high",

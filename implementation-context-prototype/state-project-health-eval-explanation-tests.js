@@ -91,7 +91,10 @@ function cachedSnapshot(){
     assert.strictEqual(story.observed.excerpt,null,'no proposal was recorded, so none is shown');
     assert.strictEqual(story.expected.text,'State should propose a Current State change for a person to approve.','Expected is one line');
     assert.strictEqual(story.expected.source,'From the scenario catalog.');
-    assert.ok(story.expected.details.some(line=>/^Also acceptable: flag the Current State fact as at risk; open a new Question/.test(line)),'alternatives move to details');
+    // #711 (Paige, Nov 18: "Record the plan"): an at-risk flag or a Question no longer passes; recording the plan and also
+    // opening a Question still does.
+    assert.ok(story.expected.details.some(line=>/^Also acceptable: propose a Current State change and open a new Question\.$/.test(line)),'alternatives move to details');
+    assert.ok(!story.expected.details.some(line=>/at risk/.test(line)),'an at-risk flag is no longer acceptable for an agreed plan');
     assert.ok(story.expected.details.some(line=>/must not say “was revised”/.test(line)),'forbidden phrases move to details');
     assert.strictEqual(story.consequence.direction,'missed');
     assert.match(story.consequence.text,/^This run missed a needed Review, so the agreed revision plan wasn’t proposed for approval\. It did not incorrectly report the revision as completed\.$/);

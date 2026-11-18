@@ -110,6 +110,9 @@ class ReviewQualityResult:
             forbidden = [phrase for phrase in self.scenario.forbidden_state_update_phrases if _normalize(phrase) in text]
             if forbidden:
                 return [f"proposed state contains forbidden {', '.join(forbidden)}"]
+        if self.scenario.keeps_existing_state and re.search(r"\b(?:update|retire) target=\S+ status=pending",
+                                                            self.proposal_rows):
+            return ["changes the existing Current State item instead of recording the plan beside it"]
         prose = _normalize(self.review_prose)
         forbidden = [phrase for phrase in self.scenario.forbidden_review_phrases if _normalize(phrase) in prose]
         if forbidden:
@@ -559,6 +562,39 @@ _NEGATED_REPORT_BEFORE = re.compile(
 )
 
 
+# #697 (Paige, Nov 17: rule A) the Oct 27 "confirmed information that" frame, for a decision, record or approval: "State
+# does not have a confirmed decision that SSO is on the Q1 roadmap", "State has no accepted decision that …", "…a
+# confirmed, accepted record that …". Only these filler words may sit between the negation and the noun, so "no doubt
+# the accepted decision that X stands" still asserts X.
+_NEGATED_RECORD_FRAME = re.compile(
+    r"(?:\bnot|n't|\bno)\s+(?:(?:yet|have|has|had|hold|holds|contain|contains|a|an|any|the|single|formal)\s+){0,4}"
+    r"(?:(?:confirmed|accepted|approved|recorded|authorized|documented),?\s+(?:and\s+)?){0,3}"
+    r"(?:decision|record|records|information|confirmation|approval)\s+(?:that\s+)?(?:the\s+|a\s+|an\s+)?$"
+)
+# #697 (Paige, Nov 17: rule B, a DEC-022 trust rule, DEC-032) reporting what an unaccepted source says is not asserting
+# it, when the same sentence says the source is unaccepted: "Unaccepted sales call notes and a Slack message say SSO is
+# planned for Q1, but this is proposed and awaiting review". Not when the source is an authority ("Current State says
+# …"), not without the unaccepted framing ("Sales notes say …"), and a separate assertion later still counts.
+_REPORTED_BEFORE = re.compile(r"\b(?:say|says|said|report|reports|reported|claim|claims|claimed|state|states|suggest|"
+                              r"suggests|indicate|indicates)\s+(?:that\s+)?$")
+_UNACCEPTED_SOURCE = (r"\b(?:unaccepted|unconfirmed|pending|proposed|not\s+(?:yet\s+)?(?:been\s+)?accepted|"
+                      r"awaiting\s+review|under\s+review|not\s+(?:yet\s+)?confirmed)\b")
+_AUTHORITY_SOURCE = re.compile(r"\b(?:current\s+state|state['’]?s?\s+(?:accepted|record|roadmap)|accepted|approved\s+roadmap|"
+                               r"history)\b")
+
+
+def _reported_from_unaccepted_source(text: str, start: int, claim: str) -> bool:
+    if not _REPORTED_BEFORE.search(text[:start]):
+        return False
+    sentence_start = max(text.rfind(c, 0, start) for c in ".!?;") + 1
+    ends = [e for e in (text.find(c, start) for c in ".!?") if e != -1]
+    subject, after = text[sentence_start:start], text[start + len(claim):(min(ends) if ends else len(text))]
+    if _AUTHORITY_SOURCE.search(subject):
+        return False
+    return bool(re.search(_UNACCEPTED_SOURCE, subject)
+                or re.search(r"\bbut\s+(?:this|that|it|these|those|they)\b.*" + _UNACCEPTED_SOURCE, after))
+
+
 def _asserts(text: str, claim: str) -> bool:
     """True if `claim` appears in `text` other than directly negated.
 
@@ -571,7 +607,8 @@ def _asserts(text: str, claim: str) -> bool:
             start = text.find(claim, start + 1)
             continue
         if not (_NEGATION_BEFORE.search(text[:start]) or _NEGATED_REPORT_BEFORE.search(text[:start])
-                or _INSIDE_WHETHER.search(text[:start]) or _NAMES_PREMISE.search(text[:start])):
+                or _INSIDE_WHETHER.search(text[:start]) or _NAMES_PREMISE.search(text[:start])
+                or _NEGATED_RECORD_FRAME.search(text[:start]) or _reported_from_unaccepted_source(text, start, claim)):
             return True
         start = text.find(claim, start + 1)
     return False

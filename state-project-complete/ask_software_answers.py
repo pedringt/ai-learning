@@ -310,29 +310,79 @@ def _active_project_text(connection: Any) -> str:
     return " ".join(parts).lower()
 
 
+# #705 (Paige, Nov 18): a one-word project name ("Northstar", "juniper") is also an ordinary word ("Juniper routers",
+# "the Northstar Cafe"), so it names the other project only with a cue. Multi-word names ("Juniper Office Move",
+# "Harbor Lights") always count, as before (#693). Cue 3 reads that project's own records, so it depends on data:
+# if Juniper's records start mentioning routers, "Juniper routers" is declined again. That errs toward declining.
+_NAME_STOPWORDS = {
+    "a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "with", "is", "are", "was", "be", "by", "at", "as", "it",
+    "its", "this", "that", "what", "which", "who", "how", "do", "does", "did", "our", "we", "us", "you", "your", "from",
+    "about", "vs", "versus", "than",
+}
+_NAME_SUBJECT_VERBS = {
+    "is", "are", "was", "were", "has", "have", "had", "does", "do", "did", "will", "would", "can", "could", "should",
+    "compare", "compares", "decide", "decided", "plan", "plans", "planned", "approve", "approved", "stand", "stands",
+}
+_NAME_STANDS_ALONE = re.compile(r"\s*(?:[?.!,;:)]|$|\b(?:and|or|with|vs|versus|than)\b)")
+_NAME_OWNED = re.compile(r"\b(?:our|your|their|my)\s+$")
+
+
+def _project_record_words(connection: Any, project_id: str) -> set[str]:
+    """The words another project's own records use (Current State, open Reviews, open Questions)."""
+    active = connection.project_id
+    connection.project_id = project_id
+    try:
+        return set(_words(_active_project_text(connection))) - _NAME_STOPWORDS
+    finally:
+        connection.project_id = active
+
+
+def _one_word_name_is_a_reference(text: str, word: str, full_name: str, record_words: set[str]) -> bool:
+    """#705: the cues that make a one-word project name a reference to that project, not an ordinary word."""
+    for match in re.finditer(rf"(?<![a-z0-9]){re.escape(word)}(?![a-z0-9])", text):
+        after = text[match.end():]
+        following = re.match(r"\s*([a-z0-9]+)", after)
+        next_word = following.group(1) if following else None
+        if (after.startswith(("'s", "\u2019s"))                                        # 1 possessive: "Northstar's"
+                or next_word == "project" or next_word in set(_words(full_name)) - {word}  # 2 "the juniper project / office move"
+                or (next_word is not None and next_word in record_words)                  # 3 a word from its records: "Northstar pilot"
+                or _NAME_STANDS_ALONE.match(after)                                       # 4 alone: "Compare Juniper with Northstar"
+                or next_word in _NAME_SUBJECT_VERBS                                      # 5 a subject: "How does Juniper compare"
+                or _NAME_OWNED.search(text[:match.start()])):                            # 6 owned: "our Northstar badge readers"
+            return True
+    return False
+
+
 def other_projects_named(connection: Any, query: str) -> tuple[str, list[str]]:
     """The active project's name, and the names of other projects the question names.
 
-    A project is named by its full name, or by its id when the id is a plain word (the demo projects' "northstar" and
-    "juniper"; a created project's id is generated, so only its name counts). A name that also appears in the active
-    project's own records ("Budget", say) is an ordinary word there, not a reference to the other project."""
+    A multi-word project name counts wherever it appears. A one-word name, or a plain-word id (the demo projects'
+    "northstar" and "juniper"), counts only with a cue (#705, `_one_word_name_is_a_reference`). A name that also appears
+    in the active project's own records ("Budget", say) is an ordinary word there, not a reference to the other project."""
     active_id = project_id_of(connection)
     rows = [dict(row) for row in connection.execute("SELECT id, name FROM projects").fetchall()]
     active_name = next((str(r["name"]) for r in rows if r["id"] == active_id), active_id)
     text = (query or "").lower()
-    candidates = []
+    own = None
+    named = []
     for row in rows:
         if row["id"] == active_id:
             continue
-        names = [str(row["name"] or "").strip()]
-        if re.fullmatch(r"[a-z]{4,}", str(row["id"])):
-            names.append(str(row["id"]))
-        if any(_phrase_in(name, text) for name in names):
-            candidates.append((str(row["name"] or row["id"]), names))
-    if not candidates:
-        return active_name, []
-    own = _active_project_text(connection) + " " + active_name.lower()
-    named = [name for name, names in candidates if not any(_phrase_in(n, own) for n in names if _phrase_in(n, text))]
+        full_name = str(row["name"] or "").strip()
+        one_word = [w for w in {full_name.lower(), str(row["id"])} if re.fullmatch(r"[a-z]{4,}", w)]
+        multi_word = len(_words(full_name)) > 1
+        if not (multi_word and _phrase_in(full_name, text)) and not any(_phrase_in(w, text) for w in one_word):
+            continue
+        if own is None:
+            own = _active_project_text(connection) + " " + active_name.lower()
+        if multi_word and _phrase_in(full_name, text) and not _phrase_in(full_name, own):
+            named.append(full_name or str(row["id"]))
+            continue
+        candidates = [w for w in one_word if _phrase_in(w, text) and not _phrase_in(w, own)]
+        if candidates:
+            record_words = _project_record_words(connection, str(row["id"])) | set(_words(full_name))
+            if any(_one_word_name_is_a_reference(text, w, full_name, record_words) for w in candidates):
+                named.append(full_name or str(row["id"]))
     return active_name, named
 
 
