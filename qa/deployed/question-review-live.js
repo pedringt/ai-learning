@@ -32,7 +32,16 @@ async function check(name, fn) {
   console.log('START ' + name);
   try { await fn(item); item.status = 'passed'; }
   catch (e) { item.status = 'failed'; item.error = String(e.message).replace(/x-vercel-protection-bypass=[^&\s]+/g, '[redacted]'); }
-  console.log(item.status.toUpperCase() + ' ' + name + (item.error ? ': ' + item.error : '')); save();
+  console.log(item.status.toUpperCase() + ' ' + name + (item.severity ? ' [' + item.outcome + ', ' + item.severity + ' severity]' : '') + (item.error ? ': ' + item.error : '')); save();
+}
+// #713 (Paige, Nov 17): which kind of miss a repeated unknown produced. Diagnostic only: the check still fails on any
+// open_question Review, as the intake rule says ("Evidence only repeats … preserve only"). A Review linked to the
+// existing Question is low severity (one click, review burden); one proposing a new Question is higher (a duplicate).
+function repeatedUnknownOutcome(reviews) {
+  const questionReviews = (reviews || []).filter(r => r.review_type === 'open_question');
+  if (!questionReviews.length) return { outcome: 'no_question_review' };
+  const linked = questionReviews.every(r => r.question_to_create && r.question_to_create.existing_question_id);
+  return linked ? { outcome: 'redundant_linked_review', severity: 'low' } : { outcome: 'duplicate_question_proposal', severity: 'higher' };
 }
 function recordSubmission(name, content, result) {
   report.submissions.push({ name, content, result });
@@ -222,6 +231,7 @@ async function unchanged() {
       if (!q) throw new Error('No created Question available for the duplicate model check');
       const result = await evidence('already tracked unknown', 'The Northstar team revisited this same unresolved question: ' + q.text + ' There is still no answer and no new decision or evidence beyond what was already discussed.');
       item.reviewTypes = (result.reviews || []).map(r => r.review_type);
+      Object.assign(item, repeatedUnknownOutcome(result.reviews));
       expect((result.reviews || []).some(r => r.review_type === 'open_question')).toBe(false); await unchanged();
     });
     await check('No unhandled browser errors', async () => expect(report.errors).toEqual([]));
