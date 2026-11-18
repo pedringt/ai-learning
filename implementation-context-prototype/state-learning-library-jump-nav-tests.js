@@ -18,7 +18,15 @@ for(const page of ['ai-durable-knowledge.html','ai-professional-edge.html']){
 // Oct 21: AI Professional Edge builds its sections after fetching the markdown, so a link to
 // ai-professional-edge.html#section landed at the top. It now scrolls to the hash once rendered.
 const edge=fs.readFileSync(path.join(root,'ai-professional-edge.html'),'utf8');
-check('ai-professional-edge.html: a #section link scrolls there once the sections render',/setupNav\(\);jumpToHash\(\)/.test(edge)&&/function jumpToHash\(\)/.test(edge));
+check('ai-professional-edge.html: a #section link scrolls there once the sections render',/setupNav\(\);if\(document\.readyState==='complete'\)jumpToHash\(\);else addEventListener\('load',jumpToHash/.test(edge)&&/function jumpToHash\(\)/.test(edge));
+// Nov 18 QA (P1): the content was only rendered in the browser, so the raw HTML (crawlers, link previews, no
+// JavaScript) had the title and "Loading…". tools/render_professional_edge.js now writes it into the page; this fails
+// when content/ai-professional-edge.md changes without re-running it.
+const {spawnSync}=require('child_process');
+const rendered=spawnSync('node',[path.join(root,'tools','render_professional_edge.js'),'--check'],{encoding:'utf8'});
+check('ai-professional-edge.html: the rendered content matches the markdown',rendered.status===0,rendered.stderr);
+check('ai-professional-edge.html: the content is in the HTML, not only "Loading…"',/data-prerendered="true"/.test(edge)&&!/Loading…/.test(edge)&&(edge.match(/<h2 id=/g)||[]).length>=8);
+check('ai-professional-edge.html: the review date comes from the markdown marker',/<!-- edge-note:begin -->Reviewed [A-Z][a-z]+ \d{4}\.<!-- edge-note:end -->/.test(edge));
 const durable=fs.readFileSync(path.join(root,'ai-durable-knowledge.html'),'utf8');
 check('ai-durable-knowledge.html: jump targets add no margin on top of the site scroll-padding',/\.edge-body section\[id\]\{scroll-margin-top:0\}/.test(durable));
 check('ai-professional-edge.html: jump targets add no margin on top of the site scroll-padding',/\.edge-body h2\{[^}]*scroll-margin-top:0\}/.test(edge));
