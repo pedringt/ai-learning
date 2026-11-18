@@ -180,7 +180,9 @@ def test_anthropic_prompt_is_compact_and_does_not_repeat_json_skeleton():
     # before/after with eval.run_mixed_spec_intake.
     # 12100 -> 12200 (2026-11-14): #660's reversal rule (propose the new state, not a bare retire; Paige, Nov 12).
     # review_direct_reversal 2/10 -> 10/10 on Haiku 5.5, measured before/after (runs 43635190380, 43635193846).
-    assert len(prompt) < 12200
+    # 12200 -> 12250 (2026-11-18, Paige): #711's agreed-plan rule and its contrast (asked or considered: open_question),
+    # which shortening alone broke (review_tentative_high_consequence 26/30 -> 17/30, run 44369067949).
+    assert len(prompt) < 12250
 
 
 def test_provider_output_schema_stays_below_anthropic_complexity_budget():

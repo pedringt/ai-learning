@@ -47,3 +47,5 @@ def test_the_intake_instructions_carry_the_rule():
     assert "planned != committed" in source                                   # the #480 epistemic rule stays
     assert "raise it though State is still accurate" in source                # #711: still accurate is no reason to stay silent
     assert "missing_understanding create, agreed, not yet done; never edit the existing item" in source
+    # Run 44369067949: without this contrast, "leadership asked whether…" became an at-risk flag 13/30 times.
+    assert "Asked/considered only: open_question; opinion isn't a decision" in source
