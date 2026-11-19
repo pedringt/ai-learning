@@ -26,6 +26,14 @@ const {spawnSync}=require('child_process');
 const rendered=spawnSync('node',[path.join(root,'tools','render_professional_edge.js'),'--check'],{encoding:'utf8'});
 check('ai-professional-edge.html: the rendered content matches the markdown',rendered.status===0,rendered.stderr);
 check('ai-professional-edge.html: the content is in the HTML, not only "Loading…"',/data-prerendered="true"/.test(edge)&&!/Loading…/.test(edge)&&(edge.match(/<h2 id=/g)||[]).length>=8);
+// Nov 18 QA (decision B3): makeGlossary() looked for a renamed heading and a format the list no longer used, so the
+// Working Vocabulary table never appeared. The renderer now builds it; one row per "**Term:**" item in the markdown.
+{const md=fs.readFileSync(path.join(__dirname,'..','content','ai-professional-edge.md'),'utf8');
+ const vocab=(md.split('## Working Vocabulary')[1]||'').split('\n## ')[0];
+ const terms=(vocab.match(/^- \*\*[^*]+:\*\*/gm)||[]).length;
+ const table=(edge.match(/<h2 id="working-vocabulary">[^<]*<\/h2><table class="edge-glossary">([\s\S]*?)<\/table>/)||[])[1]||'';
+ check('ai-professional-edge.html: Working Vocabulary is a glossary table with every term',terms>10&&(table.match(/<tr><td>/g)||[]).length===terms);
+ check('ai-professional-edge.html: no dead glossary code',!/makeGlossary/.test(edge));}
 check('ai-professional-edge.html: the review date comes from the markdown marker',/<!-- edge-note:begin -->Reviewed [A-Z][a-z]+ \d{4}\.<!-- edge-note:end -->/.test(edge));
 const durable=fs.readFileSync(path.join(root,'ai-durable-knowledge.html'),'utf8');
 check('ai-durable-knowledge.html: jump targets add no margin on top of the site scroll-padding',/\.edge-body section\[id\]\{scroll-margin-top:0\}/.test(durable));

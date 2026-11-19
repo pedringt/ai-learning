@@ -33,11 +33,22 @@
  }
  function formatReviewDate(value){const d=new Date(`${value}T12:00:00Z`);return Number.isNaN(d.getTime())?null:new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric',timeZone:'UTC'}).format(d)}
  function renderMarkdown(src){const lines=src.replace(/\r\n/g,'\n').split('\n');let html='',i=0,paragraph=[];const flush=()=>{if(paragraph.length){const text=paragraph.join(' ');const callout=LEAD_LABELS.some(label=>text.startsWith(`**${label}**`));html+=`<p${callout?' class="edge-callout"':''}>${inline(text)}</p>`;paragraph=[]}};while(i<lines.length){const line=lines[i],heading=/^(#{1,3})\s+(.*)$/.exec(line);if(line.trim()===''){flush();i++;continue}if(line.trim()==='---'){flush();html+='<hr>';i++;continue}if(heading){flush();const level=heading[1].length;const id=level===2?` id="${slug(heading[2])}"`:'';html+=`<h${level}${id}>${inline(heading[2])}</h${level}>`;i++;continue}if(/^\d+\.\s+/.test(line)){flush();html+='<ol>';while(i<lines.length&&/^\d+\.\s+/.test(lines[i])){html+=`<li>${inline(lines[i].replace(/^\d+\.\s+/,''))}</li>`;i++}html+='</ol>';continue}if(/^[-*]\s+/.test(line)){flush();html+='<ul>';while(i<lines.length&&/^[-*]\s+/.test(lines[i])){html+=`<li>${inline(lines[i].replace(/^[-*]\s+/,''))}</li>`;i++}html+='</ul>';continue}paragraph.push(line.trim());i++}flush();return html}
+/* Nov 18 QA: the Working Vocabulary list ("**Term:** meaning") renders as a two-column glossary table. */
+ const GLOSSARY_ID = 'working-vocabulary';
+ function glossaryTable(body) {
+  const re = new RegExp(`(<h2 id="${GLOSSARY_ID}">[^<]*</h2>)<ul>([\\s\\S]*?)</ul>`);
+  return body.replace(re, (whole, heading, items) => {
+   const rows = [...items.matchAll(/<li><strong>([\s\S]*?):<\/strong>\s*([\s\S]*?)<\/li>/g)];
+   if (!rows.length) return whole;
+   return heading + '<table class="edge-glossary"><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody>' +
+    rows.map(r => `<tr><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('') + '</tbody></table>';
+  });
+ }
  const HEADER = /^#\s+[^\n]*\n(?:(?!\n##)[\s\S])*?\n\s*---[ \t]*\n/;
  function renderDocument(text) {
   const prepared = prepareMarkdown(text);
   const reviewLabel = prepared.reviewDate && formatReviewDate(prepared.reviewDate);
-  const body = renderMarkdown(prepared.markdown.replace(HEADER, '').trim());
+  const body = glossaryTable(renderMarkdown(prepared.markdown.replace(HEADER, '').trim()));
   const jump = [...body.matchAll(/<h2 id="([^"]+)">([\s\S]*?)<\/h2>/g)].map(m => `<a href="#${m[1]}">${m[2].replace(/<[^>]+>/g, '')}</a>`).join('');
   return { body, jump, reviewLabel };
  }

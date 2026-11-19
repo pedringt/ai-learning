@@ -48,3 +48,12 @@
 - **Project switch:** I didn't reproduce Add Evidence after a project switch, though the same mechanism applies.
 - **Slack app:** whether it allows installs from other workspaces wasn't checked, because that needs Slack.
 - **Production interactions:** none, deliberately.
+
+## Follow-up (Nov 18, after scope review)
+- **Tastemake popover, now browser-verified:** `bookmark-flow.js` in Playwright Chromium (served from the worktree, the same page the harness builds) gives 137/137 at 1440 and 390. With `src/app.js` from before 56bbcab, the two new checks fail.
+- **B2 done:** the unsupported "worth revisiting" sentence (`state-36`) was removed from `implementation-context.html`.
+- **B3 done:** the renderer turns the Working Vocabulary list into the glossary table (17 terms), so it's in the prerendered HTML. The dead `makeGlossary()` was removed. A test fails without the fix. Checked at 390px: readable, no sideways scroll.
+- **#716 (b3faf21) is still a proposal:** it isn't part of the approved fixes until its false-positive behavior is reviewed.
+- **Live first-visitor pass:** read-only, with writes blocked in the browser.
+  - Home, the three case studies, Professional Edge, the State app and Tastemake (fresh and Example Profile) at 1440 and 390: no page errors, no failed requests, no sideways scroll.
+  - State's tabs and the Ask drawer open correctly. The demo has only the two seeded projects, with Northstar active.
