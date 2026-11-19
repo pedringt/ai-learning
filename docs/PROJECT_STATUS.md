@@ -2,29 +2,18 @@
 
 This is the canonical current-state handoff for State and the surrounding portfolio. Read this first, then verify the repository and live environments before relying on older notes or conversation memory.
 
-_Last updated: November 14, 2026, Pacific time. One dated current-state section, then durable reference. Earlier handoff sections (Sept 19 to Oct 27) were moved verbatim to `docs/history/PROJECT_STATUS_THROUGH_2026-10-27.md` (#630). When you update this file, replace "Current state" rather than adding a new dated section above it; move what it replaces to `docs/history/` if it is worth keeping._
+_Last updated: November 18, 2026, Pacific time. One dated current-state section, then durable reference. Earlier handoff sections (Sept 19 to Oct 27) were moved verbatim to `docs/history/PROJECT_STATUS_THROUGH_2026-10-27.md` (#630). When you update this file, replace "Current state" rather than adding a new dated section above it; move what it replaces to `docs/history/` if it is worth keeping._
 
-## Current state (Nov 14, 2026)
+## Current state (Nov 18, 2026)
 
-- **`main` (production):** `574d259` (PR #661, Nov 14: #567 claim-level Ask, #640 retrieval, #642 DEC-022, #656 backstop repair). A staging-to-`main` promotion PR is open for the bundle below. Promotion needs Paige's OK each time.
-- **`staging`:** this status update on top of `7ce823b`. The whole of it is in the promotion PR:
-  - **#654:** a cancelled streaming Ask closes the provider stream (pins `anyio>=4.1,<5`).
-  - **#660:** the Review scorer reads a retire as `retire_state`; the intake prompt proposes the new state when Evidence reverses a fact. Before/after: `review_direct_reversal` 2/10 to 10/10. The prompt-size guard is 12,200.
-  - **Ask scorer (Paige, Nov 14):** "has no confirmed/accepted" accepted; a labelled Needs-review item passes authority; the compound answer's body must state the budget and "$40,000" (quality miss otherwise).
-  - **#663:** no static Northstar fixture in Copy Context or Notes when the API fails.
-  - **#653:** deterministic Ask retrieval benchmark (no model calls).
-  - **Ask backstop removed** (`ask_authority_text.py`, unused since #567; resolves #656).
-  - **#641 grader v11** with Paige's held-out ratings and adjudication (observe-only, DEC-008).
-  - **Portfolio:** Library section 08 "Experiments and Evidence" overview; State and Tastemake case-study copy.
-  - **Checks on `682f52b`:** Deep QA passed; `qa-release` passed (real-model 61 passed, 2 skipped); AI quality check Review 16/16 and Ask 13/13 (DEC-022 gate passes, 29 calls, $0.022). The later commits are copy only.
-  - **Scoring versions:** `ask-13-a28ffe959a81`, `review-16-38831291d59c`.
-- **Held for the next release:** #664 Ask retrieval (newest answered Questions, Review rank order); it changes model context, so it needs its own Ask run.
-- **Production:** portfolio `https://www.contextswitch.tech/`, State `https://state.contextswitch.tech/`, API `https://state-api-6waw.onrender.com`. **Data** is SQLite on the `state-api` persistent disk (`/var/data/state.db`), not Postgres; backups per `CLAUDE.md`. No schema change is pending.
+- **`main` (production):** `3c5b67d` (PR #715, Nov 18). It ships #711 (an agreed future change gets a Review that records the plan beside the existing fact, DEC-033; this was an intake prompt change, with the prompt budget at 12,250), #705 (Ask needs a cue before declining a question that uses another project's one-word name), and #697 (Ask scorer fix, DEC-032). The previous release was PR #714 on Nov 17 (`dadf855`): #701 V3/V4, #703/#704 freshness and absence (DEC-029), #709 deleted-project refusal, #710 counted open work (DEC-031), #707, #708, and the portfolio case-study copy.
+- **Release checks on `e69e847`:** Deep QA 17/17. `qa-release` passed (1944 fast tests; 61 real-model tests passed, 2 skipped, no retry). The AI quality check scored Walkthrough 8/8, Review 16/16 and Ask 13/13 (29 calls, $0.022). Scoring versions are `review-16-2b9a16bd5df9` and `ask-13-c1cf0f8aeced`. #711's scenario changed, so its DEC-022 history starts fresh (expected about 28/30; two wording misses are recorded in DEC-033).
+- **`staging`:** equal to `main` plus this status update.
+- **Production:** portfolio `https://www.contextswitch.tech/`, State `https://state.contextswitch.tech/`, API `https://state-api-6waw.onrender.com`. **Data** is SQLite on the `state-api` persistent disk (`/var/data/state.db`), not Postgres; backups per `CLAUDE.md`. No schema change is pending. Paige should delete the old backups `state-pre-662.db` (about Nov 28) and `state-pre-025-026.db` (about Nov 30) from the Render Shell.
 - **Model:** `claude-haiku-5-5` (code default). Rollback and model history: `docs/history/PROJECT_STATUS_THROUGH_2026-10-27.md` (Oct 10 and Oct 20 sections).
 - **Spend:** State has a $50/day cap on recorded model spend (DEC-014). Project Health's paid actions are open to anyone with cooldowns (DEC-012, updated Nov 12).
-- **Release checks:** `make qa-fast` (free, no model calls) and `make qa-release` (paid on model-sensitive changes). Deep QA on staging is the browser gate. Paid workflows are pre-approved for testing; report calls and cost afterwards. Details: `QA.md`, `RELEASE.md`, `docs/evals/`.
-- **Known flakes:** `test_idle_page_does_not_rewrite_the_dom_every_frame[True]` (the test page calls the live staging API; a late error render can land in its watch window) and `test_state_ask_drawer_focus_browser[375]`. Both pass on rerun.
-- **Open:** review `ask_question_answer_no_state_mutation`'s `known_unsupported` marker (#640); #641 grader rounds 2 and 3 stay on `eval/641-grader-v10`; #594 visitor isolation parked; #142 is a learning placeholder. GitHub Issues and the **State** Project are the source of truth for open work.
+- **Release checks:** `make qa-fast` (free, no model calls) and `make qa-release` (paid on model-sensitive changes). Deep QA on staging is the browser gate, and the AI quality check (`question-review-live.yml`) runs after it, alone. Paid workflows are pre-approved for testing; report calls and cost afterwards. Details: `QA.md`, `RELEASE.md`, `docs/evals/`.
+- **Open and held:** #696 and #701 P3 are held (no further implementation authorized). #712 and #713 are in Backlog (#713 is not a release blocker, and its test stays strict). #594 visitor isolation is parked, and #142 is a learning placeholder. GitHub Issues and the **State Product** Project are the source of truth for open work.
 - **Other repos:** Tastemake (`~/code/tastemake`, see its `docs/HANDOFF.md`); Authority Lab (`~/code/authority-lab`).
 
 ## Deploy verification rule

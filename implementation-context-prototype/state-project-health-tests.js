@@ -82,6 +82,18 @@ const healthy=H.normalizeQuality({
   }
 });
 assert.strictEqual(H.qualityAttention(healthy).kind,'good');
+// Nov 18 QA (G2): suites recorded on different days each show their own date; a normal run keeps one date.
+{const M=require('../project-health-model.js'),fmt=v=>String(v).slice(0,10);
+ assert.strictEqual(M.evalRecordedText({review:{created_at:'2026-11-18T09:00:00Z'},ask:{created_at:'2026-11-08T09:00:00Z'}},fmt),'Update understanding recorded 2026-11-18 · Answer quality recorded 2026-11-08');
+ assert.strictEqual(M.evalRecordedText({review:{created_at:'2026-11-18T09:00:00Z'},ask:{created_at:'2026-11-18T09:01:30Z'}},fmt),'Recorded 2026-11-18');
+ assert.strictEqual(M.evalRecordedText({review:null,ask:null},fmt),'Recording time unknown');}
+// Nov 18 QA (G3): all-pass results, but the "what changed in State since" source failed with nothing loaded before:
+// the headline can't say healthy; it says the results can't be confirmed as current. With that date known, healthy again.
+const freshnessUnknown=H.qualityAttention({...healthy,behaviorUpdatedAt:null},{failures:[{label:'Quality behavior'}]});
+assert.strictEqual(freshnessUnknown.kind,'unknown');
+assert.match(freshnessUnknown.title,/Can.t confirm these AI eval results still apply/);
+assert.strictEqual(H.qualityAttention({...healthy,behaviorUpdatedAt:null},{failures:[]}).kind,'good','no failed source: unchanged');
+assert.strictEqual(require('../project-health-model.js').stateEvalFreshnessUnknown({...healthy,behaviorUpdatedAt:'2026-11-01T00:00:00Z'},{failures:[{label:'Quality behavior'}]}),false,'a known date from before is enough');
 
 // "Unknown is not healthy": a quality signal that was never measured must not read as healthy (PR #429).
 const unmeasured=H.normalizeQuality({
@@ -468,6 +480,17 @@ const usageChanges=H.meaningfulChanges({
   detailCheckedAt:'2026-09-30T01:00:00Z'
 });
 assert.strictEqual(usageChanges.find(item=>item.title==='Site analytics changed').section,undefined);
+// Nov 18 QA (G1): "Failures in high-severity scenarios changed" is dated by the newer run, not the page fetch ("just now").
+const severeChanges=H.meaningfulChanges({
+  project:{quality:'state'},
+  lastVisit:{deliverySha:'same',quality:{severe:1,reviewAt:'2026-11-10T00:00:00Z',askAt:'2026-11-10T00:00:00Z'},analyticsAvailable:null,openPullRequests:0},
+  delivery:{sha:'same'},platform:{},openPullRequests:[],
+  quality:{review:{created_at:'2026-11-15T09:00:00Z',high_severity_failures:0,total:16},ask:{created_at:'2026-11-14T09:00:00Z',high_severity_failures:0,total:13}},
+  checkedAt:'2026-11-18T12:00:00Z'
+});
+const severeItem=severeChanges.find(item=>item.title==='Failures in high-severity scenarios changed');
+assert.ok(severeItem,'the severity change is listed');
+assert.strictEqual(severeItem.observedAt,'2026-11-15T09:00:00Z','dated by the newer run, not when the page was fetched');
 assert.strictEqual(usageChanges.find(item=>item.title==='Site analytics changed').detail,'No page views → Receiving page views in the last 30 days');
 assert.ok(!usageChanges.some(item=>/\d+ page views/.test(item.detail)),'changes never report raw counts');
 // Cowork, Oct 11: the analytics card shows the signal, not the counts.

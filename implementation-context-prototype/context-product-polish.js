@@ -261,7 +261,8 @@
     // abort's rejection arrives after something else already changed
     // requestId. running is cleared immediately either way, so a new
     // question can be asked right away instead of waiting out the old one.
-    if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();ui.requestId++;ui.running=false;ui.stream=null;}
+    // Nov 18 QA: also clear the half-drawn answer, so a reopened drawer isn't stuck on "Finding the answer…".
+    if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();ui.requestId++;ui.running=false;ui.stream=null;renderDrawerResult('');}
     const wasOpen=ui.drawerOpen,drawer=document.getElementById('askStateDrawer');
     ui.drawerOpen=false;drawer?.setAttribute('hidden','');document.body.classList.remove('ask-state-drawer-open');unlockBackground();syncLauncherVisibility();announceDrawer();
     if(drawer)setAskModal(drawer,false);
@@ -399,6 +400,9 @@
   }
   async function runAsk(query,{skipRouting=false}={}){
     const clean=String(query||'').trim();if(!clean)return;
+    // Nov 18 QA: a second Enter (or a double submit) while this same question is still being answered sent a second
+    // request, and the first kept running unaborted; both could reach the model before either filled the cache.
+    if(ui.running&&clean===ui.query)return;
     // Persisted alongside the query (not just used inline below) so a later
     // refresh-ask on this same query -- which doesn't get a fresh
     // {skipRouting} from its caller -- knows whether this text is trusted
@@ -425,6 +429,8 @@
       renderDrawerResult(routingHtml);return;
     }
     if(!ASK?.submit){renderDrawerResult('<div class="ask-live-error"><h2>Ask is temporarily unavailable.</h2><p>The Ask module did not load.</p></div>');return;}
+    // A different question while one is still running replaces it: cancel the old request rather than orphaning it.
+    if(ui.running){ui.askTiming?.cancelled?.();ui.askTiming=null;ui.abortController?.abort();}
     const requestId=++ui.requestId;ui.running=true;ui.stale=false;ui.payload=null;ui.resolvedContext=[];
     // QA follow-up (2026-09-14): closing Ask mid-answer used to only stop
     // the drawer from *showing* whatever arrived later -- the request kept

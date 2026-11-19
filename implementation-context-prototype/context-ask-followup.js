@@ -157,7 +157,16 @@
       return;
     }
     const stage = onboardingStage();
-    if (stage === null) { existing?.remove(); return; }  // still loading; the next render decides
+    // Nov 18 QA: while loading, keep the guide's space (hidden) instead of removing it. Inserting it once Evidence
+    // loaded pushed "Add Evidence" down ~106px, so a click aimed at the button landed on empty space.
+    if (stage === null) {
+      if (!existing) {
+        overview.insertAdjacentHTML('afterbegin', guideMarkup('established'));
+        const placeholder = overview.querySelector('.state-reviewer-guide');
+        if (placeholder) { placeholder.dataset.guideStage = 'pending'; placeholder.setAttribute('aria-hidden', 'true'); placeholder.style.visibility = 'hidden'; }
+      }
+      return;  // still loading; the next render decides (a 'pending' guide is replaced in place)
+    }
     if (!existing) { overview.insertAdjacentHTML('afterbegin', guideMarkup(stage)); return; }
     if (existing.dataset.guideStage !== stage) existing.outerHTML = guideMarkup(stage);
   }
