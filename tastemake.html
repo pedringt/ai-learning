@@ -107,10 +107,10 @@
 <figure class="test-compare" aria-labelledby="test-compare-label">
   <figcaption id="test-compare-label" class="example-label">Two tests, different outcomes</figcaption>
   <div class="test-compare-grid">
-    <div class="test-metric"><h3>Alignment with scoring</h3><div class="metric-value">98%</div><div class="metric-detail">62 of 63 eligible explanations referenced the rating used to select the recommendation, up from about 65% in earlier recorded runs. Automated tests across 12 test profiles.</div></div>
-    <div class="test-metric"><h3>Explanation quality</h3><div class="metric-value">53%</div><div class="metric-detail">8 of 15 explanations were judged specific and true, down from 9 of 13, in a separate blind review of my own profile.</div></div>
+    <div class="test-metric"><h3>Alignment with scoring</h3><div class="metric-value">98%</div><div class="metric-detail">With the rule (tested Nov 4, not shipped): 62 of 63 eligible explanations referenced the rating used to select the recommendation, up from about 65% in earlier recorded runs. One automated run across 12 synthetic test profiles.</div></div>
+    <div class="test-metric"><h3>Explanation quality</h3><div class="metric-value">53%</div><div class="metric-detail">With the rule: 8 of 15 explanations were judged specific and true, versus 9 of 13 without it, in a separate blind review of my own profile.</div></div>
   </div>
-  <div class="test-compare-note">The two numbers come from different tests and aren’t directly comparable. In 11 paired comparisons, three explanations got worse and none improved. These were small internal tests with one rater, not outside-user research.</div>
+  <div class="test-compare-note">The two numbers come from different tests and aren’t directly comparable. Of 11 explanations rated both with and without the rule, three got worse, eight stayed the same and none improved. These were small internal tests with one rater, not outside-user research.</div>
 </figure>
 <p data-edit="tastemake-21">One example made the tradeoff clear. The original explanation connected a recommended game to a novel I’d liked for its sense of wonder and discovery. That felt like a meaningful connection. After the change, the explanation focused on a broad genre similarity instead. It was more consistent with the scoring process, but less useful in explaining why I might enjoy the game.</p>
 <p data-edit="tastemake-22">Matching the system’s internal reasoning isn’t enough. An explanation also needs to help someone understand why a recommendation might fit their taste.</p>

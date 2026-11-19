@@ -122,11 +122,11 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Bl
 <p data-edit="project-health-20">A failed AI check does not always mean the same thing. It may point to a real product bug, a test expectation that is wrong, or incomplete evidence. Project Health shows what was observed and what was expected.</p>
 
 <div class="ph-example">
-  <span class="example-label">Earlier State eval · not in today’s dashboard</span>
-  <p data-edit="project-health-21"><span class="lead-in">What failed.</span> One saved run of State’s answer-quality checks passed 9 of 10. The miss: State knew the pilot in its fictional example project, Northstar, was paused, but its answer didn’t say that the reason for the pause wasn’t on record. A user could have mistaken an inferred explanation for maintained project truth.</p>
-  <p data-edit="project-health-22"><span class="lead-in">What Project Health showed.</span> It put the failed scenario at the top of the quality view, with the failed check, the expected behavior, and the scenario evidence. It did not diagnose the cause.</p>
-  <p data-edit="project-health-23"><span class="lead-in">What it left to me.</span> Whether State’s behavior or the test expectation needed to change.</p>
-  <p data-edit="project-health-24"><span class="lead-in">What happened next.</span> The same scenario had passed in the three earlier saved runs, and it passed again in the next two. One failure among passing runs is exactly when a dashboard should show the evidence and leave the judgment to a person, rather than declare a regression or wave it away.</p>
+  <span class="example-label">State eval · November 2026</span>
+  <p data-edit="project-health-21"><span class="lead-in">What failed.</span> Two saved runs of State’s review checks failed the same scenario. A meeting note said the team had agreed to revise its evaluation criteria before the next test round. State didn’t reliably record that as a plan rather than as something already done.</p>
+  <p data-edit="project-health-22"><span class="lead-in">What Project Health showed.</span> Both times it put the failing scenario at the top of the quality view, with the failed check and the evidence. It didn’t diagnose the cause.</p>
+  <p data-edit="project-health-23"><span class="lead-in">What it left to me.</span> Whether State or the test needed to change. Repeated 30 times, the scenario passed 24 of 30. I decided an agreed plan must be recorded as a plan, never as done, changed State’s instructions, and made the check stricter to match.</p>
+  <p data-edit="project-health-24"><span class="lead-in">What happened next.</span> Under the stricter check it passed 28 of 30 runs, and the full review suite passed 471 of 480. The release check and the first production run each passed all 16 scenarios. That clean pass isn’t the measure; the repeated 28 of 30 is, which is why I run a scenario more than once before trusting it.</p>
 </div>
 
 <p data-edit="project-health-25"><span class="lead-in">Delivery and quality are judged separately.</span> If a release fails to deploy while the previous version stays live, Project Health flags the release for engineering and reports no confirmed impact on users, without marking product quality as failing.</p>
