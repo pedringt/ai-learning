@@ -1,9 +1,13 @@
 /* Portfolio light/dark theme (DEC-034).
    Follows the visitor's system setting until they use the header toggle; that choice is remembered.
    Loaded synchronously in <head> on every portfolio page so the theme is set before first paint.
-   Colours live in site-dark.css, keyed on html[data-theme="dark"]. */
+   Colours live in site-dark.css, keyed on html[data-theme="dark"].
+   The toggle goes in the header's .top-actions; a page without that header (the cheat sheets) names its own
+   spot with data-toggle-host on this script tag. Printing always uses the light theme. */
 (function(){
   var KEY='cs-theme';
+  var script=document.currentScript;
+  var hostSelector=(script&&script.getAttribute('data-toggle-host'))||'.topbar .top-actions';
   var root=document.documentElement;
   var media=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
 
@@ -31,6 +35,10 @@
 
   apply(preferred());
 
+  /* Print in light: the cheat sheets are made to be printed or saved as PDF. */
+  window.addEventListener('beforeprint',function(){root.setAttribute('data-theme','light');});
+  window.addEventListener('afterprint',function(){apply(preferred());});
+
   /* Keep following the system setting until the visitor makes an explicit choice. */
   if(media){
     var onChange=function(){if(!saved())apply(preferred());};
@@ -39,12 +47,12 @@
   }
 
   function mount(){
-    var host=document.querySelector('.topbar .top-actions');
+    var host=document.querySelector(hostSelector);
     if(!host||document.getElementById('csThemeToggle'))return;
     var button=document.createElement('button');
     button.type='button';
     button.id='csThemeToggle';
-    button.className='theme-toggle';
+    button.className=hostSelector==='.topbar .top-actions'?'theme-toggle':'theme-toggle theme-toggle-corner';
     button.setAttribute('aria-label','Dark mode');
     button.addEventListener('click',function(){
       var next=isDark()?'light':'dark';

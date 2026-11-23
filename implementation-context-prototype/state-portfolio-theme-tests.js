@@ -21,6 +21,20 @@ for(const page of pages){
   check(`${page}: site-dark.css is the last stylesheet in <head>`,darkAt>=0&&!/<link[^>]*\.css|<style/.test(after));
 }
 
+// The Library's cheat sheets: own inline styles and no site header, so the script names the toggle's spot (.bar).
+const sheets=fs.readdirSync(path.join(root,'cheat-sheets')).filter(f=>f.endsWith('.html'));
+check('the Library has its 17 cheat sheets',sheets.length===17,sheets.length+' sheets');
+for(const sheet of sheets){
+  const html=fs.readFileSync(path.join(root,'cheat-sheets',sheet),'utf8');
+  const head=html.slice(0,html.indexOf('</head>'));
+  const themeAt=head.search(/<script src="\.\.\/site-theme\.js" data-toggle-host="\.bar"><\/script>/);
+  check(`cheat-sheets/${sheet}: site-theme.js loads before its styles, with the toggle in .bar`,themeAt>=0&&themeAt<head.indexOf('<style')&&/class="bar"/.test(html));
+  const darkAt=head.search(/<link href="\.\.\/site-dark\.css" rel="stylesheet">/);
+  check(`cheat-sheets/${sheet}: site-dark.css is the last stylesheet in <head>`,darkAt>=0&&!/<link[^>]*\.css|<style/.test(head.slice(darkAt+1)));
+}
+const theme=fs.readFileSync(path.join(root,'site-theme.js'),'utf8');
+check('printing always uses the light theme',/beforeprint[\s\S]*'light'/.test(theme)&&/afterprint/.test(theme));
+
 const ignore=fs.readFileSync(path.join(root,'.vercelignore'),'utf8');
 check('the site serves root .js and .css files (site-theme.js, site-dark.css)',/^!\/\*\.js$/m.test(ignore)&&/^!\/\*\.css$/m.test(ignore));
 

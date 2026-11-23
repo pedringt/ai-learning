@@ -31,6 +31,8 @@ PAGES = ["index.html", "404.html", "ai-business-solutions-map.html", "ai-durable
          "debugging-ai-systems.html", "implementation-context.html", "legal-ai-governance.html",
          "meridian.html", "project-health-case-study.html", "state-architecture-cost.html",
          "state-managed-agent-tracing.html", "state-testing-debugging.html", "tastemake.html"]
+# The Library's standalone cheat sheets (own inline styles, no site header).
+PAGES += sorted("cheat-sheets/" + p.name for p in (ROOT / "cheat-sheets").glob("*.html"))
 
 # Rules for retired themes, and the dark sheet itself.
 SKIP_SELECTOR = re.compile(r"\.dark\b|v88-dark|data-theme|prefers-color-scheme")
@@ -103,9 +105,12 @@ def fmt(h, l, s, a):
 ACCENTS = ["f4ff52", "f6ee52", "8fe9f4", "cfc7ff", "ffb3d6", "ffe174", "00bfd6", "ff5fa2", "f0408f",
            "ee2a7b", "6b5cff", "ff6b57"]
 ACCENT_RGB = [tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) for h in ACCENTS]
-ACCENT_VARS = re.compile(r"var\(--(rd-acid|rd-cyan|rd-pink|rd-pink-soft|rd-violet|rd-coral|cc-accent|cc-acid|"
+ACCENT_VARS = re.compile(r"var\(--(acid|rd-acid|rd-cyan|rd-pink|rd-pink-soft|rd-violet|rd-coral|cc-accent|cc-acid|"
                          r"cc-cyan|cc-lilac|lilac|rose|yellow|pink)\)")
 INK = "rgb(21 17 26)"
+OFFSET_INK = re.compile(r"-?\d+px -?\d+px 0(px)? var\(--(cc-)?ink\)")
+INK_VAR = re.compile(r"var\(--(cc-)?ink\)")
+DARK_SHADOW = "rgb(0 0 0 / 0.6)"
 
 
 def is_accent(r, g, b):
@@ -216,7 +221,7 @@ def build(base):
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page()
-        props = sorted(BG_PROPS | BORDER_PROPS | TEXT_PROPS | {"background"})
+        props = sorted(BG_PROPS | BORDER_PROPS | TEXT_PROPS | {"background", "box-shadow"})
         for name in PAGES:
             page.goto(f"{base}/{name}", wait_until="networkidle")
             for r in page.evaluate(COLLECT_JS % str(props)):
@@ -226,6 +231,12 @@ def build(base):
                 accent_fill = keeps_accent_fill(decl)
                 out = {}
                 for prop, (value, prio) in decl.items():
+                    if prop == "box-shadow":
+                        # Offset "paper" shadows in ink (3px 3px 0 var(--cc-ink)) turn light with the ink token;
+                        # keep them dark (Paige, Nov 23).
+                        if OFFSET_INK.search(value):
+                            out[prop] = (INK_VAR.sub(DARK_SHADOW, value), prio)
+                        continue
                     if prop == "background":
                         # With var() inside, the longhands come back empty, so remap the shorthand as written.
                         if "var(" not in value:

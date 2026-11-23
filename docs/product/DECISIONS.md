@@ -764,9 +764,11 @@ v1 shortened the contrast to fit the old budget, and "leadership asked whetherâ€
 
 **Decision**
 - **Trigger:** the portfolio follows the visitor's system light/dark setting until they use the sun/moon toggle in the header; that choice is remembered (`localStorage` key `cs-theme`; the pre-#428 key `ai-cs-theme` is ignored, so an old saved choice does not come back).
-- **Scope:** every page on the shared portfolio stylesheets (homepage, Applied Work, Library, Library guides, case studies, 404). `project-health.html` and `state-evals.html` stay light for now. The State app is separate and unchanged.
+- **Scope:** every page on the shared portfolio stylesheets (homepage, Applied Work, Library, Library guides, case studies, 404) and the Library's 17 cheat sheets (added Nov 23 after Paige found them still white). The cheat sheets have no site header, so their toggle sits at the right end of their top bar (Paige's choice). `project-health.html` and `state-evals.html` stay light for now. The State app is separate and unchanged.
+- **Printing** always uses the light theme (the cheat sheets are made to be printed or saved as PDF).
 - **Light stays the reference design** and renders as before; the only light-mode change is the toggle in the header.
-- **Look:** a near-black purple-tinted base (`#0f0d12`), dark cards, the bright product-art accents (acid yellow, cyan, lilac, rose) kept as-is with dark text on them, ink buttons inverted to light.
+- **Look:** a near-black purple-tinted base (`#0f0d12`), dark cards, ink buttons inverted to light. Small bright accents (pills, badges, the hero sticky note) keep their colour with dark text on them.
+- **Feedback round (Paige, Nov 23):** large bright blocks (State's flow-diagram steps and Ask banner, the sticky-note callouts on the case studies) glared on dark, so they get a dark fill tinted with their accent, an accent border and accent headings. Offset "paper" shadows stay dark instead of turning light. The hero tape stays light, and the project cards' big 01â€“03 numbers are brighter.
 
 **Why**
 Paige asked for it after seeing a preview on the live site. It reverses #428's "light only", which was recorded only in that commit, not here.
