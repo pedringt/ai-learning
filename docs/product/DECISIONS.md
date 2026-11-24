@@ -755,3 +755,23 @@ On staging f4912e9 the model skipped the Review 6 of 30 times for an agreed revi
 v1 shortened the contrast to fit the old budget, and "leadership asked whether…" became an at-risk flag 13/30 times. v2 restores it. In v2 all 30 #711 outputs raised a Review, recorded the plan as its own item, edited nothing and stated nothing as done.
 
 **Known limitation (Paige, Nov 18).** 2 of 30 v2 outputs wrote "…are to be revised together…; no revision has been made yet", which loses "agreed". They stay counted as failures. 28/30 is one measured run, not a guaranteed 93% reliability; later quality runs should show whether the distinction keeps slipping. No further prompt tuning to chase 30/30.
+
+### DEC-034 — The portfolio has a dark mode again: follows the system setting, with a header toggle
+
+**Status:** Decided (Paige, Nov 23). Built on `feature/portfolio-dark-mode`; not on staging.
+**Date:** 2026-11-23
+**Related:** #428 (the bright redesign that removed the old dark mode, "light only"); `site-theme.js`, `site-dark.css`, `tools/dark_css.py`, `implementation-context-prototype/state-portfolio-theme-tests.js`
+
+**Decision**
+- **Trigger:** the portfolio follows the visitor's system light/dark setting until they use the sun/moon toggle in the header; that choice is remembered (`localStorage` key `cs-theme`; the pre-#428 key `ai-cs-theme` is ignored, so an old saved choice does not come back).
+- **Scope:** every page on the shared portfolio stylesheets (homepage, Applied Work, Library, Library guides, case studies, 404) and the Library's 17 cheat sheets (added Nov 23 after Paige found them still white). The cheat sheets have no site header, so their toggle sits at the right end of their top bar (Paige's choice). `project-health.html` and `state-evals.html` stay light for now. The State app is separate and unchanged.
+- **Printing** always uses the light theme (the cheat sheets are made to be printed or saved as PDF).
+- **Light stays the reference design** and renders as before; the only light-mode change is the toggle in the header.
+- **Look:** a near-black purple-tinted base (`#0f0d12`), dark cards, ink buttons inverted to light. Small bright accents (pills, badges, the hero sticky note) keep their colour with dark text on them.
+- **Feedback round (Paige, Nov 23):** large bright blocks (State's flow-diagram steps and Ask banner, the sticky-note callouts on the case studies) glared on dark, so they get a dark fill tinted with their accent, an accent border and accent headings. Offset "paper" shadows stay dark instead of turning light. The hero tape stays light, and the project cards' big 01–03 numbers are brighter.
+
+**Why**
+Paige asked for it after seeing a preview on the live site. It reverses #428's "light only", which was recorded only in that commit, not here.
+
+**How it is built**
+`site-theme.js` (loaded in `<head>` before the stylesheets, so there is no light flash) sets `html[data-theme]` and adds the toggle. `site-dark.css` (last in `<head>`) remaps the colour tokens by hand; `tools/dark_css.py` generates the rest from every colour literal the pages apply, scoped with `:where()` so the light cascade still decides which rule wins. After changing portfolio CSS colours, re-run the generator (`python3 tools/dark_css.py <local server>`; `--check` reports whether it is stale).

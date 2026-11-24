@@ -57,7 +57,7 @@
 .gloss-tooltip{position:absolute;z-index:200;max-width:280px;background:var(--ink);color:var(--bg,#fff);font-size:12.5px;line-height:1.45;padding:9px 12px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.22);pointer-events:auto}
 
 </style>
-<link href="site-shell.css" rel="stylesheet">
+<script src="site-theme.js"></script><link href="site-shell.css" rel="stylesheet">
 <style id="v932-manager-readiness">
 
 /* Prevent short explanatory bands from inheriting oversized vertical space. */
@@ -687,7 +687,7 @@ body.v88-dark #ai-cs-mock{background:#171419!important;color:#f3ede8!important;-
 
 </style>
 <link href="site-redesign.css" rel="stylesheet">
-</head>
+<link href="site-dark.css" rel="stylesheet"></head>
 <body>
 <div class="app-root" id="ai-cs-mock">
 
@@ -890,26 +890,8 @@ body.v88-dark #ai-cs-mock{background:#171419!important;color:#f3ede8!important;-
   const nav=[...root.querySelectorAll('.nav [data-view]')];
   const mobile=root.querySelector('#mobileNav');
 
-  // Theme: explicit user choice persists; otherwise honor system preference.
-  const themeToggle=root.querySelector('#themeToggle');
-  const setTheme=(dark,persist=false)=>{
-    root.classList.toggle('dark',dark);
-    document.body.classList.toggle('v88-dark',dark);
-    const bg=dark?'#101014':'#ffffff';
-    document.documentElement.style.background=bg;
-    document.body.style.background=bg;
-    document.body.style.margin='0';
-    if(themeToggle){
-      themeToggle.textContent=dark?'☀':'☾';
-      themeToggle.setAttribute('aria-pressed',String(dark));
-      themeToggle.setAttribute('aria-label',dark?'Switch to light mode':'Switch to dark mode');
-      themeToggle.setAttribute('title',dark?'Switch to light mode':'Switch to dark mode');
-    }
-    if(persist){try{localStorage.setItem('ai-cs-theme',dark?'dark':'light');}catch(e){}}
-  };
-  let savedTheme=null; try{savedTheme=localStorage.getItem('ai-cs-theme');}catch(e){}
-  setTheme(false); /* light only: dark mode removed in the bright redesign (#428) */
-  if(themeToggle)themeToggle.addEventListener('click',()=>setTheme(!root.classList.contains('dark'),true));
+  // Theme: site-theme.js (DEC-034). The old theme code also zeroed the body margin; keep that.
+  document.body.style.margin='0';
   const valid=new Set(views.map(v=>v.dataset.page));
   const learningIds=new Set([...root.querySelectorAll('details.learning-stage[id]')].map(el=>el.id));
   const pageTitles={home:'Context Switch | Software Delivery, Product Quality + AI',portfolio:'Applied Work · Context Switch',learn:'Library · Context Switch'};
