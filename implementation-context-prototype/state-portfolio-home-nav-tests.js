@@ -41,7 +41,7 @@ const homeCard=between('<article class="home-feature-card home-feature-state-anc
 const catalog=between('<h3><a class="applied-card-primary-link" href="implementation-context.html">State</a></h3>','</div></div>');
 // Nov 3 (Paige): the card names the scattered-decisions problem and who proposes and approves changes.
 check('the homepage State card describes the practical problem and keeps demo + case-study links',
-  homeCard.includes('As a project moves forward, decisions and open questions get scattered across notes and conversations. State keeps a current project record, with AI proposing updates and people approving changes.')&&!/documents/i.test(homeCard)&&homeCard.includes('data-state-app-link')&&homeCard.includes('href="implementation-context.html"'));
+  homeCard.includes('I created State after seeing AI present an open question as a settled decision. It keeps AI suggestions separate from approved project facts, so people decide what goes into the record.')&&!/documents/i.test(homeCard)&&homeCard.includes('data-state-app-link')&&homeCard.includes('href="implementation-context.html"'));
 check('the authority-boundary explanation is not repeated in the homepage card or the catalog entry',
   ![homeCard,catalog].some(t=>/authoriz|human-approved|boundary/i.test(t)));
 
