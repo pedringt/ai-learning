@@ -10,6 +10,10 @@ outline or text colour writes a dark counterpart scoped to html[data-theme="dark
 The generated rules sit between the GENERATED markers in site-dark.css and are replaced on each run.
 Hand-written fixes belong after the markers, where they win by source order.
 
+site-dark.css is shared by every page, so a page's own inline rules are scoped to the pages they came
+from when those are the cheat sheets (marked <html data-cheat-sheet>): otherwise a cheat-sheet rule such
+as .lead{background:#f8f7ff} would tint every .lead on the portfolio in dark mode.
+
 Usage (serve the repo root first, e.g. python3 -m http.server 8204):
     python3 tools/dark_css.py http://127.0.0.1:8204          # rewrite site-dark.css
     python3 tools/dark_css.py http://127.0.0.1:8204 --check  # exit 1 if it would change
@@ -48,10 +52,10 @@ COLLECT_JS = r"""
 () => {
   const out = [];
   const props = %s;
-  const walk = (rules, media) => {
+  const walk = (rules, media, inline) => {
     for (const r of rules) {
-      if (r.type === 4) { walk(r.cssRules, [...media, '@media ' + r.conditionText]); continue; }
-      if (r.type === 12) { walk(r.cssRules, [...media, '@supports ' + r.conditionText]); continue; }
+      if (r.type === 4) { walk(r.cssRules, [...media, '@media ' + r.conditionText], inline); continue; }
+      if (r.type === 12) { walk(r.cssRules, [...media, '@supports ' + r.conditionText], inline); continue; }
       if (r.type !== 1) continue;
       const decl = {};
       for (let i = 0; i < r.style.length; i++) {
@@ -62,12 +66,12 @@ COLLECT_JS = r"""
         const v = r.style.getPropertyValue(p);
         if (v) decl[p] = [v, r.style.getPropertyPriority(p)];
       }
-      if (Object.keys(decl).length) out.push({sel: r.selectorText, media, decl});
+      if (Object.keys(decl).length) out.push({sel: r.selectorText, media, decl, inline});
     }
   };
   for (const s of document.styleSheets) {
     if (s.href && s.href.includes('site-dark.css')) continue;
-    try { walk(s.cssRules, []); } catch (e) {}
+    try { walk(s.cssRules, [], !s.href); } catch (e) {}
   }
   return out;
 }
@@ -184,18 +188,20 @@ def keeps_accent_fill(decl):
     return False
 
 
-def scope(selector):
+def scope(selector, cheat_sheet=False):
     """Scope to dark mode without changing specificity, so the original cascade still decides:
-    a rule overridden by a more specific one in light mode stays overridden in dark mode."""
+    a rule overridden by a more specific one in light mode stays overridden in dark mode.
+    cheat_sheet limits the rule to the cheat sheets (a cheat sheet's own inline styles)."""
+    page = "[data-cheat-sheet]" if cheat_sheet else ""
     parts = []
     for sel in split_selectors(selector):
         sel = sel.strip()
         if sel.startswith(":root"):
-            parts.append(':root:where([data-theme="dark"])' + sel[len(":root"):])
+            parts.append(f':root:where([data-theme="dark"]{page})' + sel[len(":root"):])
         elif re.match(r"html\b", sel):
-            parts.append('html:where([data-theme="dark"])' + sel[4:])
+            parts.append(f'html:where([data-theme="dark"]{page})' + sel[4:])
         else:
-            parts.append(':where(html[data-theme="dark"]) ' + sel)
+            parts.append(f':where(html[data-theme="dark"]{page}) ' + sel)
     return ",\n".join(parts)
 
 
@@ -216,7 +222,7 @@ def split_selectors(selector):
 
 
 def build(base):
-    rules = {}   # (media tuple, selector) -> {prop: value}
+    rules = {}   # (media tuple, selector, cheat-sheet only) -> {prop: value}
     order = []
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -224,7 +230,9 @@ def build(base):
         props = sorted(BG_PROPS | BORDER_PROPS | TEXT_PROPS | {"background", "box-shadow"})
         for name in PAGES:
             page.goto(f"{base}/{name}", wait_until="networkidle")
+            cheat_sheet = name.startswith("cheat-sheets/")
             for r in page.evaluate(COLLECT_JS % str(props)):
+                only_cs = cheat_sheet and r["inline"]
                 if SKIP_SELECTOR.search(r["sel"]) or any(SKIP_SELECTOR.search(m) for m in r["media"]):
                     continue
                 decl = r["decl"]
@@ -262,14 +270,14 @@ def build(base):
                     star = ", ".join(x.strip() + " *" for x in split_selectors(r["sel"]) if "::" not in x)
                     out["color"] = (INK, "important")
                     if star:
-                        k2 = (tuple(r["media"]), star)
+                        k2 = (tuple(r["media"]), star, only_cs)
                         if k2 not in rules:
                             rules[k2] = {}
                             order.append(k2)
                         rules[k2]["color"] = (INK, "important")
                 if not out:
                     continue
-                key = (tuple(r["media"]), r["sel"])
+                key = (tuple(r["media"]), r["sel"], only_cs)
                 if key not in rules:
                     rules[key] = {}
                     order.append(key)
@@ -277,10 +285,10 @@ def build(base):
         browser.close()
 
     lines = [BEGIN]
-    for media, sel in order:
+    for media, sel, only_cs in order:
         body = "".join(f"  {p}:{v}{' !important' if prio else ''};\n"
-                       for p, (v, prio) in sorted(rules[(media, sel)].items()))
-        block = f"{scope(sel)}{{\n{body}}}"
+                       for p, (v, prio) in sorted(rules[(media, sel, only_cs)].items()))
+        block = f"{scope(sel, only_cs)}{{\n{body}}}"
         for m in reversed(media):
             block = f"{m}{{\n{block}\n}}"
         lines.append(block)

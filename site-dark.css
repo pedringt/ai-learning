@@ -788,47 +788,47 @@ html:where([data-theme="dark"]) body main[data-accent="project-health"] .ph-stat
   background-color:rgb(23 20 28);
 }
 }
-:root:where([data-theme="dark"]){
+:root:where([data-theme="dark"][data-cheat-sheet]){
   --line:rgb(36 36 41);
   --pink:rgb(244 113 172);
 }
-:where(html[data-theme="dark"]) body{
+:where(html[data-theme="dark"][data-cheat-sheet]) body{
   background-color:rgb(23 20 28);
 }
-:where(html[data-theme="dark"]) .bar i *{
+:where(html[data-theme="dark"][data-cheat-sheet]) .bar i *{
   color:rgb(21 17 26) !important;
 }
-:where(html[data-theme="dark"]) .bar i{
+:where(html[data-theme="dark"][data-cheat-sheet]) .bar i{
   color:rgb(21 17 26) !important;
 }
-:where(html[data-theme="dark"]) .tools button{
+:where(html[data-theme="dark"][data-cheat-sheet]) .tools button{
   background-color:rgb(23 20 28);
 }
-:where(html[data-theme="dark"]) .label *{
+:where(html[data-theme="dark"][data-cheat-sheet]) .label *{
   color:rgb(21 17 26) !important;
 }
-:where(html[data-theme="dark"]) .label{
+:where(html[data-theme="dark"][data-cheat-sheet]) .label{
   color:rgb(21 17 26) !important;
 }
-:where(html[data-theme="dark"]) .lead{
+:where(html[data-theme="dark"][data-cheat-sheet]) .lead{
   background-color:rgb(28 25 52);
 }
-:where(html[data-theme="dark"]) .number *{
+:where(html[data-theme="dark"][data-cheat-sheet]) .number *{
   color:rgb(21 17 26) !important;
 }
-:where(html[data-theme="dark"]) .number{
+:where(html[data-theme="dark"][data-cheat-sheet]) .number{
   color:rgb(21 17 26) !important;
 }
-:where(html[data-theme="dark"]) .note{
+:where(html[data-theme="dark"][data-cheat-sheet]) .note{
   background-color:rgb(25 43 52);
 }
-:where(html[data-theme="dark"]) thead{
+:where(html[data-theme="dark"][data-cheat-sheet]) thead{
   background-color:rgb(28 25 52);
 }
-:where(html[data-theme="dark"]) tr:nth-child(2n){
+:where(html[data-theme="dark"][data-cheat-sheet]) tr:nth-child(2n){
   background-color:rgb(25 25 52);
 }
-:where(html[data-theme="dark"]) .flowbox span{
+:where(html[data-theme="dark"][data-cheat-sheet]) .flowbox span{
   background-color:rgb(28 25 52);
 }
 /* ---------- END GENERATED ---------- */
